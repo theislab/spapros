@@ -48,14 +48,14 @@ sphinx-click = "^2.6.0"
 Pygments = "^2.7.2"
 
 [tool.poetry.scripts]
-test-project-poetry = "test_project_poetry.__main__:main"
+test-project-poetry = "spapros.__main__:main"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ["test_project_poetry"]
+source = ["spapros"]
 
 [tool.coverage.report]
 show_missing = true
