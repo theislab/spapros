@@ -1,20 +1,24 @@
 #!/usr/bin/env python
 """Command-line interface."""
 import click
-from rich import traceback
 from rich import print
+from rich import traceback
+
 
 @click.command()
 @click.version_option()
 def main() -> None:
-    print("""[bold blue]
+    """Main entry point for spapros."""
+    print(
+        """[bold blue]
 ███████ ██████   █████  ██████  ██████   ██████  ███████ 
 ██      ██   ██ ██   ██ ██   ██ ██   ██ ██    ██ ██      
 ███████ ██████  ███████ ██████  ██████  ██    ██ ███████ 
      ██ ██      ██   ██ ██      ██   ██ ██    ██      ██ 
 ███████ ██      ██   ██ ██      ██   ██  ██████  ███████ 
                                                          
-""")
+"""
+    )
 
 
 if __name__ == "__main__":
