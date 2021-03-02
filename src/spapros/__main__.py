@@ -2,12 +2,19 @@
 """Command-line interface."""
 import click
 from rich import traceback
-
+from rich import print
 
 @click.command()
 @click.version_option()
 def main() -> None:
-    """spapros."""
+    print("""[bold blue]
+███████ ██████   █████  ██████  ██████   ██████  ███████ 
+██      ██   ██ ██   ██ ██   ██ ██   ██ ██    ██ ██      
+███████ ██████  ███████ ██████  ██████  ██    ██ ███████ 
+     ██ ██      ██   ██ ██      ██   ██ ██    ██      ██ 
+███████ ██      ██   ██ ██      ██   ██  ██████  ███████ 
+                                                         
+""")
 
 
 if __name__ == "__main__":
