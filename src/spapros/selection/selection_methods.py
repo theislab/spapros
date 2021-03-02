@@ -1,13 +1,14 @@
-import numpy as np
-import pandas as pd
-import scanpy as sc
-import utils
-import selection_methods as select
-import seaborn as sns
-import matplotlib.pyplot as plt
 import itertools
 from pathlib import Path
 from timeit import default_timer as timer
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scanpy as sc
+import seaborn as sns
+import selection_methods as select
+import utils
 
 # load test dataset
 adata = sc.read("../data/small_data_raw_counts.h5ad")
@@ -50,33 +51,16 @@ select.select_pca_genes(
 )
 
 
-# Some selection methods in selection_methods.py are not on the latest versions (`select_pca_genes()` is always good for testing, other methods see below)
-# - The options `process_adata`, `penalty_keys`, (`corr_penalty`) and eventually others needs to be added
-# - happy to adjust these functions when we decided how to handle the methods generally
-
-
 ##########################
 # Demonstrate constraint #
 ##########################
-# Here we show how an expression penalty kernel is applied
-# - the expression penalty is based on computed quantiles (adata.var['quantile_0.99'] precomputed via `utils.get_expression_quantile()`)
-# - we want to penalize genes that are above and below certain expression thresholds (to prevent image saturation and undetectable genes)
-# - we choose genes that exceed the lower tresholds for at least 1% of cells (user defined threshold) and don't exceed the upper threshold
-#   for more than 1% of cells (therefore the 0.99 quantile)
 
 ### Map expression thresholds
-# From experimental partners we know good thresholds for the basic normalisation to a target_sum of 10000. However, we use scran normalisation for our datasets.
+# From experimental partners we know good thresholds for the basic normalisation to a target_sum of 10000.
+# However, we use scran normalisation for our datasets.
 lower_th, upper_th = utils.transfered_expression_thresholds(
     adata, lower=2, upper=6, tolerance=0.05, target_sum=10000, plot=True
 )
-
-### Now we have mapped limits, we want to apply a smoothed penalty kernel: genes close to the threshold are still chosen if the score is very high
-# To decide on a proper kernel the user must be able to test selections with different kernel parameters. For that purpose I prepared an interactive plotting function.
-# This is an interesting point for the package design:
-# - we want to do multiple selections with our current selection method settings for different penalty kernels.
-# - The following plot function specifically includes the pca selection method. We want it to be generalized for any method though.
-#   --> Guess the best way is to define selection methods as class objects (?)
-# since the plotting function is far from generalized I don't put it in some imported module atm. I'll rewrite it later.
 
 
 def explore_constraint(factors=[10, 1, 0.1], q=0.99, lower=lower_th, upper=upper_th):
@@ -106,16 +90,16 @@ def explore_constraint(factors=[10, 1, 0.1], q=0.99, lower=lower_th, upper=upper
 
         a.append(adata.copy())
 
-        a[i].var[f"penalty_expression"] = gaussians[i](a[i].var[f"quantile_{q}"])
+        a[i].var["penalty_expression"] = gaussians[i](a[i].var[f"quantile_{q}"])
         selections_tmp.append(
-            select_pca_genes(
+            select.select_pca_genes(
                 a[i],
                 100,
                 variance_scaled=False,
                 absolute=True,
                 n_pcs=20,
                 process_adata=["norm", "log1p", "scale"],
-                penalty_keys=[f"penalty_expression"],
+                penalty_keys=["penalty_expression"],
                 corr_penalty=None,
                 inplace=False,
                 verbose=True,
@@ -162,7 +146,7 @@ def explore_constraint(factors=[10, 1, 0.1], q=0.99, lower=lower_th, upper=upper
 factor = 0.1
 var = [factor * 0.1, factor * 0.5]
 penalty = utils.plateau_penalty_kernel(var=var, x_min=lower_th, x_max=upper_th)
-adata.var["expression_penalty"] = penalty(adata.var[f"quantile_0.99"])
+adata.var["expression_penalty"] = penalty(adata.var["quantile_0.99"])
 # Our final selection would then be
 select.select_pca_genes(
     adata,
@@ -181,39 +165,9 @@ print(adata.var)
 #######################################################################################
 # Systematic selections pipeline to create probeset files for the evaluation pipeline #
 #######################################################################################
-# So for this we will need some config file to define the systematic selections
-# - we want to be able to easily define multiple methods
-# - and easily define shared and specific parameters
-#     - e.g. the number of selected genes n could be shared
-#     - hyperparameter `n_pcs` for pca selection would be specific
-#     - we should also be able to set general parameters as method specific:
-#          - e.g. for some experiments we want `process_adata` to be the same for all methods, and in other experiments not
-#          - the option `n_pcs` could also be shared between standard pca selection and sparse pca (general parameter, applicable on some methods)
-
-# example options of systematic selections:
-# - different methods
-# - different hyperparameters
-# - with and without constraints (not shown here)
-# - different dataset parameters: n_hvg (not shown here), scaled/unscaled
-#
-# The systematic selection are saved in the two files
-# - ../results/probesets/selections_genesets_1.csv (includes the selected probesets)
-# - ../results/probesets/selections_info_genesets_1.csv (includes infos on each selected probeset)
-#
-# usage at the end (systematic selections):
-# for the project so far I wrote a script that runs parallelized jobs for each selection to speed things up, however I think this job distribution can be done much nicer (so far hyperparameters are not saved nicely, specifications are too entangled).
-# I don't know if this systematic selection procedure should be part of the pipeline? I guess yes, but then the pipeline would have two aspects: 1. systematic probeset selection, 2. evaluation of the probesets
-
-# for the probesets csv file I'd like to indicate from which genes the methods could select from ("full_gene_set"). Two options:
-# 1. we have different csv files for each different full_gene_set (I don't like that option, if we iterate over many HVGs we have a lot of files)
-# 2. instead of boolean columns we could use three categories: 'selected', 'not selected', 'not given'
-# --> i think 2. would be okay, we'd need an utility fct that maps to a bool vector
-# --> Ah I think atm we might even have a bug here: if two different datasets are in the systematic selection configs this might
-#     raise errors when creating the gene list in the csv output files..
-
 
 ###### Define experiment configurations ######
-RESULTS_DIR = "../results/probesets/"  #
+RESULTS_DIR = "../results/probesets/"
 NAME = "genesets_1"  # Provide a name for the systematic selections in case we want to combine different experiments later
 
 general_params = {
@@ -282,7 +236,7 @@ methods_kwargs = {
 
 ###### Reshape configs for single selections ######
 cartesian_product = list(
-    itertools.product(*[param_list for _, param_list in general_params.items()])
+    itertools.product(*[param_list for _, param_list in general_params.items()])  # type: ignore
 )
 general_configs = [
     {key: val for key, val in zip(general_params, val_list)}
@@ -292,10 +246,10 @@ general_configs = [
 method_configs = {}
 for method, params in method_params.items():
     cartesian_product = list(
-        itertools.product(*[param_list for _, param_list in params.items()])
+        itertools.product(*[param_list for _, param_list in params.items()])  # type: ignore
     )
     method_configs[method] = [
-        {key: val for key, val in zip(params, val_list)}
+        {key: val for key, val in zip(params, val_list)}  # type: ignore
         for val_list in cartesian_product
     ]
 
@@ -305,7 +259,7 @@ Path(RESULTS_DIR).mkdir(parents=True, exist_ok=True)
 param_keys = list(
     np.unique(
         [k for k in general_params]
-        + [k for _, m_params in method_params.items() for k in m_params]
+        + [k for _, m_params in method_params.items() for k in m_params]  # type: ignore
     )
 )
 param_keys.remove("process_adata")
