@@ -45,7 +45,7 @@ reorder-python-imports = "^2.3.6"
 pre-commit-hooks = "^3.3.0"
 sphinx-rtd-theme = "^0.5.0"
 sphinx-click = "^2.5.0"
-Pygments = "^2.7.2"
+Pygments = "^2.8.0"
 
 [tool.poetry.scripts]
 test-project-poetry = "test_project_poetry.__main__:main"
