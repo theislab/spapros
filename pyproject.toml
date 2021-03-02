@@ -27,8 +27,8 @@ Jinja2 = "^2.11.3"
 pytest = "^6.2.2"
 coverage = {extras = ["toml"], version = "^5.3"}
 safety = "^1.9.0"
-mypy = "^0.790"
-typeguard = "^2.9.1"
+mypy = "^0.812"
+typeguard = "^2.11.1"
 xdoctest = {extras = ["colors"], version = "^0.15.0"}
 sphinx = "^3.5.1"
 sphinx-autobuild = "^2020.9.1"
@@ -40,22 +40,22 @@ flake8-bugbear = "^20.1.4"
 flake8-docstrings = "^1.5.0"
 flake8-rst-docstrings = "^0.0.14"
 pep8-naming = "^0.11.1"
-darglint = "^1.5.8"
-reorder-python-imports = "^2.3.6"
+darglint = "^1.7.0"
+reorder-python-imports = "^2.4.0"
 pre-commit-hooks = "^3.3.0"
 sphinx-rtd-theme = "^0.5.0"
-sphinx-click = "^2.5.0"
+sphinx-click = "^2.6.0"
 Pygments = "^2.7.2"
 
 [tool.poetry.scripts]
-test-project-poetry = "test_project_poetry.__main__:main"
+test-project-poetry = "spapros.__main__:main"
 
 [tool.coverage.paths]
 source = ["src", "*/site-packages"]
 
 [tool.coverage.run]
 branch = true
-source = ["test_project_poetry"]
+source = ["spapros"]
 
 [tool.coverage.report]
 show_missing = true
