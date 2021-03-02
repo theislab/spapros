@@ -18,8 +18,8 @@ spapros
 .. |Build| image:: https://github.com/theislab/spapros/workflows/Build%20spapros%20Package/badge.svg
    :target: https://github.com/theislab/spapros/workflows/Build%20spapros%20Package/badge.svg
    :alt: Build package Status
-.. |Tests| image:: https://github.com/theislab/spapros/workflows/Tests/badge.svg
-   :target: https://github.com/theislab/spapros/actions?workflow=Tests
+.. |Tests| image:: https://github.com/theislab/spapros/actions/workflows/run_tests.yml/badge.svg
+   :target: https://github.com/theislab/spapros/actions/workflows/run_tests.yml/badge.svg
    :alt: Tests
 .. |Codecov| image:: https://codecov.io/gh/theislab/spapros/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/theislab/spapros
