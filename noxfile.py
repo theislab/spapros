@@ -10,13 +10,12 @@ from nox.sessions import Session
 
 
 package = "spapros"
-python_versions = ["3.8", "3.7"]
+python_versions = ["3.8"]
 nox.options.sessions = (
     "pre-commit",
     "safety",
     "mypy",
     "tests",
-    "typeguard",
     "xdoctest",
     "docs-build",
 )

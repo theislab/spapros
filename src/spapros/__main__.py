@@ -1,9 +1,17 @@
 #!/usr/bin/env python
 """Command-line interface."""
+import logging
+import sys
+
 import click
-import spapros
+import rich.logging
 from rich import print
 from rich import traceback
+
+import spapros
+
+
+log = logging.getLogger()
 
 
 @click.command()
@@ -20,16 +28,28 @@ def main() -> None:
                                                          
 """
     )
-    print('[bold blue]Run [green]spapros --help [blue]for an overview of all commands\n')
+    print(
+        "[bold blue]Run [green]spapros --help [blue]for an overview of all commands\n"
+    )
 
     spapros_cli()
 
+
 @click.group()
-@click.version_option(spapros.__version__, message=click.style(f'spapros Version: {spapros.__version__}', fg='blue'))
-@click.option('-v', '--verbose', is_flag=True, default=False, help='Enable verbose output (print debug statements).')
+@click.version_option(
+    spapros.__version__,
+    message=click.style(f"spapros Version: {spapros.__version__}", fg="blue"),
+)
+@click.option(
+    "-v",
+    "--verbose",
+    is_flag=True,
+    default=False,
+    help="Enable verbose output (print debug statements).",
+)
 @click.option("-l", "--log-file", help="Save a verbose log to a file.")
 @click.pass_context
-def spapros_cli(ctx, verbose, logfile):
+def spapros_cli(ctx, verbose, log_file):
     """
     Create state of the art probesets for spatial transcriptomics projects.
     """
@@ -50,7 +70,11 @@ def spapros_cli(ctx, verbose, logfile):
     if log_file:
         log_fh = logging.FileHandler(log_file, encoding="utf-8")
         log_fh.setLevel(logging.DEBUG)
-        log_fh.setFormatter(logging.Formatter("[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"))
+        log_fh.setFormatter(
+            logging.Formatter(
+                "[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"
+            )
+        )
         log.addHandler(log_fh)
 
 
