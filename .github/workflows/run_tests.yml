@@ -28,11 +28,6 @@ jobs:
                           session: "mypy",
                       }
                     - {
-                          python-version: 3.9,
-                          os: ubuntu-latest,
-                          session: "tests",
-                      }
-                    - {
                           python-version: 3.8,
                           os: ubuntu-latest,
                           session: "tests",
