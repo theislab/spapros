@@ -1251,7 +1251,7 @@ def tree_classifications(
         if (ct in a.obs.loc[a.obs["train_set"], ct_key].values)
         and (ct in a.obs.loc[a.obs["test_set"], ct_key].values)
     ]
-    for c in [c for c in celltypes if c not in celltypes_tmp]:
+    for c in [ct for ct in celltypes if ct not in celltypes_tmp]:
         warnings.warn(
             f"Zero cells of celltype {c} in train or test set. No tree is calculated for celltype {c}."
         )
