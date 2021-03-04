@@ -32,11 +32,6 @@ def plot_gene_expressions(f_idxs, adata, fig_title=None, save_to=None):
     plt.show()
 
 
-##########################################################
-####### Helper functions for clustering_sets() ###########
-##########################################################
-
-
 def get_found_ns(csv_file):
     found_ns = []
     with open(csv_file, "r") as f:
@@ -93,7 +88,7 @@ def compute_clustering(adata, ns, resolution, tried_res_n, csv_file, progress_ba
     write_tried_res_n_to_csv(n, resolution, csv_file[:-4] + "_tried.csv")
     if n not in found_ns:
         write_assignments_to_csv(n, resolution, list(adata.obs["tmp"]), csv_file)
-        if n in ns:
+        if n in ns and progress_bar:
             progress_bar.update(n=1)
 
 
@@ -298,7 +293,7 @@ def nmi(
              ...
     """
 
-    if save_every not in None:
+    if save_every is not None:
         start = time.time()
         minute_count = 0
 

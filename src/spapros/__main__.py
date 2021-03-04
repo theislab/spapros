@@ -5,9 +5,11 @@ import sys
 
 import click
 import rich.logging
-from rich import print, traceback
+from rich import print
+from rich import traceback
 
 import spapros
+from spapros.evaluation.evaluation_pipeline import run_evaluation
 from spapros.selection.selection import run_selection
 
 log = logging.getLogger()
@@ -73,7 +75,7 @@ def spapros_cli(ctx, verbose, log_file):
 
 @spapros_cli.command()
 @click.argument("data", type=click.Path(exists=True))
-@click.option("--output", "-o", default=".")
+@click.option("--output", "-o", default="./results/")
 def selection(data, output) -> None:
     """
     Create a selection of probesets for an h5ad file
@@ -82,6 +84,20 @@ def selection(data, output) -> None:
         output: Output path
     """
     run_selection(data, output)
+
+
+@spapros_cli.command()
+@click.argument("probeset", type=click.Path(exists=True))
+@click.option("--output", "-o", default="./results/")
+def evaluation(probeset, output) -> None:
+    """
+    Create a selection of probesets for an h5ad file
+    Args:
+        probeset: Path to the probeset file
+        results_dir: Path to the generated result of a selection
+        output: Output path
+    """
+    run_evaluation(probeset, output)
 
 
 if __name__ == "__main__":
