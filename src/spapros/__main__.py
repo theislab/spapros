@@ -9,7 +9,7 @@ from rich import print
 from rich import traceback
 
 import spapros
-
+from spapros.selection.selection import run_selection
 
 log = logging.getLogger()
 
@@ -76,6 +76,13 @@ def spapros_cli(ctx, verbose, log_file):
             )
         )
         log.addHandler(log_fh)
+
+
+@spapros_cli.command()
+@click.argument("data", type=click.Path(exists=True))
+@click.option("--output", "-o", default=".")
+def selection(data, output) -> None:
+    run_selection("../data/small_data_raw_counts.h5ad")
 
 
 if __name__ == "__main__":
