@@ -5,8 +5,7 @@ import sys
 
 import click
 import rich.logging
-from rich import print
-from rich import traceback
+from rich import print, traceback
 
 import spapros
 from spapros.selection.selection import run_selection

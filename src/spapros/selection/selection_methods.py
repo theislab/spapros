@@ -7,8 +7,7 @@ import scipy
 from sklearn.decomposition import SparsePCA
 
 from spapros.evaluation.evaluation import tree_classifications
-from spapros.util.util import clean_adata
-from spapros.util.util import preprocess_adata
+from spapros.util.util import clean_adata, preprocess_adata
 
 
 def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=None):

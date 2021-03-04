@@ -8,7 +8,6 @@ import nox
 import nox_poetry.patch
 from nox.sessions import Session
 
-
 package = "spapros"
 python_versions = ["3.8"]
 nox.options.sessions = (
