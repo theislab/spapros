@@ -16,7 +16,7 @@ from spapros.util.util import plateau_penalty_kernel
 from spapros.util.util import transfered_expression_thresholds
 
 
-def run_selection(adata_path: str):
+def run_selection(adata_path: str, output_path: str) -> None:
     adata = sc.read(adata_path)
 
     ####################################################################
@@ -137,9 +137,7 @@ def run_selection(adata_path: str):
 
             ax2 = ax1.twinx()
             x_values = np.linspace(0, np.max(a[i].var[f"quantile_{q}"]), 240)
-            plt.plot(
-                x_values, 1 * gaussians[i](x_values), label="penal.", color="green"
-            )
+            plt.plot(x_values, 1 * gaussians[i](x_values), label="penal.", color="green")
             plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
             plt.ylim([0, 2])
             for label in ax2.get_yticklabels():
@@ -171,7 +169,6 @@ def run_selection(adata_path: str):
     #######################################################################################
 
     ###### Define experiment configurations ######
-    RESULTS_DIR = "../results/probesets/"
     NAME = "genesets_1"  # Provide a name for the systematic selections in case we want to combine different experiments later
 
     general_params = {
@@ -179,7 +176,7 @@ def run_selection(adata_path: str):
         "penalty_keys": [[]],
         "dataset": ["small_data_raw_counts.h5ad"],
         "data_path": [
-            "../data/"
+            "/home/zeth/PycharmProjects/spapros/data/"
         ],  # It actually doesn't make sense to provide more than one path here I guess
         # How to handle datasets that are in different directories? (overkill?)
         "gene_subset": [
@@ -187,9 +184,7 @@ def run_selection(adata_path: str):
         ],  # We could add a key from adata.var here: e.g. different numbers of highly variable genes
         # (the key needs to be prepared in `adata.var[key]` (dtype=bool) --> adata = adata[:,adata.var[key]] )
         "obs_fraction": [None],  # For measuring method stability
-        "fraction_seed": [
-            None
-        ],  # (obs_fraction and fraction_seed only work in combination)
+        "fraction_seed": [None],  # (obs_fraction and fraction_seed only work in combination)
         #
     }
     pca_params = {
@@ -242,34 +237,26 @@ def run_selection(adata_path: str):
     cartesian_product = list(
         itertools.product(*[param_list for _, param_list in general_params.items()])  # type: ignore
     )
-    general_configs = [
-        {key: val for key, val in zip(general_params, val_list)}
-        for val_list in cartesian_product
-    ]
+    general_configs = [{key: val for key, val in zip(general_params, val_list)} for val_list in cartesian_product]
 
     method_configs = {}
     for method, params in method_params.items():
-        cartesian_product = list(
-            itertools.product(*[param_list for _, param_list in params.items()])  # type: ignore
-        )
+        cartesian_product = list(itertools.product(*[param_list for _, param_list in params.items()]))  # type: ignore
         method_configs[method] = [
-            {key: val for key, val in zip(params, val_list)}  # type: ignore
-            for val_list in cartesian_product
+            {key: val for key, val in zip(params, val_list)} for val_list in cartesian_product  # type: ignore
         ]
 
-    Path(RESULTS_DIR).mkdir(parents=True, exist_ok=True)
+    Path(output_path).mkdir(parents=True, exist_ok=True)
 
     param_keys = list(
         np.unique(
-            [k for k in general_params]
-            + [k for _, m_params in method_params.items() for k in m_params]  # type: ignore
+            [k for k in general_params] + [k for _, m_params in method_params.items() for k in m_params]  # type: ignore
         )
     )
     param_keys.remove("process_adata")
 
     df_info = pd.DataFrame(
-        columns=["directory", "method", "normalised", "log1p", "scaled", "time_seconds"]
-        + param_keys
+        columns=["directory", "method", "normalised", "log1p", "scaled", "time_seconds"] + param_keys
     )
     df_info.index.name = "set_id"
     df_sets = pd.DataFrame(index=adata.var.index)
@@ -280,44 +267,32 @@ def run_selection(adata_path: str):
             print(method)
             for m_config in m_configs:
                 adata = sc.read(g_config["data_path"] + g_config["dataset"])
-                kwargs = {
-                    k: v for k, v in g_config.items() if k in methods_kwargs[method]
-                }
-                kwargs.update(
-                    {k: v for k, v in m_config.items() if k in methods_kwargs[method]}
-                )
+                kwargs = {k: v for k, v in g_config.items() if k in methods_kwargs[method]}
+                kwargs.update({k: v for k, v in m_config.items() if k in methods_kwargs[method]})
                 start = timer()
                 s = methods[method](adata, **kwargs, inplace=False)  # type: ignore
                 computation_time = (
                     timer() - start
                 )  # actually the dataset processing shouldn't be part of the measured computation time...
 
-                df_info.loc[
-                    f"{NAME}_{count}", ["directory", "method", "time_seconds"]
-                ] = [
-                    RESULTS_DIR,
+                df_info.loc[f"{NAME}_{count}", ["directory", "method", "time_seconds"]] = [
+                    output_path,
                     method,
                     computation_time,
                 ]
                 g_config_cols = [k for k in g_config if k in df_info.columns]
-                df_info.loc[f"{NAME}_{count}", g_config_cols] = [
-                    v for k, v in g_config.items()
-                ]
+                df_info.loc[f"{NAME}_{count}", g_config_cols] = [v for k, v in g_config.items()]
                 kwarg_cols = [k for k in kwargs if k in df_info.columns]
-                df_info.loc[f"{NAME}_{count}", kwarg_cols] = [
-                    v for k, v in kwargs.items() if k in kwarg_cols
-                ]
+                df_info.loc[f"{NAME}_{count}", kwarg_cols] = [v for k, v in kwargs.items() if k in kwarg_cols]
 
                 tmp = kwargs["process_adata"] if ("process_adata" in kwargs) else []
                 pp_options = [("norm" in tmp), ("log1p" in tmp), ("scale" in tmp)]
-                df_info.loc[
-                    f"{NAME}_{count}", ["normalised", "log1p", "scaled"]
-                ] = pp_options
+                df_info.loc[f"{NAME}_{count}", ["normalised", "log1p", "scaled"]] = pp_options
 
                 df_sets[f"{NAME}_{count}"] = s["selection"]
 
                 count += 1
                 print(count)
 
-    df_info.to_csv(RESULTS_DIR + f"selections_info_{NAME}.csv")
-    df_sets.to_csv(RESULTS_DIR + f"selections_{NAME}.csv")
+    df_info.to_csv(output_path + f"selections_info_{NAME}.csv")
+    df_sets.to_csv(output_path + f"selections_{NAME}.csv")

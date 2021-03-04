@@ -14,9 +14,9 @@ from spapros.selection.selection import run_selection
 log = logging.getLogger()
 
 
-@click.command()
-@click.version_option()
 def main() -> None:
+    traceback.install()
+
     """Main entry point for spapros."""
     print(
         """[bold blue]
@@ -28,11 +28,9 @@ def main() -> None:
                                                          
 """
     )
-    print(
-        "[bold blue]Run [green]spapros --help [blue]for an overview of all commands\n"
-    )
+    print("[bold blue]Run [green]spapros --help [blue]for an overview of all commands\n")
 
-    spapros_cli()
+    spapros_cli(prog_name="spapros")
 
 
 @click.group()
@@ -70,11 +68,7 @@ def spapros_cli(ctx, verbose, log_file):
     if log_file:
         log_fh = logging.FileHandler(log_file, encoding="utf-8")
         log_fh.setLevel(logging.DEBUG)
-        log_fh.setFormatter(
-            logging.Formatter(
-                "[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"
-            )
-        )
+        log_fh.setFormatter(logging.Formatter("[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"))
         log.addHandler(log_fh)
 
 
@@ -82,9 +76,14 @@ def spapros_cli(ctx, verbose, log_file):
 @click.argument("data", type=click.Path(exists=True))
 @click.option("--output", "-o", default=".")
 def selection(data, output) -> None:
-    run_selection("../data/small_data_raw_counts.h5ad")
+    """
+    Create a selection of probesets for an h5ad file
+    Args:
+        data: Path to the h5ad file
+        output: Output path
+    """
+    run_selection(data, output)
 
 
 if __name__ == "__main__":
-    traceback.install()
-    main(prog_name="spapros")  # pragma: no cover
+    main()  # pragma: no cover

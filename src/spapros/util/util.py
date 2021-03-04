@@ -20,6 +20,17 @@ def clean_adata(
     inplace=True,
 ):
     """Removes unwanted attributes of an adata object."""
+    if not obs_keys:
+        obs_keys = []
+    if not var_keys:
+        var_keys = []
+    if not uns_keys:
+        uns_keys = []
+    if not obsm_keys:
+        obsm_keys = []
+    if not varm_keys:
+        varm_keys = []
+
     if inplace:
         a = adata
     else:
@@ -80,9 +91,7 @@ def preprocess_adata(
         if issparse(a.X):
             sparsefuncs.inplace_row_scale(a.X, 1 / a.obs["size_factors"].values)
         else:
-            a.X /= a.obs["size_factors"].values[
-                :, None
-            ]  # np.divide(X, counts[:, None], out=X)
+            a.X /= a.obs["size_factors"].values[:, None]  # np.divide(X, counts[:, None], out=X)
     if "log1p" in options:
         sc.pp.log1p(a)
     if "scale" in options:
@@ -92,9 +101,7 @@ def preprocess_adata(
         return a
 
 
-def get_expression_quantile(
-    adata, q=0.9, normalise=True, log1p=True, zeros_to_nan=False
-):
+def get_expression_quantile(adata, q=0.9, normalise=True, log1p=True, zeros_to_nan=False):
     """Compute each genes q'th quantile on normalised (and log1p) data.
 
     TODO: Add celltype weighting. (sc data does not represent correct celltype proportions)
@@ -149,9 +156,7 @@ def cluster_corr(corr_array, inplace=False):
     pairwise_distances = sch.distance.pdist(corr_array)
     linkage = sch.linkage(pairwise_distances, method="complete")
     cluster_distance_threshold = pairwise_distances.max() / 2
-    idx_to_cluster_array = sch.fcluster(
-        linkage, cluster_distance_threshold, criterion="distance"
-    )
+    idx_to_cluster_array = sch.fcluster(linkage, cluster_distance_threshold, criterion="distance")
     idx = np.argsort(idx_to_cluster_array)
 
     if not inplace:
@@ -190,9 +195,7 @@ def coexpression_plot(adata, figsize=(5, 5), colorbar=False, return_mean_abs=Fal
 ####################
 
 
-def transfered_expression_thresholds(
-    adata, lower=2, upper=6, tolerance=0.05, target_sum=10000, plot=True
-):
+def transfered_expression_thresholds(adata, lower=2, upper=6, tolerance=0.05, target_sum=10000, plot=True):
     """Transfer expression thresholds between different normalisations.
 
     If expression thresholds are known for normalisation with a given `target_sum` these limits

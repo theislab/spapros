@@ -10,10 +10,6 @@ from spapros.evaluation.evaluation import tree_classifications
 from spapros.util.util import clean_adata
 from spapros.util.util import preprocess_adata
 
-#############################################################################
-# We start here with pca and marker selections with the final functionality #
-#############################################################################
-
 
 def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=None):
     """Compute correlations and iteratively penalize genes according max corr with selected genes
@@ -38,11 +34,7 @@ def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=Non
     cor_df.fillna(0, inplace=True)
 
     # Eventually penalize according max correlation with preselected genes
-    max_cor = (
-        cor_df.loc[penalized_scores.index, preselected_genes]
-        .max(axis=1)
-        .to_frame("max")
-    )
+    max_cor = cor_df.loc[penalized_scores.index, preselected_genes].max(axis=1).to_frame("max")
     if len(preselected_genes) > 0:
         tmp_scores = penalized_scores.mul(corr_penalty(max_cor), axis=0)
     else:
@@ -170,9 +162,7 @@ def select_pca_genes(
     if absolute:
         loadings = abs(loadings)
 
-    scores = pd.DataFrame(
-        index=adata.var.index, data={"scores": np.sum(loadings, axis=1)}
-    )
+    scores = pd.DataFrame(index=adata.var.index, data={"scores": np.sum(loadings, axis=1)})
     scores = apply_penalties(scores, adata, penalty_keys=penalty_keys)
     if not (corr_penalty is None):
         scores = apply_correlation_penalty(scores, adata, corr_penalty)
@@ -196,9 +186,7 @@ def select_pca_genes(
         return selection
 
 
-def marker_scores(
-    adata, obs_key="cell_types", groups="all", reference="rest", rankby_abs=False
-):
+def marker_scores(adata, obs_key="cell_types", groups="all", reference="rest", rankby_abs=False):
     """Compute marker scores for genes in adata
 
     adata: AnnData
@@ -280,18 +268,13 @@ def select_DE_genes(
         groups = group_counts[group_counts].index.to_list()
 
     selection = pd.DataFrame(index=a.var.index, data={"selection": False})
-    scores = marker_scores(
-        a, obs_key=obs_key, groups=groups, reference=reference, rankby_abs=rankby_abs
-    )
+    scores = marker_scores(a, obs_key=obs_key, groups=groups, reference=reference, rankby_abs=rankby_abs)
     scores = apply_penalties(scores, a, penalty_keys=penalty_keys)
     if per_group:
-        genes = [
-            gene for group in scores.columns for gene in scores.nlargest(n, group).index
-        ]
+        genes = [gene for group in scores.columns for gene in scores.nlargest(n, group).index]
     else:
         ordered_gene_lists = [
-            list(scores.sort_values(by=[group], ascending=False).index.values)
-            for group in scores.columns
+            list(scores.sort_values(by=[group], ascending=False).index.values) for group in scores.columns
         ]
         n_groups = len(ordered_gene_lists)
         genes = []
@@ -442,9 +425,7 @@ def add_tree_markers(
 ###### This is an old pca selection function with several different options how the loadings are aggregated to scores
 ###### My first runs showed that `method="sum"` performed best (as used in the function `select_pca_genes()`).
 ###### We should also include the old options to rerun the comparisons at the end.
-def select_features_pca_loadings(
-    adata, n, method="sum", absolute=True, n_pcs=30, inplace=True, verbose=True
-):
+def select_features_pca_loadings(adata, n, method="sum", absolute=True, n_pcs=30, inplace=True, verbose=True):
     """
     Arguments
     ---------
@@ -641,9 +622,7 @@ def get_mean(X, axis=0):
     return mean
 
 
-def highest_expressed_genes(
-    adata, n, inplace=True, process_adata=None, use_existing_means=False
-):
+def highest_expressed_genes(adata, n, inplace=True, process_adata=None, use_existing_means=False):
     """Select n highest expressed genes in adata"""
     if process_adata:
         a = preprocess_adata(adata, options=process_adata, inplace=False)
@@ -655,9 +634,7 @@ def highest_expressed_genes(
         if "means" in a.var:
             df["means"] = a.var["means"]
         else:
-            raise ValueError(
-                'Column "means" in adata.var not found. Either add it or set use_existing_means=False.'
-            )
+            raise ValueError('Column "means" in adata.var not found. Either add it or set use_existing_means=False.')
     else:
         df["means"] = get_mean(a.X)
     df["selection"] = False
@@ -694,9 +671,7 @@ def next_alpha(n, alphas, n_features):
     for i, a in enumerate(alphas):
         if (i == 0) and (n_features[i] < n):
             return a / 2
-        elif (i < (len(alphas) - 1)) and (
-            (n_features[i] > n) and (n_features[i + 1] < n)
-        ):
+        elif (i < (len(alphas) - 1)) and ((n_features[i] > n) and (n_features[i + 1] < n)):
             return (alphas[i] + alphas[i + 1]) / 2
         elif (i == (len(alphas) - 1)) and (n_features[i] > n):
             return a * 2
@@ -796,9 +771,7 @@ def spca_feature_selection(
     if (type(n_alphas_max) == int) and (len(alphas) == n_alphas_max):
         max_alphas = True
 
-    while not (
-        n_features_equals_n or (n_features_in_tolerance and min_alphas) or max_alphas
-    ):
+    while not (n_features_equals_n or (n_features_in_tolerance and min_alphas) or max_alphas):
         # get next alpha
         alphas, n_features = sort_alphas(alphas, n_features)
         alpha = next_alpha(n, alphas, n_features)
@@ -833,17 +806,13 @@ def spca_feature_selection(
 
     if verbosity >= 1:
         if n_features_equals_n:
-            print(
-                "Found solution with sparse PC components based on exactly n features"
-            )
+            print("Found solution with sparse PC components based on exactly n features")
         elif n_features_in_tolerance:
             print(
                 "Found solution with number of features in defined tolerance. Excluded features with lowest loadings sums"
             )
         elif max_alphas:
-            print(
-                "Maximal number of trials (n_alphas_max) was reached without finding a solution"
-            )
+            print("Maximal number of trials (n_alphas_max) was reached without finding a solution")
     if (not n_features_equals_n) and (not n_features_in_tolerance) and max_alphas:
         return 0
 
@@ -856,9 +825,7 @@ def spca_feature_selection(
         adata.var["selection_score"] = scores
         adata.var["selection"] = selection
     else:
-        df = pd.DataFrame(
-            index=adata.var.index, columns=["selection", "selection_scores"]
-        )
+        df = pd.DataFrame(index=adata.var.index, columns=["selection", "selection_scores"])
         df["selection"] = selection
         df["selection_score"] = scores
         return df

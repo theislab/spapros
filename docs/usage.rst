@@ -1,6 +1,6 @@
 Usage
 =====
 
-.. click:: spapros.__main__:main
+.. click:: spapros.spabros_cli
    :prog: spapros
    :nested: full

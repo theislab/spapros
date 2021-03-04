@@ -160,17 +160,13 @@ def clustering_sets(adata, ns, save_to, start_res=1.0, verbose=False):
         .
         (note: this listing keeps the order of the conducted trials)
     """
-    tried_res_n = get_tried_res_n(
-        save_to[:-4] + "_tried.csv"
-    )  # list of [resolution,n] lists
+    tried_res_n = get_tried_res_n(save_to[:-4] + "_tried.csv")  # list of [resolution,n] lists
 
     if verbose:
         bar = tqdm(total=len(ns))
         if len(tried_res_n) > 0:
             bar.n = len(set(ns).intersection(set([res_n[1] for res_n in tried_res_n])))
-            bar.last_print_n = len(
-                set(ns).intersection(set([res_n[1] for res_n in tried_res_n]))
-            )
+            bar.last_print_n = len(set(ns).intersection(set([res_n[1] for res_n in tried_res_n])))
             bar.refresh()
     else:
         bar = None
@@ -207,10 +203,7 @@ def clustering_sets(adata, ns, save_to, start_res=1.0, verbose=False):
             # check if two neighbouring resolutions have different n's
             cond1 = tmp_res_n[i + 1][1] - tmp_res_n[i][1] > 1
             # check if we search an n between the two n's of the given resolutions
-            cond2 = (
-                len([n for n in ns if n > tmp_res_n[i][1] and n < tmp_res_n[i + 1][1]])
-                > 0
-            )
+            cond2 = len([n for n in ns if n > tmp_res_n[i][1] and n < tmp_res_n[i + 1][1]]) > 0
             # we run in some error to recompute values between false pairs
             # I think this occurs since it can happen that sometimes a slightly higher
             # resolution leads to a lower number of clusters
@@ -219,9 +212,7 @@ def clustering_sets(adata, ns, save_to, start_res=1.0, verbose=False):
             cond3 = abs(tmp_res_n[i + 1][0] - tmp_res_n[i][0]) > 0.00005  # 0.0003
             if cond1 and cond2 and cond3:
                 res = (tmp_res_n[i][0] + tmp_res_n[i + 1][0]) * 0.5
-                compute_clustering(
-                    adata, ns, res, tried_res_n, save_to, progress_bar=bar
-                )
+                compute_clustering(adata, ns, res, tried_res_n, save_to, progress_bar=bar)
                 found_space = True
 
 
@@ -354,9 +345,7 @@ def nmi(
                 if method in ["max", "min", "geometric", "arithmetic"]:
                     from sklearn.metrics import normalized_mutual_info_score
 
-                    nmi_value = normalized_mutual_info_score(
-                        labels, ref_labels, average_method=method
-                    )
+                    nmi_value = normalized_mutual_info_score(labels, ref_labels, average_method=method)
                 else:
                     raise ValueError(f"Method {method} not valid")
                 nmis.at[n, name] = nmi_value
@@ -459,9 +448,7 @@ def NMI_AUCs(results_path, sections=None, full_AUC=True):
         if i == 0:
             tmp = df.loc[(df.index >= interval[0]) & (df.index <= interval[1])].mean()
             # print(list(tmp))
-            AUCs = pd.DataFrame(
-                [list(tmp)], columns=tmp.index, index=[f"{interval[0]}-{interval[1]}"]
-            )
+            AUCs = pd.DataFrame([list(tmp)], columns=tmp.index, index=[f"{interval[0]}-{interval[1]}"])
         else:
             tmp = df.loc[(df.index >= interval[0]) & (df.index <= interval[1])].mean()
             tmp.name = f"{interval[0]}-{interval[1]}"
@@ -604,12 +591,7 @@ def knn_similarity(
 
     """
 
-    if (
-        (save_dir is None)
-        or (save_name is None)
-        or (reference_dir is None)
-        or (reference_name is None)
-    ):
+    if (save_dir is None) or (save_name is None) or (reference_dir is None) or (reference_name is None):
         raise ValueError("Names and directories for saving results must be specified.")
 
     if type(reference) == str:
@@ -1229,9 +1211,7 @@ def tree_classifications(
     if save_load:
         if os.path.exists(save_load):
             if plot:
-                warnings.warn(
-                    "Can't plot decision trees when results are loaded from file."
-                )
+                warnings.warn("Can't plot decision trees when results are loaded from file.")
             return pickle.load(open(save_load, "rb"))
         if "/" in save_load:
             Path(save_load.rsplit("/", 1)[0]).mkdir(parents=True, exist_ok=True)
@@ -1248,13 +1228,10 @@ def tree_classifications(
     celltypes_tmp = [
         ct
         for ct in celltypes
-        if (ct in a.obs.loc[a.obs["train_set"], ct_key].values)
-        and (ct in a.obs.loc[a.obs["test_set"], ct_key].values)
+        if (ct in a.obs.loc[a.obs["train_set"], ct_key].values) and (ct in a.obs.loc[a.obs["test_set"], ct_key].values)
     ]
     for c in [ct for ct in celltypes if ct not in celltypes_tmp]:
-        warnings.warn(
-            f"Zero cells of celltype {c} in train or test set. No tree is calculated for celltype {c}."
-        )
+        warnings.warn(f"Zero cells of celltype {c} in train or test set. No tree is calculated for celltype {c}.")
     celltypes = celltypes_tmp
     f1_table = pd.Series(index=celltypes, name="macro avg f1", dtype="float64")
 
@@ -1320,9 +1297,7 @@ def tree_classifications(
                 **{"fontname": "Helvetica", "fontfamily": "monospace"},
             )
             plt.axis("off")
-        report = classification_report(
-            y_test[ct], ct_trees[ct].predict(X_test), output_dict=True
-        )
+        report = classification_report(y_test[ct], ct_trees[ct].predict(X_test), output_dict=True)
         f1_table.loc[ct] = report["macro avg"]["f1-score"]
         decision_genes[ct] = {
             a.var.index.values[i]: ct_trees[ct].feature_importances_[i]
@@ -1408,9 +1383,7 @@ def forest_classifications(
     if save_load:
         if os.path.exists(save_load):
             if plot:  # noqa: F821  TODO Louis
-                warnings.warn(
-                    "Can't plot decision trees when results are loaded from file."
-                )
+                warnings.warn("Can't plot decision trees when results are loaded from file.")
             return pickle.load(open(save_load, "rb"))
         if "/" in save_load:
             Path(save_load.rsplit("/", 1)[0]).mkdir(parents=True, exist_ok=True)
@@ -1428,13 +1401,10 @@ def forest_classifications(
     celltypes_tmp = [
         ct
         for ct in celltypes
-        if (ct in a.obs.loc[a.obs["train_set"], ct_key].values)
-        and (ct in a.obs.loc[a.obs["test_set"], ct_key].values)
+        if (ct in a.obs.loc[a.obs["train_set"], ct_key].values) and (ct in a.obs.loc[a.obs["test_set"], ct_key].values)
     ]
     for c in [c for c in celltypes if c not in celltypes_tmp]:
-        warnings.warn(
-            f"Zero cells of celltype {c} in train or test set. No tree is calculated for celltype {c}."
-        )
+        warnings.warn(f"Zero cells of celltype {c} in train or test set. No tree is calculated for celltype {c}.")
     celltypes = celltypes_tmp
 
     if scipy.sparse.issparse(a.X):
@@ -1446,13 +1416,9 @@ def forest_classifications(
         y_test[ct] = np.where(a[a.obs["test_set"], :].obs[ct_key] == ct, ct, "other")
 
         # f1_table = pd.Series(index=celltypes, name='macro avg f1', dtype='float64')
-    f1_table = pd.DataFrame(
-        index=celltypes, columns=[str(i) for i in range(n_trees)], dtype="float64"
-    )
+    f1_table = pd.DataFrame(index=celltypes, columns=[str(i) for i in range(n_trees)], dtype="float64")
     importances = {
-        ct: pd.DataFrame(
-            index=a.var.index, columns=[str(i) for i in range(n_trees)], dtype="float64"
-        )
+        ct: pd.DataFrame(index=a.var.index, columns=[str(i) for i in range(n_trees)], dtype="float64")
         for ct in celltypes
     }
     ct_trees = {ct: [] for ct in celltypes}
@@ -1462,9 +1428,7 @@ def forest_classifications(
     for i in range(n_trees):
         if verbose:
             print(f"~~~ Trees number {i} ~~~")
-        X_train, y_train = sample_train_set_by_ct(
-            a, ct_key, subsample=subsample, seed=seeds[i], celltypes=celltypes
-        )
+        X_train, y_train = sample_train_set_by_ct(a, ct_key, subsample=subsample, seed=seeds[i], celltypes=celltypes)
         for ct in celltypes:
             ct_trees[ct].append(
                 tree.DecisionTreeClassifier(
@@ -1477,21 +1441,15 @@ def forest_classifications(
             )
             ct_trees[ct][-1] = ct_trees[ct][-1].fit(X_train, y_train[ct])
 
-            report = classification_report(
-                y_test[ct], ct_trees[ct][-1].predict(X_test), output_dict=True
-            )
+            report = classification_report(y_test[ct], ct_trees[ct][-1].predict(X_test), output_dict=True)
             f1_table.loc[ct, str(i)] = report["macro avg"]["f1-score"]
             importances[ct][str(i)] = ct_trees[ct][-1].feature_importances_
 
-    best_f1_table = pd.Series(
-        index=f1_table.index, name="macro avg f1", dtype="float64"
-    )
+    best_f1_table = pd.Series(index=f1_table.index, name="macro avg f1", dtype="float64")
     best_tree_genes = {}
     for ct, best_tree in f1_table.idxmax(axis=1).items():
         best_f1_table.loc[ct] = f1_table.loc[ct, best_tree]
-        best_tree_genes[ct] = {
-            c: im for c, im in importances[ct][best_tree].items() if (im > 0)
-        }
+        best_tree_genes[ct] = {c: im for c, im in importances[ct][best_tree].items() if (im > 0)}
 
     if save_load:
         with open(save_load, "wb") as f:
