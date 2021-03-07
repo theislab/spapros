@@ -5,12 +5,16 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import scanpy as sc
+from rich.console import Console
+from rich.progress import Progress
 
 from spapros.evaluation.evaluation import clustering_sets
 from spapros.evaluation.evaluation import knn_similarity
 from spapros.evaluation.evaluation import nmi
 from spapros.util.util import clean_adata
 from spapros.util.util import preprocess_adata
+
+console = Console()
 
 dataset_params = {
     "data_path": ["/home/zeth/PycharmProjects/spapros/data/"],
@@ -91,9 +95,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
 
     df_info.to_csv(results_dir + NAME + ".csv")
 
-    ############################################################
-    ################ Actual Evaluation Pipeline ################
-    ############################################################
+    # Actual Evaluation Pipeline #
 
     ###############################
     # Clustering similarity (NMI) #
@@ -107,120 +109,135 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
     # - important note: the leiden algorithmus eventually does not find a resolution for a searched number of clusters.
     # So there are some gaps that are interpolated
     # it can be problematic if the gap is very large, ideally we have a warning for that case
+    with Progress() as progress:
+        evaluation_task = progress.add_task(
+            "[bold blue]Performing evaluation...", total=2
+        )  # COOKIETEMPLE TODO: Currently hardcoded!
+        nmi_task = progress.add_task("[bold blue]Clustering similarity (NMI)", total=len(dataset_configs))
+        for i, d_config in enumerate(dataset_configs):
+            config_id = f"data_config_{i}"
 
-    for i, d_config in enumerate(dataset_configs):
-        config_id = f"data_config_{i}"
+            # Load dataset
+            a = sc.read(d_config["data_path"] + d_config["dataset"])
+            if d_config["process_adata"]:
+                preprocess_adata(a, options=d_config["process_adata"])
+            clean_adata(a)
 
-        # Load dataset
-        a = sc.read(d_config["data_path"] + d_config["dataset"])
-        if d_config["process_adata"]:
-            preprocess_adata(a, options=d_config["process_adata"])
-        clean_adata(a)
+            # Alias for current metric config
+            m_config = metric_configs["nmi"]
 
-        # Alias for current metric config
-        m_config = metric_configs["nmi"]
-
-        # Calculate the reference clusterings
-        adata = a.copy()
-        sc.tl.pca(adata)
-        sc.pp.neighbors(adata)
-        clustering_sets(
-            adata, m_config["ns"], reference_dir + f"{config_id}_assignments.csv", start_res=1.0, verbose=False  # type: ignore
-        )
-
-        # Calculate the clusterings for each probeset
-        for set_id in probesets:
-            selection = pd.read_csv(probeset, usecols=["index", set_id], index_col=0)
-            genes = [g for g in selection.loc[selection[set_id]].index.to_list() if g in a.var.index]
-            adata = a[:, genes].copy()
-            clean_adata(adata)
+            # Calculate the reference clusterings
+            adata = a.copy()
             sc.tl.pca(adata)
             sc.pp.neighbors(adata)
-            output_file = results_dir + f"{config_id}_{set_id}_assignments.csv"
-            clustering_sets(adata, m_config["ns"], output_file, start_res=1.0, verbose=False)  # type: ignore
-
-        # Calculate nmis between reference and probeset clusterings and save them in `save_to`
-        nmi_results_file = results_dir + f"nmi_{config_id}.csv"
-        reference_file = reference_dir + f"{config_id}_assignments.csv"
-        probeset_files = [results_dir + f"{config_id}_{set_id}_assignments.csv" for set_id in probesets]
-        nmi(
-            probeset_files,
-            reference_file,
-            nmi_results_file,
-            m_config["ns"],  # type: ignore
-            method="arithmetic",
-            names=None,
-            verbose=False,
-            save_every=10,
-        )
-
-        # Calculate AUCs of nmis
-        # - Just realized it's a little problematic to have this in the pipeline since you normally want to first
-        #   plot curves of the results from `nmi_results_file` before you set m_config['AUC_borders']. But I'd rly
-        #   like to have the whole thing till the scalar metrics (AUCs) in one pipeline. A simple interactive plot
-        #   as for expression constraints won't work, the nmi calculations take too long. Maybe the user can readjust the
-        #   'AUC_borders' for a given data_config afterwards to recalculate the final results? idk..
-        def AUC(series, n_min=1, n_max=60):
-            tmp = series.loc[(series.index >= n_min) & (series.index <= n_max)]
-            n = len(tmp)
-            return tmp.sum() / n
-
-        df = pd.read_csv(nmi_results_file, index_col=0)
-        nmi_results_AUC_file = results_dir + f"nmi_AUCs_{config_id}.csv"
-        df_nmi_AUCs = pd.DataFrame(
-            index=probesets, columns=[f"nmi_{ths[0]}-{ths[1]}" for ths in m_config["AUC_borders"]]  # type: ignore
-        )
-        for set_id in probesets:
-            for ths in m_config["AUC_borders"]:  # type: ignore
-                df_nmi_AUCs.loc[set_id, f"nmi_{ths[0]}-{ths[1]}"] = AUC(
-                    df[f"{config_id}_{set_id}_assignments"].interpolate(), n_min=ths[0], n_max=ths[1]
-                )
-        df_nmi_AUCs.to_csv(nmi_results_AUC_file)
-
-    ########################
-    # Knn graph similarity #
-    ########################
-    # Actually the ev.knn_similarity function that I wrote takes care of reference knn graph and selections knn graph calc
-    # note: if it's called several times simultaneously it might try to calculate the reference results several times.
-    # In practice I ran it once for the first probeset and then for all others afterwards in parallel
-    for i, d_config in enumerate(dataset_configs):
-        config_id = f"data_config_{i}"
-
-        # Load dataset
-        adata = sc.read(d_config["data_path"] + d_config["dataset"])
-        if d_config["process_adata"]:
-            preprocess_adata(adata, options=d_config["process_adata"])
-        clean_adata(adata)
-
-        m_config = metric_configs["knn"]
-
-        for set_id in probesets:
-            selection = pd.read_csv(probeset, usecols=["index", set_id], index_col=0)
-            genes = [g for g in selection.loc[selection[set_id]].index.to_list() if g in adata.var.index]
-            knn_similarity(
-                genes,
-                adata,
-                ks=m_config["ks"],  # type: ignore
-                save_dir=results_dir,
-                save_name=f"{config_id}_{set_id}",
-                reference_dir=reference_dir,
-                reference_name=config_id,
-                bbknn_ref_key=None,
+            clustering_sets(
+                adata, m_config["ns"], reference_dir + f"{config_id}_assignments.csv", start_res=1.0, verbose=False  # type: ignore
             )
 
-        # Calculate AUC
-        knn_results_AUC_file = results_dir + f"knn_AUCs_{config_id}.csv"
-        df_knn_AUCs = pd.DataFrame(index=probesets, columns=["knn_AUC"])
+            # Calculate the clusterings for each probeset
+            for set_id in probesets:
+                selection = pd.read_csv(probeset, usecols=["index", set_id], index_col=0)
+                genes = [g for g in selection.loc[selection[set_id]].index.to_list() if g in a.var.index]
+                adata = a[:, genes].copy()
+                clean_adata(adata)
+                sc.tl.pca(adata)
+                sc.pp.neighbors(adata)
+                output_file = results_dir + f"{config_id}_{set_id}_assignments.csv"
+                clustering_sets(adata, m_config["ns"], output_file, start_res=1.0, verbose=False)  # type: ignore
 
-        for set_id in probesets:
-            df = pd.read_csv(results_dir + f"nn_similarity_{config_id}_{set_id}.csv", index_col=0)
-            x = [int(x) for x in df.mean().index.values]
-            y = df.mean().values
-            tmp = pd.Series(index=range(np.min(x), np.max(x)))
-            for i in range(len(y)):
-                tmp.loc[x[i]] = y[i]
-            df_knn_AUCs.loc[set_id, "knn_AUC"] = AUC(tmp.interpolate(), n_min=np.min(x), n_max=np.max(x))
-        df_knn_AUCs.to_csv(knn_results_AUC_file)
+            # Calculate nmis between reference and probeset clusterings and save them in `save_to`
+            nmi_results_file = results_dir + f"nmi_{config_id}.csv"
+            reference_file = reference_dir + f"{config_id}_assignments.csv"
+            probeset_files = [results_dir + f"{config_id}_{set_id}_assignments.csv" for set_id in probesets]
+            nmi(
+                probeset_files,
+                reference_file,
+                nmi_results_file,
+                m_config["ns"],  # type: ignore
+                method="arithmetic",
+                names=None,
+                verbose=False,
+                save_every=10,
+            )
+
+            # Calculate AUCs of nmis
+            # - Just realized it's a little problematic to have this in the pipeline since you normally want to first
+            #   plot curves of the results from `nmi_results_file` before you set m_config['AUC_borders']. But I'd rly
+            #   like to have the whole thing till the scalar metrics (AUCs) in one pipeline. A simple interactive plot
+            #   as for expression constraints won't work, the nmi calculations take too long. Maybe the user can readjust the
+            #   'AUC_borders' for a given data_config afterwards to recalculate the final results? idk..
+            def AUC(series, n_min=1, n_max=60):
+                tmp = series.loc[(series.index >= n_min) & (series.index <= n_max)]
+                n = len(tmp)
+                return tmp.sum() / n
+
+            df = pd.read_csv(nmi_results_file, index_col=0)
+            nmi_results_AUC_file = results_dir + f"nmi_AUCs_{config_id}.csv"
+            df_nmi_AUCs = pd.DataFrame(
+                index=probesets, columns=[f"nmi_{ths[0]}-{ths[1]}" for ths in m_config["AUC_borders"]]  # type: ignore
+            )
+            for set_id in probesets:
+                for ths in m_config["AUC_borders"]:  # type: ignore
+                    df_nmi_AUCs.loc[set_id, f"nmi_{ths[0]}-{ths[1]}"] = AUC(
+                        df[f"{config_id}_{set_id}_assignments"].interpolate(), n_min=ths[0], n_max=ths[1]
+                    )
+            df_nmi_AUCs.to_csv(nmi_results_AUC_file)
+
+            progress.advance(nmi_task)
+
+        progress.advance(evaluation_task)
+
+        ########################
+        # Knn graph similarity #
+        ########################
+        # Actually the ev.knn_similarity function that I wrote takes care of reference knn graph and selections knn graph calc
+        # note: if it's called several times simultaneously it might try to calculate the reference results several times.
+        # In practice I ran it once for the first probeset and then for all others afterwards in parallel
+        knn_task = progress.add_task("[bold blue]KNN Graph Similarity", total=len(dataset_configs))
+        for i, d_config in enumerate(dataset_configs):
+            config_id = f"data_config_{i}"
+
+            # Load dataset
+            adata = sc.read(d_config["data_path"] + d_config["dataset"])
+            if d_config["process_adata"]:
+                preprocess_adata(adata, options=d_config["process_adata"])
+            clean_adata(adata)
+
+            m_config = metric_configs["knn"]
+
+            for set_id in probesets:
+                selection = pd.read_csv(probeset, usecols=["index", set_id], index_col=0)
+                genes = [g for g in selection.loc[selection[set_id]].index.to_list() if g in adata.var.index]
+                knn_similarity(
+                    genes,
+                    adata,
+                    ks=m_config["ks"],  # type: ignore
+                    save_dir=results_dir,
+                    save_name=f"{config_id}_{set_id}",
+                    reference_dir=reference_dir,
+                    reference_name=config_id,
+                    bbknn_ref_key=None,
+                )
+
+            # Calculate AUC
+            knn_results_AUC_file = results_dir + f"knn_AUCs_{config_id}.csv"
+            df_knn_AUCs = pd.DataFrame(index=probesets, columns=["knn_AUC"])
+
+            for set_id in probesets:
+                df = pd.read_csv(results_dir + f"nn_similarity_{config_id}_{set_id}.csv", index_col=0)
+                x = [int(x) for x in df.mean().index.values]
+                y = df.mean().values
+                tmp = pd.Series(index=range(np.min(x), np.max(x)))
+                for i in range(len(y)):
+                    tmp.loc[x[i]] = y[i]
+                df_knn_AUCs.loc[set_id, "knn_AUC"] = AUC(tmp.interpolate(), n_min=np.min(x), n_max=np.max(x))
+            df_knn_AUCs.to_csv(knn_results_AUC_file)
+
+            progress.advance(knn_task)
+
+        progress.advance(evaluation_task)
+
+    console.print(f"[bold blue]Wrote results to {results_dir}")
 
     #################################
     # The other metrics will follow #
