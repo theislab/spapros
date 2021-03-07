@@ -195,7 +195,9 @@ def coexpression_plot(adata, figsize=(5, 5), colorbar=False, return_mean_abs=Fal
 ####################
 
 
-def transfered_expression_thresholds(adata, lower=2, upper=6, tolerance=0.05, target_sum=10000, plot=True):
+def transfered_expression_thresholds(
+    adata, lower=2, upper=6, tolerance=0.05, target_sum=10000, output_path: str = "./results/", plot=True
+):
     """Transfer expression thresholds between different normalisations.
 
     If expression thresholds are known for normalisation with a given `target_sum` these limits
@@ -272,7 +274,7 @@ def transfered_expression_thresholds(adata, lower=2, upper=6, tolerance=0.05, ta
             transform=ax.transAxes,
         )
         plt.title("Expressions around limits (target normalisation)")
-        plt.show()
+        plt.savefig(f"{output_path}expression_around_limits.png")
     return lo_mean, hi_mean
 
 

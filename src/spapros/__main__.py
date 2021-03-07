@@ -17,6 +17,10 @@ log = logging.getLogger()
 
 def main() -> None:
     traceback.install()
+    # COOKIETEMPLE TODO: Remove the warnings filter!
+    import warnings
+
+    warnings.filterwarnings("ignore")
 
     """Main entry point for spapros."""
     print(
@@ -94,7 +98,6 @@ def evaluation(probeset, output) -> None:
     Create a selection of probesets for an h5ad file
     Args:
         probeset: Path to the probeset file
-        results_dir: Path to the generated result of a selection
         output: Output path
     """
     run_evaluation(probeset, output)

@@ -88,7 +88,6 @@ def select_pca_genes(
     penalty_keys=[],
     corr_penalty=None,
     inplace=True,
-    verbose=True,
 ):
     """Select n features based on pca loadings
 
@@ -122,7 +121,6 @@ def select_pca_genes(
         recomputed after each selected gene)
     inplace: bool
         Save results in adata.var or return dataframe
-    verbose: bool
 
     Returns
     -------
@@ -144,8 +142,6 @@ def select_pca_genes(
     if process_adata:
         preprocess_adata(a, options=process_adata)
 
-    if verbose:
-        print("Compute PCA.")
     sc.pp.pca(
         a,
         n_comps=n_pcs,
