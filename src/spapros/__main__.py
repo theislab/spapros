@@ -17,10 +17,6 @@ log = logging.getLogger()
 
 def main() -> None:
     traceback.install()
-    # COOKIETEMPLE TODO: Remove the warnings filter!
-    import warnings
-
-    warnings.filterwarnings("ignore")
 
     """Main entry point for spapros."""
     print(
