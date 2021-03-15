@@ -1,5 +1,3 @@
-.. |pic1| image:: https://user-images.githubusercontent.com/21954664/111175015-409d9080-85a8-11eb-9055-f7452aed98b2.png
-
 |PyPI| |Python Version| |License| |Read the Docs| |Build| |Tests| |Codecov| |pre-commit| |Black|
 
 .. |PyPI| image:: https://img.shields.io/pypi/v/spapros.svg
@@ -29,6 +27,8 @@
 .. |Black| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
    :alt: Black
+
+|logo|
 
 Features
 --------
@@ -62,6 +62,7 @@ Credits
 
 This package was created with cookietemple_ using Cookiecutter_ based on Hypermodern_Python_Cookiecutter_.
 
+.. |logo| image:: https://user-images.githubusercontent.com/21954664/111175015-409d9080-85a8-11eb-9055-f7452aed98b2.png
 .. _cookietemple: https://cookietemple.com
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _MIT: http://opensource.org/licenses/MIT
