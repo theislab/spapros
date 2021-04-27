@@ -1,5 +1,7 @@
 import itertools
 from pathlib import Path
+from typing import Any
+from typing import Dict
 from typing import Union
 
 import numpy as np
@@ -20,7 +22,7 @@ from spapros.util.util import preprocess_adata
 
 console = Console()
 
-spapros_dir = "/mnt/home/icb/louis.kuemmerle/projects/st_probesets/spapros/"#"/home/zeth/PycharmProjects/spapros/"
+spapros_dir = "/mnt/home/icb/louis.kuemmerle/projects/st_probesets/spapros/"  # "/home/zeth/PycharmProjects/spapros/"
 
 dataset_params = {
     "data_path": [spapros_dir + "data/"],
@@ -28,7 +30,7 @@ dataset_params = {
     "process_adata": [["norm", "log1p"], ["norm", "log1p", "scale"]],
 }
 
-metric_configs = {
+metric_configs: Dict[Any, Any] = {
     # Clustering similarity via normalized mutual information
     "nmi": {
         "ns": list(range(5, 21, 1)),
@@ -45,7 +47,7 @@ metric_configs = {
         "marker_list": spapros_dir + "data/small_data_marker_list.csv",
         "per_celltype": True,
         "per_marker": True,
-        "per_celltype_min_mean": [None], 
+        "per_celltype_min_mean": [None],
         "per_marker_min_mean": [0.025],
     },
     # Forest classification
@@ -83,8 +85,8 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
     # Save dataset configuration infos #
     ####################################
 
-    metric_cols = [f"{metric}_{k}" for metric, m_config in metric_configs.items() for k in m_config]  # type: ignore
-    metric_vals = [v for metric, m_config in metric_configs.items() for _, v in m_config.items()]  # type: ignore
+    metric_cols = [f"{metric}_{k}" for metric, m_config in metric_configs.items() for k in m_config]
+    metric_vals = [v for metric, m_config in metric_configs.items() for _, v in m_config.items()]
     dataset_cols = [k for k in dataset_params]
     dataset_cols.remove("process_adata")
 
@@ -154,7 +156,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
             sc.tl.pca(adata)
             sc.pp.neighbors(adata)
             clustering_sets(
-                adata, m_config["ns"], reference_dir + f"{config_id}_assignments.csv", start_res=1.0, verbose=False  # type: ignore
+                adata, m_config["ns"], reference_dir + f"{config_id}_assignments.csv", start_res=1.0, verbose=False
             )
 
             # Calculate the clusterings for each probeset
@@ -166,7 +168,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
                 sc.tl.pca(adata)
                 sc.pp.neighbors(adata)
                 output_file = nmi_res_dir + f"{config_id}_{set_id}_assignments.csv"
-                clustering_sets(adata, m_config["ns"], output_file, start_res=1.0, verbose=False)  # type: ignore
+                clustering_sets(adata, m_config["ns"], output_file, start_res=1.0, verbose=False)
 
             # Calculate nmis between reference and probeset clusterings and save them in `save_to`
             nmi_results_file = nmi_res_dir + f"nmi_{config_id}.csv"
@@ -176,7 +178,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
                 probeset_files,
                 reference_file,
                 nmi_results_file,
-                m_config["ns"],  # type: ignore
+                m_config["ns"],
                 method="arithmetic",
                 names=None,
                 verbose=False,
@@ -197,10 +199,10 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
             df = pd.read_csv(nmi_results_file, index_col=0)
             nmi_results_AUC_file = results_dir + f"summary_nmi_AUCs_{config_id}.csv"
             df_nmi_AUCs = pd.DataFrame(
-                index=probesets, columns=[f"nmi_{ths[0]}-{ths[1]}" for ths in m_config["AUC_borders"]]  # type: ignore
+                index=probesets, columns=[f"nmi_{ths[0]}-{ths[1]}" for ths in m_config["AUC_borders"]]
             )
             for set_id in probesets:
-                for ths in m_config["AUC_borders"]:  # type: ignore
+                for ths in m_config["AUC_borders"]:
                     df_nmi_AUCs.loc[set_id, f"nmi_{ths[0]}-{ths[1]}"] = AUC(
                         df[f"{config_id}_{set_id}_assignments"].interpolate(), n_min=ths[0], n_max=ths[1]
                     )
@@ -236,7 +238,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
                 knn_similarity(
                     genes,
                     adata,
-                    ks=m_config["ks"],  # type: ignore
+                    ks=m_config["ks"],
                     save_dir=knn_res_dir,
                     save_name=f"{config_id}_{set_id}",
                     reference_dir=reference_dir,
