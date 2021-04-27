@@ -20,7 +20,7 @@ from spapros.util.util import preprocess_adata
 
 console = Console()
 
-spapros_dir = "/home/zeth/PycharmProjects/spapros/"
+spapros_dir = "/mnt/home/icb/louis.kuemmerle/projects/st_probesets/spapros/"#"/home/zeth/PycharmProjects/spapros/"
 
 dataset_params = {
     "data_path": [spapros_dir + "data/"],
@@ -45,7 +45,8 @@ metric_configs = {
         "marker_list": spapros_dir + "data/small_data_marker_list.csv",
         "per_celltype": True,
         "per_marker": True,
-        "min_mean": {"per_celltype": [None], "per_marker": [0.025]},
+        "per_celltype_min_mean": [None], 
+        "per_marker_min_mean": [0.025],
     },
     # Forest classification
     "forests": {
@@ -321,7 +322,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
             cols = []
             for mode in ["per_celltype", "per_marker"]:
                 if m_config[mode]:
-                    for min_mean in m_config["min_mean"][mode]:
+                    for min_mean in m_config[f"{mode}_min_mean"]:
                         tmp_str = "" if (min_mean is None) else f"_mean>{min_mean}"
                         cols.append(f"{mode}{tmp_str}")
                         if min_mean and not (str(min_mean) in df_mean_filter.columns):
@@ -337,7 +338,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
                 corrs["max_cor"] = corr_df_marker[genes].max(axis=1)
 
                 if m_config["per_celltype"]:
-                    for min_mean in m_config["min_mean"]["per_celltype"]:
+                    for min_mean in m_config["per_celltype_min_mean"]:
                         col = "per_celltype" if (min_mean is None) else f"per_celltype_mean>{min_mean}"
                         corrs[col] = corrs["max_cor"]
                         if not (min_mean is None):
@@ -346,7 +347,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
                         corrs.loc[~idxs, col] = np.nan
 
                 if m_config["per_marker"]:
-                    for min_mean in m_config["min_mean"]["per_marker"]:
+                    for min_mean in m_config["per_marker_min_mean"]:
                         col = "per_marker" if (min_mean is None) else f"per_marker_mean>{min_mean}"
                         corrs[col] = corrs["max_cor"]
                         if not (min_mean is None):
