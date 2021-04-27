@@ -8,6 +8,10 @@ import seaborn as sns
 from scipy.sparse import issparse
 from sklearn.utils import sparsefuncs
 
+##############
+# Data Utils #
+##############
+
 
 def clean_adata(
     adata,
@@ -131,6 +135,64 @@ def get_expression_quantile(adata, q=0.9, normalise=True, log1p=True, zeros_to_n
     if zeros_to_nan:
         df[df == 0] = np.nan
     adata.var[f"quantile_{q}"] = df.quantile(q)
+
+
+def gene_means(adata, genes="all", key="mean", inplace=False):
+    """Compute each gene's mean expression
+
+    Arguments
+    ---------
+    adata: AnnData
+    genes: str or list of strs
+        Genes for which mean is computed
+    key: str
+        Column name in which means are saved
+    inplace: bool
+        Wether to save results in adata.var or return a dataframe
+
+    Returns
+    -------
+    pd.DataFrame (if not inplace)
+
+    """
+    a = adata if (genes == "all") else adata[:, genes]
+    means = a.X.mean(axis=0) if issparse(adata.X) else np.mean(a.X, axis=0)
+    if inplace:
+        adata.var[key] = np.nan
+        adata.var.loc[a.var_names, key] = means
+    else:
+        df = pd.DataFrame(index=adata.var_names, data={key: np.nan}, dtype="float64")
+        df.loc[a.var_names, key] = means
+        return df
+
+
+def gene_stds(adata, genes="all", key="std", inplace=False):
+    """Compute each gene's expression standard deviation
+
+    Arguments
+    ---------
+    adata: AnnData
+    genes: str or list of strs
+        Genes for which std is computed
+    key: str
+        Column name in which stds are saved
+    inplace: bool
+        Wether to save results in adata.var or return a dataframe
+
+    Returns
+    -------
+    pd.DataFrame (if not inplace)
+
+    """
+    a = adata if (genes == "all") else adata[:, genes]
+    stds = a.X.std(axis=0) if issparse(adata.X) else np.std(a.X, axis=0)
+    if inplace:
+        adata.var[key] = np.nan
+        adata.var.loc[a.var_names, key] = stds
+    else:
+        df = pd.DataFrame(index=adata.var_names, data={key: np.nan}, dtype="float64")
+        df.loc[a.var_names, key] = stds
+        return df
 
 
 ##############
@@ -328,3 +390,52 @@ def plateau_penalty_kernel(var, x_min=None, x_max=None):
             return np.ones_like(x)
 
     return function
+
+
+#######################
+# Miscalleneous Utils #
+#######################
+
+
+def dict_to_table(marker_dict, genes_as_index=False, reverse=False):
+    """Convert marker dictonary to pandas dataframe
+
+    # TODO: Preference? Split this in two functions instead of the `reverse` argument?
+
+    Two possible outputs:
+    - each celltype's marker in a column (genes_as_index=False)
+    - index are markers, one column with "celltype" annotation (genes_as_index=True)
+
+    Arguments
+    ---------
+    marker_dict: dict or pd.DataFrame
+        dict of form {'celltype':list of markers of celltype}. A DataFrame can be provided to reverse the
+        transformation (reverse=True)
+    genes_as_index: bool
+        Wether to have genes in the dataframe index and one column for celltype annotations or genes listed in
+        each celltype's column.
+    reverse: bool
+        Wether to transform a dataframe to a dict or a dict to a dataframe.
+
+    Returns
+    -------
+    pd.DataFrame or dict (if reverse)
+
+    """
+    if isinstance(marker_dict, dict) and (not reverse):
+        if genes_as_index:
+            swap_dict = {g: ct for ct, genes in marker_dict.items() for g in genes}
+            return pd.DataFrame.from_dict(swap_dict, orient="index", columns=["celltype"])
+        else:
+            max_length = max([len(genes) for _, genes in marker_dict.items()])
+            marker_dict_padded = {ct: genes + [np.nan] * (max_length - len(genes)) for ct, genes in marker_dict.items()}
+            return pd.DataFrame(data=marker_dict_padded)
+    elif isinstance(marker_dict, pd.DataFrame) and reverse:
+        output = {}
+        if genes_as_index:
+            for ct in marker_dict.celltype.unique():
+                output[ct] = marker_dict.loc[marker_dict["celltype"] == ct].index.tolist()
+        else:
+            for ct in marker_dict.columns:
+                output[ct] = marker_dict.loc[~marker_dict[ct].isnull(), ct].tolist()
+        return output
