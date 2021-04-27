@@ -299,7 +299,6 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
 
             # Get markers and their corresponding celltype
             markers = [g for _, genes in marker_list.items() for g in genes]
-            marker_ct_map = [[g, ct] for ct, genes in marker_list.items() for g in genes]
             markers = np.unique(markers).tolist()  # TODO: maybe throw a warning if genes occur twice
             # wrt celltype we take the first occuring celltype in marker_list for a given marker
             markers = [
@@ -329,7 +328,6 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
                             df_mean_filter[str(min_mean)] = df_mean_filter["mean"] > min_mean
 
             # Run metric for each probeset
-            max_marker_corr = pd.DataFrame(index=corr_df_marker.index, columns=probesets)
             result_tables = {}
             for set_id in probesets:
                 selection = pd.read_csv(probeset, usecols=["index", set_id], index_col=0)
