@@ -30,7 +30,7 @@ dataset_params = {
     "process_adata": [["norm", "log1p"], ["norm", "log1p", "scale"]],
 }
 
-metric_configs: Dict[Any, Any] = {
+metric_configs: Dict[str, Any] = {
     # Clustering similarity via normalized mutual information
     "nmi": {
         "ns": list(range(5, 21, 1)),

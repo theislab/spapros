@@ -11,10 +11,13 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
-import sklearn
 from sklearn import tree
 from sklearn.metrics import classification_report
 from tqdm.notebook import tqdm
+
+from spapros.util.mp_util import _get_n_cores
+from spapros.util.mp_util import parallelize
+from spapros.util.mp_util import Signal
 
 
 def plot_gene_expressions(f_idxs, adata, fig_title=None, save_to=None):
@@ -30,6 +33,11 @@ def plot_gene_expressions(f_idxs, adata, fig_title=None, save_to=None):
     if save_to is not None:
         fig.savefig(save_to)
     plt.show()
+
+
+##########################################################
+####### Helper functions for clustering_sets() ###########
+##########################################################
 
 
 def get_found_ns(csv_file):
@@ -482,25 +490,6 @@ def neighbors_csv(adata, k, csv_file):
             row = [cell, len(k_nns[cell])] + k_nns[cell]
             csv_writer.writerow(row)
 
-        # def compute_similarity(csv_file_1,csv_file_2):
-
-
-# 	"""Compute len(intersection) of two sets of k nearest neighbors for each cell
-#
-# 	"""
-# 	with open(csv_file_1, 'r') as f1, open(csv_file_2, 'r') as f2:
-# 		reader1 = csv.reader(f1, delimiter=",")
-# 		reader2 = csv.reader(f2, delimiter=",")
-# 		# skip headers
-# 		next(f1, None)
-# 		next(f2, None)
-# 		common_neighbors = []
-# 		for row1,row2 in zip(reader1,reader2):
-# 			set1 = set([int(val) for val in row1[2:]])
-# 			set2 = set([int(val) for val in row2[2:]])
-# 			common_neighbors.append(len(set1.intersection(set2)))
-# 	return common_neighbors
-
 
 def compute_similarity(csv_file_1, csv_file_2):
     """Compute overlap of two sets of k nearest neighbors for each cell
@@ -619,7 +608,6 @@ def knn_similarity(
             header = next(reader)
             existing_ks = [int(header[i]) for i in range(1, len(header))]
         df = pd.read_csv(results_path, index_col=0)
-    # print(df)
     else:
         index = [i for i in range(len(adata.obs))]
         df = pd.DataFrame(index=index)
@@ -629,7 +617,6 @@ def knn_similarity(
     for k in [_ for _ in ks if not (_ in existing_ks)]:
         path = save_dir + f"nns_k{k}" + save_name + ".csv"
         ref_path = reference_dir + f"nns_k{k}" + reference_name + ".csv"
-        # if bbknn_ref_key == None:
         for p, a in [(path, adata_red), (ref_path, adata)]:
             if not os.path.isfile(p):
                 if "neighbors" in a.uns:
@@ -640,20 +627,6 @@ def knn_similarity(
                     del a.obsp["distances"]
                 sc.pp.neighbors(a, n_neighbors=k)
                 neighbors_csv(a, k, p)
-    # else:
-    # 	for p,a in [(path,adata_red)]:
-    # 		if not os.path.isfile(p):
-    # 			if 'neighbors' in a.uns:
-    # 				del a.uns['neighbors']
-    # 			sc.pp.neighbors(a,n_neighbors=k)
-    # 			neighbors_csv(a,k,p)
-    # 	for p,a in [(ref_path,adata)]:
-    # 		if not os.path.isfile(p):
-    # 			if 'neighbors' in a.uns:
-    # 				del a.uns['neighbors']
-    # 			sce.pp.bbknn(a,n_neighbors=k,batch_key=bbknn_key)
-    # 			#sc.pp.neighbors(a,n_neighbors=k)
-    # 			neighbors_csv(a,k,p)
 
     # save similarities in csv
     for k in [_ for _ in ks if not (_ in existing_ks)]:
@@ -663,461 +636,6 @@ def knn_similarity(
         # print(len(common_neighbors))
         df[f"{k}"] = common_neighbors
         df.to_csv(results_path)
-
-
-full_marker_dict = {
-    "Epithelial": {
-        "AT1": ["RTKN2", "AGER", "NCKAP5", "AQP4"],
-        "AT2": ["SFTPC", "SFTPA1", "SFTPA2", "SFTPD", "NAPSA", "SFTPB", "SFTPA2"],
-        "basal": [
-            "DLK2",
-            "KRT15",
-            "MIR205HG",
-            "KRT5",
-            "NPPC",
-            "TP63",
-            "THSD4",
-            "S1PR5",
-            "SLC5A7",
-            "NKX2-1",
-            "SFTA3",
-            "DPP4",
-        ],
-        "Cycling": ["PBK", "MKI67", "TOP2A", "UBE2C", "BIRC5"],
-        "Suprabasal": {
-            "Suprabasal": ["KRT5", "SERPINB4"],
-            "Suprabasal Nasal": [
-                "KRT6A",
-                "KRT13",
-                "NMU",
-                "PAX7",
-                "SIX3",
-                "PAX3",
-                "PAX6",
-            ],
-            "Suprabasal TB": ["BBOX1", "SERPINB13"],
-        },
-        "Club": {
-            "Club": ["CYP2F1", "CEACAM6", "VSIG2", "MSLN"],
-            "Club Nasal": [
-                "PI3",
-                "LYPD2",
-                "MUC1",
-                "OTX2",
-                "PAX7",
-                "SIX3",
-                "PAX3",
-                "PAX6",
-            ],
-            "Club TB": [
-                "SCGB1A1",
-                "BPIFB1",
-                "SCGB3A1",
-                "SHH",
-                "NKX2-1",
-                "SFTA3",
-                "DPP4",
-            ],
-        },
-        "Goblet": {
-            "Goblet": ["MUC5AC", "CEACAM6", "VSIG2", "MSLN"],
-            "Goblet Nasal": [
-                "PI3",
-                "BPIFA2",
-                "CEACAM5",
-                "FUT6",
-                "LYNX1",
-                "RDH10",
-                "OTX2",
-                "PAX7",
-                "SIX3",
-                "PAX3",
-                "PAX6",
-            ],
-            "Goblet TB": ["MUC5B", "FOXA3", "TSPAN8", "SHH", "NKX2-1", "SFTA3", "DPP4"],
-        },
-        "Multiciliated": {
-            "Multiciliated": [
-                "OMG",
-                "TPPP3",
-                "RSPH1",
-                "SNTN",
-                "CCDC78",
-                "CFAP157",
-                "DNAH12",
-                "DTHD1",
-                "DNAH12",
-                "DCDC2B",
-                "CFAP157",
-                "ANKUB1",
-                "TSPAN19",
-            ],
-            "MCC Nasal": [
-                "SAA4",
-                "PALLD",
-                "CDKN2A",
-                "SAA2",
-                "OTX2",
-                "PAX7",
-                "SIX3",
-                "PAX3",
-                "PAX6",
-            ],
-            "MCC TB": ["DOC2A", "CORO2B", "RYR3", "NKX2-1", "SFTA3", "DPP4"],
-        },
-        "Deuterosomal": [
-            "CDC20B",
-            "E2F7",
-            "ANLN",
-            "CDC20",
-            "CDC20Bshort",
-            "PLK4",
-            "FOXN4",
-            "NEK2",
-            "DEUP1",
-            "HES6",
-        ],
-        "Goblet multiciliating": ["MUC5AC", "FOXJ1"],
-        "Mucous": [
-            "BPIFB2",
-            "MUC5B",
-            "GOLM1",
-            "PART1",
-            "TCN1",
-            "AZGP1",
-            "NKX3-1",
-            "PRR4",
-            "SPDEF",
-            "XBP1",
-            "FCGBP",
-            "CBR3",
-            "TSPAN8",
-        ],
-        "Serous": [
-            "LTF",
-            "AZGP1",
-            "ZG16B",
-            "PIP",
-            "LYZ",
-            "PRR4",
-            "TCN1",
-            "S100A1",
-            "C6orf58",
-            "PRB3",
-            "SCGB3A2",
-            "LPO",
-            "ODAM",
-            "PRH2",
-        ],
-        "Brush": ["RGS13", "BMX", "HEPACAM2", "PLCG2", "BIK", "VAMP2"],
-        "Ionocyte": [
-            "ATP6V0B",
-            "SEC11C",
-            "ASCL3",
-            "AKR1B1",
-            "HEPACAM2",
-            "CLCNKB",
-            "SCNN1B",
-            "ATP6V1A",
-            "TMEM61",
-            "ATP6V1B1",
-            "FOXI1",
-            "BSND",
-            "IGF1",
-            "ATP6V1F",
-            "STAP1",
-            "CLCNKA",
-            "ATP6V1G3",
-            "CFTR",
-            "ATP6V1C2",
-            "ATP6V0A4",
-            "TMPRSS11E",
-            "FXYD2",
-            "ATP6V0D2",
-            "AMACR",
-            "PLCG2",
-        ],
-        "Neuroendocrine": [
-            "GRP",
-            "PCSK1N",
-            "PHGR1",
-            "SCGN",
-            "MIAT",
-            "BEX1",
-            "CHGB",
-            "SCG2",
-            "NEB",
-            "APLP1",
-        ],
-    },
-    "Endothelial": {
-        "Endothelial": [
-            "AQP1",
-            "VWF",
-            "IL3RA",
-            "PLVAP",
-            "ACKR1",
-            "SELE",
-            "EMCN",
-            "GNG11",
-            "CD34",
-            "NOSTRIN",
-            "LIFR",
-            "EGFL7",
-            "CLDN5",
-            "JAM2",
-            "ESAM",
-            "FAM110D",
-            "HYAL2",
-            "CXCL12",
-            "SEMA3D",
-            "SNCG",
-            "CCL21",
-            "FLT4",
-            "BMX",
-            "EDNRB",
-            "S100A3",
-            "IL7R",
-        ]
-    },
-    "Mesenchymal": {  # Stromal
-        "Fibroblast": [
-            "COL1A2",
-            "DCN",
-            "C1R",
-            "COL1A1",
-            "COL3A1",
-            "LUM",
-            "DPT",
-            "LTBP1",
-            "FBLN2",
-            "PTGDS",
-            "HTRA3",
-            "SFRP2",
-            "SFRP4",
-            "TCF21",
-            "COL6A3",
-            "MFAP4",
-            "C1S",
-            "FBLN1",
-            "PDGFRA",
-            "PDGFRL",
-            "VCAN",
-            "SCARA5",
-            "PI16",
-            "MFAP5",
-            "CD248",
-            "FGFR4",
-            "ITGA8",
-            "SCN7A",
-        ],
-        "Pericyte": [
-            "HIGD1B",
-            "GJC1",
-            "NOTCH3",
-            "RGS5",
-            "FAM162B",
-            "COX4I2",
-            "NDUFA4L2",
-            "ACTA2",
-            "TAGLN",
-            "LGI4",
-            "ITGA7",
-            "CDH6",
-        ],
-        "Smooth Muscle": [
-            "ACTA2",
-            "TAGLN",
-            "CALD1",
-            "TAGLN",
-            "TPM2",
-            "LMOD1",
-            "MYH11",
-            "MYL9",
-            "MYLK",
-            "SPARCL1",
-            "PLN",
-            "ACTG2",
-            "CAV1",
-            "DES",
-            "CNN1",
-            "KCNMB1",
-            "SORBS1",
-            "SPEG",
-            "EDNRB",
-        ],
-    },
-    "Immune": {
-        "B cell": [
-            "AIM2",
-            "BANK1",
-            "CD19",
-            "CD22",
-            "CD79A",
-            "CD79B",
-            "LINC00926",
-            "LTB",
-            "MS4A1",
-            "TLR10",
-            "VPREB3",
-        ],
-        "plasma cell": ["MZB1", "JCHAIN", "FKBP11", "IGLL5", "DERL3", "TNFRSF17"],
-        "T/NKT cell": [
-            "CD2",
-            "CD3D",
-            "CAMK4",
-            "CCL5",
-            "IL32",
-            "CD3E",
-            "CD96",
-            "XCL1",
-            "CST7",
-            "GZMH",
-            "GZMB",
-            "LTB",
-            "CD7",
-            "GZMA",
-            "NKG7",
-            "GNLY",
-            "CCL4",
-            "CTSW",
-            "CD160",
-            "CD247",
-            "IL2RB",
-            "KLRD1",
-            "PRF1",
-            "SLA2",
-            "XCL2",
-            "CD8A",
-            "CD8B",
-            "CCR6",
-            "CD3G",
-            "CD6",
-            "TRAT1",
-            "KLRB1",
-            "MYBL1",
-            "CXCR3",
-            "TRAF1",
-        ],
-        "mast cell": [
-            "TPSAB1",
-            "CPA3",
-            "HPGDS",
-            "SLC18A2",
-            "RGS13",
-            "KIT",
-            "GATA2",
-            "RGS1",
-            "HDC",
-            "VWA5A",
-            "LTC4S",
-        ],
-        "macrophage": [
-            "APOC1",
-            "OLR1",
-            "APOE",
-            "FABP4",
-            "INHBA",
-            "MARCO",
-            "RETN",
-            "MCEMP1",
-            "TREM1",
-            "CCL18",
-            "GLDN",
-            "GPD1",
-            "MS4A7",
-            "MSR1",
-            "VSIG4",
-            "HLA-DMB",
-            "HLA-DPA1",
-            "HLA-DPB1",
-            "HLA-DQA1",
-            "HLA-DQB1",
-            "HLA-DRB1",
-            "AIF1",
-            "MNDA",
-        ],
-        "dendritic cell": [
-            "CD1E",
-            "RGS1",
-            "RGS10",
-            "RNASE6",
-            "CD1C",
-            "CLEC10A",
-            "FCER1A",
-            "FCGR2B",
-            "LGALS2",
-            "MS4A6A",
-            "NLRP3",
-            "PLD4",
-        ],
-        "monocytes": [
-            "VCAN",
-            "CD300E",
-            "FCN1",
-            "S100A12",
-            "EREG",
-            "APOBEC3A",
-            "PLA2G7",
-        ],
-    },
-}
-
-
-def get_markers(level=3, return_dict=True):
-    """Get marker gene names
-
-    Arguments
-    ---------
-    level: int
-        There are three annotation levels for celltypes. Genes are specified at least till
-        level 2. Some are also specified till level 3. Possible values: 1 (rough), 2, 3 (detailed)
-    return_dict: bool
-        Return a dict, otherwise return a list without celltype annotations
-    """
-    if return_dict:
-        marker_dict = {}
-        if level == 1:
-            marker_dict = {key: [] for key in full_marker_dict}
-        elif level == 2:
-            for key1 in full_marker_dict:
-                for key2 in full_marker_dict[key1]:
-                    marker_dict.update({key2: []})
-        elif level == 3:
-            for key1 in full_marker_dict:
-                for key2 in full_marker_dict[key1]:
-                    if type(full_marker_dict[key1][key2]) == dict:
-                        for key3 in full_marker_dict[key1][key2]:
-                            marker_dict.update({key3: []})
-                    else:
-                        marker_dict.update({key2: []})
-
-        for key1 in full_marker_dict:
-            for key2 in full_marker_dict[key1]:
-                if type(full_marker_dict[key1][key2]) == dict:
-                    for key3 in full_marker_dict[key1][key2]:
-                        if level == 1:
-                            marker_dict[key1] += full_marker_dict[key1][key2][key3]
-                        elif level == 2:
-                            marker_dict[key2] += full_marker_dict[key1][key2][key3]
-                        elif level == 3:
-                            marker_dict[key3] += full_marker_dict[key1][key2][key3]
-                else:
-                    if level == 1:
-                        marker_dict[key1] += full_marker_dict[key1][key2]
-                    else:
-                        marker_dict[key2] += full_marker_dict[key1][key2]
-        return marker_dict
-    else:
-        marker_list = []
-        for key1 in full_marker_dict:
-            for key2 in full_marker_dict[key1]:
-                if type(full_marker_dict[key1][key2]) == dict:
-                    for key3 in full_marker_dict[key1][key2]:
-                        marker_list += full_marker_dict[key1][key2][key3]
-                else:
-                    marker_list += full_marker_dict[key1][key2]
-        return marker_list
 
 
 ##########################################################
@@ -1169,185 +687,230 @@ def split_train_test_sets(adata, split=4, seed=2020, verbose=True, obs_key=None)
             adata.obs.loc[df.index, "test_set"] = test_obs
 
 
-def tree_classifications(
-    adata,
-    selection,
-    celltypes="all",
-    ct_key="Celltypes",
-    plot=False,
-    save_load=False,
-    seed=0,
-):
-    """Compute or load decision tree classification results
+############## FOREST CLASSIFICATIONS ##############
 
-    Parameters
-    ----------
+
+def get_celltypes_with_too_small_test_sets(adata, ct_key, min_test_n=20, split_kwargs={"seed": 0, "split": 4}):
+    """Get celltypes whith test set sizes below `min_test_n`
+
+    We split the observations in adata into train and test sets for forest training. Check if the resulting
+    test sets have at least `min_test_n` samples.
+
+    Arguments
+    ---------
     adata: AnnData
-    selection: list or pd.DataFrame
-        Trees are trained on genes of the list or genes defined in the bool column selection['selection'].
-    celltypes: 'all' or list
-        Trees are trained on the given celltypes
     ct_key: str
-        Column name of adata.obs with celltype infos
-    plot: bool
-        Plot decision tree draft, confusion matrix and summary statistics table for each decision tree.
-    save_load: str or False
-        If not False load results if the given file exists, otherwise save results after computation.
+        adata.obs key for cell types
+    min_test_n: int
+        Minimal number of samples in each celltype's test set
+    split_kwargs: dict
+        Keyword arguments for ev.split_train_test_sets()
 
     Returns
     -------
-    f1_table: pd.Series
-        Average f1 score for each decision tree. (rows: celltypes, name: 'macro avg f1')
-    decision_genes: dict
-        Genes used in the decision tree of the given celltype (dict key).
+    cts_below_min: list
+        celltypes with too small test sets
+    counts_below_min: list
+        test set sample count for each celltype in celltype_list
 
     """
+    a = adata.copy()
+    split_train_test_sets(a, verbose=False, obs_key=ct_key, **split_kwargs)
+    a = a[a.obs["test_set"], :]
 
-    if save_load:
-        if os.path.exists(save_load):
-            if plot:
-                warnings.warn("Can't plot decision trees when results are loaded from file.")
-            return pickle.load(open(save_load, "rb"))
-        if "/" in save_load:
-            Path(save_load.rsplit("/", 1)[0]).mkdir(parents=True, exist_ok=True)
+    counts = a.obs.groupby(ct_key)["test_set"].value_counts()
+    below_min = counts < min_test_n
+    cts_below_min = [idx[0] for idx in below_min[below_min].index]
+    counts_below_min = counts[below_min].tolist()
+    return cts_below_min, counts_below_min
 
-    decision_genes = {}
-    if isinstance(selection, list):
-        genes = selection
-    elif isinstance(selection, pd.DataFrame):
-        genes = list(selection.loc[selection["selection"]].index)
-    a = adata[:, genes].copy()
-    split_train_test_sets(a, split=4, seed=2020, verbose=False, obs_key=ct_key)
+
+def uniform_samples(adata, ct_key, set_key="train_set", subsample=500, seed=2020, celltypes="all"):
+    """Subsample `subsample` cells per celltype
+
+    If the number of cells of a celltype is lower we're oversampling that celltype.
+    """
+    a = adata[adata.obs[set_key], :]
     if celltypes == "all":
-        celltypes = np.unique(a.obs[ct_key].values)
-    celltypes_tmp = [
-        ct
-        for ct in celltypes
-        if (ct in a.obs.loc[a.obs["train_set"], ct_key].values) and (ct in a.obs.loc[a.obs["test_set"], ct_key].values)
-    ]
-    for c in [ct for ct in celltypes if ct not in celltypes_tmp]:
-        warnings.warn(f"Zero cells of celltype {c} in train or test set. No tree is calculated for celltype {c}.")
-    celltypes = celltypes_tmp
-    f1_table = pd.Series(index=celltypes, name="macro avg f1", dtype="float64")
-
-    if scipy.sparse.issparse(a.X):
-        X_train = a[a.obs["train_set"], :].X.toarray()
-        X_test = a[a.obs["test_set"], :].X.toarray()
-    else:
-        X_train = a[a.obs["train_set"], :].X.copy()
-        X_test = a[a.obs["test_set"], :].X.copy()
-    y_train = {}
-    y_test = {}
-    for ct in celltypes:
-        y_train[ct] = np.where(a[a.obs["train_set"], :].obs[ct_key] == ct, ct, "other")
-        y_test[ct] = np.where(a[a.obs["test_set"], :].obs[ct_key] == ct, ct, "other")
-
-    test_ct_idxs = {}
-    for ct in np.unique(a[a.obs["test_set"], :].obs[ct_key]):
-        test_ct_idxs[ct] = np.where(a[a.obs["test_set"], :].obs[ct_key] == ct)[0]
-
-    ct_trees = {}
-    for ct in celltypes:
-        ct_trees[ct] = tree.DecisionTreeClassifier(
-            criterion="gini",
-            splitter="best",
-            max_depth=3,
-            random_state=seed,  # 0,
-            class_weight="balanced",
-        )
-        ct_trees[ct] = ct_trees[ct].fit(X_train, y_train[ct])
-
-    if plot:
-        sizefactor = 10
-        cols = 2
-        rows = len(celltypes)
-        plt.figure(figsize=(sizefactor * cols, sizefactor * rows))
-    for i, ct in enumerate(celltypes):
-        if plot:
-            plt.subplot(rows, cols, i * cols + 1)
-            tree.plot_tree(
-                ct_trees[ct],
-                impurity=False,
-                label="none",
-                feature_names=genes,
-                max_depth=2,
-                fontsize=10,
-            )  # ,proportion=True)
-            ax = plt.subplot(rows * 2, cols, i * 2 * cols + 2)
-            sklearn.metrics.plot_confusion_matrix(
-                ct_trees[ct],
-                X_test,
-                y_test[ct],
-                cmap=plt.cm.Blues,
-                normalize="true",
-                ax=ax,
-            )
-            plt.title(ct)
-            plt.yticks(rotation=90, va="center")
-            plt.subplot(rows * 2, cols, i * 2 * cols + 4)
-            plt.text(
-                0.1,
-                0.3,
-                classification_report(y_test[ct], ct_trees[ct].predict(X_test)),
-                **{"fontname": "Helvetica", "fontfamily": "monospace"},
-            )
-            plt.axis("off")
-        report = classification_report(y_test[ct], ct_trees[ct].predict(X_test), output_dict=True)
-        f1_table.loc[ct] = report["macro avg"]["f1-score"]
-        decision_genes[ct] = {
-            a.var.index.values[i]: ct_trees[ct].feature_importances_[i]
-            for i in range(len(a.var))
-            if (ct_trees[ct].feature_importances_[i] != 0)
-        }
-
-    if plot:
-        plt.show()
-    if save_load:
-        with open(save_load, "wb") as f:
-            pickle.dump([f1_table, decision_genes], f)
-    return f1_table, decision_genes
-
-
-############## FOREST CLASSIFICATIONS ##############
-def sample_train_set_by_ct(adata, ct_key, subsample=500, seed=2020, celltypes="all"):
-    """Subsample `subsample` cells per celltype"""
-    a = adata[adata.obs["train_set"], :]
-    if celltypes == "all":
-        celltypes = list(a.obs["ct_key"].unique())
-        # Get subsample for each celltype
-    obs = []
+        celltypes = list(a.obs[ct_key].unique())
+    # Get subsample for each celltype
+    all_obs = []
     for ct in celltypes:
         df = a.obs.loc[a.obs[ct_key] == ct]
         n_obs = len(df)
         np.random.seed(seed=seed)
         if n_obs > subsample:
-            train_obs = np.random.choice(n_obs, subsample, replace=False)
-            obs += list(df.iloc[train_obs].index.values)
+            obs = np.random.choice(n_obs, subsample, replace=False)
+            all_obs += list(df.iloc[obs].index.values)
         else:
-            train_obs = np.random.choice(n_obs, subsample, replace=True)
-            obs += list(df.iloc[train_obs].index.values)
+            obs = np.random.choice(n_obs, subsample, replace=True)
+            all_obs += list(df.iloc[obs].index.values)
 
-    X_train = a[obs, :].X.toarray()
-    y_train = {}
+    if scipy.sparse.issparse(a.X):
+        X = a[all_obs, :].X.toarray()
+    else:
+        X = a[all_obs, :].X.copy()
+    y = {}
     for ct in celltypes:
-        y_train[ct] = np.where(a[obs, :].obs[ct_key] == ct, ct, "other")
+        y[ct] = np.where(a[all_obs, :].obs[ct_key] == ct, ct, "other")
 
-    return X_train, y_train
+    cts = a[all_obs].obs[ct_key].values
+
+    return X, y, cts
 
 
-def forest_classifications(
+def save_forest(results, path):
+    """Save forest results to file
+
+    results: list
+        Output from forest_classifications()
+    path: str
+        Path to save file
+    """
+    Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
+    with open(path, "wb") as f:
+        pickle.dump(results, f)
+
+
+def load_forest(path):
+    """Load forest results from path
+
+    path: str
+        Path to file
+    """
+    return pickle.load(open(path, "rb"))
+
+
+def get_reference_masks(cts, ct_to_ref):
+    """Get celltype specific boolean masks over celltype annotation vector
+
+    cts: list
+        celltype annotations.
+    ct_to_ref: dict
+        Each celltype's list of reference celltypes e.g.:
+        {'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}
+    """
+    masks = {}
+    for ct, ref in ct_to_ref.items():
+        masks[ct] = np.in1d(cts, ref)
+    return masks
+
+
+def train_ct_tree_helper(celltypes, X_train, y_train, seed, max_depth=3, masks=None, queue=None):
+    """Train decision trees parallelized over celltypes
+
+    TODO: Write docstring
+    """
+    ct_trees = {}
+    for ct in celltypes:
+        ct_trees[ct] = tree.DecisionTreeClassifier(
+            criterion="gini", splitter="best", max_depth=max_depth, random_state=seed, class_weight="balanced"  # 3,
+        )
+        if masks is None:
+            ct_trees[ct] = ct_trees[ct].fit(X_train, y_train[ct])
+        elif np.sum(masks[ct]) > 0:
+            ct_trees[ct] = ct_trees[ct].fit(X_train[masks[ct], :], y_train[ct][masks[ct]])
+
+        if queue is not None:
+            queue.put(Signal.UPDATE)
+
+    if queue is not None:
+        queue.put(Signal.FINISH)
+
+    return ct_trees
+
+
+def pool_train_ct_tree_helper(ct_trees_dicts):
+    """Combine list of dictonaries to one dict
+
+    TODO: Write docstring
+    """
+    tmp = [ct for trees_dict in ct_trees_dicts for ct in trees_dict]
+    if len(set(tmp)) < len(tmp):
+        raise ValueError("Multiple trees for the same celltype are in the results of the parallelized execution")
+    ct_trees = {ct: tree for ct_trees_dict in ct_trees_dicts for ct, tree in ct_trees_dict.items()}
+    return ct_trees
+
+
+def eval_ct_tree_helper(ixs, celltypes, ref_celltypes, ct_trees, X_test, y_test, cts_test, masks=None, queue=None):
+    """
+    TODO: Write docstring
+
+    Returns
+    -------
+    f1_scores:
+    """
+    tree_names = [str(i) for i in ixs]
+    summary_metric = pd.DataFrame(index=celltypes, columns=tree_names, dtype="float64")
+    specificities = {ct: pd.DataFrame(index=ref_celltypes, columns=tree_names, dtype="float64") for ct in celltypes}
+    for i in ixs:
+        for ct in celltypes:
+            if (masks is None) or (np.sum(masks[ct]) > 0):
+                X = X_test if (masks is None) else X_test[masks[ct], :]
+                y = y_test[ct] if (masks is None) else y_test[ct][masks[ct]]
+                prediction = ct_trees[ct][i].predict(X)
+                report = classification_report(y, prediction, output_dict=True)
+                summary_metric.loc[ct, str(i)] = report["macro avg"]["f1-score"]
+                for ct2 in [c for c in ref_celltypes if not (c == ct)]:
+                    idxs = (cts_test == ct2) if (masks is None) else (cts_test[masks[ct]] == ct2)
+                    if np.sum(idxs) > 0:
+                        specificity = np.sum(prediction[idxs] == y[idxs]) / np.sum(idxs)
+                        specificities[ct].loc[ct2, str(i)] = specificity
+
+        if queue is not None:
+            queue.put(Signal.UPDATE)
+
+    if queue is not None:
+        queue.put(Signal.FINISH)
+
+    return summary_metric, specificities
+
+
+def pool_eval_ct_tree_helper(f1_and_specificities):
+    """
+    TODO: Write docstring
+
+    We parallelize over n_trees
+    """
+    summary_metric_dfs = [val[0] for val in f1_and_specificities]
+    specificity_df_dicts = [val[1] for val in f1_and_specificities]
+    summary_metric = pd.concat(summary_metric_dfs, axis=1)
+    cts = list(specificity_df_dicts[0])
+    specificities = {
+        ct: pd.concat([specificity_df_dicts[i][ct] for i in range(len(specificity_df_dicts))], axis=1) for ct in cts
+    }
+    return summary_metric, specificities
+
+
+def single_forest_classifications(
     adata,
     selection,
     celltypes="all",
+    ref_celltypes="all",
     ct_key="Celltypes",
-    save_load=False,
+    ct_spec_ref=None,
+    save=False,
     seed=0,
     n_trees=50,
+    max_depth=3,
     subsample=1000,
-    full_info=False,
+    test_subsample=3000,
+    sort_by_tree_performance=True,
     verbose=False,
+    return_clfs=False,
+    n_jobs=1,
+    backend="loky",
 ):
     """Compute or load decision tree classification results
+
+    TODO: This doc string is partially from an older version. Update it! (Descripiton and Return is already up to date)
+    TODO: Add progress bars to trees, and maybe change verbose to verbosity levels
+
+    As metrics we use:
+    macro f1 score as summary statistic - it's a uniformly weighted statistic wrt celltype groups in 'others' since
+    we sample uniformly.
+    For the reference celltype specific metric we use specificity = TN/(FP+TN) (also because FN and TP are not feasible
+    in the given setting)
 
     Parameters
     ----------
@@ -1358,30 +921,51 @@ def forest_classifications(
         Trees are trained on the given celltypes
     ct_key: str
         Column name of adata.obs with celltype infos
+    ct_spec_ref: dict of lists
+        Celltype specific references (e.g.: {'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}).
+        This argument was introduced to train secondary trees.
     save_load: str or False
         If not False load results if the given file exists, otherwise save results after computation.
-    full_info: bool
-        Additionally return performance table and importances of all trees
+    max_depth: str
+        max_depth argument of DecisionTreeClassifier.
     subsample: int
         For each trained tree we use samples of maximal size=`subsample` for each celltype. If fewer cells
         are present for a given celltype all cells are used.
+    sort_by_tree_performance: str
+        Wether to sort results and trees by tree performance (best first) per celltype
+    return_clfs: str
+        Wether to return the sklearn tree classifier objects. (if `return_clfs` and `save_load` we still on
+        save the results tables, if you want to save the classifiers this needs to be done separately).
+    n_jobs: int
+        Multiprocessing number of processes.
+    backend: str
+        Which backend to use for multiprocessing. See class `joblib.Parallel` for valid options.
 
     Returns
     -------
-    f1_table: pd.Series
-        Average f1 score for each decision tree. (rows: celltypes, name: 'macro avg f1')
-    decision_genes: dict
-        Genes used in the decision tree of the given celltype (dict key).
+    Note in all output files trees are ordered according macro f1 performance.
+
+    summary_metric: pd.DataFrame
+        macro f1 scores for each celltype's trees (Ordered according best performing trees)
+    ct_specific_metric: dict of pd.DataFrame
+        For each celltype's tree: specificity (= TN / (FP+TN)) wrt each other celltype's test sample
+    importances: dict of pd.DataFrame
+        Gene's feature importances for each tree.
+
+    if return_clfs:
+        return [summary_metric,ct_specific_metric,importances], forests
 
     """
 
-    if save_load:
-        if os.path.exists(save_load):
-            if plot:  # noqa: F821  TODO Louis
-                warnings.warn("Can't plot decision trees when results are loaded from file.")
-            return pickle.load(open(save_load, "rb"))
-        if "/" in save_load:
-            Path(save_load.rsplit("/", 1)[0]).mkdir(parents=True, exist_ok=True)
+    if verbose:
+        try:
+            from tqdm.notebook import tqdm
+        except ImportError:
+            from tqdm import tqdm_notebook as tqdm
+    else:
+        tqdm = None
+
+    n_jobs = _get_n_cores(n_jobs)
 
     if isinstance(selection, list):
         genes = selection
@@ -1393,63 +977,292 @@ def forest_classifications(
     split_train_test_sets(a, split=4, seed=2020, verbose=False, obs_key=ct_key)
     if celltypes == "all":
         celltypes = np.unique(a.obs[ct_key].values)
+    if ref_celltypes == "all":
+        ref_celltypes = np.unique(a.obs[ct_key].values)
     celltypes_tmp = [
         ct
         for ct in celltypes
         if (ct in a.obs.loc[a.obs["train_set"], ct_key].values) and (ct in a.obs.loc[a.obs["test_set"], ct_key].values)
     ]
+    ref_celltypes_tmp = [
+        ct
+        for ct in ref_celltypes
+        if (ct in a.obs.loc[a.obs["train_set"], ct_key].values) and (ct in a.obs.loc[a.obs["test_set"], ct_key].values)
+    ]
     for c in [c for c in celltypes if c not in celltypes_tmp]:
         warnings.warn(f"Zero cells of celltype {c} in train or test set. No tree is calculated for celltype {c}.")
+    for c in [c for c in ref_celltypes if c not in ref_celltypes_tmp]:
+        warnings.warn(
+            f"Zero cells of celltype {c} in train or test set. Celltype {c} is not included as reference celltype."
+        )
     celltypes = celltypes_tmp
+    ref_celltypes = ref_celltypes_tmp
+    cts_not_in_ref = [ct for ct in celltypes if not (ct in ref_celltypes)]
+    if cts_not_in_ref:
+        warnings.warn(
+            f"For celltypes {cts_not_in_ref} trees are computed, they are not listed in reference celltypes though. Added them..."
+        )
+        ref_celltypes += cts_not_in_ref
 
-    if scipy.sparse.issparse(a.X):
-        X_test = a[a.obs["test_set"], :].X.toarray()
+    X_test, y_test, cts_test = uniform_samples(
+        a, ct_key, set_key="test_set", subsample=test_subsample, seed=seed, celltypes=ref_celltypes
+    )
+    if ct_spec_ref is not None:
+        masks_test = get_reference_masks(cts_test, ct_spec_ref)
     else:
-        X_test = a[a.obs["test_set"], :].X.copy()
-    y_test = {}
-    for ct in celltypes:
-        y_test[ct] = np.where(a[a.obs["test_set"], :].obs[ct_key] == ct, ct, "other")
+        masks_test = None
 
-        # f1_table = pd.Series(index=celltypes, name='macro avg f1', dtype='float64')
-    f1_table = pd.DataFrame(index=celltypes, columns=[str(i) for i in range(n_trees)], dtype="float64")
+    ct_trees = {ct: [] for ct in celltypes}
+    np.random.seed(seed=seed)
+    seeds = np.random.choice(100000, n_trees, replace=False)
+    # Compute trees (for each tree index we parallelize over celltypes)
+    for i in tqdm(range(n_trees), desc="Train trees") if tqdm else range(n_trees):
+        # if verbose: print(f"\t\t ~~~ Trees number {i} ~~~")
+        X_train, y_train, cts_train = uniform_samples(
+            a, ct_key, set_key="train_set", subsample=subsample, seed=seeds[i], celltypes=ref_celltypes
+        )
+        if ct_spec_ref is not None:
+            masks = get_reference_masks(cts_train, ct_spec_ref)
+        else:
+            masks = None
+        ct_trees_i = parallelize(
+            callback=train_ct_tree_helper,
+            collection=celltypes,
+            n_jobs=n_jobs,
+            backend=backend,
+            extractor=pool_train_ct_tree_helper,
+            show_progress_bar=False,  # verbose,
+        )(X_train=X_train, y_train=y_train, seed=seeds[i], max_depth=max_depth, masks=masks)
+        for ct in celltypes:
+            ct_trees[ct].append(ct_trees_i[ct])
+    # Get feature importances
     importances = {
         ct: pd.DataFrame(index=a.var.index, columns=[str(i) for i in range(n_trees)], dtype="float64")
         for ct in celltypes
     }
-    ct_trees = {ct: [] for ct in celltypes}
-    decision_genes = {ct: [] for ct in celltypes}
-    np.random.seed(seed=seed)
-    seeds = np.random.choice(100000, n_trees, replace=False)
     for i in range(n_trees):
-        if verbose:
-            print(f"~~~ Trees number {i} ~~~")
-        X_train, y_train = sample_train_set_by_ct(a, ct_key, subsample=subsample, seed=seeds[i], celltypes=celltypes)
         for ct in celltypes:
-            ct_trees[ct].append(
-                tree.DecisionTreeClassifier(
-                    criterion="gini",
-                    splitter="best",
-                    max_depth=3,
-                    random_state=seeds[i],  # 0,
-                    class_weight="balanced",
+            if (masks_test is None) or (np.sum(masks_test[ct]) > 0):
+                importances[ct][str(i)] = ct_trees[ct][i].feature_importances_
+    # Evaluate trees (we parallelize over tree indices)
+    summary_metric, ct_specific_metric = parallelize(
+        callback=eval_ct_tree_helper,
+        collection=[i for i in range(n_trees)],
+        n_jobs=n_jobs,
+        backend=backend,
+        extractor=pool_eval_ct_tree_helper,
+        show_progress_bar=verbose,
+        desc="Evaluate trees",
+    )(
+        celltypes=celltypes,
+        ref_celltypes=ref_celltypes,
+        ct_trees=ct_trees,
+        X_test=X_test,
+        y_test=y_test,
+        cts_test=cts_test,
+        masks=masks_test,
+    )
+
+    # Sort results
+    if sort_by_tree_performance:
+        for ct in summary_metric.index:
+            if (masks_test is None) or (np.sum(masks_test[ct]) > 0):
+                order = summary_metric.loc[ct].sort_values(ascending=False).index.values.copy()
+                order_int = [summary_metric.loc[ct].index.get_loc(idx) for idx in order]
+                summary_metric.loc[ct] = summary_metric.loc[ct, order].values
+                ct_specific_metric[ct].columns = order.copy()
+                importances[ct].columns = order.copy()
+                ct_specific_metric[ct] = ct_specific_metric[ct].reindex(
+                    sorted(ct_specific_metric[ct].columns, key=int), axis=1
                 )
-            )
-            ct_trees[ct][-1] = ct_trees[ct][-1].fit(X_train, y_train[ct])
+                importances[ct] = importances[ct].reindex(sorted(importances[ct].columns, key=int), axis=1)
+                ct_trees[ct] = [ct_trees[ct][i] for i in order_int]
 
-            report = classification_report(y_test[ct], ct_trees[ct][-1].predict(X_test), output_dict=True)
-            f1_table.loc[ct, str(i)] = report["macro avg"]["f1-score"]
-            importances[ct][str(i)] = ct_trees[ct][-1].feature_importances_
+    # We change the f1 summary metric now, since we can't summarize this value anymore when including secondary trees.
+    # When creating the results for secondary trees we take the specificities according reference celltypes of each tree.
+    # Our new metric is just the mean of these specificities. Btw we still keep the ordering to be based on f1 scores.
+    # Think that makes more sense since it's the best balanced result.
+    # TODO TODO TODO: Change misleading variable names in other functions (where the old "f1_table" is used)
+    summary_metric = summarize_specs(ct_specific_metric)
 
-    best_f1_table = pd.Series(index=f1_table.index, name="macro avg f1", dtype="float64")
-    best_tree_genes = {}
-    for ct, best_tree in f1_table.idxmax(axis=1).items():
-        best_f1_table.loc[ct] = f1_table.loc[ct, best_tree]
-        best_tree_genes[ct] = {c: im for c, im in importances[ct][best_tree].items() if (im > 0)}
+    if save:
+        save_forest([summary_metric, ct_specific_metric, importances], save)
 
-    if save_load:
-        with open(save_load, "wb") as f:
-            pickle.dump([f1_table, decision_genes], f)
-    if full_info:
-        return best_f1_table, best_tree_genes, f1_table, importances
+    if return_clfs:
+        return [summary_metric, ct_specific_metric, importances], ct_trees
     else:
-        return best_f1_table, best_tree_genes
+        return summary_metric, ct_specific_metric, importances
+
+
+def summarize_specs(specs):
+    """Summarize specificities to summary metrics per celltype"""
+    cts = [ct for ct in specs]
+    df = pd.DataFrame(index=cts, columns=specs[cts[0]].columns)
+    for ct in specs:
+        df.loc[ct] = specs[ct].mean()
+    return df
+
+
+def combine_tree_results(primary, secondary):
+    """Combine results of primary and secondary trees
+
+    There are three parts in the forest results:
+    1. f1_table
+    2. classification specificities
+    3. feature_importances
+
+    The output for 2. and 3. will be in the same form as the input.
+    Specificities are taken from secondary where existend, otherwise from primary.
+    Feature_importances are summed up (reasoning: distinguishing celltypes that are
+    hard to distinguish is very important and therefore good to rank respective genes high).
+    The f1 tables are just aggregated to a list
+
+    primary: dict of pd.DataFrames
+    secondary: dict of pd.DataFrames
+
+    """
+    combined = [0, {}, {}]
+    ## f1 (exchanged by summary stats below)
+    # for f1_table in [primary[0],secondary[0]]:
+    #    if isinstance(f1_table,list):
+    #        combined[0] += f1_table
+    #    else:
+    #        combined[0].append(f1_table)
+    # specificities
+    celltypes = [key for key in secondary[1]]
+    combined[1] = {ct: df.copy() for ct, df in primary[1].items()}
+    for ct in celltypes:
+        filt = ~secondary[1][ct].isnull().all(axis=1)
+        combined[1][ct].loc[filt] = secondary[1][ct].loc[filt]
+    # summary stats
+    combined[0] = summarize_specs(combined[1])
+    # feature importance
+    combined[2] = {ct: df.copy() for ct, df in primary[2].items()}
+    for ct in celltypes:
+        combined[2][ct] += secondary[2][ct].fillna(0)
+        combined[2][ct] = combined[2][ct].div(combined[2][ct].sum(axis=0), axis=1)
+    return combined
+
+
+def outlier_mask(df, n_stds=1, min_outlier_dif=0.02, min_score=0.9):
+    """Get mask over df.index based on values in df columns"""
+    crit1 = df < (df.mean(axis=0) - (n_stds * df.std(axis=0))).values[np.newaxis, :]
+    crit2 = df < (df.mean(axis=0) - min_outlier_dif).values[np.newaxis, :]
+    crit3 = df < min_score
+    return (crit1 & crit2) | crit3
+
+
+def get_outlier_reference_celltypes(specs, n_stds=1, min_outlier_dif=0.02, min_score=0.9):
+    """For each celltype's best tree get reference celltypes with low performance
+
+    specs: dict of pd.DataFrames
+        Each celltype's specificities of reference celltypes.
+    """
+    outliers = {}
+    for ct, df in specs.items():
+        outliers[ct] = df.loc[outlier_mask(df[["0"]], n_stds, min_outlier_dif, min_score).values].index.tolist() + [ct]
+        if len(outliers[ct]) == 1:
+            outliers[ct] = []
+    return outliers
+
+
+def forest_classifications(adata, selection, max_n_forests=3, verbosity=1, outlier_kwargs={}, **forest_kwargs):
+    """Train best trees including secondary trees
+
+    max_n_forests: int
+        Number of best trees considered as a tree group. Including the primary tree.
+
+    """
+
+    if verbosity > 0:
+        try:
+            from tqdm.notebook import tqdm
+        except ImportError:
+            from tqdm import tqdm_notebook as tqdm
+    else:
+        tqdm = None
+
+    ct_spec_ref = None
+    res = None
+
+    for _ in tqdm(range(max_n_forests), desc="Train hierarchical trees") if tqdm else range(max_n_forests):
+        new_res = single_forest_classifications(
+            adata, selection, ct_spec_ref=ct_spec_ref, verbose=verbosity > 1, **forest_kwargs
+        )
+        res = new_res if (res is None) else combine_tree_results(res, new_res)
+        ct_spec_ref = get_outlier_reference_celltypes(res[1], **outlier_kwargs)
+
+    return res
+
+
+def forest_rank_table(importances, celltypes="all", return_ct_specific_rankings=False):
+    """Rank genes according importances of the celltypes' forests
+
+    celltypes: str or list of strs
+        If 'all' create ranking based on all celltypes in importances. Otherwise base the ranking only on
+        the trees of the subset `celltypes`.
+    importances: dict of pd.DataFrame
+        Output from `forest_classifications()`. DataFrame for each celltype's forest.
+        Each column refers to genes of one tree. The columns are sorted according performance (best first)
+
+    Returns
+    -------
+    pd.DataFrame
+        index: Genes found in `importances`
+        columns:
+            - 'rank': integer, tree rank in which a gene occured the first time (best over all celltypes)
+            - 'importance_score': max feature importance of gene over celltypes where the gene occured at `rank`
+            - ct in celltypes:
+    """
+    im = (
+        importances.copy()
+        if (celltypes == "all")
+        else {ct: df.copy() for ct, df in importances.items() if ct in celltypes}
+    )
+
+    # ranking per celltype
+    worst_rank = max([len(im[ct].columns) + 1 for ct in im])
+    for ct in im:
+        im[ct] = im[ct].reindex(columns=im[ct].columns.tolist() + ["tree", "rank", "importance_score"])
+        rank = 1
+        for tree_idx, col in enumerate(im[ct].columns):
+            filt = im[ct]["rank"].isnull() & (im[ct][col] > 0)
+            if filt.sum() > 0:
+                im[ct].loc[filt, ["tree", "rank"]] = [tree_idx, rank]
+                im[ct].loc[filt, "importance_score"] = im[ct].loc[filt, col]
+                rank += 1
+        filt = im[ct]["rank"].isnull()
+        im[ct].loc[filt, ["rank", "importance_score"]] = [worst_rank, 0]
+
+    # Save celltype specific rankings in current form if later returned
+    if return_ct_specific_rankings:
+        im_ = {ct: df.copy() for ct, df in im.items()}
+
+    # collapse to general ranking.
+    for ct in im:
+        im[ct].columns = [f"{ct}_{col}" for col in im[ct]]
+    tab = pd.concat([df for _, df in im.items()], axis=1)
+    tab["rank"] = tab[[f"{ct}_rank" for ct in im]].min(axis=1)
+    tab["importance_score"] = 0
+    tab = tab.reindex(columns=tab.columns.tolist() + [ct for ct in im])
+    tab[[ct for ct in im]] = False
+    for gene in tab.index:
+        tmp_cts = [ct for ct in im if (tab.loc[gene, f"{ct}_rank"] == tab.loc[gene, "rank"])]
+        tmp_scores = [
+            tab.loc[gene, f"{ct}_importance_score"]
+            for ct in im
+            if (tab.loc[gene, f"{ct}_rank"] == tab.loc[gene, "rank"])
+        ]
+        tab.loc[gene, "importance_score"] = max(tmp_scores) if tmp_scores else 0
+        if tab.loc[gene, "rank"] != worst_rank:
+            tab.loc[gene, tmp_cts] = True
+
+    tab = tab[["rank", "importance_score"] + [ct for ct in im]]
+    tab = tab.sort_values(["rank", "importance_score"], ascending=[True, False])
+    tab["rank"] = tab["rank"].rank(axis=0, method="dense", na_option="keep", ascending=True)
+
+    if return_ct_specific_rankings:
+        im_ = {ct: df.sort_values(["rank", "importance_score"], ascending=[True, False]) for ct, df in im_.items()}
+        return tab, im_
+    else:
+        return tab

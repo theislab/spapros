@@ -6,9 +6,11 @@ import scanpy as sc
 import scipy
 from sklearn.decomposition import SparsePCA
 
-from spapros.evaluation.evaluation import tree_classifications
 from spapros.util.util import clean_adata
 from spapros.util.util import preprocess_adata
+from spapros.evaluation.evaluation import forest_classifications
+
+# from spapros.evaluation.evaluation import tree_classifications
 
 
 def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=None):
@@ -289,46 +291,321 @@ def select_DE_genes(
         return selection
 
 
-def add_tree_markers(
+#################################################################################
+# Procedure to add DE genes with specific reference groups to trees of interest #
+#################################################################################
+# Toroughly tested.
+
+
+def outlier_mask(df, n_stds=1.0, min_outlier_dif=0.02, min_score=0.9):
+    """Get mask over df.index based on values in df columns"""
+    crit1 = df < (df.mean(axis=0) - (n_stds * df.std(axis=0))).values[np.newaxis, :]
+    crit2 = df < (df.mean(axis=0) - min_outlier_dif).values[np.newaxis, :]
+    crit3 = df < min_score
+    return (crit1 & crit2) | crit3
+
+
+def add_DE_genes_to_trees(
     adata,
-    selection,
-    f1,
-    dec_genes,
-    f1_ref,
-    dec_genes_ref,
+    tree_results,
     ct_key="Celltypes",
+    n_DE=1,
+    min_score=0.9,
+    n_stds=1.0,
+    penalty_keys=[],
+    min_outlier_dif=0.02,
+    n_terminal_repeats=3,
+    max_step=12,
+    tree_clf_kwargs={},
+    verbosity=1,
+    save=None,
+    return_clfs=False,
+):
+    """Improve decision trees by adding DE genes wrt reduced sets of reference celltypes
+
+    Typically we train trees on genes preselected by simple 1-vs-all differential expression.
+    We now test for the best tree of each celltype of interest if some other celltype is hard to distinguish.
+    If that's the case we add DE genes that are calculated in a 1-vs-"hard to distinguish celltypes" fashion.
+    The adding procedure is as follows:
+    - For each tree for a celltype of interest (ct_oi) we take specificity scores of all other celltypes (ct_others)
+    - Based on those scores we find celltypes that are low specificity outliers.
+    - we consider celltypes as outliers if
+        - specificity < `min_score` or
+        - (specificity < mean_specificy - `n_stds` x standard deviation) && (specificity < mean_specificy - min_outlier_dif)
+    - if we have outliers: add `n_DE` genes from a DE test ct_oi-vs-outliers
+    - recalculate trees and repeat
+    - stop criteria: either no more outliers, or the same outliers occured in the last `n_terminal_repeats` (each tree is
+                     stopped individually), or `max_step` is reached.
+
+    Arguments
+    ---------
+    adata: AnnData
+    tree_results: list
+        Results of forest_classifications()
+    ct_key: str
+        adata.obs key with celltype annotations
+    n_DE: int
+        Number of DE genes added per tree and iteration
+    min_score: float
+        Minimal specificty score to not classify a reference celltype as outlier.
+    n_stds: float
+        Celltypes are considered as outliers if their specificity is `n_stds` standard deviations below the mean specificity
+    penalty_keys: list of strs
+        adata.obs keys for penalties applied to DE genes selection
+    min_outlier_dif: float
+        Lower bound of `n_stds` x standard_deviation in the outlier criterion
+    n_terminal_repeats: int
+        If the same outliers are identified `n_terminal_repeats` times for a given celltype then optimisation for that celltype
+        is stopped
+    max_step: int
+        Maximal number of iterations as a manual step threshold also to stop the while loop in case of unexpected behavior.
+        Unexpected behavior really shouldn't happen but we can't say that for sure.
+    tree_clf_kwargs: dict
+        Keyword arguments that are passed to forest_classifications(). The same arguments that were used to
+        compute `tree_results` should be used here.
+    verbosity: int
+        verbosity level
+    save: str
+        Path to save the final classification forest
+    return_clfs: bool
+        Wether to return the sklearn tree classifiers of the final retrained trees
+
+    Returns
+    -------
+    forest_results: list
+        Output of forest_classification() on the final set of genes (initial genes + added DE genes)
+    forest_classifiers (if `return_clfs`):
+        dict: keys are celltypes, values are list of sklearn tree classifiers.
+    DE_info: pd.DataFrame
+        Infos of added DE genes:
+        - index: added genes, sorted by 'rank' (no sorting within the same rank)
+        - columns:
+            - column = 'step': iteration step where DE gene was selected
+            - column.names = "celltypes": float DE scores for each selected gene (the score is only > 0 if a gene was selected
+                                          for a given celltype)
+            - column.names = "celltypes (ref)": if celltype was in the reference of a given DE test (these might include
+                                                pooled references of multiple tests which yielded the same selected DE gene)
+    """
+    # Note: in specificities we have celltype keys and dataframes with reference celltypes as index
+    # the ct keys might be fewer and in a different order then the reference cts in the index
+    # - we want to create an "outlier" dataframe with symmetric celltype order in index (references) and columns (celltypes of
+    #   interest)
+    # - therefore we need to add columns that are actually not used to identify outliers (we just set the performance to 1 in
+    #   those cols)
+    # - the design could have been different (but i first only regarded the case where cts_oi and reference_cts were the same...)
+    init_summary, specificities, im = tree_results
+    all_celltypes = specificities[list(specificities)[0]].index.tolist()
+    # all_celltypes = [ct for ct in specificities]
+
+    # Get all input genes of the initial forest training (the `genes` variable will be updated with new selected DE genes each
+    # iteration)
+    genes = im[list(im)[0]].index.tolist()
+
+    # Specificities table (True negative rates) of best trees
+    TN_rates = pd.DataFrame(index=all_celltypes, columns=all_celltypes, data=1)
+    new_TN_rates = pd.concat([d["0"] for ct, d in specificities.items()], axis=1)
+    celltypes = [ct for ct in specificities]
+    new_TN_rates.columns = celltypes
+    TN_rates[celltypes] = new_TN_rates
+    # TN_rates = pd.concat([d['0'] for ct,d in specificities.items()],axis=1)
+    # TN_rates.columns = [ct for ct in all_celltypes]
+
+    # Get outlier mask. Note the columns are the celltypes of interest, and the index are potential outlier celltypes for a
+    # given celltype of interest
+    outliers = outlier_mask(TN_rates, n_stds, min_outlier_dif, min_score)
+    celltypes = outliers.columns[outliers.any(axis=0)].tolist()
+
+    # Variable to measure how many steps in a row we have the same outliers for a celltype (stop criterion)
+    repeats = {ct: 0 for ct in TN_rates.columns}
+
+    # Initialize DE_info table with infos about iteratively added DE genes
+    ref_columns = [f"{ct} (ref)" for ct in all_celltypes]
+    DE_info = pd.DataFrame(columns=["step"] + all_celltypes + ref_columns)
+
+    step = 1
+
+    if verbosity > 0:
+        print("Add DE genes with specific reference groups to improve tree performance...")
+
+    while (outliers.values.sum() > 0) and celltypes and (step < max_step + 1):
+        if verbosity > 1:
+            print(f"  Iteration step {step}:")
+        # Get mapping of each celltype to its test reference group
+        reference = outliers.copy()
+        np.fill_diagonal(reference.values, True)
+        ct_to_reference = {
+            ct: reference[ct].loc[reference[ct]].index.tolist() for ct in reference.columns if (reference[ct].sum() > 1)
+        }
+
+        # DE selection for celltypes with outliers
+        if verbosity > 1:
+            print("\t Select DE genes...")
+        for ct in ct_to_reference:
+            if verbosity > 2:
+                print(f"\t ...for celltype {ct} with reference group {ct_to_reference[ct]}")
+            df_ct_DE = select_DE_genes(
+                adata[:, [g for g in adata.var_names if not (g in genes)]],
+                n_DE,
+                per_group=True,
+                obs_key=ct_key,
+                process_adata=None,
+                penalty_keys=penalty_keys,
+                groups=[ct],
+                reference=ct_to_reference[ct],
+                rankby_abs=False,
+                inplace=False,
+            )
+            if verbosity > 2:
+                print(f"\t\t Selected: {df_ct_DE[df_ct_DE['selection']].index.tolist()}")
+            # Add rows and update values in DE_info
+            df_ct_DE = df_ct_DE[df_ct_DE["selection"]]
+            del df_ct_DE["selection"]
+            df_ct_DE[ref_columns] = pd.DataFrame(
+                np.tile(reference[ct].values.copy(), (len(df_ct_DE), 1)), index=df_ct_DE.index
+            )
+            already_added = [g for g in df_ct_DE.index if g in DE_info.index]
+            df_ct_DE.loc[already_added, ref_columns] = (
+                df_ct_DE.loc[already_added, ref_columns] | DE_info.loc[already_added, ref_columns]
+            )
+            DE_info = DE_info.reindex(DE_info.index.union(df_ct_DE.index))
+            DE_info.loc[df_ct_DE.index, df_ct_DE.columns] = df_ct_DE
+            DE_info.loc[df_ct_DE.index, "step"] = step
+
+        new_genes = DE_info.loc[~DE_info.index.isin(genes)].index.tolist()
+        genes += new_genes
+
+        # Retrain forests
+        if verbosity > 1:
+            print(f"\t Train decision trees on celltypes:\n\t\t {celltypes}")
+        _, specificities, _ = forest_classifications(
+            adata,
+            genes,
+            celltypes=celltypes,
+            ref_celltypes="all",
+            ct_key=ct_key,
+            save=False,
+            **tree_clf_kwargs,
+            verbose=verbosity > 2,
+        )
+        if verbosity > 1:
+            print("\t\t Training finished.")
+
+        if verbosity > 2:
+            print("\t Identify outliers with new trees...")
+        # Calculate outliers of new trees, and kick out celltypes with outliers that repeated `n_terminal_repeats` times
+        new_TN_rates = pd.concat([d["0"] for ct, d in specificities.items()], axis=1)
+        new_TN_rates.columns = celltypes
+        TN_rates[celltypes] = new_TN_rates
+        TN_rates.columns = [ct for ct in all_celltypes]
+        new_outliers = outlier_mask(TN_rates, n_stds, min_outlier_dif, min_score)
+        for ct in celltypes:
+            if (new_outliers[ct] == outliers[ct]).all():
+                repeats[ct] += 1
+                if repeats[ct] == n_terminal_repeats:
+                    new_outliers[ct] = False
+        outliers = new_outliers.copy()
+        celltypes = outliers.columns[outliers.any(axis=0)].tolist()
+
+        step += 1
+
+    # Sort DE info
+    DE_info = DE_info.sort_values("step")
+
+    # Train final forest on all celltypes
+    if verbosity > 1:
+        print("Train final trees on all celltypes, now with the added genes...")
+    celltypes = init_summary.index.tolist()
+
+    forest_results = forest_classifications(
+        adata,
+        genes,
+        celltypes=all_celltypes,
+        ref_celltypes="all",
+        ct_key=ct_key,
+        save=save,
+        **tree_clf_kwargs,
+        verbose=verbosity > 2,
+        return_clfs=return_clfs,
+    )
+    if return_clfs:
+        results, tree_clfs = forest_results
+        summary, ct_spec_summary, im = results
+    else:
+        summary, ct_spec_summary, im = forest_results
+
+    if verbosity > 1:
+        print("\t Finished...")
+        if save:
+            print(f"\t Results saved at {save}")
+
+    if verbosity > 2:
+        print("\t Final performance table of training with all new markers:")
+        f1_diffs = summary["0"] - init_summary["0"]
+        tmp = pd.concat([summary["0"], init_summary["0"], f1_diffs], axis=1)
+        tmp.columns = ["final f1 score", "initial f1 score", "difference"]
+        print(tmp)  # display(tmp)
+
+    if return_clfs:
+        return [summary, ct_spec_summary, im], tree_clfs, DE_info
+    else:
+        return [summary, ct_spec_summary, im], DE_info
+
+
+##################################################################################
+# Procedure to add important genes from second set of trees to trees of interest #
+##################################################################################
+# Toroughly tested.
+
+
+def add_tree_genes_from_reference_trees(
+    adata,
+    tree_results,
+    ref_tree_results,
+    ct_key="Celltypes",
+    ref_celltypes="all",
     n_max_per_it=5,
     n_max=None,
-    performance_th=0.1,
-    importance_th=0.1,
-    verbose=False,
+    performance_th=0.02,
+    importance_th=0,
+    verbosity=1,
+    max_step=12,
+    save=None,
+    tree_clf_kwargs={},
+    return_clfs=False,
 ):
     """Add markers till reaching classification performance of reference
 
     Classification trees are given for the pre selected genes and a reference. Classification performance and
     the feature importance of the reference trees are used to add markers.
-    TODO: Write detailed description
-    - maximal 1 marker per celltype per iteration
-    - rank according the sum of importances across celltypes of interest
-    - ...
+    Markers are added according the following procedure:
+    - take best tree of each celltype from `tree_results` (trees_1) and `ref_tree_results` (trees_2) respectively
+    - whenever we retrain trees (for checking the performance after adding genes) we train on all genes in `tree_results` and the
+      already iteratively added new genes from trees_2
+    - each step we add 1 gene per celltype from trees_2 for those celltypes with: performance difference(trees_2 - trees_1) >
+      performance_th
+    - Added genes are chosen according the feature importance in trees_2
+    - If the same gene occurs in more than one tree of trees_2 the importance is summed over the multiple celltypes and if the
+      importance of the multi occuring gene is the highest, then only this one gene is added for the multiple celltypes
+    - additionally we only add `n_max_per_it` genes per step
 
 
     Arugments
     ---------
     adata: AnnData
-    selection: list or pd.DataFrame
-        Already selected genes. index: genes, boolean column 'selection'
-    f1: pd.DataFrame
-        f1 results table of ev.tree_classifications. This one should belong to a tree_classification on genes
-        in `selection` (TODO: The function could also be written with the first tree_classification in here...)
-    dec_genes: dict
-        key: genes, values: importances for tree classifications. Result of ev.tree_classifications
-    f1_ref: As f1 but for reference gene set
-    dec_genes_ref: As dec_genes but for reference gene set
+    tree_results: list
+        Info of trees that we want to improve. List of output variables of the function forest_classifications().
+        Note that tree_results include the info on which genes the trees were trained. We still allow all genes for
+        the updated table, not only those that are in the initial best trees.
+    ref_tree_results: list
+        Like `tree_results` but for reference trees.
     ct_key: str
-    n_mar_per_it: int
-        Add n_mar_per_it genes per iteration. In each iteration ev.tree_classifications will be calculated.
+    ref_celltypes: str or list
+    n_max_per_it: int
+        Add `n_max_per_it` genes per iteration. In each iteration tree_classifications will be calculated.
         Note that per celltype only one gene per iteration is added.
+        TODO: check if this parameter works, and eventually fix the bug (i think it actually works, thought there is
+        a bug since the number of potential markers dropped more than difference of n_max_per_it, but this can be the
+        case when we reach the wanted classification performance for several celltypes)
     n_max: int
         Limit the upper number of added genes
     performance_th: float
@@ -338,69 +615,240 @@ def add_tree_markers(
         Only reference genes with at least importance_th as feature importance in the reference tree are added as markers.
         TODO: We're working with a relative importance measure here. An absolute value could be better.
               (If classification is bad for a given celltype then useless genes have a high importance)
-    #save_load: Might be interesting to add some log of results...
-    verbose: bool
+    verbosity: int
+    max_step: int
+        Number of maximal iteration steps.
+    save: str
+        path to save final forest results
+    TODO: add Arguments for kwargs for forest_calssifications()
+          (it's mainly about subsample=1000,test_subsample=3000 - but it's probably best to also include n_trees and
+          ref_celltypes!!!) ... ok n_trees is also in there now - don't know about ref_celltypes
+    tree_clf_kwargs: dict
+        Keyword arguments that are passed to forest_classifications(). The same arguments that were used to
+        compute `tree_results` should be used here.
+    return_clfs: bool
+        Wether to return the sklearn tree classifiers of the final retrained trees
 
     Returns
     -------
-    pd.Dataframe as selection with added markers
-    TODO: we could even have a ranking according our adding procedure. Might be interesting to return such ranking
+    Results of the final trees trained on union of old genes and new markers
+        (results are in the form of the output from forest_classifications())
+    forest_classifiers (if `return_clfs`):
+        dict: keys are celltypes, values are list of sklearn tree classifiers.
+
     """
-    if isinstance(selection, list):
-        tmp = selection
-        selection = pd.DataFrame(index=adata.var.index, data={"selection": False})
-        selection.loc[tmp, "selection"] = True
+    initial_summary, _, im = tree_results
+    initial_summary_ref, _, im_ref = ref_tree_results
+    # get summary metrics from best trees
+    f1 = initial_summary["0"]
+    f1_ref = initial_summary_ref["0"]
+
+    # Start performance difference
     f1_diffs = f1_ref - f1
     f1_diffs = f1_diffs.loc[f1_diffs > performance_th]
-    importances = pd.DataFrame(dec_genes_ref)
+
+    # Get reference importance table of the celltypes' best trees
+    importances = pd.concat([im_ref[ct]["0"] for ct in im_ref], axis=1)
+    importances.columns = [ct for ct in im_ref]
+    # Set reference importances to nan if below threshold
     importances = importances[importances > importance_th]
+    # Drop rows with only nan
     importances = importances.dropna(axis=0, thresh=1).dropna(axis=1, thresh=1)
+    # Reduce to celltypes for which we have genes in reference tree above threshold
     celltypes = [ct for ct in f1_diffs.index if ct in importances.columns]
-    selected = list(selection.loc[selection["selection"]].index)
+    # Genes on which we trained the trees initially
+    selected = im[celltypes[0]].index.tolist()
+    # Potential new genes from reference
     unselected = [g for g in importances.index if not (g in selected)]
+    # Filter importances table to unselected genes
+    importances = importances.loc[unselected, celltypes]
+    importances = importances.dropna(axis=0, thresh=1).dropna(axis=1, thresh=1)
 
     n_max_unreached = True
     selected_all = False
     n_added = 0
-    while celltypes and n_max_unreached and (not selected_all):
-        importances = importances.loc[unselected, celltypes]
-        importances = importances.dropna(axis=0, thresh=1).dropna(axis=1, thresh=1)
+    if verbosity > 0:
+        print("Adding genes from reference tree...")
+    if verbosity > 2:
+        print("\t Performance table before training with new markers:")
+        tmp = pd.concat([f1, f1_ref, f1_diffs], axis=1)
+        tmp.columns = ["f1", "reference f1", "difference"]
+        print(tmp)  # display(tmp)
+
+    max_step_reached = False
+    step = 0
+
+    while celltypes and n_max_unreached and (not selected_all) and (not importances.empty) and (not max_step_reached):
+
         if n_max:
             if (n_max - n_added) < n_max_per_it:
                 n_max_per_it = n_max - n_added
+
         if len(importances.idxmax().unique()) > n_max_per_it:
             new_markers = list(importances.sum(axis=1).nlargest(n_max_per_it).index)
         else:
             new_markers = list(importances.idxmax().unique())
         selected += new_markers
         n_added += len(new_markers)
-        if verbose:
-            print(f"Add new markers:\n{new_markers}")
         unselected = [g for g in importances.index if not (g in new_markers)]
-        if verbose:
-            print(f"Train decision trees on celltypes:\n{celltypes}")
-        f1, _ = tree_classifications(
+        if verbosity > 1:
+            print(f"\t Added new markers:\n\t\t {new_markers} \n\t\t ({len(unselected)} potential new markers left)")
+        if verbosity > 1:
+            print(f"\t Train decision trees on celltypes:\n\t\t {celltypes}")
+        summary, _, _ = forest_classifications(
             adata,
             selected,
             celltypes=celltypes,
+            ref_celltypes=ref_celltypes,
             ct_key=ct_key,
-            plot=False,
-            save_load=False,
+            save=False,
+            verbose=verbosity > 2,
+            **tree_clf_kwargs,
         )
-        if verbose:
-            print("\t Training finished.")
+        f1 = summary["0"].copy()
+        if verbosity > 1:
+            print("\t\t Training finished.")
         f1_diffs = f1_ref.loc[f1.index] - f1
         f1_diffs = f1_diffs.loc[f1_diffs > performance_th]
+        if (verbosity > 1) and not np.all([(ct in importances.columns) for ct in f1_diffs.index]):
+            print("\t There are no more new markers in the reference trees for celltypes:")
+            print(f"\t\t {[ct for ct in f1_diffs.index if not ct in importances.columns]}")
+            print("\t\t even though the performance threshold was not reached")
+            print("\t\t (statistical randomness, consider increasing n_trees or performance_th)")
+
         celltypes = [ct for ct in f1_diffs.index if ct in importances.columns]
+
+        if verbosity > 2:
+            print("\t Performance table after training with new markers:")
+            tmp = pd.concat([f1.loc[celltypes], f1_ref.loc[celltypes], f1_diffs], axis=1)
+            tmp.columns = ["f1", "reference f1", "difference"]
+            print(tmp)  # display(tmp)
 
         if n_max and (n_added == n_max):
             n_max_unreached = False
         if len(unselected) == 0:
             selected_all = True
 
-    df = selection.copy()
-    df.loc[selected, "selection"] = True
-    return df
+        importances = importances.loc[unselected, celltypes]
+        importances = importances.dropna(axis=0, thresh=1).dropna(axis=1, thresh=1)
+
+        step += 1
+        if max_step and (step >= max_step):
+            max_step_reached = True
+            if verbosity > 1:
+                print(f"\t\t Maximal iteration step ({step}) reached.")
+
+    if verbosity > 0:
+        print("Train final trees on all celltypes, now with the added genes...")
+    celltypes = initial_summary.index.tolist()
+    forest_results = forest_classifications(
+        adata,
+        selected,
+        celltypes=celltypes,
+        ref_celltypes=ref_celltypes,
+        ct_key=ct_key,
+        save=save,
+        verbose=verbosity > 2,
+        return_clfs=return_clfs,
+        **tree_clf_kwargs,
+    )
+    if return_clfs:
+        results, tree_clfs = forest_results
+        summary, ct_spec_summary, im = results
+    else:
+        summary, ct_spec_summary, im = forest_results
+
+    if verbosity > 0:
+        print("\t Finished...")
+        if save:
+            print(f"\t Results saved at {save}")
+
+    if verbosity > 2:
+        print("\t Final performance table of training with all new markers:")
+        f1_diffs = f1_ref - summary["0"]
+        tmp = pd.concat([summary["0"], f1_ref, f1_diffs], axis=1)
+        tmp.columns = ["f1", "reference f1", "difference"]
+        print(tmp)  # display(tmp)
+
+    if return_clfs:
+        return [summary, ct_spec_summary, im], tree_clfs
+    else:
+        return summary, ct_spec_summary, im
+
+
+################################################
+# Selection from marker list related functions #
+################################################
+
+
+def get_markers_and_correlated_genes(cor_mat, markers, selection, n_min=2, th=0.5):
+    """Get markers and marker correlated genes for seletion from marker list
+
+    Typically use this function for markers of one celltype in a marker_list dictionary
+
+    We consider gene pairs when selecting based on correlations, e.g. n_min = 2 and th = 0.5:
+    - take gene A from selection with the highest correlation to all markers (let marker M and gene A have the highest correlation)
+    - if correlation(gene A,marker M) > th=0.5 add gene A to `correlated_genes` (we then have 1 of n_min=2 genes selected)
+        - if not we add the first n_min - len(already_selected) markers
+    - for the next correlation checks we exclude gene A and marker M (since we want to make sure to capture n_min markers with
+      n_min genes) and repeat the previous steps till we reached n_min selected genes (or the possible maximum)
+
+    Arguments
+    ---------
+    cor_mat: pd.DataFrame
+        Dataframe with index = columns = genes. Genes in cor_mat must include all genes in `markers` and all
+        genes with `selection['selection'] == True`
+    markers: dict
+    selection: pd.DataFrame or list
+    n_min: int
+        Minimal number of markers per ct that are captured with a min correlation of `th`
+    th: float
+        Minimal correlation to consider a gene as captures
+
+    Returns
+    -------
+    add_markers: list
+        The markers that are added to reach `n_min` (if there are enough markers provided)
+    correlated_genes: list
+        Genes in `selection` that have correlations > `th` with specific markers
+
+    """
+    # Initialize output lists
+    add_markers = []
+    correlated_genes = []
+
+    # Prepare gene list of already selected genes
+    if isinstance(selection, pd.DataFrame):
+        selected_genes = selection.loc[selection["selection"]].index.tolist()
+    else:
+        selected_genes = selection
+
+    # Transfer markers from `markers` into `already_selected` if markers are already in the selection
+    already_selected = [g for g in markers if g in selected_genes]
+    markers = [g for g in markers if g not in already_selected]
+    selected_genes = [g for g in selected_genes if g not in already_selected]
+    if already_selected:
+        add_markers += already_selected
+
+    if (len(add_markers) >= n_min) or (markers == []):
+        return add_markers[: min(len(add_markers), n_min)], correlated_genes
+
+    genes = [g for g in (markers + selected_genes)]
+    cm = cor_mat.loc[genes, genes]
+    n_genes = len(add_markers)
+
+    while (n_genes < n_min) and markers:
+        max_marker = cm.loc[selected_genes, markers].max().idxmax()
+        max_gene = cm.loc[markers, selected_genes].max().idxmax()
+        if cor_mat.loc[max_marker, max_gene] > th:
+            correlated_genes.append(max_gene)
+            markers.remove(max_marker)
+            selected_genes.remove(max_gene)
+        else:
+            add_markers += markers[: min([len(markers), n_min - n_genes])]
+            markers = []
+        n_genes = len(add_markers + correlated_genes)
+    return add_markers, correlated_genes
 
 
 ######################################################################################
