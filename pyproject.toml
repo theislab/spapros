@@ -28,7 +28,7 @@ matplotlib = "^3.4.1"
 leidenalg = "^0.8.4"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.2.3"
+pytest = "^6.2.4"
 coverage = {extras = ["toml"], version = "^5.3"}
 safety = "^1.9.0"
 mypy = "^0.812"
