@@ -8,6 +8,8 @@ import rich.logging
 import spapros
 from rich import print
 from rich import traceback
+
+from spapros.cli.commands.upgrade import UpgradeCommand
 from spapros.evaluation.evaluation_pipeline import run_evaluation
 from spapros.selection.selection import run_selection
 
@@ -30,6 +32,9 @@ def main() -> None:
     )
     print("[bold blue]Run [green]spapros --help [blue]for an overview of all commands\n")
 
+    # Is the latest spapros version installed? Upgrade if not!
+    if not UpgradeCommand.check_spapros_latest():
+        print("[bold blue]Run [green]spapros upgrade [blue]to get the latest version.")
     spapros_cli(prog_name="spapros")
 
 
