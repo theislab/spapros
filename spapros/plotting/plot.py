@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-
 from spapros.selection.selection_methods import select_pca_genes
 from spapros.util.util import plateau_penalty_kernel
 

@@ -13,11 +13,10 @@ import scanpy as sc
 import scipy
 from sklearn import tree
 from sklearn.metrics import classification_report
-from tqdm.notebook import tqdm
-
 from spapros.util.mp_util import _get_n_cores
 from spapros.util.mp_util import parallelize
 from spapros.util.mp_util import Signal
+from tqdm.notebook import tqdm
 
 
 def plot_gene_expressions(f_idxs, adata, fig_title=None, save_to=None):

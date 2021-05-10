@@ -10,7 +10,6 @@ import scanpy as sc
 from rich.console import Console
 from rich.progress import Progress
 from scipy.sparse import issparse
-
 from spapros.evaluation.evaluation import clustering_sets
 from spapros.evaluation.evaluation import knn_similarity
 from spapros.evaluation.evaluation import nmi
@@ -22,6 +21,7 @@ from spapros.util.util import preprocess_adata
 
 console = Console()
 
+# TODO below must become a parameter :)
 spapros_dir = "/mnt/home/icb/louis.kuemmerle/projects/st_probesets/spapros/"  # "/home/zeth/PycharmProjects/spapros/"
 
 dataset_params = {
