@@ -8,7 +8,6 @@ import rich.logging
 import spapros
 from rich import print
 from rich import traceback
-
 from spapros.cli.commands.upgrade import UpgradeCommand
 from spapros.evaluation.evaluation_pipeline import run_evaluation
 from spapros.selection.selection import run_selection

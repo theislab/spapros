@@ -40,9 +40,7 @@ def spapros_questionary(function: str, question: str, choices: list = None, defa
         if function == "select":
             if default not in choices:  # type: ignore
                 log.debug(f"Default value {default} is not in the set of choices!")
-            answer = getattr(questionary, function)(
-                f"{question}: ", choices=choices, style=spapros_style
-            ).unsafe_ask()
+            answer = getattr(questionary, function)(f"{question}: ", choices=choices, style=spapros_style).unsafe_ask()
         elif function == "password":
             while not answer or answer == "":
                 answer = getattr(questionary, function)(f"{question}: ", style=spapros_style).unsafe_ask()
