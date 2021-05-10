@@ -33,7 +33,9 @@
 Features
 --------
 
-* TODO
+* Select probe sets for spatial transcriptomics which capture data variability, distinguish cell types and incorporate prior knowledge
+* Evaluate probe sets with an extensive pipeline
+
 
 Installation
 ------------

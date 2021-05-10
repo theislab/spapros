@@ -19,8 +19,8 @@ from spapros.util.mp_util import Signal
 from tqdm.notebook import tqdm
 
 
-def plot_gene_expressions(f_idxs, adata, fig_title=None, save_to=None):
-    a = adata.copy()
+def plot_gene_expressions(adata, f_idxs, fig_title=None, save_to=None):
+    a = adata.copy()  # TODO Think we can get rid of this copy and just work with the views
     gene_obs = []
     for _, f_idx in enumerate(f_idxs):
         gene_name = a.var.index[f_idx]
