@@ -1,5 +1,11 @@
 import itertools
 from pathlib import Path
+from spapros.selection.selection_methods import highest_expressed_genes
+from spapros.selection.selection_methods import random_selection
+from spapros.selection.selection_methods import select_DE_genes
+from spapros.selection.selection_methods import select_pca_genes
+from spapros.util.util import plateau_penalty_kernel
+from spapros.util.util import transfered_expression_thresholds
 from timeit import default_timer as timer
 
 import numpy as np
@@ -7,12 +13,6 @@ import pandas as pd
 import scanpy as sc
 from rich.console import Console
 from rich.progress import Progress
-from spapros.selection.selection_methods import highest_expressed_genes
-from spapros.selection.selection_methods import random_selection
-from spapros.selection.selection_methods import select_DE_genes
-from spapros.selection.selection_methods import select_pca_genes
-from spapros.util.util import plateau_penalty_kernel
-from spapros.util.util import transfered_expression_thresholds
 
 console = Console()
 

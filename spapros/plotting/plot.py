@@ -1,8 +1,9 @@
+from spapros.selection.selection_methods import select_pca_genes
+from spapros.util.util import plateau_penalty_kernel
+
 import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
-from spapros.selection.selection_methods import select_pca_genes
-from spapros.util.util import plateau_penalty_kernel
 
 
 def explore_constraint(adata, factors=None, q=0.99, lower=0, upper=1):

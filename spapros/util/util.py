@@ -392,9 +392,9 @@ def plateau_penalty_kernel(var, x_min=None, x_max=None):
     return function
 
 
-#######################
-# Miscalleneous Utils #
-#######################
+#####################
+# Marker List Utils #
+#####################
 
 
 def dict_to_table(marker_dict, genes_as_index=False, reverse=False):
@@ -439,3 +439,68 @@ def dict_to_table(marker_dict, genes_as_index=False, reverse=False):
             for ct in marker_dict.columns:
                 output[ct] = marker_dict.loc[~marker_dict[ct].isnull(), ct].tolist()
         return output
+
+
+def filter_marker_dict_by_penalty(marker_dict, adata, penalty_keys, threshold=1, verbose=True, return_filtered=False):
+    """Filter out genes in marker_dict if a gene's penalty < threshold
+
+    Parameters
+    ----------
+    marker_dict: dict
+    adata: AnnData
+    penalty_keys: str or list of strs
+        keys of adata.var with penalty values
+    threshold: float
+        min value of penalty to keep gene
+
+    Returns
+    -------
+    - filtered marker_dict
+    - and if return_filtered a dict of the filtered genes
+    """
+    if isinstance(penalty_keys, str):
+        penalty_keys = [penalty_keys]
+    genes_in_adata = [g for ct, gs in marker_dict.items() for g in gs if g in adata.var.index]
+    genes_not_in_adata = [g for ct, gs in marker_dict.items() for g in gs if not (g in adata.var.index)]
+    df = adata.var.loc[genes_in_adata, penalty_keys].copy()
+    penalized = (df < threshold).any(axis=1)
+    genes = df.loc[~penalized].index.tolist() + genes_not_in_adata
+
+    filtered_marker_dict = {}
+    if verbose:
+        filtered_out = {}
+    for ct, gs in marker_dict.items():
+        filtered_marker_dict[ct] = [g for g in gs if g in genes]
+        filtered_genes_of_ct = [g for g in gs if g not in genes]
+        if filtered_genes_of_ct and verbose:
+            filtered_out[ct] = filtered_genes_of_ct
+    if filtered_out and verbose:
+        print(f"The following genes are filtered out due to the given penalty_keys (threshold: >= {threshold}):")
+        max_str_length = max([len(ct) for ct in filtered_out])
+        for ct, genes in filtered_out.items():
+            print(f"\t {ct:<{max_str_length}} : {genes}")
+    if genes_not_in_adata and verbose:
+        print("The following genes couldn't be tested on penalties since they don't occur in adata.var.index:")
+        print(f"\t {genes_not_in_adata}")
+
+    if return_filtered:
+        return filtered_marker_dict, filtered_out
+    else:
+        return filtered_marker_dict
+
+
+def filter_marker_dict_by_shared_genes(marker_dict, verbose=True):
+    """Filter out genes in marker_dict that occur multiple times"""
+    genes = np.unique([g for _, gs in marker_dict.items() for g in gs])
+    gene_cts_dict = {g: [] for g in genes}
+    for ct, gs in marker_dict.items():
+        for g in gs:
+            gene_cts_dict[g].append(ct)
+    multi_occurence_genes = [g for g, cts in gene_cts_dict.items() if (len(cts) > 1)]
+    if multi_occurence_genes and verbose:
+        max_str_length = max([len(g) for g in multi_occurence_genes])
+        print("The following genes are filtered out since they occur multiple times in marker_dict:")
+        for g in multi_occurence_genes:
+            print(f"\t {g:<{max_str_length}} : {gene_cts_dict[g]}")
+        print("\t If you want to include shared markers e.g. add a shared celltype key to the marker_dict")
+    return {ct: [g for g in gs if g not in multi_occurence_genes] for ct, gs in marker_dict.items()}

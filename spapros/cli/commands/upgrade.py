@@ -1,5 +1,7 @@
 import json
+import spapros
 import sys
+from spapros.cli.questionary import spapros_questionary
 from subprocess import check_call
 from subprocess import PIPE
 from subprocess import Popen
@@ -8,10 +10,8 @@ from urllib.error import URLError
 from urllib.request import Request
 from urllib.request import urlopen
 
-import spapros
 from pkg_resources import parse_version
 from rich import print
-from spapros.cli.questionary import spapros_questionary
 
 
 class UpgradeCommand:

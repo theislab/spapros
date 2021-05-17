@@ -4,6 +4,9 @@ import pickle
 import time
 import warnings
 from pathlib import Path
+from spapros.util.mp_util import _get_n_cores
+from spapros.util.mp_util import parallelize
+from spapros.util.mp_util import Signal
 
 import anndata as ann
 import matplotlib.pyplot as plt
@@ -13,9 +16,6 @@ import scanpy as sc
 import scipy
 from sklearn import tree
 from sklearn.metrics import classification_report
-from spapros.util.mp_util import _get_n_cores
-from spapros.util.mp_util import parallelize
-from spapros.util.mp_util import Signal
 from tqdm.notebook import tqdm
 
 
@@ -966,8 +966,10 @@ def single_forest_classifications(
 
     n_jobs = _get_n_cores(n_jobs)
 
-    if isinstance(selection, list):
+    if isinstance(selection, (list, np.ndarray, np.generic)):
         genes = selection
+    elif isinstance(selection, pd.Index):
+        genes = selection.values
     elif isinstance(selection, pd.DataFrame):
         genes = list(selection.loc[selection["selection"]].index)
     a = adata[:, genes].copy()
@@ -1002,6 +1004,14 @@ def single_forest_classifications(
             f"For celltypes {cts_not_in_ref} trees are computed, they are not listed in reference celltypes though. Added them..."
         )
         ref_celltypes += cts_not_in_ref
+
+    # Reset subsample and test_subsample if dataset is actually too small.
+    max_counts_train = a.obs.loc[a.obs["train_set"], ct_key].value_counts().loc[ref_celltypes].max()
+    max_counts_test = a.obs.loc[a.obs["test_set"], ct_key].value_counts().loc[ref_celltypes].max()
+    if subsample > max_counts_train:
+        subsample = max_counts_train
+    if test_subsample > max_counts_test:
+        test_subsample = max_counts_test
 
     X_test, y_test, cts_test = uniform_samples(
         a, ct_key, set_key="test_set", subsample=test_subsample, seed=seed, celltypes=ref_celltypes
@@ -1102,7 +1112,7 @@ def summarize_specs(specs):
     return df
 
 
-def combine_tree_results(primary, secondary):
+def combine_tree_results(primary, secondary, with_clfs=False):
     """Combine results of primary and secondary trees
 
     There are three parts in the forest results:
@@ -1118,8 +1128,22 @@ def combine_tree_results(primary, secondary):
 
     primary: dict of pd.DataFrames
     secondary: dict of pd.DataFrames
+    with_clfs: bool
+        Whether primary, secondary and the output each contain a list of forest results and the forest classifiers
+        or only the results.
 
     """
+    expected_len = 2 if with_clfs else 3
+    if (len(primary) != expected_len) or (len(secondary) != expected_len):
+        raise ValueError(
+            f"inputs primary and secondary are expected to be lists of length == {expected_len}, not {len(primary)},"
+            f"{len(secondary)}"
+        )
+
+    if with_clfs:
+        primary, primary_clfs = primary
+        secondary, secondary_clfs = secondary
+
     combined = [0, {}, {}]
     ## f1 (exchanged by summary stats below)
     # for f1_table in [primary[0],secondary[0]]:
@@ -1140,7 +1164,15 @@ def combine_tree_results(primary, secondary):
     for ct in celltypes:
         combined[2][ct] += secondary[2][ct].fillna(0)
         combined[2][ct] = combined[2][ct].div(combined[2][ct].sum(axis=0), axis=1)
-    return combined
+
+    if with_clfs:
+        combined_clfs = primary_clfs
+        for ct in combined_clfs:
+            if ct in secondary_clfs:
+                combined_clfs[ct] += secondary_clfs[ct]
+        return combined, combined_clfs
+    else:
+        return combined
 
 
 def outlier_mask(df, n_stds=1, min_outlier_dif=0.02, min_score=0.9):
@@ -1183,13 +1215,15 @@ def forest_classifications(adata, selection, max_n_forests=3, verbosity=1, outli
 
     ct_spec_ref = None
     res = None
+    with_clfs = "return_clfs" in forest_kwargs
 
     for _ in tqdm(range(max_n_forests), desc="Train hierarchical trees") if tqdm else range(max_n_forests):
         new_res = single_forest_classifications(
             adata, selection, ct_spec_ref=ct_spec_ref, verbose=verbosity > 1, **forest_kwargs
         )
-        res = new_res if (res is None) else combine_tree_results(res, new_res)
-        ct_spec_ref = get_outlier_reference_celltypes(res[1], **outlier_kwargs)
+        res = new_res if (res is None) else combine_tree_results(res, new_res, with_clfs=with_clfs)
+        specs = res[0][1] if with_clfs else res[1]
+        ct_spec_ref = get_outlier_reference_celltypes(specs, **outlier_kwargs)
 
     return res
 

@@ -1,18 +1,18 @@
 from datetime import datetime
+from spapros.evaluation.evaluation import forest_classifications
+from spapros.util.util import clean_adata
+from spapros.util.util import preprocess_adata
 
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
 from sklearn.decomposition import SparsePCA
-from spapros.evaluation.evaluation import forest_classifications
-from spapros.util.util import clean_adata
-from spapros.util.util import preprocess_adata
 
 # from spapros.evaluation.evaluation import tree_classifications
 
 
-def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=None):
+def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=[]):
     """Compute correlations and iteratively penalize genes according max corr with selected genes
 
     This function is thoroughly tested.
@@ -22,8 +22,7 @@ def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=Non
     scores: pd.DataFrame
         no gene in preselected_genes should occur in scores.index
     """
-    if preselected_genes is None:
-        preselected_genes = []
+
     penalized_scores = scores.copy()
 
     # Compute correlations
@@ -198,12 +197,14 @@ def marker_scores(adata, obs_key="cell_types", groups="all", reference="rest", r
         index are genes as in adata.var.index, columns are names of groups in adata.obs[obs_key]
     """
     df = pd.DataFrame(index=adata.var.index)
+    adata_ = adata if isinstance(reference, str) else adata[adata.obs[obs_key].isin(reference)]
+    ref = reference if isinstance(reference, str) else "rest"
     a = sc.tl.rank_genes_groups(
-        adata,
+        adata_,
         obs_key,
         use_raw=False,
         groups=groups,
-        reference=reference,
+        reference=ref,
         n_genes=adata.n_vars,
         rankby_abs=rankby_abs,
         copy=True,
@@ -213,8 +214,7 @@ def marker_scores(adata, obs_key="cell_types", groups="all", reference="rest", r
     names = a.uns["rank_genes_groups"]["scores"].dtype.names
     marker_scores = {
         name: pd.DataFrame(
-            index=a.uns["rank_genes_groups"]["names"][name],
-            data={name: a.uns["rank_genes_groups"]["scores"][name]},
+            index=a.uns["rank_genes_groups"]["names"][name], data={name: a.uns["rank_genes_groups"]["scores"][name]}
         )
         for name in names
     }
@@ -242,25 +242,31 @@ def select_DE_genes(
     n: int
         nr of genes to selected (in total if not per_group else per group)
     per_group: bool
-        Select `n` genes per group of adata.obs[obs_key] (default: False).
-        Note that the same gene can be selected for multiple groups.
+        Select `n` genes per group of adata.obs[obs_key] (default: False). Note that the same gene can be selected for
+        multiple groups.
     obs_key: str
         column name of adata.obs for which marker scores are calculated
     penalty_keys: list of strs
         penalty factor for gene selection.
     groups, reference, rankby_abs: see sc.tl.rank_genes_groups()
+        we extended `reference` also to lists of reference groups though. Note that in case of providing such list you
+        need to include all elements of `groups` in `reference`.
 
     Returns
     -------
     pd.DataFrame
         index are genes as in adata.var.index, bool column: 'selection'
     """
+
     if process_adata:
         a = preprocess_adata(adata, options=process_adata, inplace=False)
     else:
         a = adata
 
-    group_counts = a.obs[obs_key].value_counts() > 2
+    if groups == "all":
+        group_counts = a.obs[obs_key].value_counts() > 2
+    else:
+        group_counts = a[a.obs[obs_key].isin(groups)].obs[obs_key].value_counts() > 2
     if not group_counts.values.all():
         groups = group_counts[group_counts].index.to_list()
 
@@ -268,22 +274,15 @@ def select_DE_genes(
     scores = marker_scores(a, obs_key=obs_key, groups=groups, reference=reference, rankby_abs=rankby_abs)
     scores = apply_penalties(scores, a, penalty_keys=penalty_keys)
     if per_group:
-        genes = [gene for group in scores.columns for gene in scores.nlargest(n, group).index]
+        for group in scores.columns:
+            scores.loc[scores.index.difference(scores.nlargest(n, group).index), group] = 0
     else:
-        ordered_gene_lists = [
-            list(scores.sort_values(by=[group], ascending=False).index.values) for group in scores.columns
-        ]
-        n_groups = len(ordered_gene_lists)
-        genes = []
-        count = 0
-        while len(genes) < n:
-            i = count // n_groups
-            j = count % n_groups
-            gene = ordered_gene_lists[j][i]
-            if gene not in genes:
-                genes.append(gene)
-            count += 1
+        for i, group in enumerate(scores.columns):
+            n_tmp = (n // len(scores.columns) + 1) if (i < (n % len(scores.columns))) else (n // len(scores.columns))
+            scores.loc[scores.index.difference(scores.nlargest(n_tmp, group).index), group] = 0
+    genes = scores.loc[(scores > 0).any(axis=1)].index.tolist()
     selection.loc[genes, "selection"] = True
+    selection[scores.columns] = scores
     if inplace:
         adata.var["selection"] = selection["selection"]
     else:
@@ -484,7 +483,7 @@ def add_DE_genes_to_trees(
             ct_key=ct_key,
             save=False,
             **tree_clf_kwargs,
-            verbose=verbosity > 2,
+            verbosity=verbosity,
         )
         if verbosity > 1:
             print("\t\t Training finished.")
@@ -523,7 +522,7 @@ def add_DE_genes_to_trees(
         ct_key=ct_key,
         save=save,
         **tree_clf_kwargs,
-        verbose=verbosity > 2,
+        verbosity=verbosity,
         return_clfs=return_clfs,
     )
     if return_clfs:
@@ -701,7 +700,7 @@ def add_tree_genes_from_reference_trees(
             ref_celltypes=ref_celltypes,
             ct_key=ct_key,
             save=False,
-            verbose=verbosity > 2,
+            verbosity=verbosity,
             **tree_clf_kwargs,
         )
         f1 = summary["0"].copy()
@@ -747,7 +746,7 @@ def add_tree_genes_from_reference_trees(
         ref_celltypes=ref_celltypes,
         ct_key=ct_key,
         save=save,
-        verbose=verbosity > 2,
+        verbosity=verbosity,
         return_clfs=return_clfs,
         **tree_clf_kwargs,
     )
