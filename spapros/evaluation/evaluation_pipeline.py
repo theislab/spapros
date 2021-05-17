@@ -1,13 +1,5 @@
 import itertools
 from pathlib import Path
-from spapros.evaluation.evaluation import clustering_sets
-from spapros.evaluation.evaluation import knn_similarity
-from spapros.evaluation.evaluation import nmi
-from spapros.util.util import clean_adata
-from spapros.util.util import cluster_corr
-from spapros.util.util import dict_to_table
-from spapros.util.util import gene_means
-from spapros.util.util import preprocess_adata
 from typing import Any
 from typing import Dict
 from typing import Union
@@ -18,6 +10,14 @@ import scanpy as sc
 from rich.console import Console
 from rich.progress import Progress
 from scipy.sparse import issparse
+from spapros.evaluation.evaluation import clustering_sets
+from spapros.evaluation.evaluation import knn_similarity
+from spapros.evaluation.evaluation import nmi
+from spapros.util.util import clean_adata
+from spapros.util.util import cluster_corr
+from spapros.util.util import dict_to_table
+from spapros.util.util import gene_means
+from spapros.util.util import preprocess_adata
 
 console = Console()
 

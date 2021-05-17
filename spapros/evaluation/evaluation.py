@@ -4,9 +4,6 @@ import pickle
 import time
 import warnings
 from pathlib import Path
-from spapros.util.mp_util import _get_n_cores
-from spapros.util.mp_util import parallelize
-from spapros.util.mp_util import Signal
 
 import anndata as ann
 import matplotlib.pyplot as plt
@@ -16,6 +13,9 @@ import scanpy as sc
 import scipy
 from sklearn import tree
 from sklearn.metrics import classification_report
+from spapros.util.mp_util import _get_n_cores
+from spapros.util.mp_util import parallelize
+from spapros.util.mp_util import Signal
 from tqdm.notebook import tqdm
 
 
