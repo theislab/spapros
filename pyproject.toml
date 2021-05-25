@@ -27,6 +27,7 @@ seaborn = "^0.11.1"
 matplotlib = "^3.4.1"
 leidenalg = "^0.8.4"
 questionary = "^1.9.0"
+sphinx-rtd-dark-mode = "^1.2.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
@@ -37,7 +38,7 @@ typeguard = "^2.12.0"
 xdoctest = {extras = ["colors"], version = "^0.15.0"}
 sphinx = "^3.5.4"
 sphinx-autobuild = "^2021.3.14"
-pre-commit = "^2.12.1"
+pre-commit = "^2.13.0"
 flake8 = "^3.9.2"
 black = "^21.5b1"
 flake8-bandit = "^2.1.2"
@@ -50,7 +51,7 @@ reorder-python-imports = "^2.5.0"
 pre-commit-hooks = "^4.0.1"
 sphinx-rtd-theme = "^0.5.2"
 Pygments = "^2.9.0"
-sphinx-click = "^2.7.1"
+sphinx-click = "^3.0.0"
 
 [tool.poetry.scripts]
 spapros = "spapros.__main__:main"
