@@ -27,6 +27,7 @@ seaborn = "^0.11.1"
 matplotlib = "^3.4.1"
 leidenalg = "^0.8.4"
 questionary = "^1.9.0"
+xgboost = "^1.4.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
