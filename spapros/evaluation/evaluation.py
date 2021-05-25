@@ -13,10 +13,14 @@ import scanpy as sc
 import scipy
 from sklearn import tree
 from sklearn.metrics import classification_report
+from sklearn.metrics import confusion_matrix
+from sklearn.model_selection import StratifiedKFold
+from sklearn.utils.class_weight import compute_sample_weight
 from spapros.util.mp_util import _get_n_cores
 from spapros.util.mp_util import parallelize
 from spapros.util.mp_util import Signal
 from tqdm.notebook import tqdm
+from xgboost import XGBClassifier
 
 
 def plot_gene_expressions(adata, f_idxs, fig_title=None, save_to=None):
@@ -1299,3 +1303,188 @@ def forest_rank_table(importances, celltypes="all", return_ct_specific_rankings=
         return tab, im_
     else:
         return tab
+           
+def XGBoost_forest_classification(
+    adata,
+    selection,
+    celltypes="all",
+    ct_key="Celltypes",
+    n_cells_min=40,
+    max_depth=3,
+    lr=0.2,
+    colsample_bytree=1,
+    cv_splits=5,
+    min_child_weight=None,
+    gamma=None,
+    seed=0,    
+    n_seeds=5,    
+    verbosity=0,
+    return_train_perform=False,
+    return_clfs=False,
+    n_jobs=1
+):
+    """Measure celltype classification performance with gradient boosted forests.
+    
+    We train extreme gradient boosted forest classifiers on multi class classification of cell types. Cross validation
+    is performed to get an average confusion matrix (normalised by ground truth counts and sample weights to weight cell
+    types in a balanced way). To make the performance measure robust only cell types with at least `n_cells_min` are 
+    taken into account. To make the cross validation more robust we run it with `n_seeds`. I.e. `cv_splits` x `n_seeds`
+    classifiers are trained and evaluated.
+    
+    Parameters
+    ----------
+    adata: AnnData
+        We expect log normalised data in adata.X.
+    selection: list or pd.DataFrame
+        Forests are trained on genes of the list or genes defined in the bool column selection['selection'].
+    celltypes: 'all' or list
+        Forests are trained on the given celltypes.
+    ct_key: str
+        Column name of adata.obs with cell type info.
+    n_cells_min: int
+        Minimal number of cells to filter out cell types from the training set. Performance results are not robust
+        for low `n_cells_min`.
+    max_depth: str
+        max_depth argument of XGBClassifier.
+    cv_splits: int
+        Number of cross validation splits.
+    lr: float
+        Learning rate of XGBClassifier.
+    colsample_bytree: float
+        Fraction of features (randomly selected) that will be used to train each tree of XGBClassifier.
+    gamma: float
+        Regularisation parameter of XGBClassifier. Instruct trees to add nodes only if the associated loss gain is 
+        larger or equal to gamma.
+    seed: int
+    n_seeds: int
+        Number of training repetitions with different seeds. We use multiple seeds to make results more robust. 
+        Also we don't want to increase the number of CV splits to keep a minimal test size.
+    verbosity: int
+        Set to 2 for progress bar. Set to 3 to print test performance of each tree during training.
+    return_train_perform: bool
+        Wether to also return confusion matrix of training set.
+    return_clfs: str
+        Wether to return the classifier objects.
+    n_jobs: int
+        Multiprocessing number of processes.
+    
+    Returns
+    -------
+    pd.DataFrame:
+        confusion matrix averaged over cross validations and seeds.
+    pd.DataFrame:
+        confusion matrix standard deviation over cross validations and seeds.
+    if return_train_perform:
+        pd.DataFrames as above for train set.
+    if return_clfs:
+        list of XGBClassifier objects of each cross validation step and seed.
+    
+    """
+    
+    if verbosity > 1:
+        try:
+            from tqdm.notebook import tqdm
+        except ImportError:
+            from tqdm import tqdm_notebook as tqdm
+        desc = "XGBClassifier Cross Val."
+    else:
+        tqdm = None    
+    
+    # Define cell type list
+    if celltypes == "all":
+        celltypes = adata.obs[ct_key].unique().tolist()
+    # Filter out cell types with less cells than n_cells_min
+    cell_counts = adata.obs[ct_key].value_counts().loc[celltypes]
+    if (cell_counts < n_cells_min).any():
+        warnings.warn(f"The following cell types are not included in forest classifications since they have fewer "\
+                      f"than {n_cells_min} cells: {cell_counts.loc[cell_counts < n_cells_min].index.tolist()}")
+        celltypes = [ct for ct in celltypes if (cell_counts.loc[ct] >= n_cells_min)]
+        
+    # Get data
+    obs = adata.obs[ct_key].isin(celltypes)
+    s = selection if isinstance(selection,list) else selection.loc[selection['selection']].index.tolist()
+    X = adata[obs,s].X
+    ct_encoding = {ct:i for i,ct in enumerate(celltypes)}
+    y = adata.obs.loc[obs,ct_key].astype(str).map(ct_encoding).values
+    
+    # Seeds
+    # To have more robust results we use multiple seeds (especially important for cell types with low cell count)
+    if n_seeds > 1:
+        rng = np.random.default_rng(seed)
+        seeds = rng.integers(low=0, high=100000, size=n_seeds)
+    else:
+        seeds = [seed]
+    
+    # Initialize variables for training
+    confusion_matrices = []
+    if return_train_perform:
+        confusion_matrices_train = []
+    if return_clfs:
+        clfs = []
+    n_classes = len(celltypes)    
+    
+    # Cross validated random forest training
+    for seed in tqdm(seeds, desc="seeds", total=len(seeds)) if tqdm else seeds:
+        k_fold = StratifiedKFold(n_splits=cv_splits,random_state=seed,shuffle=True)            
+        for train_ix, test_ix in tqdm(k_fold.split(X,y), desc=desc, total=cv_splits) if tqdm else k_fold.split(X,y):
+            # Get train and test sets
+            train_x, train_y, test_x, test_y = X[train_ix], y[train_ix], X[test_ix], y[test_ix]
+            sample_weight_train = compute_sample_weight('balanced', train_y)
+            sample_weight_test = compute_sample_weight('balanced', test_y)
+            # Fit the classifier
+            n_classes = len(np.unique(train_y))
+            clf = XGBClassifier(max_depth=max_depth, 
+                                num_class=n_classes,
+                                n_estimators=250,
+                                objective="multi:softmax" if n_classes > 2 else "binary:logistic",
+                                eval_metric='mlogloss', # set this to get rid of warning
+                                learning_rate=lr,
+                                colsample_bytree=colsample_bytree,
+                                min_child_weight=min_child_weight,
+                                gamma=gamma,
+                                booster='gbtree',#TODO: compare with 'dart',rate_drop= 0.1
+                                random_state=seed,
+                                use_label_encoder=False, # To get rid of deprecation warning we convert labels into ints
+                                n_jobs=n_jobs)
+            clf.fit(train_x, 
+                    train_y, 
+                    sample_weight=sample_weight_train, 
+                    early_stopping_rounds=5,
+                    eval_metric="mlogloss", 
+                    eval_set=[(test_x,test_y)], 
+                    sample_weight_eval_set=[sample_weight_test], 
+                    verbose=verbosity>2)
+            if return_clfs:
+                clfs.append(clf)
+            # Predict the labels of the test set samples
+            y_pred = clf.predict(test_x) # in case you try booster='dart' add, ntree_limit=1 (some value>0) check again
+            # Append cv step results        
+            confusion_matrices.append(confusion_matrix(test_y, 
+                                                       y_pred, 
+                                                       normalize="true", 
+                                                       sample_weight=sample_weight_test)
+                                     )
+            if return_train_perform:
+                y_pred = clf.predict(train_x)
+                confusion_matrices_train.append(confusion_matrix(train_y, 
+                                                                 y_pred, 
+                                                                 normalize="true", 
+                                                                 sample_weight=sample_weight_train)
+                                               )
+        
+    # Pool confusion matrices
+    confusions_merged = np.concatenate([np.expand_dims(mat, axis=-1) for mat in confusion_matrices],axis=-1)
+    confusion_mean = pd.DataFrame(index=celltypes,columns=celltypes,data=np.mean(confusions_merged, axis=-1))
+    confusion_std = pd.DataFrame(index=celltypes,columns=celltypes,data=np.std(confusions_merged, axis=-1))
+    if return_train_perform:
+        confusions_merged = np.concatenate([np.expand_dims(mat, axis=-1) for mat in confusion_matrices_train],axis=-1)
+        confusion_mean_train = pd.DataFrame(index=celltypes,columns=celltypes,data=np.mean(confusions_merged, axis=-1))
+        confusion_std_train = pd.DataFrame(index=celltypes,columns=celltypes,data=np.std(confusions_merged, axis=-1))
+       
+    # Return
+    out = [confusion_mean, confusion_std]
+    if return_train_perform:
+        out += [confusion_mean_train, confusion_std_train]
+    if return_clfs:
+        out += [clfs]
+    return out
