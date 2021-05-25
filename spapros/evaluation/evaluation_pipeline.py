@@ -13,6 +13,7 @@ from scipy.sparse import issparse
 from spapros.evaluation.evaluation import clustering_sets
 from spapros.evaluation.evaluation import knn_similarity
 from spapros.evaluation.evaluation import nmi
+from spapros.evaluation.evaluation import xgboost_forest_classification
 from spapros.util.util import clean_adata
 from spapros.util.util import cluster_corr
 from spapros.util.util import dict_to_table
@@ -42,6 +43,11 @@ metric_configs: Dict[str, Any] = {
         # TODO: Add uniform weighted metric. And here some argument for different weightings
         # "weighting": {"no key":["data"], f"{CT_KEY}":["uniform"]} ... need to think about this
     },
+    # Forest classification
+    "forests": {
+        "ct_key": ["celltype"],
+        "threshold": [0.8],
+    },
     # Marker list correlation
     "marker_corr": {
         "marker_list": spapros_dir + "data/small_data_marker_list.csv",
@@ -49,10 +55,6 @@ metric_configs: Dict[str, Any] = {
         "per_marker": True,
         "per_celltype_min_mean": [None],
         "per_marker_min_mean": [0.025],
-    },
-    # Forest classification
-    "forests": {
-        # FOLLOWS SOON
     },
     # Gene redundancy via coexpression
     "coexpr": {
@@ -115,12 +117,13 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
 
     with Progress() as progress:
         evaluation_task = progress.add_task(
-            "[bold blue]Performing evaluation...", total=4
+            "[bold blue]Performing evaluation...", total=5
         )  # COOKIETEMPLE TODO: Currently hardcoded!
         # TODO: Preference? I added the bars right at the beginning to directly have an overview which metrics gets calculated when
         #       if that's bad practice: move each task back to the beginning of the metric computation
         nmi_task = progress.add_task("[bold blue]Clustering similarity (NMI)", total=len(dataset_configs))
         knn_task = progress.add_task("[bold blue]KNN Graph Similarity", total=len(dataset_configs))
+        forest_task = progress.add_task("[bold blue]Forest Cell Type Classification", total=len(dataset_configs))
         marker_task = progress.add_task("[bold blue]Marker List Correlation", total=len(dataset_configs))
         coexpr_task = progress.add_task("[bold blue]Gene Redundancy By Correlation", total=len(dataset_configs))
 
@@ -264,6 +267,60 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
 
         progress.advance(evaluation_task)
 
+        #########################
+        # Forest Classification #
+        #########################
+        forest_res_dir = results_dir + "forest_classification/"
+        Path(forest_res_dir).mkdir(parents=True, exist_ok=True)
+
+        for i, d_config in enumerate(dataset_configs):
+            config_id = f"data_config_{i}"
+
+            m_config = metric_configs["forests"]
+
+            # Load dataset
+            adata = sc.read(d_config["data_path"] + d_config["dataset"])
+            if d_config["process_adata"]:
+                preprocess_adata(adata, options=d_config["process_adata"])
+            clean_adata(adata, obs_keys=m_config["ct_key"])
+
+            save_strs = ["test_mean", "test_std", "train_mean", "train_std"]
+            for set_id in probesets:
+                selection = pd.read_csv(probeset, usecols=["index", set_id], index_col=0)
+                genes = [g for g in selection.loc[selection[set_id]].index.to_list() if g in adata.var.index]
+
+                for ct_key in m_config["ct_key"]:
+                    confusion_matrices = xgboost_forest_classification(
+                        adata,
+                        genes,
+                        celltypes="all",
+                        ct_key=ct_key,
+                        return_train_perform=True,
+                        n_jobs=-1,
+                    )
+                    for i, mat in enumerate(confusion_matrices):
+                        mat.to_csv(forest_res_dir + f"conf_mat_{config_id}_{set_id}_{ct_key}_{save_strs[i]}.csv")
+
+            # Calculate summary metrics
+            forest_results_file = results_dir + f"summary_forest_clfs_{config_id}.csv"
+            statistics = ["mean_clfs_acc"] + [f"perct_above_{th}" for th in m_config["threshold"]]
+            columns = [f"{ct_key}_{statistic}" for ct_key in m_config["ct_key"] for statistic in statistics]
+            forest_summary = pd.DataFrame(index=probesets, columns=columns)
+            for set_id in probesets:
+                for ct_key in m_config["ct_key"]:
+                    conf_mat = pd.read_csv(
+                        forest_res_dir + f"conf_mat_{config_id}_{set_id}_{ct_key}_test_mean.csv", index_col=0
+                    )
+                    diag = np.diag(conf_mat)
+                    forest_summary.loc[set_id, f"{ct_key}_mean_clfs_acc"] = diag.mean()
+                    for th in m_config["threshold"]:
+                        forest_summary.loc[set_id, f"{ct_key}_perct_above_{th}"] = np.mean(diag > th)
+            forest_summary.to_csv(forest_results_file)
+
+            progress.advance(forest_task)
+
+        progress.advance(evaluation_task)
+
         ###########################
         # Marker List Correlation #
         ###########################
@@ -363,7 +420,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
             df = pd.DataFrame(index=probesets, columns=cols)
             for set_id in probesets:
                 df.loc[set_id] = result_tables[set_id][cols].mean(axis=0)
-            df.to_csv(results_dir + f"summary_marker_list_correlatios_{config_id}.csv")
+            df.to_csv(results_dir + f"summary_marker_list_correlations_{config_id}.csv")
 
             progress.advance(marker_task)
 
