@@ -12,15 +12,409 @@ import pandas as pd
 import scanpy as sc
 import scipy
 from sklearn import tree
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
-from sklearn.model_selection import StratifiedKFold
-from sklearn.utils.class_weight import compute_sample_weight
+#from sklearn.metrics import classification_report
+#from sklearn.metrics import confusion_matrix
+#from sklearn.model_selection import StratifiedKFold
+#from sklearn.utils.class_weight import compute_sample_weight
 from spapros.util.mp_util import _get_n_cores
 from spapros.util.mp_util import parallelize
 from spapros.util.mp_util import Signal
 from tqdm.notebook import tqdm
-from xgboost import XGBClassifier
+#from xgboost import XGBClassifier
+
+from spapros.evaluation.metrics import get_metric_default_parameters
+from spapros.evaluation.metrics import metric_shared_computations
+from spapros.evaluation.metrics import metric_computations
+from spapros.evaluation.metrics import metric_summary
+import spapros.plotting as pl
+
+
+
+class ProbesetEvaluator():
+    """General class for probe set evaluation, comparison, plotting
+    
+    The evaluator works on one given dataset and calculates metrics/analyses with respect to that dataset.
+    
+    The calculation steps of the metrics can be divided into:
+    - calculations that need to be run one time
+    - calculations that need to be run for each probe set
+    
+    ###################
+    # Run evaluations #
+    ###################    
+    
+    Evaluate a single probeset:
+        evaluator = ProbesetEvaluator(adata)
+        evaluator.evaluate_probeset(gene_set)
+    
+    In a pipeline to evaluate multiple probesets you would run
+        - sequential setup:
+            evaluator = ProbesetEvaluator(adata)
+            for i,gene_set in enumerate(sets):
+                evaluator.evaluate_probeset(gene_set,set_id=f"set_{i}")
+        - parallelised setup:
+            evaluator = ProbesetEvaluator(adata)
+            # 1. step:
+            evaluator.compute_or_load_shared_results()
+            # 2. step: parallelised processes
+            evaluator.evaluate_probeset(gene_set,set_id,update_summary=False) # parallelised over set_ids
+            # 3. step: 
+            evaluator.summary_statistics()
+    
+    #########################
+    # Reference evaluations #
+    #########################
+    
+    In practice the evaluations are meaningful when having reference evaluations to compare to.
+    
+    A simple way to get reference probe sets:
+        reference_sets = spapros.selection.select_reference_probesets(adata)
+    Evaluate them (we also provide ids to keep track of the probesets):
+        evaluator = ProbesetEvaluator(adata)
+        for set_id, gene_set in reference_sets.items():
+            evaluator.evaluate_probeset(gene_set,set_id=set_id)
+        evaluator.plot_summary()
+        
+    ######################
+    # Evaluation schemes #
+    ######################
+    
+    Some metrics take very long to compute, we prepared different metric sets for a quick or a full evaluation.
+    You can also specify the list of metrics yourself by setting scheme="custom". Note that in any scheme it might
+    still be reasonable to adjust `metrics_params`.
+    
+    #####################
+    # Saving of results #
+    #####################
+    
+    If `results_dir` is not None we save the results in files. 
+    Why:
+    - some computations are time demanding, especially when you evaluate multiple sets it's reasonable to keep results.
+    - load previous results when initializing a ProbesetEvaluator. Makes it very easy to access and compare old results.
+    
+    Two saving directories need to be distinguished:
+    1. `results_dir`: each probeset's evaluation results are saved here
+    2. `reference_dir`: for shared reference dataset results (default is reference_dir = results_dir + reference_name)
+    
+    In which files the results are saved:
+    - Shared computations are saved as
+        reference_dir # (default: results_dir+"references")
+        └── {reference_name}_{metric}.csv # shared computations for given reference dataset   
+    - The final probeset specific results are saved as
+        results_dir
+        ├── {metric} # one folder for each metric
+        │   └── {reference_name}_{set_id}.csv # result file for given set_id, reference dataset, and metric
+        └── {reference_name}_summary.csv # summary statistics
+        
+    ############
+    # Plotting #
+    ############    
+    
+    Plot a summary metrics table to get an overall performance overview:
+        evaluator.plot_summary()
+    
+    For each evaluation we provide a detailed plot, e.g.:
+    - forest_clfs: heatmap of normalised confusion matrix
+    - gene_corr: heatmap of ordered correlation matrix
+    
+    Create detailed plots with:
+        evaluator.plot_evaluations()
+    
+    """
+    def __init__(
+            self,
+            adata,
+            celltype_key="celltype",
+            results_dir="./probeset_evaluation/",
+            scheme="quick",
+            metrics=None,
+            metrics_params={},
+            marker_list = None,
+            summary_only=False,  # TODO: think we shouldn't support this, makes things more complicated      
+            reference_name="adata1",
+            reference_dir=None,
+            verbosity=1,
+            n_jobs=-1
+        ) -> None:
+        """
+        adata: AnnData
+            Already preprocessed. Typically we use log normalised data.
+        celltype_key: str or list of strs
+            adata.obs key for cell type annotations. Provide a list of keys to calculate the according metrics on
+            multiple keys.
+        results_dir: str
+            Directory where probeset results are saved. Set to `None` if you don't want to save results. When 
+            initializing the class we also check for existing results
+            
+            Note if 
+            TODO: Decide: saving results is nice since we don't need to keep them in memory. On the other hand the stuff
+                          doesn't need that much memory I think. Even if you have 100 probesets, it's not that much
+        scheme: str
+            Defines which metrics are calculated
+            - "quick" : knn, forest classification, marker correlation (if marker list given), gene correlation
+            - "full" : nmi, knn, forest classification, marker correlation (if marker list given), gene correlation
+            - "custom": define metrics of intereset in `metrics`
+        metrics: list of strs
+            Define which metrics are calculated. This is set automatically if `scheme != "custom"`. Supported are
+            - "nmi"
+            - "knn"
+            - "forest_clfs"
+            - "marker_corr"
+            - "gene_corr"
+        metrics_params: dict of dicts
+            Provide parameters for the calculation of each metric. E.g.
+            metrics_params = {
+                "nmi":{
+                    "ns": list(range(5, 21, 1)),
+                    "AUC_borders": [[7, 14], [15, 20]],
+                    }
+                }
+            This overwrites the arguments `ns` and `AUC_borders` of the nmi metric. See 
+            spapros.evaluation.get_metric_default_parameters() for the default values of each metric
+        summary_only: bool
+            Wether to skip steps that aren't needed for summary metrics. Computations are faster then. Example: For plotting a gene set's 
+            correlation matrix the matrix is ordered by a linkage clustering - that step can be skipped for summary metric calculation only.
+        reference_name: str
+            Name of reference dataset. This is chosen automatically if `None` is given.
+        reference_dir: str
+            Directory where reference results are saved. If `None` is given `reference_dir` is set to `results_dir+"reference/"`
+        n_jobs: int
+            Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+
+
+        metrics_params: list of dicts
+        """
+        self.adata = adata
+        self.celltype_key=celltype_key
+        self.dir = results_dir
+        self.scheme = scheme
+        self.marker_list = marker_list
+        self.metrics_params = self._prepare_metrics_params(metrics_params)
+        self.metrics = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
+        self.ref_name = reference_name
+        self.ref_dir = reference_dir if (reference_dir is not None) else self._default_reference_dir()
+        self.verbosity = verbosity
+        self.n_jobs = n_jobs
+
+        self.shared_results = {}
+        self.results = {metric:{} for metric in self.metrics}
+        self.summary_results = None
+        
+        self._shared_res_file = lambda metric : os.path.join(self.ref_dir,f"{self.ref_name}_{metric}.csv")
+        self._res_file = lambda metric, set_id : os.path.join(self.dir,f"{metric}/{self.ref_name}_{set_id}.csv")
+        self._summary_file = os.path.join(self.dir,f"{self.ref_name}_summary.csv") if self.dir else None 
+        
+        # TODO:
+        # For the user it could be important to somehow throw a warning when reinitializing the Evaluator with new 
+        # params but still having the old directory. The problem is then that old results are loaded that are 
+        # calculated with old parameters. Don't know exactly how to do this to make it still pipeline friendly
+
+    def compute_or_load_shared_results(
+            self,
+        ):    
+        """Compute results that are potentially reused for evaluations of different probesets
+        """
+        
+        for metric in self.metrics:
+            if self.ref_dir and os.path.isfile(self._shared_res_file(metric)):
+                self.shared_results[metric] = pd.read_csv(self._shared_res_file(metric),index_col=0)
+            else:
+                self.shared_results[metric] = metric_shared_computations(self.adata,
+                                                                         metric=metric,
+                                                                         parameters=self.metrics_params[metric],
+                                                                        )
+                if self.ref_dir and (self.shared_results[metric] is not None):
+                    Path(self.ref_dir).mkdir(parents=True, exist_ok=True)
+                    self.shared_results[metric].to_csv(self._shared_res_file(metric))
+        
+    def evaluate_probeset(
+            self,
+            genes,
+            set_id="probeset1",
+            update_summary=True
+        ):
+        """
+        probeset_name: str
+            Name of probeset. This is chosen automatically if `None` is given.
+        update_summary: bool
+            Whether to compute summary statistics, update the summary table and also update the summary csv file if
+            self.dir is not None. This option is interesting when using ProbesetEvaluator in a distributed pipeline 
+            since multiple processes would access the same file in parallel.
+        """
+
+        self.compute_or_load_shared_results()
+        
+        for metric in self.metrics:
+            if (self.dir is None) or (not os.path.isfile(self._res_file(metric,set_id))):
+                self.results[metric][set_id] = metric_computations(genes,
+                                                                   adata=self.adata,
+                                                                   metric=metric,
+                                                                   shared_results=self.shared_results[metric],
+                                                                   parameters=self.metrics_params[metric]
+                                                                  )  
+                if self.dir:
+                    Path(os.path.dirname(self._res_file(metric,set_id))).mkdir(parents=True, exist_ok=True)
+                    self.results[metric][set_id].to_csv(self._res_file(metric,set_id))
+            
+        if update_summary:
+            self.summary_statistics(set_ids=[set_id])
+                        
+    def summary_statistics(self,set_ids):
+        """Compute summary statistics and update summary csv (if self.results_dir is not None)
+        """
+            
+        df = self._init_summary_table(set_ids)
+        
+        for set_id in set_ids:
+            for metric in self.metrics:
+                if (set_id in self.results[metric]) and (self.results[metric][set_id] is not None): 
+                    results = self.results[metric][set_id]
+                elif self.dir and os.path.isfile(self._res_file(metric,set_id)):
+                    results = pd.read_csv(self._res_file(metric,set_id),index_col=0)
+                summary = metric_summary(adata=self.adata,
+                                         results=results,
+                                         metric=metric,
+                                         parameters=self.metrics_params[metric]
+                                        )
+                for key in summary:
+                    df.loc[set_id,key] = summary[key]
+        if self.dir:
+            df.to_csv(self._summary_file)
+        
+        self.summary_results = df
+        
+    def _prepare_metrics_params(self,new_params):
+        """Set metric parameters to default values and overwrite defaults in case user defined param is given
+        """
+        params = get_metric_default_parameters()
+        for metric in params:
+            if metric in new_params:
+                for param in params[metric]:
+                    if param in new_params[metric]:
+                        params[metric][param] = new_params[metric][param]
+        if self.marker_list is not None:
+            params["marker_corr"]["marker_list"] = self.marker_list
+        if self.celltype_key is not None:
+            params["forest_clfs"]["ct_key"] = self.celltype_key
+        return params
+        
+    def _get_metrics_of_scheme(self,):
+        """
+        """
+        
+        if self.scheme == "quick":
+            metrics = ["knn_overlap", "forest_clfs", "gene_corr"]
+        elif self.scheme == "full":
+            metrics = ["cluster_similarity", "knn_overlap", "forest_clfs", "gene_corr"]
+        
+        # Add marker correlation metric if a marker list is provided
+        if ("marker_corr" in self.metrics_params) and ("marker_list" in self.metrics_params["marker_corr"]):
+            if self.metrics_params["marker_corr"]["marker_list"]:
+                metrics.append("marker_corr")
+                
+        return metrics
+        
+    def _init_summary_table(self,set_ids):
+        """Initialize or load table with summary results
+        
+        Note that column names for the summary metrics are not initialized here (except of the ones that already exist
+        in the csv).
+        
+        set_ids: list of strs
+            Initialize dataframe with set_ids as index. We also keep all set_ids that already exist in the summary csv.
+            
+        Returns
+        -------
+        pd.DataFrame with set_ids as index
+        """
+        if self.dir:
+            if os.path.isfile(self._summary_file):
+                df = pd.read_csv(self._summary_file,index_col=0)
+                sets_tmp = [s for s in set_ids if (s not in df.index)]
+                return pd.concat([df,pd.DataFrame(index=sets_tmp)])
+        return pd.DataFrame(index=set_ids)
+    
+    def _default_reference_dir(self,):
+        """
+        """
+        if self.dir:
+            return os.path.join(self.dir,"references")
+        else:
+            return None
+            
+    def plot_summary(
+            self,
+            set_ids="all",
+            **plot_kwargs,
+        ):
+        """Plot heatmap of summary metrics
+        
+        set_ids: "all" or list of strs
+        """
+        if (self.summary_results is None) and self.dir:
+            self.summary_results = pd.read_csv((self._summary_file),index_col=0)
+        if set_ids == "all":
+            set_ids = self.summary_results.index.tolist()
+        table = self.summary_results.loc[set_ids]
+        pl.summary_table(table,**plot_kwargs)
+
+
+    def plot_evaluations(
+            self,
+            set_ids="all",
+            metrics="all",
+            show=True,
+            save=False,
+            plt_kwargs={},
+        ):
+        """Plot detailed results plots for specified metrics
+        
+        Note: not all plots can be supported here. If we want to plot a penalty kernel for example we're missing the
+              kernel info. For such plots we need separate functions. 
+              
+        set_ids: "all" or list of strs
+            Check out self.summary_results for available sets.
+        metrics: "all" or list of strs
+            Check out 
+        
+        """
+        
+        if set_ids == "all":
+            if self.dir:
+                self.summary_results = pd.read_csv(self._summary_file,index_col=0)
+            set_ids = self.summary_results.index.tolist()
+        
+        if metrics == "all":
+            metrics = self.metrics
+            
+        for metric in metrics:
+            if metric not in self.results:
+                self.results[metric] = {}
+            for set_id in set_ids:
+                if (set_id not in self.results[metric]) or (self.results[metric][set_id] is None):
+                    try:
+                        self.results[metric][set_id] = pd.read_csv(self._res_file(metric, set_id), index_col=0)
+                    except:
+                        print(f"No results file found for set {set_id} for metric {metric}.")            
+            
+        if ("forest_clfs" in metrics):
+            conf_plt_kwargs = plt_kwargs["forest_clfs"] if ("forest_clfs" in plt_kwargs) else {}
+            pl.confusion_heatmap(set_ids,self.results["forest_clfs"],**conf_plt_kwargs)
+            
+        if ("gene_corr" in metrics):
+            corr_plt_kwargs = plt_kwargs["gene_corr"] if ("gene_corr" in plt_kwargs) else {}
+            pl.correlation_matrix(set_ids,self.results["gene_corr"],**corr_plt_kwargs)
+            
+
+
+
+
+
+########################################################################################################
+########################################################################################################
+########################################################################################################
+# evaluation.py will be reserved for the ProbesetEvaluator class only at the end. Therefore
+# the following functions will be moved or removed (quite a few dependencies need to be adjusted first though)
 
 
 def plot_gene_expressions(adata, f_idxs, fig_title=None, save_to=None):
@@ -36,333 +430,6 @@ def plot_gene_expressions(adata, f_idxs, fig_title=None, save_to=None):
     if save_to is not None:
         fig.savefig(save_to)
     plt.show()
-
-
-##########################################################
-####### Helper functions for clustering_sets() ###########
-##########################################################
-
-
-def get_found_ns(csv_file):
-    found_ns = []
-    with open(csv_file, "r") as f:
-        reader = csv.reader(f, delimiter=",")
-        next(f, None)  # skip header # TODO: test
-        for row in reader:
-            found_ns.append(int(row[0]))
-    return found_ns
-
-
-def write_assignments_to_csv(n, resolution, assignments, csv_file):
-    new_row = [n, resolution] + assignments
-    with open(csv_file, "a") as f:
-        csv_writer = csv.writer(f, delimiter=",")
-        csv_writer.writerow(new_row)
-
-
-def write_tried_res_n_to_csv(n, resolution, csv_file):
-    new_row = [resolution, n]
-    with open(csv_file, "a") as f:
-        csv_writer = csv.writer(f, delimiter=",")
-        csv_writer.writerow(new_row)
-
-
-def create_leiden_results_csv(csv_file, adata):
-    header = ["n", "resolution"] + list(adata.obs.index)
-    with open(csv_file, "w") as f:
-        csv_writer = csv.writer(f, delimiter=",")
-        csv_writer.writerow(header)
-    with open(csv_file[:-4] + "_tried.csv", "w") as f:
-        csv_writer = csv.writer(f, delimiter=",")
-        csv_writer.writerow(["resolution", "n"])
-
-
-def get_tried_res_n(csv_file):
-    tried_res_n = []
-    if os.path.isfile(csv_file):
-        with open(csv_file, "r") as f:
-            reader = csv.reader(f, delimiter=",")
-            next(f, None)  # skip header
-            for row in reader:
-                tried_res_n.append([float(row[0]), int(row[1])])
-        tried_res_n.sort(key=lambda x: x[0])
-    return tried_res_n
-
-
-def compute_clustering(adata, ns, resolution, tried_res_n, csv_file, progress_bar=None):
-    """Compute leiden clustering for the given resolution, save result if new n was found, and update the variables."""
-    sc.tl.leiden(adata, resolution=resolution, key_added="tmp")
-    n = len(set(adata.obs["tmp"]))
-    tried_res_n.append([resolution, n])
-    tried_res_n.sort(key=lambda x: x[0])  # sort list of list by resolutions
-    found_ns = get_found_ns(csv_file)
-    write_tried_res_n_to_csv(n, resolution, csv_file[:-4] + "_tried.csv")
-    if n not in found_ns:
-        write_assignments_to_csv(n, resolution, list(adata.obs["tmp"]), csv_file)
-        if n in ns and progress_bar:
-            progress_bar.update(n=1)
-
-
-##########################################################
-################# clustering_sets() ######################
-##########################################################
-
-
-def clustering_sets(adata, ns, save_to, start_res=1.0, verbose=False):
-    """Compute leiden clusters for different numbers of clusters
-
-    Leiden clusters are calculated with different resolutions.
-     A search (similar to binary search) is applied to find the right resolutions for all defined n's.
-
-    Arguments
-    ---------
-    adata: anndata object
-        adata object with data to compute clusters on. Need to include a
-        neighbors graph (and PCA?)  TODO: make this clear.
-    ns: list of ints
-        list of numbers of clusters
-    save_to: str
-        path to save results (e.g. /path/to/file.csv)
-    start_res: float
-        resolution to start computing clusterings.
-    verbose: bool
-        if True a progress bar is shown
-
-    Return
-    ------
-    nothing
-
-    Save
-    ----
-    csv file (path including the name of the file is given by save_to)
-        1st column refers to the number of clusters,
-        2nd col refers to the resolution used to calculate the clustering
-        each following column refer to individual cell's cluster assignments
-        e.g.
-        n , res  , <adata.obs.index[0]>, <adata.obs.index[1]>, ...., <adata.obs.index[n_cells-1]>
-        6 , 1.   ,         0           ,          4          , ....,              5
-        2 , 0.67 ,         1           ,          0          , ....,              1
-        13, 2.34 ,         9           ,          7          , ....,             12
-        17, 2.78 ,         7           ,          7          , ....,              3
-        .
-        .
-        .
-    csv file (at path, save_to[:-4]+"_tried.csv")
-        this file includes all resolutions that were tried, some resolution lead to same
-        numbers of clusters that have already been observed, such resolutions are not saved in
-        the first csv file. Therefore the second is added, such that results can be easily
-        extended if the function is called again. File structure:
-        1nd column refers to the resolution used to calculate the clustering
-        2st column refers to the number of clusters,
-        e.g.
-        res   , n
-        1.    , 6
-        0.5   , 4
-        0.25  , 2
-        0.375 , 2
-        0.4375, 3
-        .
-        .
-        .
-        (note: this listing keeps the order of the conducted trials)
-    """
-    tried_res_n = get_tried_res_n(save_to[:-4] + "_tried.csv")  # list of [resolution,n] lists
-
-    if verbose:
-        bar = tqdm(total=len(ns))
-        if len(tried_res_n) > 0:
-            bar.n = len(set(ns).intersection(set([res_n[1] for res_n in tried_res_n])))
-            bar.last_print_n = len(set(ns).intersection(set([res_n[1] for res_n in tried_res_n])))
-            bar.refresh()
-    else:
-        bar = None
-
-    if not os.path.isfile(save_to):
-        save_dir = save_to.rsplit("/", 1)[0]
-        Path(save_dir).mkdir(parents=True, exist_ok=True)
-        create_leiden_results_csv(save_to, adata)
-
-    n_min = np.min(ns)
-    n_max = np.max(ns)
-    if not len(tried_res_n) > 0:
-        res = start_res
-        compute_clustering(adata, ns, res, tried_res_n, save_to, progress_bar=bar)
-
-    # search for lower resolution border
-    res = np.min([res_n[0] for res_n in tried_res_n])
-    while np.min(np.unique([res_n[1] for res_n in tried_res_n])) > n_min:
-        res *= 0.5
-        compute_clustering(adata, ns, res, tried_res_n, save_to, progress_bar=bar)
-
-    # search for higher resolution border
-    res = np.max([res_n[0] for res_n in tried_res_n])
-    while np.max([res_n[1] for res_n in tried_res_n]) < n_max:
-        res *= 2
-        compute_clustering(adata, ns, res, tried_res_n, save_to, progress_bar=bar)
-
-    # search missing n's between neighbouring found n's
-    found_space = True
-    while (not set(ns) <= set([res_n[1] for res_n in tried_res_n])) and (found_space):
-        tmp_res_n = tried_res_n
-        found_space = False
-        for i in range(len(tmp_res_n) - 1):
-            # check if two neighbouring resolutions have different n's
-            cond1 = tmp_res_n[i + 1][1] - tmp_res_n[i][1] > 1
-            # check if we search an n between the two n's of the given resolutions
-            cond2 = len([n for n in ns if n > tmp_res_n[i][1] and n < tmp_res_n[i + 1][1]]) > 0
-            # we run in some error to recompute values between false pairs
-            # I think this occurs since it can happen that sometimes a slightly higher
-            # resolution leads to a lower number of clusters
-            # TODO: check this properly
-            # cond3 is added to account for that issue (probably not the best way)
-            cond3 = abs(tmp_res_n[i + 1][0] - tmp_res_n[i][0]) > 0.00005  # 0.0003
-            if cond1 and cond2 and cond3:
-                res = (tmp_res_n[i][0] + tmp_res_n[i + 1][0]) * 0.5
-                compute_clustering(adata, ns, res, tried_res_n, save_to, progress_bar=bar)
-                found_space = True
-
-
-############## Helper function for nmi () ###################
-
-
-def get_assignments(csv_file, n):
-    with open(csv_file, "r") as f:
-        reader = csv.reader(f, delimiter=",")
-        next(f, None)  # skip header
-        for row in reader:
-            if int(row[0]) == n:
-                return [int(val) for val in row[2:]]
-
-
-####################### NMI () ##############################
-
-
-def nmi(
-    files,
-    reference_file,
-    save_to,
-    ns,
-    method="arithmetic",
-    names=None,
-    verbose=True,
-    save_every=10,
-):
-    """Compute NMI between sets  of clusterings and a reference set of clusterings.
-
-    For different numbers of clusters (`ns`) the normalized mutual information
-    NMI based on 2 different cluster assignments are computed. This is done for
-    all cluster assignments of each element in files wrt the assignment
-    in reference_file with the according `n`.
-    Results are saved to a csv file. If a csv file already exists nmis are calculated
-    for missing sets. Existing results are not deleted.
-
-    Parameters
-    ----------
-    files: list of strs
-        file pathes to csv files that contain clusterings for different
-        numbers of clusters. Each file refers to one set of selected
-        features. file structure:
-        n , name1, name2, name3, ...
-        2 ,   0  ,   0  ,   1  , ...
-        4 ,   1  ,   0  ,   3  , ...
-        8 ,   7  ,   7  ,   2  , ...
-        3 ,   2  ,   1  ,   0  , ...
-        (each row is a list of cluster assignments)
-    reference_file: str
-        file path to reference file (same file structure as in groups)
-    save_to: str
-        path to output file.
-    ns: list of ints
-        list of numbers of clusters for which NMIs are computed.
-    method:
-        NMI implementation
-            'max': scikit method with `average_method='max'`
-            'min': scikit method with `average_method='min'`
-            'geometric': scikit method with `average_method='geometric'`
-            'arithmetic': scikit method with `average_method='arithmetic'`
-            TODO: implement the following (see comment below and scib)
-            'Lancichinetti': implementation by A. Lancichinetti 2009 et al.
-            'ONMI': implementation by Aaron F. McDaid et al. (https://github.com/aaronmcdaid/Overlapping-NMI) Hurley 2011
-    names: list of strs
-        Optionally provide a list with names refering to groups. The saved file
-        has those names as column names. If names is None (default) the
-        file names of files are used.
-    save_every: int
-        save results after every `save_every` minutes
-
-    Return
-    ------
-    nothing
-
-    Save
-    ----
-    csv file (pandas dataframe)
-        dataframe of NMI results. Structure of dataframe:
-             n (index),     name1  ,     name2  , ....
-             1        ,     1.0    ,     1.0    , ....
-             2        ,     0.9989 ,     0.9789 , ....
-             ...
-    """
-
-    if save_every is not None:
-        start = time.time()
-        minute_count = 0
-
-    if names is None:
-        names = []
-        for file in files:
-            tmp = file.rsplit("/")[-1]
-            tmp = tmp.rsplit(".", 1)[0]
-            names.append(tmp)
-
-        # Create nmi dataframe or extent existing with NaN values for nmis to calculate
-    if (save_to is not None) and os.path.isfile(save_to):
-        nmis = pd.read_csv(save_to, index_col=0)
-        # add NaN cols
-        for name in [s for s in names if s not in nmis.columns]:
-            nmis[name] = np.nan
-        # add NaN rows
-        old_ns = list(nmis.index)
-        all_ns = old_ns + [n for n in ns if n not in old_ns]
-        nmis.reindex(all_ns)
-    else:
-        save_dir = save_to.rsplit("/", 1)[0]
-        Path(save_dir).mkdir(parents=True, exist_ok=True)
-        nmis = pd.DataFrame(np.nan, index=ns, columns=names)
-
-    # Search which nmis can be calculated with given files
-    result_exists = pd.DataFrame(False, index=nmis.index, columns=nmis.columns)
-    ref_ns_full = get_found_ns(reference_file)
-    ref_ns = [n for n in ref_ns_full if n in ns]
-    for i, name in enumerate(names):
-        found_ns = get_found_ns(files[i])
-        valid_ns = [n for n in found_ns if n in ref_ns]
-        result_exists.loc[result_exists.index.isin(valid_ns), name] = True
-
-    for n in ref_ns:
-        ref_labels = get_assignments(reference_file, n)
-        for i, name in enumerate(names):
-            if np.isnan(nmis.loc[n, name]) and result_exists.loc[n, name]:
-                labels = get_assignments(files[i], n)
-                if len(ref_labels) != len(labels):
-                    raise ValueError(
-                        f"different lengths in {file} - ({len(ref_labels)}) and reference - ({len(labels)})"
-                    )
-                if method in ["max", "min", "geometric", "arithmetic"]:
-                    from sklearn.metrics import normalized_mutual_info_score
-
-                    nmi_value = normalized_mutual_info_score(labels, ref_labels, average_method=method)
-                else:
-                    raise ValueError(f"Method {method} not valid")
-                nmis.at[n, name] = nmi_value
-
-                if save_every is not None:
-                    atm = time.time()
-                    minutes, seconds = divmod(atm - start, 60)
-                    if minutes // save_every > minute_count:
-                        minute_count += 1
-                        nmis.to_csv(save_to)
-    nmis.to_csv(save_to)
 
 
 def plot_nmis(results_path, cols=None, colors=None, labels=None, legend=None):
@@ -406,239 +473,6 @@ def plot_nmis(results_path, cols=None, colors=None, labels=None, legend=None):
     plt.ylabel("NMI")
     plt.show()
     return fig
-
-
-def NMI_AUCs(results_path, sections=None, full_AUC=True):
-    """Calculate the AUC of NMI vs n clusters plots
-
-    Note that the function assumes that NMI values are given for n's with
-    stepsize of one 1 between the n values. Otherwise a factor of the step
-    size would make the results comparable. (if stepsizes change a n value
-    specific factor needs to be taken into account...)
-
-    Arguments
-    ---------
-    results_path: str
-        path to csv file with NMI results (created with evaluate_nmi.py script).
-    sections: list of floats
-        The interval of n values is divided in sections defined by the thresholds
-        given in sections. E.g.
-            ns = [1,2,3,...,300]
-            sections = [50, 100, 200]
-            AUCs are separately calculated for
-                1. ns = [1,2, ..., 50]
-                2. ns = [51,52, ..., 100]
-                3. ns = [101,102, ..., 200]
-                4. ns = [201,202, ..., 300]
-    full_AUC: bool
-        if True the AUC over the full set of n is calculated. This is interesting
-        if you want to calculate AUCs on sections but also on the full set.
-
-    """
-    df = pd.read_csv(results_path, index_col=0)
-
-    ns = list(df.index)
-    sects = []
-    if full_AUC:
-        sects.append([np.min(ns), np.max(ns)])
-    if sections is not None and len(sections) > 0:
-        sections.sort()
-        for i, s in enumerate(sections):
-            if i == 0:
-                sects.append([np.min(ns), s])
-            else:
-                sects.append([sections[i - 1] + 1, s])
-        sects.append([sections[-1] + 1, np.max(ns)])
-
-    for i, interval in enumerate(sects):
-        if i == 0:
-            tmp = df.loc[(df.index >= interval[0]) & (df.index <= interval[1])].mean()
-            # print(list(tmp))
-            AUCs = pd.DataFrame([list(tmp)], columns=tmp.index, index=[f"{interval[0]}-{interval[1]}"])
-        else:
-            tmp = df.loc[(df.index >= interval[0]) & (df.index <= interval[1])].mean()
-            tmp.name = f"{interval[0]}-{interval[1]}"
-            AUCs = AUCs.append(tmp)  # list(tmp))
-
-    return AUCs
-
-
-##########################################################
-################## knn_similarity() ######################
-##########################################################
-
-
-def neighbors_csv(adata, k, csv_file):
-    """Save nearest neighbors of each cell in a csv file"""
-    if "distances" in adata.obsp:
-        neighbors = adata.obsp["distances"]
-    elif "distances" in adata.uns["neighbors"]:
-        neighbors = adata.uns["neighbors"]["distances"]
-    rows, cols = neighbors.nonzero()
-    k_nns = {}
-    for r in range(adata.n_obs):
-        k_nns[str(r)] = []
-    for i in range(len(rows)):
-        k_nns[str(rows[i])].append(cols[i])
-    max_k = 0
-    for r in k_nns:
-        if len(k_nns[r]) > max_k:
-            max_k = len(k_nns[r])
-
-    header = ["cell_idx", "n_neighbors"] + [f"neighbor_{i}" for i in range(max_k)]
-    with open(csv_file, "w") as f:
-        csv_writer = csv.writer(f, delimiter=",")
-        csv_writer.writerow(header)
-        for cell in k_nns:
-            row = [cell, len(k_nns[cell])] + k_nns[cell]
-            csv_writer.writerow(row)
-
-
-def compute_similarity(csv_file_1, csv_file_2):
-    """Compute overlap of two sets of k nearest neighbors for each cell
-
-    The overlap is the len(intersection) of both sets. To make the values comparable
-    in a reasonable way they are divided by the number of neighbors in the smaller set.
-
-    """
-    with open(csv_file_1, "r") as f1, open(csv_file_2, "r") as f2:
-        reader1 = csv.reader(f1, delimiter=",")
-        reader2 = csv.reader(f2, delimiter=",")
-        # skip headers
-        next(f1, None)
-        next(f2, None)
-        overlaps = []
-        for row1, row2 in zip(reader1, reader2):
-            set1 = set([int(val) for val in row1[2:]])
-            set2 = set([int(val) for val in row2[2:]])
-            max_intersection = np.min([len(set1), len(set2)])
-            overlaps.append(len(set1.intersection(set2)) / max_intersection)
-    return overlaps
-
-
-def knn_similarity(
-    gene_set,
-    reference,
-    ks=[15],
-    save_dir=None,
-    save_name=None,
-    reference_dir=None,
-    reference_name=None,
-    bbknn_ref_key=None,
-):
-    """Compute the nr of identical neighbors for each cell
-
-    For each `k` in `ks` neighbor graphs for reference adata and adata[:,gene_set] are calculated.
-    If results for a given `k` already exist they are not recalculated.
-    For each cell the number of identical neighbors in both neighbor graphs are calculated.
-    Neighbor graphs are calculated on 50 PCA components
-
-    Parameters
-    ----------
-    gene_set: list
-        list of genes or int indices for selected genes
-    reference: anndata or str
-        Either reference (full gene set) anndata object or path to .h5ad file
-    ks: list
-        list of ints. Number of neighbors for which neighbor graphs are calculated
-    save_dir: str
-        path where files and results for `gene_set` are saved
-    save_name: str
-        name that is added to saved neighbors of `gene_set`'s neighbor graph and similarity results.
-    reference_dir: str
-        directory where neighbor info files of `reference` are saved
-    reference_name: str
-        name for saving reference files
-    bbknn_ref: None or str
-        If str: calculate the neighbors graph for the reference with bbknn on provided batch key
-
-    Save
-    ----
-    for each k in `ks`:
-    1. csv file of `gene_set`'s neighbors at path = <save_dir> + f"nns_k{k}" + <save_name> + ".csv"
-        Structure of file:
-        cell_idx,  n_neighbors, neighbor_0, neighbor_1, ..., neighbor_<n_neighbors-1>
-            0   ,      14     ,    307    ,    432    , ...,      30356
-            1   ,      14     ,    256    ,    289    , ...,      43220
-        ...
-        (Caution! rows can be longer than the original k-1 because the neighbors search algorithm
-        finds more than k-1, happens super rarely, idk why. Ideally k-1 == n_neighbors. If such case
-        occurs in your dataset rows in the csv file may have different length)
-    2. csv file of `reference`'s neighbors at path = <reference_dir> + f"nns_k{k}" + <reference_name> + ".csv"
-        Same structure as 1.
-    3. csv file of results at path = <save_dir> + "nn_similarity_" + <save_name> + ".csv"
-        Structure of file:
-        (header: cell_idx, ks[0], ks[1], ..., ks[-1])
-        e.g.
-        (cell_idx),  15  ,  30  , ...,  100
-            0     ,   7  ,  22  , ...,   73
-            1     ,  14  ,  28  , ...,   82
-            2     ,   0  ,   3  , ...,   37
-        ...
-
-    """
-
-    if (save_dir is None) or (save_name is None) or (reference_dir is None) or (reference_name is None):
-        raise ValueError("Names and directories for saving results must be specified.")
-
-    if type(reference) == str:
-        adata = ann.read_h5ad(reference)
-    else:
-        adata = reference.copy()
-    gene_set = [g for g in gene_set if g in adata.var.index]
-    n_pcs = np.min([50, len(gene_set) - 1])
-    adata_red = adata[:, gene_set]
-
-    # Delete existing PCAs, neighbor graphs, etc. and calculate PCA for n_pcs
-    for a in [adata, adata_red]:
-        uns = [key for key in a.uns]
-        for u in uns:
-            del a.uns[u]
-        obsm = [key for key in a.obsm]
-        for o in obsm:
-            del a.obsm[o]
-        varm = [key for key in a.varm]
-        for v in varm:
-            del a.varm[v]
-        sc.tl.pca(a, n_comps=n_pcs)
-
-    Path(save_dir).mkdir(parents=True, exist_ok=True)
-    Path(reference_dir).mkdir(parents=True, exist_ok=True)
-    results_path = save_dir + "nn_similarity_" + save_name + ".csv"
-    if os.path.isfile(results_path):
-        with open(results_path, "r") as f:
-            reader = csv.reader(f)
-            header = next(reader)
-            existing_ks = [int(header[i]) for i in range(1, len(header))]
-        df = pd.read_csv(results_path, index_col=0)
-    else:
-        index = [i for i in range(len(adata.obs))]
-        df = pd.DataFrame(index=index)
-        existing_ks = []
-
-    # create files where neighbors are saved
-    for k in [_ for _ in ks if not (_ in existing_ks)]:
-        path = save_dir + f"nns_k{k}" + save_name + ".csv"
-        ref_path = reference_dir + f"nns_k{k}" + reference_name + ".csv"
-        for p, a in [(path, adata_red), (ref_path, adata)]:
-            if not os.path.isfile(p):
-                if "neighbors" in a.uns:
-                    del a.uns["neighbors"]
-                if "connectivities" in a.obsp:
-                    del a.obsp["connectivities"]
-                if "distances" in a.obsp:
-                    del a.obsp["distances"]
-                sc.pp.neighbors(a, n_neighbors=k)
-                neighbors_csv(a, k, p)
-
-    # save similarities in csv
-    for k in [_ for _ in ks if not (_ in existing_ks)]:
-        path = save_dir + f"nns_k{k}" + save_name + ".csv"
-        ref_path = reference_dir + f"nns_k{k}" + reference_name + ".csv"
-        common_neighbors = compute_similarity(path, ref_path)
-        # print(len(common_neighbors))
-        df[f"{k}"] = common_neighbors
-        df.to_csv(results_path)
 
 
 ##########################################################
@@ -1303,193 +1137,3 @@ def forest_rank_table(importances, celltypes="all", return_ct_specific_rankings=
         return tab, im_
     else:
         return tab
-
-
-def xgboost_forest_classification(
-    adata,
-    selection,
-    celltypes="all",
-    ct_key="Celltypes",
-    n_cells_min=40,
-    max_depth=3,
-    lr=0.2,
-    colsample_bytree=1,
-    cv_splits=5,
-    min_child_weight=None,
-    gamma=None,
-    seed=0,
-    n_seeds=5,
-    verbosity=0,
-    return_train_perform=False,
-    return_clfs=False,
-    n_jobs=1,
-):
-    """Measure celltype classification performance with gradient boosted forests.
-
-    We train extreme gradient boosted forest classifiers on multi class classification of cell types. Cross validation
-    is performed to get an average confusion matrix (normalised by ground truth counts and sample weights to weight cell
-    types in a balanced way). To make the performance measure robust only cell types with at least `n_cells_min` are
-    taken into account. To make the cross validation more robust we run it with `n_seeds`. I.e. `cv_splits` x `n_seeds`
-    classifiers are trained and evaluated.
-
-    Parameters
-    ----------
-    adata: AnnData
-        We expect log normalised data in adata.X.
-    selection: list or pd.DataFrame
-        Forests are trained on genes of the list or genes defined in the bool column selection['selection'].
-    celltypes: 'all' or list
-        Forests are trained on the given celltypes.
-    ct_key: str
-        Column name of adata.obs with cell type info.
-    n_cells_min: int
-        Minimal number of cells to filter out cell types from the training set. Performance results are not robust
-        for low `n_cells_min`.
-    max_depth: str
-        max_depth argument of XGBClassifier.
-    cv_splits: int
-        Number of cross validation splits.
-    lr: float
-        Learning rate of XGBClassifier.
-    colsample_bytree: float
-        Fraction of features (randomly selected) that will be used to train each tree of XGBClassifier.
-    gamma: float
-        Regularisation parameter of XGBClassifier. Instruct trees to add nodes only if the associated loss gain is
-        larger or equal to gamma.
-    seed: int
-    n_seeds: int
-        Number of training repetitions with different seeds. We use multiple seeds to make results more robust.
-        Also we don't want to increase the number of CV splits to keep a minimal test size.
-    verbosity: int
-        Set to 2 for progress bar. Set to 3 to print test performance of each tree during training.
-    return_train_perform: bool
-        Wether to also return confusion matrix of training set.
-    return_clfs: str
-        Wether to return the classifier objects.
-    n_jobs: int
-        Multiprocessing number of processes.
-
-    Returns
-    -------
-    pd.DataFrame:
-        confusion matrix averaged over cross validations and seeds.
-    pd.DataFrame:
-        confusion matrix standard deviation over cross validations and seeds.
-    if return_train_perform:
-        pd.DataFrames as above for train set.
-    if return_clfs:
-        list of XGBClassifier objects of each cross validation step and seed.
-
-    """
-
-    if verbosity > 1:
-        try:
-            from tqdm.notebook import tqdm
-        except ImportError:
-            from tqdm import tqdm_notebook as tqdm
-        desc = "XGBClassifier Cross Val."
-    else:
-        tqdm = None
-
-    # Define cell type list
-    if celltypes == "all":
-        celltypes = adata.obs[ct_key].unique().tolist()
-    # Filter out cell types with less cells than n_cells_min
-    cell_counts = adata.obs[ct_key].value_counts().loc[celltypes]
-    if (cell_counts < n_cells_min).any():
-        warnings.warn(
-            f"The following cell types are not included in forest classifications since they have fewer "
-            f"than {n_cells_min} cells: {cell_counts.loc[cell_counts < n_cells_min].index.tolist()}"
-        )
-        celltypes = [ct for ct in celltypes if (cell_counts.loc[ct] >= n_cells_min)]
-
-    # Get data
-    obs = adata.obs[ct_key].isin(celltypes)
-    s = selection if isinstance(selection, list) else selection.loc[selection["selection"]].index.tolist()
-    X = adata[obs, s].X
-    ct_encoding = {ct: i for i, ct in enumerate(celltypes)}
-    y = adata.obs.loc[obs, ct_key].astype(str).map(ct_encoding).values
-
-    # Seeds
-    # To have more robust results we use multiple seeds (especially important for cell types with low cell count)
-    if n_seeds > 1:
-        rng = np.random.default_rng(seed)
-        seeds = rng.integers(low=0, high=100000, size=n_seeds)
-    else:
-        seeds = [seed]
-
-    # Initialize variables for training
-    confusion_matrices = []
-    if return_train_perform:
-        confusion_matrices_train = []
-    if return_clfs:
-        clfs = []
-    n_classes = len(celltypes)
-
-    # Cross validated random forest training
-    for seed in tqdm(seeds, desc="seeds", total=len(seeds)) if tqdm else seeds:
-        k_fold = StratifiedKFold(n_splits=cv_splits, random_state=seed, shuffle=True)
-        for train_ix, test_ix in tqdm(k_fold.split(X, y), desc=desc, total=cv_splits) if tqdm else k_fold.split(X, y):
-            # Get train and test sets
-            train_x, train_y, test_x, test_y = X[train_ix], y[train_ix], X[test_ix], y[test_ix]
-            sample_weight_train = compute_sample_weight("balanced", train_y)
-            sample_weight_test = compute_sample_weight("balanced", test_y)
-            # Fit the classifier
-            n_classes = len(np.unique(train_y))
-            clf = XGBClassifier(
-                max_depth=max_depth,
-                num_class=n_classes,
-                n_estimators=250,
-                objective="multi:softmax" if n_classes > 2 else "binary:logistic",
-                eval_metric="mlogloss",  # set this to get rid of warning
-                learning_rate=lr,
-                colsample_bytree=colsample_bytree,
-                min_child_weight=min_child_weight,
-                gamma=gamma,
-                booster="gbtree",  # TODO: compare with 'dart',rate_drop= 0.1
-                random_state=seed,
-                use_label_encoder=False,  # To get rid of deprecation warning we convert labels into ints
-                n_jobs=n_jobs,
-            )
-            clf.fit(
-                train_x,
-                train_y,
-                sample_weight=sample_weight_train,
-                early_stopping_rounds=5,
-                eval_metric="mlogloss",
-                eval_set=[(test_x, test_y)],
-                sample_weight_eval_set=[sample_weight_test],
-                verbose=verbosity > 2,
-            )
-            if return_clfs:
-                clfs.append(clf)
-            # Predict the labels of the test set samples
-            y_pred = clf.predict(test_x)  # in case you try booster='dart' add, ntree_limit=1 (some value>0) check again
-            # Append cv step results
-            confusion_matrices.append(
-                confusion_matrix(test_y, y_pred, normalize="true", sample_weight=sample_weight_test)
-            )
-            if return_train_perform:
-                y_pred = clf.predict(train_x)
-                confusion_matrices_train.append(
-                    confusion_matrix(train_y, y_pred, normalize="true", sample_weight=sample_weight_train)
-                )
-
-    # Pool confusion matrices
-    confusions_merged = np.concatenate([np.expand_dims(mat, axis=-1) for mat in confusion_matrices], axis=-1)
-    confusion_mean = pd.DataFrame(index=celltypes, columns=celltypes, data=np.mean(confusions_merged, axis=-1))
-    confusion_std = pd.DataFrame(index=celltypes, columns=celltypes, data=np.std(confusions_merged, axis=-1))
-    if return_train_perform:
-        confusions_merged = np.concatenate([np.expand_dims(mat, axis=-1) for mat in confusion_matrices_train], axis=-1)
-        confusion_mean_train = pd.DataFrame(
-            index=celltypes, columns=celltypes, data=np.mean(confusions_merged, axis=-1)
-        )
-        confusion_std_train = pd.DataFrame(index=celltypes, columns=celltypes, data=np.std(confusions_merged, axis=-1))
-
-    # Return
-    out = [confusion_mean, confusion_std]
-    if return_train_perform:
-        out += [confusion_mean_train, confusion_std_train]
-    if return_clfs:
-        out += [clfs]
-    return out
