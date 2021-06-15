@@ -644,18 +644,18 @@ def add_tree_genes_from_reference_trees(
     # Start performance difference
     f1_diffs = f1_ref - f1
     f1_diffs = f1_diffs.loc[f1_diffs > performance_th]
-    
+
     # Return initial results if all cell types' performances are good enough already
     if len(f1_diffs) == 0:
         if return_clfs:
-            #raise ValueError("No classifiers were trained since no cell type needs a performance improvement. "\
+            # raise ValueError("No classifiers were trained since no cell type needs a performance improvement. "\
             #                 "Set return_clfs=False or scip the function call.")
             # TODO: ideally we would have the following option (it's not too important though):
             #       return [initial_summary, initial_ct_spec_summary, im], initial_tree_clfs
             return [initial_summary, initial_ct_spec_summary, im], []
         else:
-            return initial_summary, initial_ct_spec_summary, im  
-    
+            return initial_summary, initial_ct_spec_summary, im
+
     # Get reference importance table of the celltypes' best trees
     importances = pd.concat([im_ref[ct]["0"] for ct in im_ref], axis=1)
     importances.columns = [ct for ct in im_ref]
