@@ -141,7 +141,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
         #############
         # Load data #
         #############
-        adata = sc.read(dataset_params["data_path"] + dataset_params["dataset"]) # type: ignore
+        adata = sc.read(dataset_params["data_path"] + dataset_params["dataset"])  # type: ignore
         if dataset_params["process_adata"]:
             preprocess_adata(adata, options=dataset_params["process_adata"])
 

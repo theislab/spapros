@@ -452,7 +452,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
                 edge_color = []  # type: ignore
                 for color_value in cmap(normalize(mean_flat)):  # type: ignore
                     lum = relative_luminance(color_value)
-                    edge_color.append(".15" if lum > 0.408 else "w") # type: ignore
+                    edge_color.append(".15" if lum > 0.408 else "w")  # type: ignore
 
             edge_lw = 1.5 if edge_lw is None else edge_lw
 
