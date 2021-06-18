@@ -269,6 +269,7 @@ class ProbesetEvaluator:
                         shared_results=self.shared_results[metric],
                         pre_results=self.pre_results[metric][set_id],
                         parameters=self.metrics_params[metric],
+                        n_jobs=self.n_jobs,
                     )
                     if self.dir:
                         Path(os.path.dirname(self._res_file(metric, set_id))).mkdir(parents=True, exist_ok=True)
