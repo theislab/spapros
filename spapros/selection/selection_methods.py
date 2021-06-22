@@ -7,7 +7,6 @@ import scipy
 from sklearn.decomposition import SparsePCA
 from spapros.evaluation.evaluation import forest_classifications
 from spapros.util.util import clean_adata
-from spapros.util.util import preprocess_adata
 
 # from spapros.evaluation.evaluation import tree_classifications
 
@@ -84,7 +83,6 @@ def select_pca_genes(
     variance_scaled=False,
     absolute=True,
     n_pcs=20,
-    process_adata=None,
     penalty_keys=[],
     corr_penalty=None,
     inplace=True,
@@ -94,7 +92,7 @@ def select_pca_genes(
     Arguments
     ---------
     adata: AnnData
-        adata
+        log normalised data
     n: int
         number of selected features
     variance_scaled: bool
@@ -104,14 +102,6 @@ def select_pca_genes(
         Take absolute value of loadings.
     n_pcs: int
         number of PCs used to calculate loadings sums.
-    process_adata: list of strs
-        Options to process adata before selection. Supported options are:
-        - 'norm': normalise adata.X according adata.obs['size_factors']
-        - 'log1p': log(adata.X + 1)
-        - 'scale': scale genes of adata.X to zero mean and std 1 (adata.X no longer sparse)
-        TODO: this selection function should only accept norm-log1p or norm-log1p-scaled data
-              (...actually we might not want to include such constraint,
-               maybe someone wants to try selections on other data than scRNA-seq)
     penalty_keys: list of strs
         List of keys for columns in adata.var that are multiplied with the scores
     corr_penalty: function
@@ -138,9 +128,7 @@ def select_pca_genes(
     if n_pcs > a.n_vars:
         n_pcs = a.n_vars
 
-    clean_adata(a, obs_keys=["size_factors"])
-    if process_adata:
-        preprocess_adata(a, options=process_adata)
+    clean_adata(a)
 
     sc.pp.pca(
         a,
@@ -228,7 +216,6 @@ def select_DE_genes(
     n,
     per_group=False,
     obs_key="cell_types",
-    process_adata=None,
     penalty_keys=[],
     groups="all",
     reference="rest",
@@ -258,10 +245,7 @@ def select_DE_genes(
         index are genes as in adata.var.index, bool column: 'selection'
     """
 
-    if process_adata:
-        a = preprocess_adata(adata, options=process_adata, inplace=False)
-    else:
-        a = adata
+    a = adata
 
     if groups == "all":
         group_counts = a.obs[obs_key].value_counts() > 2
@@ -446,7 +430,6 @@ def add_DE_genes_to_trees(
                 n_DE,
                 per_group=True,
                 obs_key=ct_key,
-                process_adata=None,
                 penalty_keys=penalty_keys,
                 groups=[ct],
                 reference=ct_to_reference[ct],
@@ -1075,12 +1058,10 @@ def get_mean(X, axis=0):
     return mean
 
 
-def highest_expressed_genes(adata, n, inplace=True, process_adata=None, use_existing_means=False):
+def highest_expressed_genes(adata, n, inplace=True, use_existing_means=False):
     """Select n highest expressed genes in adata"""
-    if process_adata:
-        a = preprocess_adata(adata, options=process_adata, inplace=False)
-    else:
-        a = adata
+
+    a = adata
 
     df = pd.DataFrame(index=a.var.index, columns=["means"])
     if use_existing_means:

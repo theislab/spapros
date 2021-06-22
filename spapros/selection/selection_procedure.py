@@ -259,7 +259,6 @@ class ProbesetSelector:  # (object)
                 self.adata[:, self.genes],
                 obs_key=self.ct_key,
                 **self.DE_selection_hparams,
-                process_adata=None,
                 penalty_keys=self.DE_penalties,
                 groups=self.celltypes,
                 reference="rest",

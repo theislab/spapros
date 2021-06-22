@@ -12,6 +12,7 @@ from spapros.selection.selection_methods import random_selection
 from spapros.selection.selection_methods import select_DE_genes
 from spapros.selection.selection_methods import select_pca_genes
 from spapros.util.util import plateau_penalty_kernel
+from spapros.util.util import preprocess_adata
 from spapros.util.util import transfered_expression_thresholds
 
 console = Console()
@@ -20,19 +21,23 @@ console = Console()
 def run_selection(adata_path: str, output_path: str) -> None:
     adata = sc.read(adata_path)
 
+    a = preprocess_adata(adata, options=["norm", "log1p"], inplace=False)
+
     with console.status("Selecting genes with PCA..."):
         selected_df = select_pca_genes(
-            adata,
+            a,
             100,
             variance_scaled=False,
             absolute=True,
             n_pcs=20,
-            process_adata=["norm", "log1p"],
             penalty_keys=[],
             corr_penalty=None,
             inplace=False,
         )
         console.print(f"[bold blue]Using {len(selected_df)} genes")
+
+    print(output_path)
+    Path(output_path).mkdir(parents=True, exist_ok=True)
 
     # Map expression thresholds
     # From experimental partners we know good thresholds for the basic normalisation to a target_sum of 10000.
@@ -46,14 +51,14 @@ def run_selection(adata_path: str, output_path: str) -> None:
     var = [factor * 0.1, factor * 0.5]
     penalty = plateau_penalty_kernel(var=var, x_min=lower_th, x_max=upper_th)
     adata.var["expression_penalty"] = penalty(adata.var["quantile_0.99"])
+    a = preprocess_adata(adata, options=["norm", "log1p"], inplace=False)
     # Our final selection would then be
     select_pca_genes(
-        adata,
+        a,
         100,
         variance_scaled=False,
         absolute=True,
         n_pcs=20,
-        process_adata=["norm", "log1p"],
         penalty_keys=["expression_penalty"],
         corr_penalty=None,
         inplace=True,
@@ -68,7 +73,7 @@ def run_selection(adata_path: str, output_path: str) -> None:
         "n": [20, 100],
         "penalty_keys": [[]],
         "dataset": ["small_data_raw_counts.h5ad"],
-        "data_path": ["/home/zeth/PycharmProjects/spapros/data/"],
+        "data_path": ["../package_dev/data/"],  # "/home/zeth/PycharmProjects/spapros/data/"],
         "gene_subset": [
             None
         ],  # We could add a key from adata.var here: e.g. different numbers of highly variable genes
@@ -161,7 +166,11 @@ def run_selection(adata_path: str, output_path: str) -> None:
                 for m_config in m_configs:
                     adata = sc.read(g_config["data_path"] + g_config["dataset"])
                     kwargs = {k: v for k, v in g_config.items() if k in methods_kwargs[method]}
-                    kwargs.update({k: v for k, v in m_config.items() if k in methods_kwargs[method]})
+                    kwargs.update(
+                        {k: v for k, v in m_config.items() if (k in methods_kwargs[method]) & (k != "process_adata")}
+                    )
+                    if "process_adata" in m_config:
+                        preprocess_adata(adata, options=m_config["process_adata"], inplace=True)
                     start = timer()
                     generated_selection = methods[method](adata, **kwargs, inplace=False)  # type: ignore
                     # TODO actually the dataset processing shouldn't be part of the measured computation time...
@@ -173,11 +182,12 @@ def run_selection(adata_path: str, output_path: str) -> None:
                         computation_time,
                     ]
                     g_config_cols = [k for k in g_config if k in df_info.columns]
-                    df_info.loc[f"{NAME}_{count}", g_config_cols] = [v for k, v in g_config.items()]
+                    g_config_values = [v if (not isinstance(v, list)) else "-".join(v) for k, v in g_config.items()]
+                    df_info.loc[f"{NAME}_{count}", g_config_cols] = g_config_values
                     kwarg_cols = [k for k in kwargs if k in df_info.columns]
-                    df_info.loc[f"{NAME}_{count}", kwarg_cols] = [v for k, v in kwargs.items() if k in kwarg_cols]
-
-                    tmp = kwargs["process_adata"] if ("process_adata" in kwargs) else []
+                    kwarg_values = [v if (not isinstance(v, list)) else "-".join(v) for k, v in kwargs.items()]
+                    df_info.loc[f"{NAME}_{count}", kwarg_cols] = kwarg_values
+                    tmp = m_config["process_adata"] if ("process_adata" in m_config) else []
                     pp_options = [("norm" in tmp), ("log1p" in tmp), ("scale" in tmp)]
                     df_info.loc[f"{NAME}_{count}", ["normalised", "log1p", "scaled"]] = pp_options
 
