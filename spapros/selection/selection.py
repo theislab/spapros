@@ -70,9 +70,8 @@ def run_selection(adata_path: str, output_path: str) -> None:
     general_params = {
         "n": [20, 100],
         "penalty_keys": [[]],
-        "gene_subset": [
-            None
-        ],  # We could add a key from adata.var here: e.g. different numbers of highly variable genes
+        "gene_subset": [None],
+        # We could add a key from adata.var here: e.g. different numbers of highly variable genes
         # (the key needs to be prepared in `adata.var[key]` (dtype=bool) --> adata = adata[:,adata.var[key]] )
         "obs_fraction": [None],  # For measuring method stability
         "fraction_seed": [None],  # (obs_fraction and fraction_seed only work in combination)
