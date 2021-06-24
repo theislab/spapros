@@ -91,16 +91,20 @@ def selection(data, output) -> None:
 
 
 @spapros_cli.command()
+@click.argument("data", type=click.Path(exists=True))
 @click.argument("probeset", type=click.Path(exists=True))
+@click.argument("marker_file", type=click.Path(exists=True))
 @click.option("--output", "-o", default="./results/")
-def evaluation(probeset, output) -> None:
+def evaluation(data, probeset, marker_file, output) -> None:
     """
     Create a selection of probesets for an h5ad file
     Args:
+        data: Path to the h5ad dataset file
         probeset: Path to the probeset file
+        marker_file: Path to the marker file
         output: Output path
     """
-    run_evaluation(probeset, output)
+    run_evaluation(data, probeset, marker_file, output)
 
 
 @spapros_cli.command(short_help="Check for a newer version of ehrapy and upgrade if required.")

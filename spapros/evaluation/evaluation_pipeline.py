@@ -22,13 +22,8 @@ from spapros.util.util import preprocess_adata
 
 console = Console()
 
-# TODO below must become a parameter :)
-spapros_dir = "/home/zeth/PycharmProjects/spapros/"
-
 dataset_params = {
     "name": "small_data",
-    "data_path": spapros_dir + "data/",
-    "dataset": "small_data_raw_counts.h5ad",
     "process_adata": ["norm", "log1p"],
     "celltype_key": "celltype",
 }
@@ -50,7 +45,6 @@ metric_configs: Dict[str, Any] = {
     },
     # Marker list correlation
     "marker_corr": {
-        "marker_list": spapros_dir + "data/small_data_marker_list.csv",
         "per_celltype": True,
         "per_marker": True,
         "per_celltype_min_mean": None,
@@ -62,10 +56,8 @@ metric_configs: Dict[str, Any] = {
     },
 }
 
-marker_list = metric_configs["marker_corr"]["marker_list"] if metric_configs["marker_corr"]["marker_list"] else None
 
-
-def run_evaluation(probeset: str, result_dir: str) -> None:
+def run_evaluation(adata_path: str, probeset: str, marker_file: str, result_dir: str) -> None:
     NAME = "210615_test_eval"
     PROBESET_IDS: Union[str, list] = ["genesets_1_0", "genesets_1_1", "genesets_1_13"]  # 'all'
 
@@ -124,7 +116,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
     with Progress() as progress:
         evaluation_task = progress.add_task(
             "[bold blue]Performing evaluation...", total=8
-        )  # COOKIETEMPLE TODO: Currently hardcoded!
+        )  # TODO: Currently hardcoded!
 
         shared_tasks = progress.add_task(
             "[bold blue]Computations shared for each probeset", total=len([key for key in metric_configs]) - 1
@@ -140,7 +132,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
         #############
         # Load data #
         #############
-        adata = sc.read(dataset_params["data_path"] + dataset_params["dataset"])  # type: ignore
+        adata = sc.read(adata_path)  # type: ignore
         if dataset_params["process_adata"]:
             preprocess_adata(adata, options=dataset_params["process_adata"])
 
@@ -158,7 +150,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
             scheme="custom",
             results_dir=results_dir,
             celltype_key=dataset_params["celltype_key"],
-            marker_list=marker_list,
+            marker_list=marker_file,
             metrics_params=metric_configs,
             reference_name=dataset_params["name"],
         )
@@ -314,7 +306,6 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
         )
         evaluator.summary_statistics(probesets)
         progress.advance(summary_task)
-
         progress.advance(evaluation_task)
 
     #################################
