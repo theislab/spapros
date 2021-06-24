@@ -23,7 +23,7 @@ from spapros.util.util import preprocess_adata
 console = Console()
 
 # TODO below must become a parameter :)
-spapros_dir = "/mnt/home/icb/louis.kuemmerle/projects/st_probesets/spapros/"  # "/home/zeth/PycharmProjects/spapros/"
+spapros_dir = "/home/zeth/PycharmProjects/spapros/"
 
 dataset_params = {
     "name": "small_data",
@@ -76,7 +76,6 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
     # reference_dir (of ProbesetEvaluator) which is within `results_dir`.
 
     Path(results_dir).mkdir(parents=True, exist_ok=True)
-    # Path(reference_dir).mkdir(parents=True, exist_ok=True)
 
     # cartesian_product = list(itertools.product(*[param_list for _, param_list in dataset_params.items()]))  # type: ignore
     # dataset_configs = [{key: val for key, val in zip(dataset_params, val_list)} for val_list in cartesian_product]

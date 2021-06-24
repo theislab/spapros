@@ -36,7 +36,6 @@ def run_selection(adata_path: str, output_path: str) -> None:
         )
         console.print(f"[bold blue]Using {len(selected_df)} genes")
 
-    print(output_path)
     Path(output_path).mkdir(parents=True, exist_ok=True)
 
     # Map expression thresholds
@@ -73,7 +72,8 @@ def run_selection(adata_path: str, output_path: str) -> None:
         "n": [20, 100],
         "penalty_keys": [[]],
         "dataset": ["small_data_raw_counts.h5ad"],
-        "data_path": ["../package_dev/data/"],  # "/home/zeth/PycharmProjects/spapros/data/"],
+        # "data_path": ["../package_dev/data/"],
+        "data_path": ["/home/zeth/PycharmProjects/spapros/data/"],
         "gene_subset": [
             None
         ],  # We could add a key from adata.var here: e.g. different numbers of highly variable genes

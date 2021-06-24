@@ -60,7 +60,7 @@ def spapros_questionary(function: str, question: str, choices: list = None, defa
             log.debug(f"Unsupported questionary function {function} used!")
 
     except KeyboardInterrupt:
-        print("[bold red] Aborted!")
+        print("[bold red]Aborted!")
         sys.exit(1)
     if answer is None or answer == "":
         answer = default  # type: ignore

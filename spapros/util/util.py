@@ -297,9 +297,9 @@ def transfered_expression_thresholds(
     if plot:
         plt.figure(figsize=(12, 4))
         ax = plt.subplot(1, 2, 1)
-        sns.distplot(a.X[mask_lo])
+        sns.displot(a.X[mask_lo])
         plt.axvline(x=np.mean(a.X[mask_lo]), lw=0.5, ls="--", color="black")
-        sns.distplot(a.X[mask_hi])
+        sns.displot(a.X[mask_hi])
         plt.axvline(x=np.mean(a.X[mask_hi]), lw=0.5, ls="--", color="black")
         plt.title(f"Expressions around limits (target_sum = {target_sum})")
 
@@ -314,9 +314,9 @@ def transfered_expression_thresholds(
     hi_mean = np.mean(hi_expr)
     if plot:
         ax = plt.subplot(1, 2, 2)
-        sns.distplot(lo_expr)
+        sns.displot(lo_expr)
         plt.axvline(x=lo_mean, lw=0.5, ls="--", color="black")
-        sns.distplot(hi_expr)
+        sns.displot(hi_expr)
         plt.axvline(x=hi_mean, lw=0.5, ls="--", color="black")
         _, right = plt.xlim()
         plt.text(
