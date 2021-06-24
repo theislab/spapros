@@ -6,13 +6,14 @@ import sys
 import click
 import rich.logging
 import spapros
+from pypi_latest import PypiLatest
 from rich import print
 from rich import traceback
-from spapros.cli.commands.upgrade import UpgradeCommand
 from spapros.evaluation.evaluation_pipeline import run_evaluation
 from spapros.selection.selection import run_selection
 
 log = logging.getLogger()
+spapros_pypi_latest = PypiLatest("spapros", spapros.__version__)
 
 
 def main() -> None:
@@ -32,7 +33,7 @@ def main() -> None:
     print("[bold blue]Run [green]spapros --help [blue]for an overview of all commands\n")
 
     # Is the latest spapros version installed? Upgrade if not!
-    if not UpgradeCommand.check_spapros_latest():
+    if not spapros_pypi_latest.check_latest():
         print("[bold blue]Run [green]spapros upgrade [blue]to get the latest version.")
     spapros_cli(prog_name="spapros")
 
@@ -100,6 +101,12 @@ def evaluation(probeset, output) -> None:
         output: Output path
     """
     run_evaluation(probeset, output)
+
+
+@spapros_cli.command(short_help="Check for a newer version of ehrapy and upgrade if required.")
+def upgrade() -> None:
+    """Checks whether the locally installed version of spapros is the latest & upgrades if not."""
+    spapros_pypi_latest.check_upgrade()
 
 
 if __name__ == "__main__":

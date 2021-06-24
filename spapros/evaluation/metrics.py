@@ -61,7 +61,6 @@ def get_metric_default_parameters():
 
 def metric_shared_computations(adata=None, metric=None, parameters={}):
     """ """
-
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
 
@@ -85,10 +84,8 @@ def metric_pre_computations(
     parameters={},
 ):
     """
-
     Note: If there are no shared results needed at all to calculate a metric the computations are put in
     `metric_computations`, this is the case for e.g. forest_clfs.
-
     """
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
@@ -194,7 +191,7 @@ def compute_clustering_and_update(adata, annotations, resolution, tried_res_n, f
     return annotations, tried_res_n, found_ns
 
 
-def leiden_clusterings(adata, ns, start_res=1.0, verbose=False):
+def leiden_clusterings(adata, ns, start_res=1.0):
     """Compute leiden clusters for different numbers of clusters
 
     Leiden clusters are calculated with different resolutions.
@@ -231,7 +228,7 @@ def leiden_clusterings(adata, ns, start_res=1.0, verbose=False):
         .
     """
 
-    # Clean adata and recalc pca + neighbors graph
+    # Clean adata and recalculate pca + neighbors graph
     a = adata.copy()
     clean_adata(a)
     sc.tl.pca(a)
@@ -290,7 +287,6 @@ def clustering_nmis(
     ref_annotations,
     ns,
     method="arithmetic",
-    verbose=True,
 ):
     """Compute NMI between clusterings and a reference set of clusterings.
 
