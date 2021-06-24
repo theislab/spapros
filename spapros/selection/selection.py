@@ -51,7 +51,6 @@ def run_selection(adata_path: str, output_path: str) -> None:
     penalty = plateau_penalty_kernel(var=var, x_min=lower_th, x_max=upper_th)
     adata.var["expression_penalty"] = penalty(adata.var["quantile_0.99"])
     a = preprocess_adata(adata, options=["norm", "log1p"], inplace=False)
-    # Our final selection would then be
     select_pca_genes(
         a,
         100,
@@ -71,9 +70,6 @@ def run_selection(adata_path: str, output_path: str) -> None:
     general_params = {
         "n": [20, 100],
         "penalty_keys": [[]],
-        "dataset": ["small_data_raw_counts.h5ad"],
-        # "data_path": ["../package_dev/data/"],
-        "data_path": ["/home/zeth/PycharmProjects/spapros/data/"],
         "gene_subset": [
             None
         ],  # We could add a key from adata.var here: e.g. different numbers of highly variable genes
@@ -164,7 +160,7 @@ def run_selection(adata_path: str, output_path: str) -> None:
             for method, m_configs in method_configs.items():
                 progress.console.print(f"[bold green]Running: {method}")
                 for m_config in m_configs:
-                    adata = sc.read(g_config["data_path"] + g_config["dataset"])
+                    adata = sc.read(adata_path)
                     kwargs = {k: v for k, v in g_config.items() if k in methods_kwargs[method]}
                     kwargs.update(
                         {k: v for k, v in m_config.items() if (k in methods_kwargs[method]) & (k != "process_adata")}
