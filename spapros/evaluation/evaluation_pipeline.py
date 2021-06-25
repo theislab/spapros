@@ -38,7 +38,7 @@ def run_evaluation(
             "metrics": {
                 # Clustering similarity via normalized mutual information
                 "cluster_similarity": {
-                    "ns": list(range(5, 21, 1)),
+                    "ns": [5, 21, 1],
                     "AUC_borders": [[7, 14], [15, 20]],
                 },
                 # Similarity of knn graphs
