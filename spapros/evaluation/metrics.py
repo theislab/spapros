@@ -15,7 +15,7 @@ from xgboost import XGBClassifier
 
 METRICS_PARAMETERS = {
     "cluster_similarity": {
-        "ns": list(range(5, 61, 1)),
+        "ns": [5, 60],
         "AUC_borders": [[5, 20], [21, 60]],
     },
     "knn_overlap": {
@@ -202,8 +202,8 @@ def leiden_clusterings(adata, ns, start_res=1.0):
     adata: anndata object
         adata object with data to compute clusters on. Need to include a
         neighbors graph (and PCA?)  TODO: make this clear.
-    ns: list of ints
-        list of numbers of clusters
+    ns: list of two ints
+        minimum (`ns[0]`) and maximum (`ns[1]`) number of clusters.
     start_res: float
         resolution to start computing clusterings.
     verbose: bool
@@ -227,6 +227,11 @@ def leiden_clusterings(adata, ns, start_res=1.0):
         .
         .
     """
+
+    # Convert min and max n to list of ns
+    if len(ns) != 2:
+        raise ValueError(f"`ns` must be a list of two integers.")
+    ns = range(ns[0], ns[1] + 1)
 
     # Clean adata and recalculate pca + neighbors graph
     a = adata.copy()

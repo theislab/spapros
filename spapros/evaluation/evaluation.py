@@ -29,8 +29,11 @@ class ProbesetEvaluator:
     The evaluator works on one given dataset and calculates metrics/analyses with respect to that dataset.
 
     The calculation steps of the metrics can be divided into:
-    - calculations that need to be run one time
-    - calculations that need to be run for each probe set
+    1. calculations that need to be run one time for the given dataset (not all metrics have this step)
+    2. calculations that need to be run for each probe set
+        2.1 calculations independent of 1.
+        2.2 calculations dependent on 1. (if 1. existed for a given metric)
+    3. Summarize results into summary statistics
 
     ###################
     # Run evaluations #
@@ -162,7 +165,7 @@ class ProbesetEvaluator:
             Provide parameters for the calculation of each metric. E.g.
             metrics_params = {
                 "nmi":{
-                    "ns": list(range(5, 21, 1)),
+                    "ns": [5,20],
                     "AUC_borders": [[7, 14], [15, 20]],
                     }
                 }
