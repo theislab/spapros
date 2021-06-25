@@ -230,7 +230,7 @@ def leiden_clusterings(adata, ns, start_res=1.0):
 
     # Convert min and max n to list of ns
     if len(ns) != 2:
-        raise ValueError(f"`ns` must be a list of two integers.")
+        raise ValueError("`ns` must be a list of two integers.")
     ns = range(ns[0], ns[1] + 1)
 
     # Clean adata and recalculate pca + neighbors graph
