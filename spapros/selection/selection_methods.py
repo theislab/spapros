@@ -1167,7 +1167,7 @@ def spca_feature_selection(
         if True save results in adata.var else return results
 
     Return
-    ------        
+    ------
     if inplace: add
         - adata.var['selection'] - boolean column of n selected features
         - adata.var['selection_scores'] - column with sum of abs loadings for each feature
