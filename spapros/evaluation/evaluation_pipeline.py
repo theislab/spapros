@@ -1,12 +1,11 @@
 from pathlib import Path
-from typing import Any
-from typing import Dict
 from typing import Union
 
 import pandas as pd
 import scanpy as sc
 from rich.console import Console
 from rich.progress import Progress
+from ruamel.yaml import YAML
 from spapros.evaluation import ProbesetEvaluator
 from spapros.util.util import preprocess_adata
 
@@ -22,54 +21,54 @@ from spapros.util.util import preprocess_adata
 
 console = Console()
 
-# TODO below must become a parameter :)
-spapros_dir = "/home/zeth/PycharmProjects/spapros/"
 
-dataset_params = {
-    "name": "small_data",
-    "data_path": spapros_dir + "data/",
-    "dataset": "small_data_raw_counts.h5ad",
-    "process_adata": ["norm", "log1p"],
-    "celltype_key": "celltype",
-}
+def run_evaluation(
+    adata_path: str, probeset: str, marker_file: str, result_dir: str, parameters_file: str = None
+) -> None:
+    if parameters_file is not None:
+        yaml = YAML(typ="safe")
+        parameters = yaml.load(Path(parameters_file))
+    else:
+        parameters = {  # TODO create some reasonable default
+            "data": {
+                "name": "small_data",
+                "process_adata": ["norm", "log1p"],
+                "celltype_key": "celltype",
+            },
+            "metrics": {
+                # Clustering similarity via normalized mutual information
+                "cluster_similarity": {
+                    "ns": [5, 21, 1],
+                    "AUC_borders": [[7, 14], [15, 20]],
+                },
+                # Similarity of knn graphs
+                "knn_overlap": {
+                    "ks": [5, 10, 15, 20, 25, 30],
+                },
+                # Forest classification
+                "forest_clfs": {
+                    "threshold": 0.8,
+                },
+                # Marker list correlation
+                "marker_corr": {
+                    "per_celltype": True,
+                    "per_marker": True,
+                    "per_celltype_min_mean": None,
+                    "per_marker_min_mean": 0.025,
+                },
+                # Gene redundancy via coexpression
+                "gene_corr": {
+                    "threshold": 0.8,
+                },
+            },
+        }
 
-metric_configs: Dict[str, Any] = {
-    # Clustering similarity via normalized mutual information
-    "cluster_similarity": {
-        "ns": list(range(5, 21, 1)),
-        "AUC_borders": [[7, 14], [15, 20]],
-    },
-    # Similarity of knn graphs
-    "knn_overlap": {
-        "ks": [5, 10, 15, 20, 25, 30],
-    },
-    # Forest classification
-    "forest_clfs": {
-        "ct_key": dataset_params["celltype_key"],  # this value does not matter actually...
-        "threshold": 0.8,
-    },
-    # Marker list correlation
-    "marker_corr": {
-        "marker_list": spapros_dir + "data/small_data_marker_list.csv",
-        "per_celltype": True,
-        "per_marker": True,
-        "per_celltype_min_mean": None,
-        "per_marker_min_mean": 0.025,
-    },
-    # Gene redundancy via coexpression
-    "gene_corr": {
-        "threshold": 0.8,
-    },
-}
+    dataset_params = parameters["data"]
+    metric_configs = parameters["metrics"]
 
-marker_list = metric_configs["marker_corr"]["marker_list"] if metric_configs["marker_corr"]["marker_list"] else None
-
-
-def run_evaluation(probeset: str, result_dir: str) -> None:
-    NAME = "210615_test_eval"
     PROBESET_IDS: Union[str, list] = ["genesets_1_0", "genesets_1_1", "genesets_1_13"]  # 'all'
 
-    results_dir = result_dir + NAME + "/"
+    results_dir = result_dir + f"{dataset_params['name']}/"
     # reference_dir = result_dir + "references/"  # handy to reuse reference results for further evaluations
     # reference_dir is a little tricky atm, since I don't save the info of previous hyperparameters the saved
     # reference files might be produced with wrong hyperparameters, therefore atm we use the default
@@ -124,7 +123,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
     with Progress() as progress:
         evaluation_task = progress.add_task(
             "[bold blue]Performing evaluation...", total=8
-        )  # COOKIETEMPLE TODO: Currently hardcoded!
+        )  # TODO: Currently hardcoded!
 
         shared_tasks = progress.add_task(
             "[bold blue]Computations shared for each probeset", total=len([key for key in metric_configs]) - 1
@@ -137,10 +136,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
         corr_task = progress.add_task("[bold blue]Gene and Marker Correlation", total=len(probesets))
         summary_task = progress.add_task("[bold blue]Summary Statistics", total=1)
 
-        #############
-        # Load data #
-        #############
-        adata = sc.read(dataset_params["data_path"] + dataset_params["dataset"])  # type: ignore
+        adata = sc.read(adata_path)  # type: ignore
         if dataset_params["process_adata"]:
             preprocess_adata(adata, options=dataset_params["process_adata"])
 
@@ -150,15 +146,11 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
             genes = [g for g in selection.loc[selection[set_id]].index.to_list() if g in var_names]
             return genes
 
-        ########################################
-        # General kwargs for ProbesetEvaluator #
-        ########################################
-
         evaluator_kwargs = dict(
             scheme="custom",
             results_dir=results_dir,
             celltype_key=dataset_params["celltype_key"],
-            marker_list=marker_list,
+            marker_list=marker_file,
             metrics_params=metric_configs,
             reference_name=dataset_params["name"],
         )
@@ -166,9 +158,7 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
         ##############################
         # 1.1 Compute shared results #
         ##############################
-        #
         # Note: forest_clfs doesn't have any shared computations
-        #
 
         # Process 1.1.1 shared cluster_similarity
         # output file: results_dir+f"references/{dataset_params["name"]}_cluster_similarity.csv"
@@ -314,11 +304,6 @@ def run_evaluation(probeset: str, result_dir: str) -> None:
         )
         evaluator.summary_statistics(probesets)
         progress.advance(summary_task)
-
         progress.advance(evaluation_task)
-
-    #################################
-    # The other metrics will follow #
-    #################################
 
     console.print(f"[bold blue]Wrote results to {results_dir}")
