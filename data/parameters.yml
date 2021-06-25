@@ -1,0 +1,20 @@
+data:
+    name: "small_data"
+    process_adata: ["norm", "log1p"]
+    celltype_key: "celltype"
+metrics:
+    cluster_similarity:
+        ns: [5, 21]
+        AUC_borders: [[7, 14], [15, 20]]
+    knn_overlap:
+        ks: [5, 10, 15, 20, 25, 30]
+    forest_clfs:
+        ct_key: "celltype"
+        threshold: 0.8
+    marker_corr:
+        per_celltype: True
+        per_marker: True
+        per_celltype_min_mean:
+        per_marker_min_mean: 0.025
+    gene_corr:
+        threshold: 0.8
