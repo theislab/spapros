@@ -1020,7 +1020,7 @@ jupyter = ["ipywidgets (>=7.5.1,<8.0.0)"]
 name = "ruamel.yaml"
 version = "0.17.10"
 description = "ruamel.yaml is a YAML parser/emitter that supports roundtrip preservation of comments, seq/map flow style, and map key order"
-category = "dev"
+category = "main"
 optional = false
 python-versions = ">=3"
 
@@ -1035,7 +1035,7 @@ jinja2 = ["ruamel.yaml.jinja2 (>=0.2)"]
 name = "ruamel.yaml.clib"
 version = "0.2.2"
 description = "C version of reader, parser and emitter for ruamel.yaml derived from libyaml"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
