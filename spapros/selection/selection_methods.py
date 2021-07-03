@@ -1175,6 +1175,11 @@ def spca_feature_selection(
         pd.Dataframe with columns 'selection', 'selection_scores'
     """
 
+    if scipy.sparse.issparse(adata.X):
+        if verbosity > 0:
+            print("Convert adata.X from sparse representation to standard format.")
+        adata.X = adata.X.toarray()
+    
     # conditions for while loop
     n_features_in_tolerance = False
     n_features_equals_n = False
