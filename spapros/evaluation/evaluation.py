@@ -223,6 +223,7 @@ class ProbesetEvaluator:
                 )
                 if self.ref_dir and (self.shared_results[metric] is not None):
                     Path(self.ref_dir).mkdir(parents=True, exist_ok=True)
+                    print(self._shared_res_file(metric))
                     self.shared_results[metric].to_csv(self._shared_res_file(metric))
 
     def evaluate_probeset(self, genes, set_id="probeset1", update_summary=True, pre_only=False):
