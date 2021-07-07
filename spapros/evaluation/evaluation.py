@@ -889,7 +889,6 @@ def single_forest_classifications(
     seeds = np.random.choice(100000, n_trees, replace=False)
     # Compute trees (for each tree index we parallelize over celltypes)
     for i in tqdm(range(n_trees), desc="Train trees") if tqdm else range(n_trees):
-        # if verbose: print(f"\t\t ~~~ Trees number {i} ~~~")
         X_train, y_train, cts_train = uniform_samples(
             a, ct_key, set_key="train_set", subsample=subsample, seed=seeds[i], celltypes=ref_celltypes
         )
