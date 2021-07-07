@@ -23,7 +23,12 @@ console = Console()
 
 
 def run_evaluation(
-    adata_path: str, probeset: str, marker_file: str, result_dir: str, parameters_file: str = None
+    adata_path: str,
+    probeset: str,
+    marker_file: str,
+    result_dir: str,
+    probeset_ids: Union[str, list] = "all",
+    parameters_file: str = None,
 ) -> None:
     if parameters_file is not None:
         yaml = YAML(typ="safe")
@@ -66,8 +71,6 @@ def run_evaluation(
     dataset_params = parameters["data"]
     metric_configs = parameters["metrics"]
 
-    PROBESET_IDS: Union[str, list] = ["genesets_1_0", "genesets_1_1", "genesets_1_13"]  # 'all'
-
     results_dir = result_dir + f"{dataset_params['name']}/"
     # reference_dir = result_dir + "references/"  # handy to reuse reference results for further evaluations
     # reference_dir is a little tricky atm, since I don't save the info of previous hyperparameters the saved
@@ -79,12 +82,12 @@ def run_evaluation(
     # cartesian_product = list(itertools.product(*[param_list for _, param_list in dataset_params.items()]))  # type: ignore
     # dataset_configs = [{key: val for key, val in zip(dataset_params, val_list)} for val_list in cartesian_product]
 
-    if PROBESET_IDS == "all":
+    if probeset_ids == "all":
         df = pd.read_csv(probeset, index_col=0)
         probesets = df.columns.to_list()
         del df
     else:
-        probesets = PROBESET_IDS
+        probesets = probeset_ids
 
     ####################################
     # Save dataset configuration infos #
@@ -121,9 +124,7 @@ def run_evaluation(
     ##############################
 
     with Progress() as progress:
-        evaluation_task = progress.add_task(
-            "[bold blue]Performing evaluation...", total=8
-        )  # TODO: Currently hardcoded!
+        evaluation_task = progress.add_task("[bold blue]Performing evaluation...", total=8)
 
         shared_tasks = progress.add_task(
             "[bold blue]Computations shared for each probeset", total=len([key for key in metric_configs]) - 1
