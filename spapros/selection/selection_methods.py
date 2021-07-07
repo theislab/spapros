@@ -260,11 +260,23 @@ def select_DE_genes(
     if per_group:
         for group in scores.columns:
             scores.loc[scores.index.difference(scores.nlargest(n, group).index), group] = 0
+        genes = scores.loc[(scores > 0).any(axis=1)].index.tolist()
     else:
-        for i, group in enumerate(scores.columns):
-            n_tmp = (n // len(scores.columns) + 1) if (i < (n % len(scores.columns))) else (n // len(scores.columns))
-            scores.loc[scores.index.difference(scores.nlargest(n_tmp, group).index), group] = 0
-    genes = scores.loc[(scores > 0).any(axis=1)].index.tolist()
+        genes = []
+        groups_of_genes = {}
+        tmp_scores = scores.copy()
+        while len(genes) < n:
+            for group in scores.columns:
+                gene = tmp_scores[group].idxmax()
+                if (len(genes) < n) and (gene not in genes):
+                    genes.append(gene)
+                    groups_of_genes[gene] = [group]
+                elif gene in genes:
+                    groups_of_genes[gene].append(group)
+            tmp_scores = scores.loc[~scores.index.isin(genes)].copy()
+        scores.loc[~scores.index.isin(list(groups_of_genes.keys()))] = 0
+        for gene, groups in groups_of_genes.items():
+            scores.loc[gene, [group for group in scores.columns if group not in groups]] = 0
     selection.loc[genes, "selection"] = True
     selection[scores.columns] = scores
     if inplace:
@@ -1084,8 +1096,8 @@ def highest_expressed_genes(adata, n, inplace=True, use_existing_means=False):
 ##################################################################################
 
 
-def sparse_pca(X, n_pcs, alpha, seed):
-    transformer = SparsePCA(n_components=n_pcs, alpha=alpha, random_state=seed)
+def sparse_pca(X, n_pcs, alpha, seed, n_jobs):
+    transformer = SparsePCA(n_components=n_pcs, alpha=alpha, random_state=seed, n_jobs=n_jobs)
     transformer.fit(X)
     transformer.transform(X)
     loadings = transformer.components_
@@ -1115,13 +1127,14 @@ def spca_feature_selection(
     adata,
     n,
     n_pcs=30,
-    a_init=10,
-    n_alphas_max=20,
-    n_alphas_min=3,
-    tolerance=0.05,
+    a_init=150,
+    n_alphas_max=25,
+    n_alphas_min=5,
+    tolerance=0.1,
     seed=0,
     verbosity=1,
     inplace=True,
+    n_jobs=-1,
 ):
     """Select features based on sparse pca
 
@@ -1165,6 +1178,8 @@ def spca_feature_selection(
     verbosity: int
     inplace: bool
         if True save results in adata.var else return results
+    n_jobs: int
+        Number of parallel jobs to run.
 
     Return
     ------
@@ -1174,12 +1189,14 @@ def spca_feature_selection(
     else: return
         pd.Dataframe with columns 'selection', 'selection_scores'
     """
-
+    print(type(adata.X), flush=True)
     if scipy.sparse.issparse(adata.X):
         if verbosity > 0:
             print("Convert adata.X from sparse representation to standard format.")
+        if adata.is_view:
+            adata = adata.copy()
         adata.X = adata.X.toarray()
-    
+    print(type(adata.X), flush=True)
     # conditions for while loop
     n_features_in_tolerance = False
     n_features_equals_n = False
@@ -1192,11 +1209,11 @@ def spca_feature_selection(
     alphas = [a_init]
     if verbosity >= 1:
         t0 = datetime.now()
-        print(f"Start alpha trial {len(alphas)} ({datetime.now() - t0})")
-    features, loadings = sparse_pca(adata.X, n_pcs, alphas[0], seed)
+        print(f"Start alpha trial {len(alphas)} ({datetime.now() - t0})", flush=True)
+    features, loadings = sparse_pca(adata.X, n_pcs, alphas[0], seed, n_jobs)
     n_features = [np.sum(features)]
     if verbosity == 1:
-        print(f"\t alpha = {alphas[0]}, n_features = {n_features[0]}")
+        print(f"\t alpha = {alphas[0]}, n_features = {n_features[0]}", flush=True)
     # adjust conditions
     if n_features[-1] == n:
         n_features_equals_n = True
@@ -1213,13 +1230,13 @@ def spca_feature_selection(
         alpha = next_alpha(n, alphas, n_features)
         alphas.append(alpha)
         if verbosity >= 1:
-            print(f"Start alpha trial {len(alphas)} ({datetime.now() - t0})")
+            print(f"Start alpha trial {len(alphas)} ({datetime.now() - t0})", flush=True)
         # sparse pca
-        features, loadings = sparse_pca(adata.X, n_pcs, alpha, seed)
+        features, loadings = sparse_pca(adata.X, n_pcs, alpha, seed, n_jobs)
         n_f = np.sum(features)
         n_features.append(n_f)
         if verbosity == 1:
-            print(f"\t alpha = {alpha}, n_features = {n_f}")
+            print(f"\t alpha = {alpha}, n_features = {n_f}", flush=True)
 
         # adjust conditions
         if n_features[-1] == n:
@@ -1232,23 +1249,24 @@ def spca_feature_selection(
             max_alphas = True
 
         if verbosity >= 2:
-            print(f"########## {len(alphas)} ##########")
-            print("alphas     : ", alphas)
-            print("n_features : ", n_features)
-            print(f"equal_n   : {n_features_equals_n}")
-            print(f"in tol    : {n_features_in_tolerance}")
-            print(f"min_alphas: {min_alphas}")
-            print(f"max_alphas: {max_alphas}")
+            print(f"########## {len(alphas)} ##########", flush=True)
+            print("alphas     : ", alphas, flush=True)
+            print("n_features : ", n_features, flush=True)
+            print(f"equal_n   : {n_features_equals_n}", flush=True)
+            print(f"in tol    : {n_features_in_tolerance}", flush=True)
+            print(f"min_alphas: {min_alphas}", flush=True)
+            print(f"max_alphas: {max_alphas}", flush=True)
 
     if verbosity >= 1:
         if n_features_equals_n:
-            print("Found solution with sparse PC components based on exactly n features")
+            print("Found solution with sparse PC components based on exactly n features", flush=True)
         elif n_features_in_tolerance:
             print(
-                "Found solution with number of features in defined tolerance. Excluded features with lowest loadings sums"
+                "Found solution with number of features in defined tolerance. Excluded features with lowest loadings sums",
+                flush=True,
             )
         elif max_alphas:
-            print("Maximal number of trials (n_alphas_max) was reached without finding a solution")
+            print("Maximal number of trials (n_alphas_max) was reached without finding a solution", flush=True)
     if (not n_features_equals_n) and (not n_features_in_tolerance) and max_alphas:
         return 0
 
