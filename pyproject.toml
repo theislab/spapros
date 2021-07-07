@@ -83,6 +83,8 @@ show_error_codes = true
 show_error_context = true
 ignore_missing_imports = true
 
+[tool.isort]
+profile = "black"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
