@@ -124,9 +124,7 @@ def run_evaluation(
     ##############################
 
     with Progress() as progress:
-        evaluation_task = progress.add_task(
-            "[bold blue]Performing evaluation...", total=8
-        )
+        evaluation_task = progress.add_task("[bold blue]Performing evaluation...", total=8)
 
         shared_tasks = progress.add_task(
             "[bold blue]Computations shared for each probeset", total=len([key for key in metric_configs]) - 1
