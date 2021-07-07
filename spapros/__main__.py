@@ -93,20 +93,34 @@ def selection(data, output) -> None:
 @spapros_cli.command()
 @click.argument("data", type=click.Path(exists=True))
 @click.argument("probeset", type=click.Path(exists=True))
-@click.argument("marker_file", type=click.Path(exists=True))
+@click.argument("marker-file", type=click.Path(exists=True))
+@click.argument("probeset-ids", nargs=-1)
 @click.option("--parameters", type=click.Path(exists=True))
 @click.option("--output", "-o", default="./results/")
-def evaluation(data, probeset, marker_file, parameters, output) -> None:
+def evaluation(data, probeset, marker_file, probeset_ids, parameters, output) -> None:
     """Create a selection of probesets for an h5ad file.
 
     Args:
         data: Path to the h5ad dataset file
         probeset: Path to the probeset file
         marker_file: Path to the marker file
+        probeset_ids: Several probeset ids
         parameters: Path to a yaml file containing parameters
         output: Output path
     """
-    run_evaluation(data, probeset, marker_file, output, parameters_file=parameters)
+    if not probeset_ids:
+        probeset_ids = "all"
+    else:
+        probeset_ids = list(probeset_ids)
+
+    run_evaluation(
+        adata_path=data,
+        probeset=probeset,
+        marker_file=marker_file,
+        probeset_ids=probeset_ids,
+        result_dir=output,
+        parameters_file=parameters,
+    )
 
 
 @spapros_cli.command(short_help="Check for a newer version of ehrapy and upgrade if required.")
