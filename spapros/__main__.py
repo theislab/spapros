@@ -1,16 +1,16 @@
 #!/usr/bin/env python
 """Command-line interface."""
 import logging
+import spapros
 import sys
+from spapros.evaluation.evaluation_pipeline import run_evaluation
+from spapros.selection.selection import run_selection
 
 import click
 import rich.logging
-import spapros
 from pypi_latest import PypiLatest
 from rich import print
 from rich import traceback
-from spapros.evaluation.evaluation_pipeline import run_evaluation
-from spapros.selection.selection import run_selection
 
 log = logging.getLogger()
 spapros_pypi_latest = PypiLatest("spapros", spapros.__version__)

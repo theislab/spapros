@@ -1,18 +1,8 @@
 import os
 import pickle
+import spapros.plotting as pl
 import warnings
 from pathlib import Path
-from typing import Any
-from typing import Dict
-
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import scanpy as sc
-import scipy
-import spapros.plotting as pl
-from sklearn import tree
-from sklearn.metrics import classification_report
 from spapros.evaluation.metrics import get_metric_default_parameters
 from spapros.evaluation.metrics import metric_computations
 from spapros.evaluation.metrics import metric_pre_computations
@@ -21,6 +11,16 @@ from spapros.evaluation.metrics import metric_summary
 from spapros.util.mp_util import _get_n_cores
 from spapros.util.mp_util import parallelize
 from spapros.util.mp_util import Signal
+from typing import Any
+from typing import Dict
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import scanpy as sc
+import scipy
+from sklearn import tree
+from sklearn.metrics import classification_report
 
 
 class ProbesetEvaluator:

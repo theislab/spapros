@@ -1,7 +1,8 @@
 """Test cases for the __main__ module."""
+from spapros.__main__ import spapros_cli
+
 import pytest
 from click.testing import CliRunner
-from spapros.__main__ import spapros_cli
 
 
 @pytest.fixture

@@ -1,16 +1,16 @@
 import json
 import os
 import pickle
-from pathlib import Path
-
-import numpy as np
-import pandas as pd
 import spapros.evaluation.evaluation as ev
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
+from pathlib import Path
 from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
+
+import numpy as np
+import pandas as pd
 from tqdm.autonotebook import tqdm
 
 
