@@ -1,3 +1,8 @@
+from spapros.util.util import clean_adata
+from spapros.util.util import cluster_corr
+from spapros.util.util import dict_to_table
+from spapros.util.util import gene_means
+
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -6,10 +11,6 @@ from scipy.sparse import issparse
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_sample_weight
-from spapros.util.util import clean_adata
-from spapros.util.util import cluster_corr
-from spapros.util.util import dict_to_table
-from spapros.util.util import gene_means
 from xgboost import XGBClassifier
 
 
@@ -310,8 +311,8 @@ def clustering_nmis(
         (each row is a list of cluster assignments)
     ref_annotations: pd.DataFrame
         Same as annotations for reference clusterings.
-    ns: list of ints
-        list of numbers of clusters for which NMIs are computed.
+    ns: list of two ints
+        minimum (`ns[0]`) and maximum (`ns[1]`) number of clusters.
     method:
         NMI implementation
             'max': scikit method with `average_method='max'`
@@ -333,6 +334,11 @@ def clustering_nmis(
     """
 
     from sklearn.metrics import normalized_mutual_info_score
+
+    # Convert min and max n to list of ns
+    if len(ns) != 2:
+        raise ValueError("`ns` must be a list of two integers.")
+    ns = range(ns[0], ns[1] + 1)
 
     nmis = pd.DataFrame(np.nan, index=ns, columns=["nmi"])
 
