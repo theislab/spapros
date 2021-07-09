@@ -300,6 +300,38 @@ class ProbesetEvaluator:
 
         self.summary_results = df
 
+    def pipeline_summary_statistics(self, result_files: list, probeset_ids: str) -> None:
+        """Adaptation of the function summary_statistics for the spapros-pipeline.
+
+        Takes the input files directly to calculate the summary statistics.
+
+        Args:
+            result_files: Probeset evaluation result file paths
+            probeset_ids: Probeset ids as a single string in the format: probe_id1,probe_id2,probe_id3
+        """
+        set_ids: list = probeset_ids.split(",")
+        df = self._init_summary_table(set_ids)
+
+        # Example file name: gene_corr_small_data_genesets_1_1.csv
+        for result_file in result_files:
+            results = pd.read_csv(result_file, index_col=0)
+
+            # Assumption for the set ID: last 3 words minus file extension split by _
+            set_id = "_".join(result_file[:-4].split("_")[-3:])
+            # Assumption for the metric: first 2 words split by _
+            metric = "_".join(result_file[:-4].split("_")[:2])
+
+            summary = metric_summary(
+                adata=self.adata, results=results, metric=metric, parameters=self.metrics_params[metric]
+            )
+            for key in summary:
+                df.loc[set_id, key] = summary[key]
+
+        if self.dir:
+            df.to_csv(self._summary_file)
+
+        self.summary_results = df
+
     def _prepare_metrics_params(self, new_params):
         """Set metric parameters to default values and overwrite defaults in case user defined param is given"""
         params = get_metric_default_parameters()
