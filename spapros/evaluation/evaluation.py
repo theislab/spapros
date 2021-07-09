@@ -309,8 +309,7 @@ class ProbesetEvaluator:
             result_files: Probeset evaluation result file paths
             probeset_ids: Probeset ids as a single string in the format: probe_id1,probe_id2,probe_id3
         """
-        set_ids: list = probeset_ids.split(",")
-        df = self._init_summary_table(set_ids)
+        df = self._init_summary_table(probeset_ids)
 
         # Example file name: gene_corr_small_data_genesets_1_1.csv
         for result_file in result_files:
