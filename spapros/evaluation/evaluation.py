@@ -242,7 +242,6 @@ class ProbesetEvaluator:
             the shared results being finished. This is interesting for a parallelised pipeline.
             If `pre_only` is set to True only these pre calculations are computed.
         """
-
         if not pre_only:
             self.compute_or_load_shared_results()
 
@@ -283,7 +282,6 @@ class ProbesetEvaluator:
 
     def summary_statistics(self, set_ids):
         """Compute summary statistics and update summary csv (if self.results_dir is not None)"""
-
         df = self._init_summary_table(set_ids)
 
         for set_id in set_ids:
@@ -361,7 +359,7 @@ class ProbesetEvaluator:
     ):
         """ """
         pre_str = "_pre" if pre else ""
-        return os.path.join(self.dir, f"{metric}/{self.ref_name}_{set_id}{pre_str}.csv")
+        return os.path.join(self.dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
 
     def _default_reference_dir(
         self,
