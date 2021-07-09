@@ -1,8 +1,3 @@
-from spapros.util.util import clean_adata
-from spapros.util.util import cluster_corr
-from spapros.util.util import dict_to_table
-from spapros.util.util import gene_means
-
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -11,6 +6,10 @@ from scipy.sparse import issparse
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_sample_weight
+from spapros.util.util import clean_adata
+from spapros.util.util import cluster_corr
+from spapros.util.util import dict_to_table
+from spapros.util.util import gene_means
 from xgboost import XGBClassifier
 
 

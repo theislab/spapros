@@ -1,6 +1,4 @@
 from pathlib import Path
-from spapros.evaluation import ProbesetEvaluator
-from spapros.util.util import preprocess_adata
 from typing import Union
 
 import pandas as pd
@@ -8,6 +6,8 @@ import scanpy as sc
 from rich.console import Console
 from rich.progress import Progress
 from ruamel.yaml import YAML
+from spapros.evaluation import ProbesetEvaluator
+from spapros.util.util import preprocess_adata
 
 # CHANGES
 # - use ProbesetEvaluator
