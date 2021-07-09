@@ -318,6 +318,10 @@ class ProbesetEvaluator:
             # Assumption for the metric: first 2 words split by _
             metric = "_".join(result_file[:-4].split("_")[:2])
 
+            print(set_id)
+            print(metric)
+            print(result_file)
+
             if (set_id in self.results[metric]) and (self.results[metric][set_id] is not None):
                 results = self.results[metric][set_id]
             else:
