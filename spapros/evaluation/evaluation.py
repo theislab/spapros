@@ -318,10 +318,6 @@ class ProbesetEvaluator:
             # Assumption for the metric: first 2 words split by _
             metric = "_".join(result_file[:-4].split("_")[:2])
 
-            print(set_id)
-            print(metric)
-            print(result_file)
-
             if (set_id in self.results[metric]) and (self.results[metric][set_id] is not None):
                 results = self.results[metric][set_id]
             else:
@@ -334,6 +330,11 @@ class ProbesetEvaluator:
                 df.loc[set_id, key] = summary[key]
 
         if self.dir:
+            from pathlib import Path
+
+            output_dir = Path(self.dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+
             df.to_csv(self._summary_file)
 
         self.summary_results = df
