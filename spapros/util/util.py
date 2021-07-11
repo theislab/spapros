@@ -295,12 +295,19 @@ def transfered_expression_thresholds(
     mask_lo = (a.X > (lower - tolerance)) & (a.X < (lower + tolerance))
     mask_hi = (a.X > (upper - tolerance)) & (a.X < (upper + tolerance))
     if plot:
+        df = pd.concat(
+            [
+                pd.DataFrame(data={"expression": a.X[mask_lo], "limit": "low"}),
+                pd.DataFrame(data={"expression": a.X[mask_hi], "limit": "high"}),
+            ]
+        )
         plt.figure(figsize=(12, 4))
         ax = plt.subplot(1, 2, 1)
-        sns.displot(a.X[mask_lo])
+        sns.kdeplot(data=df, x="expression", hue="limit", fill=True, common_norm=False, legend=False)
         plt.axvline(x=np.mean(a.X[mask_lo]), lw=0.5, ls="--", color="black")
-        sns.displot(a.X[mask_hi])
         plt.axvline(x=np.mean(a.X[mask_hi]), lw=0.5, ls="--", color="black")
+        plt.ylabel("")
+        plt.yticks([])
         plt.title(f"Expressions around limits (target_sum = {target_sum})")
 
     a = adata.copy()
@@ -313,28 +320,37 @@ def transfered_expression_thresholds(
     hi_expr = a.X[mask_hi]
     hi_mean = np.mean(hi_expr)
     if plot:
+        df = pd.concat(
+            [
+                pd.DataFrame(data={"expression": lo_expr, "limit": "low"}),
+                pd.DataFrame(data={"expression": hi_expr, "limit": "high"}),
+            ]
+        )
         ax = plt.subplot(1, 2, 2)
-        sns.displot(lo_expr)
+        sns.kdeplot(data=df, x="expression", hue="limit", fill=True, common_norm=False, legend=False)
         plt.axvline(x=lo_mean, lw=0.5, ls="--", color="black")
-        sns.displot(hi_expr)
         plt.axvline(x=hi_mean, lw=0.5, ls="--", color="black")
-        _, right = plt.xlim()
+        plt.ylabel("")
+        plt.yticks([])
+        left, right = plt.xlim()
+        ax_len = right - left
         plt.text(
-            (lo_mean / right) * 1.02,
+            ((lo_mean - left) / ax_len) * 1.02,
             0.9,
             f"{lo_mean:.3f}",
             horizontalalignment="left",
             transform=ax.transAxes,
         )
         plt.text(
-            (hi_mean / right) * 0.98,
+            ((hi_mean - left) / ax_len) * 0.98,
             0.9,
             f"{hi_mean:.3f}",
             horizontalalignment="right",
             transform=ax.transAxes,
         )
         plt.title("Expressions around limits (target normalisation)")
-        plt.savefig(f"{output_path}expression_around_limits.png")
+        if output_path is not None:
+            plt.savefig(f"{output_path}expression_around_limits.png")
     return lo_mean, hi_mean
 
 
