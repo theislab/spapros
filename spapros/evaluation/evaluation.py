@@ -280,6 +280,37 @@ class ProbesetEvaluator:
             if update_summary:
                 self.summary_statistics(set_ids=[set_id])
 
+    def evaluate_probeset_pipeline(self, genes, set_id: str, shared_pre_results_path: str, step_specific_results: list):
+        """ Pipeline specific adaption of evaluate_probeset.
+
+        Computes probeset specific evaluations. The parameters for this function are adapted for the spapros-pipeline
+
+        Args:
+            genes: Genes by the 'get_genes' function.
+            set_id: ID of the current probeset
+            shared_pre_results_path: Path to the shared results
+            step_specific_results: List of paths to the specific results
+        """
+        # Load shared and pre results
+        for metric in self.metrics:
+            self.shared_results[metric] = pd.read_csv(shared_pre_results_path, index_col=0)
+            matches = list(filter(lambda x: metric in x, step_specific_results))
+            self.pre_results[metric][set_id] = pd.read_csv(matches[0], index_col=0)
+
+            # evaluate probeset
+            self.results[metric][set_id] = metric_computations(
+                genes,
+                adata=self.adata,
+                metric=metric,
+                shared_results=self.shared_results[metric],
+                pre_results=self.pre_results[metric][set_id],
+                parameters=self.metrics_params[metric],
+                n_jobs=self.n_jobs,
+            )
+            if self.dir:
+                Path(os.path.dirname(self._res_file(metric, set_id))).mkdir(parents=True, exist_ok=True)
+                self.results[metric][set_id].to_csv(self._res_file(metric, set_id))
+
     def summary_statistics(self, set_ids):
         """Compute summary statistics and update summary csv (if self.results_dir is not None)"""
         df = self._init_summary_table(set_ids)
