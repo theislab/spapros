@@ -221,7 +221,38 @@ def correlation_matrix(set_ids, cor_matrices, show=True, save=False, size_factor
     plt.close()
 
 
-def summary_table(table, summaries="all", color_maps={}, rename_cols={}, rename_rows={}, show=True, save=False):
+def format_time(time):
+    """
+    time: float
+        in seconds.
+
+    Return
+    ------
+    str
+        formatted time
+    """
+    days = int(time // (3600 * 24))
+    hours = int(time // 3600)
+    mins = int(time // 60)
+    secs = int(time // 1)
+    unit = ["d", "h", "min", "sec"]
+    for t, u in zip([days, hours, mins, secs], unit):
+        if t > 0:
+            return f"{t} {u}"
+    return "0 sec"
+
+
+def summary_table(
+    table,
+    summaries="all",
+    color_maps={},
+    rename_cols={},
+    rename_rows={},
+    time_format=[],
+    log_scale=[],
+    show=True,
+    save=False,
+):
     """Plot table of summary statistics
 
     table: pd.DataFrame
@@ -235,6 +266,8 @@ def summary_table(table, summaries="all", color_maps={}, rename_cols={}, rename_
         Rename summary metrics for plot.
     rename_rows: dict
         Rename set ids.
+    time_format: list of strs
+        Summary names that are formatted to days, hours, mins and secs (seconds are expected as input).
 
     """
 
@@ -248,10 +281,14 @@ def summary_table(table, summaries="all", color_maps={}, rename_cols={}, rename_
         "forest_clfs": "Reds",
         "marker_corr": "Reds",
         "gene_corr": "Blues",
+        "other": "Greys",
     }
 
     if summaries == "all":
         summaries = table.columns.tolist()
+        for s in summaries:
+            if s not in default_order:
+                default_order.append(s)
         # Order by default order of metrics and length of summary
         summaries.sort(key=lambda s: default_order.index(s.split()[0]) * 100 + len(s))
 
@@ -259,13 +296,23 @@ def summary_table(table, summaries="all", color_maps={}, rename_cols={}, rename_
     for summary in summaries:
         if summary in color_maps:
             cmaps[summary] = color_maps[summary]
-        else:
+        elif summary.split()[0] in default_cmaps:
             cmaps[summary] = default_cmaps[summary.split()[0]]
+        else:
+            cmaps[summary] = default_cmaps["other"]
 
+    # Init final table for plotting
     df = table[summaries].copy()
-
+    # Register potential new names of columns that are time formatted or log transformed
+    for col in df.columns:
+        if (col in time_format) and (col in rename_cols):
+            time_format.append(rename_cols[col])
+        if (col in log_scale) and (col in rename_cols):
+            log_scale.append(rename_cols[col])
+    # Rename columns
     df = df.rename(columns=rename_cols, index=rename_rows)
 
+    # Replace old column names with new names in colormaps
     for summary, new_key in rename_cols.items():
         cmaps[new_key] = cmaps.pop(summary)
 
@@ -281,10 +328,16 @@ def summary_table(table, summaries="all", color_maps={}, rename_cols={}, rename_
 
         yticklabels = bool(i == 0)
 
-        annot = True
-        fmt = ".2f"
+        color_vals = np.log(df[[col]]) if (col in log_scale) else df[[col]]
+        if col in time_format:
+            annot = df[col].apply(format_time).values[:, np.newaxis]
+            fmt = ""
+        else:
+            annot = True
+            fmt = ".2f"
+
         sns.heatmap(
-            df[[col]],
+            color_vals,
             cmap=cmaps[col],
             annot=annot,
             cbar=False,
