@@ -310,8 +310,8 @@ def clustering_nmis(
         (each row is a list of cluster assignments)
     ref_annotations: pd.DataFrame
         Same as annotations for reference clusterings.
-    ns: list of ints
-        list of numbers of clusters for which NMIs are computed.
+    ns: list of two ints
+        minimum (`ns[0]`) and maximum (`ns[1]`) number of clusters.
     method:
         NMI implementation
             'max': scikit method with `average_method='max'`
@@ -333,6 +333,11 @@ def clustering_nmis(
     """
 
     from sklearn.metrics import normalized_mutual_info_score
+
+    # Convert min and max n to list of ns
+    if len(ns) != 2:
+        raise ValueError("`ns` must be a list of two integers.")
+    ns = range(ns[0], ns[1] + 1)
 
     nmis = pd.DataFrame(np.nan, index=ns, columns=["nmi"])
 

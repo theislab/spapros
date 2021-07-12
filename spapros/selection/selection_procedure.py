@@ -56,7 +56,7 @@ class ProbesetSelector:  # (object)
             "n_DE": 1,
             "min_score": 0.9,
             "n_stds": 1.0,
-            "max_step": 12,
+            "max_step": 3,
             "min_outlier_dif": 0.02,
             "n_terminal_repeats": 3,
         },
@@ -155,12 +155,14 @@ class ProbesetSelector:  # (object)
         self.DE_penalties = DE_penalties
         self.m_penalties_adata_celltypes = m_penalties_adata_celltypes
         self.m_penalties_list_celltypes = m_penalties_list_celltypes
-        self.pca_selection_hparams = pca_selection_hparams
-        self.DE_selection_hparams = DE_selection_hparams
-        self.forest_hparams = forest_hparams
-        self.forest_DE_baseline_hparams = forest_DE_baseline_hparams
-        self.add_forest_genes_hparams = add_forest_genes_hparams
-        self.m_selection_hparams = marker_selection_hparams
+        # Set hyper parameters of selection steps
+        self.pca_selection_hparams = self._get_hparams(pca_selection_hparams, subject="pca_selection")
+        self.DE_selection_hparams = self._get_hparams(DE_selection_hparams, subject="DE_selection")
+        self.forest_hparams = self._get_hparams(forest_hparams, subject="forest")
+        self.forest_DE_baseline_hparams = self._get_hparams(forest_DE_baseline_hparams, subject="forest_DE_basline")
+        self.add_forest_genes_hparams = self._get_hparams(add_forest_genes_hparams, subject="add_forest_genes")
+        self.m_selection_hparams = self._get_hparams(marker_selection_hparams, subject="marker_selection")
+
         self.verbosity = verbosity
         self.seed = 0
         # TODO: there are probably a lot of places where the seed needs to be provided that are not captured yet.
@@ -771,6 +773,51 @@ class ProbesetSelector:  # (object)
             self.pca_penalties += ["mean_diff_constraint"]
             self.DE_penalties += ["mean_diff_constraint"]
             self.m_penalties_adata_celltypes += ["mean_diff_constraint"]
+
+    def _get_hparams(self, new_params, subject="DE_selection"):
+        """Add missing default parameters to dictionary in case they are not given
+
+        Example: forest_hparams are given in the class init definition as {"n_trees": 50, "subsample": 1000,
+        "test_subsample": 3000}. If the class is called with forest_hparams={"n_trees": 100} we would actually like
+        to have {"n_trees": 100, "subsample": 1000, "test_subsample": 3000}. The last two are added by this functions
+
+        # TODO we should have a test that checks if these default params are the same as in the __init__ method.
+        Why we keep parameters in init is that you directly see values that can be set. The laternative would be to
+        provide empty dicts in __init__.
+
+        Arguments
+        ---------
+        new_params: dict
+        subject: str
+            type of hyper parameters of interest.
+
+        Returns
+        -------
+        dict
+        """
+        params = new_params.copy()
+        if subject == "pca_selection":
+            defaults = {}
+        elif subject == "DE_selection":
+            defaults = {"n": 3, "per_group": True}
+        elif subject == "forest":
+            defaults = {"n_trees": 50, "subsample": 1000, "test_subsample": 3000}
+        elif subject == "forest_DE_basline":
+            defaults = {
+                "n_DE": 1,
+                "min_score": 0.9,
+                "n_stds": 1.0,
+                "max_step": 3,
+                "min_outlier_dif": 0.02,
+                "n_terminal_repeats": 3,
+            }
+        elif subject == "add_forest_genes":
+            defaults = {"n_max_per_it": 5, "performance_th": 0.02, "importance_th": 0}
+        elif subject == "marker_selection":
+            defaults = {"penalty_threshold": 1}
+
+        params.update({k: v for k, v in defaults.items() if k not in params})
+        return params
 
     def _initialize_file_paths(self):
         """Initialize path variables and set up folder hierarchy
