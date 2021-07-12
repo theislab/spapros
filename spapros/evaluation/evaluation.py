@@ -280,9 +280,9 @@ class ProbesetEvaluator:
             if update_summary:
                 self.summary_statistics(set_ids=[set_id])
 
-    def evaluate_probeset_pipeline(self, genes, set_id: str,
-                                   shared_pre_results_path: list,
-                                   step_specific_results: list):
+    def evaluate_probeset_pipeline(
+        self, genes, set_id: str, shared_pre_results_path: list, step_specific_results: list
+    ):
         """Pipeline specific adaption of evaluate_probeset.
 
         Computes probeset specific evaluations. The parameters for this function are adapted for the spapros-pipeline
@@ -295,7 +295,8 @@ class ProbesetEvaluator:
         """
         # Load shared and pre results
         for metric in self.metrics:
-            self.shared_results[metric] = pd.read_csv(shared_pre_results_path, index_col=0)
+            matches = list(filter(lambda result: metric in result, step_specific_results))
+            self.shared_results[metric] = pd.read_csv(matches[0], index_col=0)
             if step_specific_results:
                 matches = list(filter(lambda result: metric in result, step_specific_results))
                 self.pre_results[metric][set_id] = pd.read_csv(matches[0], index_col=0)
