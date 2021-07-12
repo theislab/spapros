@@ -294,8 +294,16 @@ class ProbesetEvaluator:
         # Load shared and pre results
         for metric in self.metrics:
             self.shared_results[metric] = pd.read_csv(shared_pre_results_path, index_col=0)
-            matches = list(filter(lambda result: metric in result, step_specific_results))
-            self.pre_results[metric][set_id] = pd.read_csv(matches[0], index_col=0)
+            if step_specific_results:
+                matches = list(filter(lambda result: metric in result, step_specific_results))
+                self.pre_results[metric][set_id] = pd.read_csv(matches[0], index_col=0)
+            else:
+                self.pre_results[metric][set_id] = metric_pre_computations(
+                    genes,
+                    adata=self.adata,
+                    metric=metric,
+                    parameters=self.metrics_params[metric],
+                )
 
             # evaluate probeset
             self.results[metric][set_id] = metric_computations(
