@@ -281,7 +281,7 @@ class ProbesetEvaluator:
                 self.summary_statistics(set_ids=[set_id])
 
     def evaluate_probeset_pipeline(self, genes, set_id: str, shared_pre_results_path: str, step_specific_results: list):
-        """ Pipeline specific adaption of evaluate_probeset.
+        """Pipeline specific adaption of evaluate_probeset.
 
         Computes probeset specific evaluations. The parameters for this function are adapted for the spapros-pipeline
 
