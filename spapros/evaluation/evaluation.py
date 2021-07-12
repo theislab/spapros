@@ -297,7 +297,7 @@ class ProbesetEvaluator:
         for metric in self.metrics:
             matches = list(filter(lambda result: metric in result, shared_pre_results_path))
             self.shared_results[metric] = pd.read_csv(matches[0], index_col=0)
-            if step_specific_results:
+            if len(step_specific_results) > 0:
                 matches = list(filter(lambda result: metric in result, step_specific_results))
                 self.pre_results[metric][set_id] = pd.read_csv(matches[0], index_col=0)
             else:
