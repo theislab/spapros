@@ -416,13 +416,13 @@ def knns(adata, genes="all", ks=[10, 20]):
         ...
     """
 
+    # Subset adata to gene set
+    if isinstance(genes, str) and (genes == "all"):
+        genes = adata.var_names
+    a = adata[:, genes].copy()
+
     # Set n_pcs to 50 or number of genes if < 50
     n_pcs = np.min([50, len(genes) - 1])
-
-    if genes == "all":
-        a = adata.copy()
-    else:
-        a = adata[:, genes].copy()
 
     # Delete existing PCAs, neighbor graphs, etc. and calculate PCA for n_pcs
     uns = [key for key in a.uns]
