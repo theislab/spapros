@@ -1,5 +1,6 @@
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
@@ -118,7 +119,16 @@ def ordered_confusion_matrices(conf_mats):
     return ordered_mats
 
 
-def confusion_heatmap(set_ids, conf_matrices, ordered=True, show=True, save=False, size_factor=6, n_cols=2):
+def confusion_heatmap(
+    set_ids, 
+    conf_matrices, 
+    ordered=True, 
+    show=True, 
+    save=False, 
+    size_factor=6, 
+    n_cols=2, 
+    rotate_x_labels=True
+):
     """Plot heatmap of cell type classification confusion matrices
 
     set_ids: list
@@ -151,6 +161,8 @@ def confusion_heatmap(set_ids, conf_matrices, ordered=True, show=True, save=Fals
         # sns.heatmap(cms[i],cmap="OrRd",cbar=(i == (len(set_ids)-1)),ax=ax,vmin=0,vmax=1,annot=True,fmt=".2f")
         if i == 0:
             plt.tick_params(axis="both", which="major", bottom=False, labelbottom=False, top=True, labeltop=True)
+            if rotate_x_labels:
+                plt.setp(plt.gca().get_xticklabels(), ha="left", rotation=45)
         elif (i % n_cols) == 0:
             plt.tick_params(
                 axis="both",
@@ -173,6 +185,8 @@ def confusion_heatmap(set_ids, conf_matrices, ordered=True, show=True, save=Fals
                 left=False,
                 labelleft=False,
             )
+            if rotate_x_labels:
+                plt.setp(plt.gca().get_xticklabels(), ha="left", rotation=45)            
         else:
             plt.tick_params(
                 axis="both",
@@ -242,6 +256,13 @@ def format_time(time):
     return "0 sec"
 
 
+def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+    new_cmap = colors.LinearSegmentedColormap.from_list(
+        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
+        cmap(np.linspace(minval, maxval, n)))
+    return new_cmap
+
+
 def summary_table(
     table,
     summaries="all",
@@ -250,6 +271,9 @@ def summary_table(
     rename_rows={},
     time_format=[],
     log_scale=[],
+    color_limits={},
+    nan_color='lightgrey',
+    threshold_ann={},
     show=True,
     save=False,
 ):
@@ -268,19 +292,29 @@ def summary_table(
         Rename set ids.
     time_format: list of strs
         Summary names that are formatted to days, hours, mins and secs (seconds are expected as input).
+    log_scale: list of strs
+        Summary names for which a log scaled colormap is applied.
+    color_limits: dict of lists of two floats
+        For each summary metric optionally provide vmin and vmax for the colormap.
+    nan_color: str
+        Color for nan values.
+    threshold_ann: dict
+        Special annotation for values above defined threshold. E.g. {"time":{"th":1000,"above":True,"ann":"> 1k"}}
 
     """
 
     fsize = 15
 
     # Default order and colors
-    default_order = ["cluster_similarity", "knn_overlap", "Greens", "forest_clfs", "marker_corr", "gene_corr"]
+    default_order = ["cluster_similarity", "knn_overlap", "Greens", "forest_clfs", "marker_corr", "gene_corr",
+                     "penalty"]
     default_cmaps = {
         "cluster_similarity": "Greens",
         "knn_overlap": "Greens",
-        "forest_clfs": "Reds",
-        "marker_corr": "Reds",
+        "forest_clfs": "Purples",#"Reds",
+        "marker_corr": "Purples",#"Reds",
         "gene_corr": "Blues",
+        "penalty": truncate_colormap(plt.get_cmap('Greys'), minval=0.05, maxval=0.7, n=100), #"Greys",
         "other": "Greys",
     }
 
@@ -288,7 +322,7 @@ def summary_table(
         summaries = table.columns.tolist()
         for s in summaries:
             if s not in default_order:
-                default_order.append(s)
+                default_order.append(s.split()[0])
         # Order by default order of metrics and length of summary
         summaries.sort(key=lambda s: default_order.index(s.split()[0]) * 100 + len(s))
 
@@ -303,15 +337,21 @@ def summary_table(
 
     # Init final table for plotting
     df = table[summaries].copy()
+
     # Register potential new names of columns that are time formatted or log transformed
     for col in df.columns:
         if (col in time_format) and (col in rename_cols):
             time_format.append(rename_cols[col])
         if (col in log_scale) and (col in rename_cols):
             log_scale.append(rename_cols[col])
+        if (col in color_limits) and (col in rename_cols):
+            color_limits[rename_cols[col]] = color_limits[col]
+        if (col in threshold_ann) and (col in rename_cols):
+            threshold_ann[rename_cols[col]] = threshold_ann[col]
+        
     # Rename columns
     df = df.rename(columns=rename_cols, index=rename_rows)
-
+    
     # Replace old column names with new names in colormaps
     for summary, new_key in rename_cols.items():
         cmaps[new_key] = cmaps.pop(summary)
@@ -323,29 +363,56 @@ def summary_table(
     gs1 = gridspec.GridSpec(1, n_cols)
     gs1.update(wspace=0.0, hspace=0.0)
 
+    multi_col = {}
+    cols = df.columns.tolist()
+    for col in df.columns.unique():
+        count = cols.count(col)
+        if count > 1:
+            multi_col[col] = 0
+    
     for i, col in enumerate(df.columns):
+
         ax = plt.subplot(gs1[i])
 
         yticklabels = bool(i == 0)
 
-        color_vals = np.log(df[[col]]) if (col in log_scale) else df[[col]]
+        if col in multi_col: # TODO: time formating multi col support? Better get col pos at the beginning + iloc
+            col_pos = [i for i, c in enumerate(df.columns) if c == col][multi_col[col]]
+            color_vals = np.log(df.iloc[:,[col_pos]]) if (col in log_scale) else df.iloc[:,[col_pos]]
+            multi_col[col] += 1
+        else:
+            color_vals = np.log(df[[col]]) if (col in log_scale) else df[[col]]
+            col_pos = [i for i, c in enumerate(df.columns) if c == col][0]
+            
         if col in time_format:
-            annot = df[col].apply(format_time).values[:, np.newaxis]
+            #annot = df[col].apply(format_time).values[:, np.newaxis]
+            annot = df.iloc[:,col_pos].apply(format_time).values[:, np.newaxis]
             fmt = ""
         else:
             annot = True
             fmt = ".2f"
+        if col in threshold_ann:
+            formatter = lambda s: f"{s:.2f}"
+            annot = df.iloc[:,col_pos].apply(formatter).values[:, np.newaxis] if isinstance(annot,bool) else annot
+            tmp = threshold_ann[col]            
+            th_mask = (df.iloc[:,col_pos] > tmp["th"]) if tmp["above"] else (df.iloc[:,col_pos] < tmp["th"])
+            annot[th_mask,:] = tmp["ann"]
+            fmt=""
 
-        sns.heatmap(
+        g = sns.heatmap(
             color_vals,
             cmap=cmaps[col],
             annot=annot,
+            mask=color_vals.isnull(),
             cbar=False,
             square=True,
             yticklabels=yticklabels,
             fmt=fmt,
             annot_kws={"fontsize": fsize - 2},
+            vmin=color_limits[col][0] if (col in color_limits) else None,
+            vmax=color_limits[col][1] if (col in color_limits) else None,
         )
+        g.set_facecolor(nan_color)
         plt.tick_params(
             axis="x", which="major", labelsize=fsize, labelbottom=False, bottom=False, top=True, labeltop=True
         )

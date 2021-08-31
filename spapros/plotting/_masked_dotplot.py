@@ -161,12 +161,15 @@ class MaskedDotPlot(sc.pl.DotPlot):
         dot_color_df: Optional[pd.DataFrame] = None,
         dot_size_df: Optional[pd.DataFrame] = None,
         ax: Optional[_AxesSubplot] = None,
+        grid: Optional[bool] = True,
+        grid_linewidth: Optional[float] = 0.1,
         **kwds,
     ):
         self.tree_genes = tree_genes
         self.marker_genes = marker_genes
         self.further_celltypes = further_celltypes
         self.show_marker_legend = True
+        self.grid_linewidth = grid_linewidth
         sc.pl.DotPlot.__init__(
             self,
             adata,
@@ -202,7 +205,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
             # dot_edge_color='black',
             # dot_edge_lw=0.2,
             # size_exponent=1.5,
-            grid=True,
+            grid=grid,  # True,
             # x_padding=0.8,
             # y_padding=1.0)
         )
@@ -285,6 +288,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
             largest_dot=self.largest_dot,
             size_exponent=self.size_exponent,
             grid=self.grid,
+            grid_linewidth=self.grid_linewidth,
             x_padding=self.plot_x_padding,
             y_padding=self.plot_y_padding,
             **self.kwds,
@@ -313,6 +317,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
         edge_color: Optional[ColorLike] = None,
         edge_lw: Optional[float] = None,
         grid: Optional[bool] = False,
+        grid_linewidth: Optional[float] = 0.1,
         x_padding: Optional[float] = 0.8,
         y_padding: Optional[float] = 1.0,
         **kwds,
@@ -561,7 +566,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
             dot_ax.set_xlim(-x_padding, dot_color.shape[1] + x_padding)
 
         if grid:
-            dot_ax.grid(True, color="gray", linewidth=0.1)
+            dot_ax.grid(True, color="gray", linewidth=grid_linewidth)  # linewidth=0.1)
             dot_ax.set_axisbelow(True)
 
         return normalize, dot_min, dot_max
