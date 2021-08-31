@@ -518,3 +518,44 @@ def filter_marker_dict_by_shared_genes(marker_dict, verbose=True):
             print(f"\t {g:<{max_str_length}} : {gene_cts_dict[g]}")
         print("\t If you want to include shared markers e.g. add a shared celltype key to the marker_dict")
     return {ct: [g for g in gs if g not in multi_occurence_genes] for ct, gs in marker_dict.items()}
+
+
+# This is at the moment still needed for the ProbesetSelector. We also have such function in metrics. Should be combined
+# at the end.
+
+def correlation_matrix(adata,genes='all',absolute=True,diag_zero=True,unknown_genes_to_zero=False):
+    """Calculate gene correlation matrix
+    
+    adata: AnnData
+    genes: 'all' or list of strs
+        Gene subset for correlation calculation (TODO: add options for an unsymmetric cor_matrix)
+    absolute: bool
+        Wether to take the absolute values of correlations
+    diag_zero: bool
+        Wether to set diagonal elements to zero
+    TODO: Add option to set a triangle to zero
+    unknown_genes_to_zero: bool
+        Wether to add genes that aren't in adata.var.index with zeros. (Otherwise an error is raised)
+    
+    """
+    if genes == 'all':
+        genes = adata.var_names
+    elif unknown_genes_to_zero:
+        unknown = [g for g in genes if not (g in adata.var_names)]
+        genes = [g for g in genes if not (g in unknown)]
+    
+    if issparse(adata.X):
+        cor_mat = pd.DataFrame(index=genes, columns=genes, data=np.corrcoef(adata[:,genes].X.toarray(),rowvar=False))
+    else:
+        cor_mat = pd.DataFrame(index=genes, columns=genes, data=np.corrcoef(adata[:,genes].X,rowvar=False))
+        
+    if absolute:
+        cor_mat = np.abs(cor_mat)
+    if diag_zero:
+        np.fill_diagonal(cor_mat.values,0)
+    if unknown_genes_to_zero and unknown:
+        for g in unknown:
+            cor_mat.loc[g] = 0.0
+            cor_mat[g] = 0.0
+        
+    return cor_mat   
