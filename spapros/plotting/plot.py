@@ -5,6 +5,8 @@ import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
+from spapros.plotting._masked_dotplot import MaskedDotPlot
+import itertools
 
 # from spapros.util.util import plateau_penalty_kernel
 
@@ -424,3 +426,112 @@ def summary_table(
     if save:
         fig.savefig(save, bbox_inches="tight")
     plt.close()
+
+    
+    
+def masked_dotplot(
+    adata, 
+    selector, 
+    ct_key="celltype", 
+    imp_threshold = 0.05,
+    celltypes=None, 
+    n_genes=None, 
+    comb_markers_only=False,
+    cmap="Reds",
+    comb_marker_color="darkblue",
+    marker_color="green",
+    non_adata_celltypes_color="grey",
+):
+    """
+    Arguments
+    ---------
+    adata
+        AnnData with adata.obs[ct_key] cell type annotations
+    selector
+        ProbesetSelector object with selected selector.probeset
+    ct_key
+    imp_threshold
+        Show genes as combinatorial marker only for those genes with importance > `imp_threshold`
+    celltypes
+        Optional subset of celltypes (rows of dotplot)
+    n_genes
+        Optionally plot top `n_genes` genes.
+    comb_markers_only
+        Whether to plot only genes that are combinatorial marker for the plotted cell types.
+    cmap
+        Colormap of mean expressions
+    comb_marker_color
+        Color for combinatorial markers
+    marker_color
+        Color for marker genes            
+    non_adata_celltypes_color
+        Color for celltypes that don't occur in the data set
+    """
+    
+    if isinstance(selector,str):
+        selector = select.ProbesetSelector(adata,ct_key,save_dir=selector)
+        # TODO: think the last steps of the ProbesetSelector are still not saved..., needs to be fixed.
+    
+    # celltypes, possible origins:
+    # - adata.obs[ct_key] (could include cts not used for selection)
+    # - celltypes for selection (including markers, could include cts which are not in adata.obs[ct_key])
+    # --> pool all together... order?
+    
+    if celltypes is not None:
+        cts = celltypes
+        a = adata[adata.obs[ct_key].isin(celltypes)].copy()
+        #a.obs[ct_key] = a.obs[ct_key].astype(str).astype("category")
+    else:
+        # Cell types from adata
+        cts = adata.obs[ct_key].unique().tolist()
+        # Cell types from marker list only
+        if 'celltypes_marker' in selector.probeset:
+            tmp = []
+            for markers_celltypes in selector.probeset['celltypes_marker'].str.split(','):
+                tmp += markers_celltypes
+            tmp = np.unique(tmp).tolist()
+            if '' in tmp:
+                tmp.remove('')
+            cts += [ct for ct in tmp if ct not in cts]
+        a = adata
+    
+    # Get selected genes that are also in adata
+    selected_genes = [g for g in selector.probeset[selector.probeset["selection"]].index.tolist() if g in adata.var_names]
+    
+    # Get tree genes
+    tree_genes = {}
+    for ct,importance_tab in selector.forest_results['forest'][2].items():
+        if ct in cts:
+            tree_genes[ct] = importance_tab['0'].loc[importance_tab['0']>imp_threshold].index.tolist()
+            tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
+        
+    # Get markers
+    marker_genes = {ct:[] for ct in (cts)}
+    for ct in (cts):
+        for gene in selector.probeset[selector.probeset["selection"]].index:
+            if ct in selector.probeset.loc[gene,'celltypes_marker'].split(',') and (gene in adata.var_names):
+                marker_genes[ct].append(gene)
+        marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
+
+    # Optionally subset genes:
+    # Subset to combinatorial markers of shown celltypes only
+    if comb_markers_only:
+        selected_genes = [g for g in selected_genes if g in list(itertools.chain(*[tree_genes[ct] for ct in tree_genes.keys()]))]
+    # Subset to show top n_genes only        
+    if n_genes:
+        selected_genes = selected_genes[:min(n_genes,len(selected_genes))]
+    for ct in cts:
+        marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
+    
+    dp = MaskedDotPlot(a,
+                       var_names=selected_genes,
+                       groupby=ct_key,
+                       tree_genes=tree_genes,
+                       marker_genes=marker_genes,
+                       further_celltypes=[ct for ct in cts if ct not in adata.obs[ct_key].unique()],
+                       cmap = cmap,
+                       tree_genes_color = comb_marker_color,
+                       marker_genes_color = marker_color,
+                       non_adata_celltypes_color = non_adata_celltypes_color,
+                       )
+    dp.make_figure()
