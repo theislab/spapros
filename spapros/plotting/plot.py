@@ -437,10 +437,12 @@ def masked_dotplot(
     celltypes=None, 
     n_genes=None, 
     comb_markers_only=False,
+    markers_only=False,
     cmap="Reds",
     comb_marker_color="darkblue",
     marker_color="green",
     non_adata_celltypes_color="grey",
+    save=None,
 ):
     """
     Arguments
@@ -457,7 +459,11 @@ def masked_dotplot(
     n_genes
         Optionally plot top `n_genes` genes.
     comb_markers_only
-        Whether to plot only genes that are combinatorial marker for the plotted cell types.
+        Whether to plot only genes that are combinatorial markers for the plotted cell types. (can be combined with 
+        markers_only, in that case markers that are not comb markers are also shown)
+    markers_only
+        Whether to plot only genes that are markers for the plotted cell types. (can be combined with comb_markers_only,
+        in that case comb markers that are not markers are also shown)
     cmap
         Colormap of mean expressions
     comb_marker_color
@@ -466,6 +472,8 @@ def masked_dotplot(
         Color for marker genes            
     non_adata_celltypes_color
         Color for celltypes that don't occur in the data set
+    save
+        Save figure to path
     """
     
     if isinstance(selector,str):
@@ -515,13 +523,21 @@ def masked_dotplot(
 
     # Optionally subset genes:
     # Subset to combinatorial markers of shown celltypes only
-    if comb_markers_only:
-        selected_genes = [g for g in selected_genes if g in list(itertools.chain(*[tree_genes[ct] for ct in tree_genes.keys()]))]
+    if comb_markers_only or markers_only:
+        allowed_genes = []
+        if comb_markers_only:
+            allowed_genes += list(itertools.chain(*[tree_genes[ct] for ct in tree_genes.keys()]))
+        if markers_only:
+            allowed_genes += list(itertools.chain(*[marker_genes[ct] for ct in marker_genes.keys()]))
+        selected_genes = [g for g in selected_genes if g in allowed_genes]
     # Subset to show top n_genes only        
     if n_genes:
         selected_genes = selected_genes[:min(n_genes,len(selected_genes))]
+    # Filter (combinatorial) markers by genes that are not in the selected genes
     for ct in cts:
         marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
+    for ct in tree_genes.keys():
+        tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]        
     
     dp = MaskedDotPlot(a,
                        var_names=selected_genes,
@@ -535,3 +551,5 @@ def masked_dotplot(
                        non_adata_celltypes_color = non_adata_celltypes_color,
                        )
     dp.make_figure()
+    if save:
+        plt.gcf().savefig(save, bbox_inches="tight")
