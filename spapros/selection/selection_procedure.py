@@ -210,7 +210,7 @@ class ProbesetSelector:  # (object)
 
         # Check if genes were preselected to a smaller number (which is recommended)
         if self.adata[:, self.genes].n_vars > 12000:
-            tmp_str = "adata[:,adata.var[genes_key]]" if self.genes_key else "adata"
+            tmp_str = "adata[:,adata.var[genes_key]]" if self.g_key else "adata"
             print(f"{tmp_str} contains many genes, consider reducing the number to fewer highly variable genes.")
 
         # Mean difference constraint
