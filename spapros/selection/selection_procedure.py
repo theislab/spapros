@@ -567,7 +567,7 @@ class ProbesetSelector:  # (object)
             index = self.genes
         # Add pre selected genes that are not in adata
         if self.selection["pre"]:
-            preselected_genes_not_in_adata = [g for g in preselected_genes if (g not in self.adata.var_names)]
+            preselected_genes_not_in_adata = [g for g in self.selection["pre"] if (g not in self.adata.var_names)]
             if isinstance(index,pd.Index):
                 index.append(
                     pd.Index(preselected_genes_not_in_adata)
