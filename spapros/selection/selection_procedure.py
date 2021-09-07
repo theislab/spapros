@@ -559,21 +559,13 @@ class ProbesetSelector:  # (object)
         # genes.
 
         # Initialize probeset table
+        index = self.genes.tolist()
+        # Add marker genes that are not in adata
         if self.marker_list:
-            index = np.unique(
-                self.genes.tolist() + [g for ct, genes in self.marker_list.items() for g in genes]
-            ).tolist()
-        else:
-            index = self.genes
+            index = np.unique(index + [g for ct, genes in self.marker_list.items() for g in genes]).tolist()
         # Add pre selected genes that are not in adata
         if self.selection["pre"]:
-            preselected_genes_not_in_adata = [g for g in self.selection["pre"] if (g not in self.adata.var_names)]
-            if isinstance(index,pd.Index):
-                index.append(
-                    pd.Index(preselected_genes_not_in_adata)
-                )
-            elif isinstance(index,list):
-                index += preselected_genes_not_in_adata
+            index = np.unique(index + self.selection["pre"]).tolist()
         # Init table
         probeset = pd.DataFrame(index=index)
         # Get rank and importance score from last trained forest
