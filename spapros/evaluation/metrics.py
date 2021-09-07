@@ -705,10 +705,31 @@ def summary_metric_diagonal_confusion_mean(conf_mat):
     """Compute mean of diagonal elements of confusion matrix"""
     return np.diag(conf_mat).mean()
 
+def linear_step(x,low,high,descending=True):
+    """Step function with linear transition between low and high
+    
+    descending:
+        Wether to go from 1 to 0 or the other way around.
+    """
+    
+    b = 1.0
+    m = 1/(high-low)
+    
+    if descending:
+        return np.where(x < low, b, np.where(x > high, 0, (x-low)*(-m) + b))
+    else:
+        return np.where(x < low, 0, np.where(x > high, b, (x-low)*m + 0))
 
-def summary_metric_diagonal_confusion_percentage(conf_mat, threshold=0.9):
-    """Compute percentage of diagonal elements of confusion matrix above threshold"""
-    return np.mean(np.diag(conf_mat) > threshold)
+def summary_metric_diagonal_confusion_percentage(conf_mat, threshold=0.9, tolerance=0.05):
+    """Compute percentage of diagonal elements of confusion matrix above threshold
+    
+    To make the metric more stable we smoothen the threshold with a linear transition from 
+    threshold - tolerance to threshold + tolerance.
+    """
+    if tolerance:
+        return np.mean(linear_step(np.diag(conf_mat),threshold-tolerance,threshold+tolerance,descending=False))
+    else:
+        return np.mean(np.diag(conf_mat) > threshold)
 
 
 ################################
@@ -920,8 +941,11 @@ def summary_metric_correlation_mean(cor_matrix):
     return 1 - np.nanmean(cor_mat)
 
 
-def summary_metric_correlation_percentage(cor_matrix, threshold=0.8):
+def summary_metric_correlation_percentage(cor_matrix, threshold=0.8, tolerance=0.05):
     """Calculate percentage of genes with max(abs(correlations)) < threshold
+
+    To make the metric more stable we smoothen the threshold with a linear transition from 
+    threshold - tolerance to threshold + tolerance.
 
     cor_mat: pd.DataFrame and np.array
         Gene set correlation matrix.
@@ -935,4 +959,7 @@ def summary_metric_correlation_percentage(cor_matrix, threshold=0.8):
     cor_mat = cor_matrix.copy()
     cor_mat = np.abs(cor_mat)
     np.fill_diagonal(cor_mat.values, 0)
-    return np.sum(np.max(cor_mat, axis=0) < threshold) / len(cor_mat)
+    if tolerance:
+        return np.mean(linear_step(np.max(cor_mat, axis=0).values,threshold-tolerance,threshold+tolerance,descending=True))
+    else:
+        return np.mean(np.max(cor_mat, axis=0).values < threshold)
