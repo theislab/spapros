@@ -606,7 +606,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
             ax.set_title("combinatorial marker", size="small")
         elif i == 1:
             ax.scatter([0], [0], s=size, marker="s", color=marker_genes_color, edgecolor="none", alpha=0.3)
-            ax.set_title("marker gene", size="small")
+            ax.set_title("DE or lit. gene", size="small")
         elif i == 2:
             ax.scatter([0], [0], s=size, marker="s", color=non_adata_celltypes_color, edgecolor="none", alpha=0.3)
             ax.set_title("celltype not in dataset", size="small")
