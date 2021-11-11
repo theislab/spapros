@@ -193,7 +193,7 @@ class ProbesetSelector:  # (object)
                 "The following celltypes' test set sizes for forest training are below min_test_n "
                 + f"(={self.min_test_n}):"
             )
-            max_length = max([len(ct) for ct in cts_below_min_test_size]) # TODO: bug fix: type(ct) != str doesnt work.
+            max_length = max([len(ct) for ct in cts_below_min_test_size])  # TODO: bug fix: type(ct) != str doesnt work.
             for i, ct in enumerate(cts_below_min_test_size):
                 print(f"\t {ct:<{max_length}} : {counts_below_min_test_size[i]}")
 
@@ -613,7 +613,7 @@ class ProbesetSelector:  # (object)
                 return (a or "") + ("," if (a and b) else "") + (b or "")
 
             probeset["celltypes_marker"] = ""
-            if isinstance(self.selection["marker"],pd.DataFrame) or self.selection["marker"]: # TODO check this
+            if isinstance(self.selection["marker"], pd.DataFrame) or self.selection["marker"]:  # TODO check this
                 probeset["celltypes_marker"] = probeset["celltypes_DE"].combine(
                     self.selection["marker"]["celltype"], str_combiner
                 )
@@ -674,7 +674,7 @@ class ProbesetSelector:  # (object)
                     tmp_rank = np.nanmin([i + 1, probeset.loc[g]["marker_rank"]])
                     probeset.loc[g, ["list_only_ct_marker", "required_marker", "marker_rank"]] = [True, True, tmp_rank]
             for ct in self.celltypes:
-                if isinstance(self.selection["marker"],pd.DataFrame) or self.selection["marker"]: # TODO check this                    
+                if isinstance(self.selection["marker"], pd.DataFrame) or self.selection["marker"]:  # TODO check this
                     gene_idxs = [
                         g
                         for g, is_marker in (

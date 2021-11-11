@@ -523,9 +523,10 @@ def filter_marker_dict_by_shared_genes(marker_dict, verbose=True):
 # This is at the moment still needed for the ProbesetSelector. We also have such function in metrics. Should be combined
 # at the end.
 
-def correlation_matrix(adata,genes='all',absolute=True,diag_zero=True,unknown_genes_to_zero=False):
+
+def correlation_matrix(adata, genes="all", absolute=True, diag_zero=True, unknown_genes_to_zero=False):
     """Calculate gene correlation matrix
-    
+
     adata: AnnData
     genes: 'all' or list of strs
         Gene subset for correlation calculation (TODO: add options for an unsymmetric cor_matrix)
@@ -536,26 +537,26 @@ def correlation_matrix(adata,genes='all',absolute=True,diag_zero=True,unknown_ge
     TODO: Add option to set a triangle to zero
     unknown_genes_to_zero: bool
         Wether to add genes that aren't in adata.var.index with zeros. (Otherwise an error is raised)
-    
+
     """
-    if genes == 'all':
+    if genes == "all":
         genes = adata.var_names
     elif unknown_genes_to_zero:
         unknown = [g for g in genes if not (g in adata.var_names)]
         genes = [g for g in genes if not (g in unknown)]
-    
+
     if issparse(adata.X):
-        cor_mat = pd.DataFrame(index=genes, columns=genes, data=np.corrcoef(adata[:,genes].X.toarray(),rowvar=False))
+        cor_mat = pd.DataFrame(index=genes, columns=genes, data=np.corrcoef(adata[:, genes].X.toarray(), rowvar=False))
     else:
-        cor_mat = pd.DataFrame(index=genes, columns=genes, data=np.corrcoef(adata[:,genes].X,rowvar=False))
-        
+        cor_mat = pd.DataFrame(index=genes, columns=genes, data=np.corrcoef(adata[:, genes].X, rowvar=False))
+
     if absolute:
         cor_mat = np.abs(cor_mat)
     if diag_zero:
-        np.fill_diagonal(cor_mat.values,0)
+        np.fill_diagonal(cor_mat.values, 0)
     if unknown_genes_to_zero and unknown:
         for g in unknown:
             cor_mat.loc[g] = 0.0
             cor_mat[g] = 0.0
-        
-    return cor_mat   
+
+    return cor_mat

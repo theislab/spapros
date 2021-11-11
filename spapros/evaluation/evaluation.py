@@ -1139,13 +1139,7 @@ def get_outlier_reference_celltypes(specs, n_stds=1, min_outlier_dif=0.02, min_s
 
 
 def forest_classifications(
-    adata, 
-    selection, 
-    max_n_forests=3, 
-    verbosity=1, 
-    save=False, 
-    outlier_kwargs={}, 
-    **forest_kwargs
+    adata, selection, max_n_forests=3, verbosity=1, save=False, outlier_kwargs={}, **forest_kwargs
 ):
     """Train best trees including secondary trees
 
@@ -1165,9 +1159,9 @@ def forest_classifications(
     ct_spec_ref = None
     res = None
     with_clfs = "return_clfs" in forest_kwargs
-    
-    COUNT = 1        
-    
+
+    COUNT = 1
+
     for _ in tqdm(range(max_n_forests), desc="Train hierarchical trees") if tqdm else range(max_n_forests):
         new_res = single_forest_classifications(
             adata, selection, ct_spec_ref=ct_spec_ref, verbose=verbosity > 1, save=False, **forest_kwargs
@@ -1175,7 +1169,7 @@ def forest_classifications(
         res = new_res if (res is None) else combine_tree_results(res, new_res, with_clfs=with_clfs)
         specs = res[0][1] if with_clfs else res[1]
         ct_spec_ref = get_outlier_reference_celltypes(specs, **outlier_kwargs)
-        
+
     if save:
         if with_clfs:
             save_forest(res[0], save)

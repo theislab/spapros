@@ -1,12 +1,13 @@
+import itertools
+
+import matplotlib.colors as colors
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
 import numpy as np
 import pandas as pd
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
 from spapros.plotting._masked_dotplot import MaskedDotPlot
-import itertools
 
 # from spapros.util.util import plateau_penalty_kernel
 
@@ -122,14 +123,7 @@ def ordered_confusion_matrices(conf_mats):
 
 
 def confusion_heatmap(
-    set_ids, 
-    conf_matrices, 
-    ordered=True, 
-    show=True, 
-    save=False, 
-    size_factor=6, 
-    n_cols=2, 
-    rotate_x_labels=True
+    set_ids, conf_matrices, ordered=True, show=True, save=False, size_factor=6, n_cols=2, rotate_x_labels=True
 ):
     """Plot heatmap of cell type classification confusion matrices
 
@@ -188,7 +182,7 @@ def confusion_heatmap(
                 labelleft=False,
             )
             if rotate_x_labels:
-                plt.setp(plt.gca().get_xticklabels(), ha="left", rotation=45)            
+                plt.setp(plt.gca().get_xticklabels(), ha="left", rotation=45)
         else:
             plt.tick_params(
                 axis="both",
@@ -260,8 +254,8 @@ def format_time(time):
 
 def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
     new_cmap = colors.LinearSegmentedColormap.from_list(
-        'trunc({n},{a:.2f},{b:.2f})'.format(n=cmap.name, a=minval, b=maxval),
-        cmap(np.linspace(minval, maxval, n)))
+        "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval), cmap(np.linspace(minval, maxval, n))
+    )
     return new_cmap
 
 
@@ -274,7 +268,7 @@ def summary_table(
     time_format=[],
     log_scale=[],
     color_limits={},
-    nan_color='lightgrey',
+    nan_color="lightgrey",
     threshold_ann={},
     show=True,
     save=False,
@@ -308,15 +302,22 @@ def summary_table(
     fsize = 15
 
     # Default order and colors
-    default_order = ["cluster_similarity", "knn_overlap", "Greens", "forest_clfs", "marker_corr", "gene_corr",
-                     "penalty"]
+    default_order = [
+        "cluster_similarity",
+        "knn_overlap",
+        "Greens",
+        "forest_clfs",
+        "marker_corr",
+        "gene_corr",
+        "penalty",
+    ]
     default_cmaps = {
         "cluster_similarity": "Greens",
         "knn_overlap": "Greens",
-        "forest_clfs": "Purples",#"Reds",
-        "marker_corr": "Purples",#"Reds",
+        "forest_clfs": "Purples",  # "Reds",
+        "marker_corr": "Purples",  # "Reds",
         "gene_corr": "Blues",
-        "penalty": truncate_colormap(plt.get_cmap('Greys'), minval=0.05, maxval=0.7, n=100), #"Greys",
+        "penalty": truncate_colormap(plt.get_cmap("Greys"), minval=0.05, maxval=0.7, n=100),  # "Greys",
         "other": "Greys",
     }
 
@@ -350,10 +351,10 @@ def summary_table(
             color_limits[rename_cols[col]] = color_limits[col]
         if (col in threshold_ann) and (col in rename_cols):
             threshold_ann[rename_cols[col]] = threshold_ann[col]
-        
+
     # Rename columns
     df = df.rename(columns=rename_cols, index=rename_rows)
-    
+
     # Replace old column names with new names in colormaps
     for summary, new_key in rename_cols.items():
         cmaps[new_key] = cmaps.pop(summary)
@@ -371,35 +372,35 @@ def summary_table(
         count = cols.count(col)
         if count > 1:
             multi_col[col] = 0
-    
+
     for i, col in enumerate(df.columns):
 
         ax = plt.subplot(gs1[i])
 
         yticklabels = bool(i == 0)
 
-        if col in multi_col: # TODO: time formating multi col support? Better get col pos at the beginning + iloc
+        if col in multi_col:  # TODO: time formating multi col support? Better get col pos at the beginning + iloc
             col_pos = [i for i, c in enumerate(df.columns) if c == col][multi_col[col]]
-            color_vals = np.log(df.iloc[:,[col_pos]]) if (col in log_scale) else df.iloc[:,[col_pos]]
+            color_vals = np.log(df.iloc[:, [col_pos]]) if (col in log_scale) else df.iloc[:, [col_pos]]
             multi_col[col] += 1
         else:
             color_vals = np.log(df[[col]]) if (col in log_scale) else df[[col]]
             col_pos = [i for i, c in enumerate(df.columns) if c == col][0]
-            
+
         if col in time_format:
-            #annot = df[col].apply(format_time).values[:, np.newaxis]
-            annot = df.iloc[:,col_pos].apply(format_time).values[:, np.newaxis]
+            # annot = df[col].apply(format_time).values[:, np.newaxis]
+            annot = df.iloc[:, col_pos].apply(format_time).values[:, np.newaxis]
             fmt = ""
         else:
             annot = True
             fmt = ".2f"
         if col in threshold_ann:
             formatter = lambda s: f"{s:.2f}"
-            annot = df.iloc[:,col_pos].apply(formatter).values[:, np.newaxis] if isinstance(annot,bool) else annot
-            tmp = threshold_ann[col]            
-            th_mask = (df.iloc[:,col_pos] > tmp["th"]) if tmp["above"] else (df.iloc[:,col_pos] < tmp["th"])
-            annot[th_mask,:] = tmp["ann"]
-            fmt=""
+            annot = df.iloc[:, col_pos].apply(formatter).values[:, np.newaxis] if isinstance(annot, bool) else annot
+            tmp = threshold_ann[col]
+            th_mask = (df.iloc[:, col_pos] > tmp["th"]) if tmp["above"] else (df.iloc[:, col_pos] < tmp["th"])
+            annot[th_mask, :] = tmp["ann"]
+            fmt = ""
 
         g = sns.heatmap(
             color_vals,
@@ -427,15 +428,14 @@ def summary_table(
         fig.savefig(save, bbox_inches="tight")
     plt.close()
 
-    
-    
+
 def masked_dotplot(
-    adata, 
-    selector, 
-    ct_key="celltype", 
-    imp_threshold = 0.05,
-    celltypes=None, 
-    n_genes=None, 
+    adata,
+    selector,
+    ct_key="celltype",
+    imp_threshold=0.05,
+    celltypes=None,
+    n_genes=None,
     comb_markers_only=False,
     markers_only=False,
     cmap="Reds",
@@ -459,7 +459,7 @@ def masked_dotplot(
     n_genes
         Optionally plot top `n_genes` genes.
     comb_markers_only
-        Whether to plot only genes that are combinatorial markers for the plotted cell types. (can be combined with 
+        Whether to plot only genes that are combinatorial markers for the plotted cell types. (can be combined with
         markers_only, in that case markers that are not comb markers are also shown)
     markers_only
         Whether to plot only genes that are markers for the plotted cell types. (can be combined with comb_markers_only,
@@ -469,55 +469,57 @@ def masked_dotplot(
     comb_marker_color
         Color for combinatorial markers
     marker_color
-        Color for marker genes            
+        Color for marker genes
     non_adata_celltypes_color
         Color for celltypes that don't occur in the data set
     save
         Save figure to path
     """
-    
-    if isinstance(selector,str):
-        selector = select.ProbesetSelector(adata,ct_key,save_dir=selector)
+
+    if isinstance(selector, str):
+        selector = select.ProbesetSelector(adata, ct_key, save_dir=selector)
         # TODO: think the last steps of the ProbesetSelector are still not saved..., needs to be fixed.
-    
+
     # celltypes, possible origins:
     # - adata.obs[ct_key] (could include cts not used for selection)
     # - celltypes for selection (including markers, could include cts which are not in adata.obs[ct_key])
     # --> pool all together... order?
-    
+
     if celltypes is not None:
         cts = celltypes
         a = adata[adata.obs[ct_key].isin(celltypes)].copy()
-        #a.obs[ct_key] = a.obs[ct_key].astype(str).astype("category")
+        # a.obs[ct_key] = a.obs[ct_key].astype(str).astype("category")
     else:
         # Cell types from adata
         cts = adata.obs[ct_key].unique().tolist()
         # Cell types from marker list only
-        if 'celltypes_marker' in selector.probeset:
+        if "celltypes_marker" in selector.probeset:
             tmp = []
-            for markers_celltypes in selector.probeset['celltypes_marker'].str.split(','):
+            for markers_celltypes in selector.probeset["celltypes_marker"].str.split(","):
                 tmp += markers_celltypes
             tmp = np.unique(tmp).tolist()
-            if '' in tmp:
-                tmp.remove('')
+            if "" in tmp:
+                tmp.remove("")
             cts += [ct for ct in tmp if ct not in cts]
         a = adata
-    
+
     # Get selected genes that are also in adata
-    selected_genes = [g for g in selector.probeset[selector.probeset["selection"]].index.tolist() if g in adata.var_names]
-    
+    selected_genes = [
+        g for g in selector.probeset[selector.probeset["selection"]].index.tolist() if g in adata.var_names
+    ]
+
     # Get tree genes
     tree_genes = {}
-    for ct,importance_tab in selector.forest_results['forest'][2].items():
+    for ct, importance_tab in selector.forest_results["forest"][2].items():
         if ct in cts:
-            tree_genes[ct] = importance_tab['0'].loc[importance_tab['0']>imp_threshold].index.tolist()
+            tree_genes[ct] = importance_tab["0"].loc[importance_tab["0"] > imp_threshold].index.tolist()
             tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
-        
+
     # Get markers
-    marker_genes = {ct:[] for ct in (cts)}
-    for ct in (cts):
+    marker_genes = {ct: [] for ct in (cts)}
+    for ct in cts:
         for gene in selector.probeset[selector.probeset["selection"]].index:
-            if ct in selector.probeset.loc[gene,'celltypes_marker'].split(',') and (gene in adata.var_names):
+            if ct in selector.probeset.loc[gene, "celltypes_marker"].split(",") and (gene in adata.var_names):
                 marker_genes[ct].append(gene)
         marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
 
@@ -530,26 +532,27 @@ def masked_dotplot(
         if markers_only:
             allowed_genes += list(itertools.chain(*[marker_genes[ct] for ct in marker_genes.keys()]))
         selected_genes = [g for g in selected_genes if g in allowed_genes]
-    # Subset to show top n_genes only        
+    # Subset to show top n_genes only
     if n_genes:
-        selected_genes = selected_genes[:min(n_genes,len(selected_genes))]
+        selected_genes = selected_genes[: min(n_genes, len(selected_genes))]
     # Filter (combinatorial) markers by genes that are not in the selected genes
     for ct in cts:
         marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
     for ct in tree_genes.keys():
-        tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]        
-    
-    dp = MaskedDotPlot(a,
-                       var_names=selected_genes,
-                       groupby=ct_key,
-                       tree_genes=tree_genes,
-                       marker_genes=marker_genes,
-                       further_celltypes=[ct for ct in cts if ct not in adata.obs[ct_key].unique()],
-                       cmap = cmap,
-                       tree_genes_color = comb_marker_color,
-                       marker_genes_color = marker_color,
-                       non_adata_celltypes_color = non_adata_celltypes_color,
-                       )
+        tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
+
+    dp = MaskedDotPlot(
+        a,
+        var_names=selected_genes,
+        groupby=ct_key,
+        tree_genes=tree_genes,
+        marker_genes=marker_genes,
+        further_celltypes=[ct for ct in cts if ct not in adata.obs[ct_key].unique()],
+        cmap=cmap,
+        tree_genes_color=comb_marker_color,
+        marker_genes_color=marker_color,
+        non_adata_celltypes_color=non_adata_celltypes_color,
+    )
     dp.make_figure()
     if save:
         plt.gcf().savefig(save, bbox_inches="tight")
