@@ -10,7 +10,6 @@ import seaborn as sns
 from spapros.plotting._masked_dotplot import MaskedDotPlot
 
 # from spapros.util.util import plateau_penalty_kernel
-
 # TODO: Fix explore_constraint plot. The following circular import is causing problems atm:
 #
 # from spapros.selection.selection_methods import select_pca_genes
@@ -475,9 +474,10 @@ def masked_dotplot(
     save
         Save figure to path
     """
+    from spapros.selection import ProbesetSelector
 
     if isinstance(selector, str):
-        selector = select.ProbesetSelector(adata, ct_key, save_dir=selector)
+        selector = ProbesetSelector(adata, ct_key, save_dir=selector)
         # TODO: think the last steps of the ProbesetSelector are still not saved..., needs to be fixed.
 
     # celltypes, possible origins:
