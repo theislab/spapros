@@ -24,12 +24,25 @@ sys.path.insert(0, os.path.abspath(".."))
 # Add 'sphinx_automodapi.automodapi' if you want to build modules
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx_click",
     "sphinx_rtd_dark_mode",
 ]
+
+autosummary_generate = True
+autodoc_member_order = "groupwise"
+autodoc_typehints = "signature"
+autodoc_docstring_signature = True
+napoleon_google_docstring = True
+napoleon_numpy_docstring = False
+napoleon_include_init_with_doc = False
+napoleon_use_rtype = True
+napoleon_use_param = True
+napoleon_custom_sections = [("Params", "Parameters")]
+todo_include_todos = False
 
 default_dark_mode = True
 

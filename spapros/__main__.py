@@ -81,8 +81,8 @@ def spapros_cli(ctx, verbose, log_file):
 @click.argument("data", type=click.Path(exists=True))
 @click.option("--output", "-o", default="./results/")
 def selection(data, output) -> None:
-    """
-    Create a selection of probesets for an h5ad file
+    """Create a selection of probesets for an h5ad file.
+
     Args:
         data: Path to the h5ad file
         output: Output path
