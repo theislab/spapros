@@ -14,8 +14,8 @@ nox.options.sessions = (
     "safety",
     "mypy",
     "tests",
-    "xdoctest",
-    "docs-build",
+    # "xdoctest",
+    # "docs-build",
 )
 
 
@@ -74,7 +74,6 @@ def precommit(session: Session) -> None:
     args = session.posargs or ["run", "--all-files"]
     session.install(
         "black",
-        "darglint",
         "flake8",
         "flake8-bandit",
         "flake8-bugbear",
