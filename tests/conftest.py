@@ -1,8 +1,7 @@
 """Global fixtures for testing."""
-
+import pandas as pd
 import pytest
 import scanpy as sc
-import pandas as pd
 
 
 @pytest.fixture()
@@ -15,7 +14,6 @@ def small_adata():
 @pytest.fixture()
 def small_probeset():
     selection = pd.read_csv("results/selections_genesets_1.csv", index_col="index")
-    genes = list(selection.index[selection['genesets_1_0']])
+    genes = list(selection.index[selection["genesets_1_0"]])
 
     return genes
-

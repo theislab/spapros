@@ -8,8 +8,6 @@ from sklearn.decomposition import SparsePCA
 from spapros.evaluation.evaluation import forest_classifications
 from spapros.util.util import clean_adata
 
-# from spapros.evaluation.evaluation import tree_classifications
-
 
 def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=[]):
     """Compute correlations and iteratively penalize genes according max corr with selected genes
@@ -72,9 +70,6 @@ def apply_penalties(scores, adata, penalty_keys=[]):
     )
     s = s.mul(penalty.product(axis=1), axis=0)
     return s
-
-
-##########################################################################
 
 
 def select_pca_genes(
@@ -547,7 +542,7 @@ def add_DE_genes_to_trees(
 ##################################################################################
 # Procedure to add important genes from second set of trees to trees of interest #
 ##################################################################################
-# Toroughly tested.
+# Thoroughly tested.
 
 
 def add_tree_genes_from_reference_trees(

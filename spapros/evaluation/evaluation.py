@@ -865,7 +865,7 @@ def single_forest_classifications(
     ct_spec_ref: dict of lists
         Celltype specific references (e.g.: {'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}).
         This argument was introduced to train secondary trees.
-    save_load: str or False
+    save: str or False
         If not False load results if the given file exists, otherwise save results after computation.
     max_depth: str
         max_depth argument of DecisionTreeClassifier.
@@ -1138,7 +1138,9 @@ def get_outlier_reference_celltypes(specs, n_stds=1, min_outlier_dif=0.02, min_s
     return outliers
 
 
-def forest_classifications(adata, selection, max_n_forests=3, verbosity=1, outlier_kwargs={}, **forest_kwargs):
+def forest_classifications(
+    adata, selection, max_n_forests=3, verbosity=1, save=False, outlier_kwargs={}, **forest_kwargs
+):
     """Train best trees including secondary trees
 
     max_n_forests: int
@@ -1160,11 +1162,17 @@ def forest_classifications(adata, selection, max_n_forests=3, verbosity=1, outli
 
     for _ in tqdm(range(max_n_forests), desc="Train hierarchical trees") if tqdm else range(max_n_forests):
         new_res = single_forest_classifications(
-            adata, selection, ct_spec_ref=ct_spec_ref, verbose=verbosity > 1, **forest_kwargs
+            adata, selection, ct_spec_ref=ct_spec_ref, verbose=verbosity > 1, save=False, **forest_kwargs
         )
         res = new_res if (res is None) else combine_tree_results(res, new_res, with_clfs=with_clfs)
         specs = res[0][1] if with_clfs else res[1]
         ct_spec_ref = get_outlier_reference_celltypes(specs, **outlier_kwargs)
+
+    if save:
+        if with_clfs:
+            save_forest(res[0], save)
+        else:
+            save_forest(res, save)
 
     return res
 

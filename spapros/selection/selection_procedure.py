@@ -126,9 +126,13 @@ class ProbesetSelector:  # (object)
         if prior_genes:
             prior_genes = [g for g in prior_genes if g not in preselected_genes]
         if preselected_genes:
-            self.genes += [g for g in preselected_genes if (g not in self.genes) and (g in self.adata.var_names)]
+            self.genes.append(
+                pd.Index([g for g in preselected_genes if (g not in self.genes) and (g in self.adata.var_names)])
+            )
         if prior_genes:
-            self.genes += [g for g in prior_genes if (not (g in self.genes)) and (g in self.adata.var_names)]
+            self.genes.append(
+                pd.Index([g for g in prior_genes if (not (g in self.genes)) and (g in self.adata.var_names)])
+            )
         self.selection = {
             "final": None,
             "pre": preselected_genes,
@@ -189,7 +193,7 @@ class ProbesetSelector:  # (object)
                 "The following celltypes' test set sizes for forest training are below min_test_n "
                 + f"(={self.min_test_n}):"
             )
-            max_length = max([len(ct) for ct in cts_below_min_test_size])
+            max_length = max([len(ct) for ct in cts_below_min_test_size])  # TODO: bug fix: type(ct) != str doesnt work.
             for i, ct in enumerate(cts_below_min_test_size):
                 print(f"\t {ct:<{max_length}} : {counts_below_min_test_size[i]}")
 
@@ -206,7 +210,7 @@ class ProbesetSelector:  # (object)
 
         # Check if genes were preselected to a smaller number (which is recommended)
         if self.adata[:, self.genes].n_vars > 12000:
-            tmp_str = "adata[:,adata.var[genes_key]]" if self.genes_key else "adata"
+            tmp_str = "adata[:,adata.var[genes_key]]" if self.g_key else "adata"
             print(f"{tmp_str} contains many genes, consider reducing the number to fewer highly variable genes.")
 
         # Mean difference constraint
@@ -555,12 +559,14 @@ class ProbesetSelector:  # (object)
         # genes.
 
         # Initialize probeset table
+        index = self.genes.tolist()
+        # Add marker genes that are not in adata
         if self.marker_list:
-            index = np.unique(
-                self.genes.tolist() + [g for ct, genes in self.marker_list.items() for g in genes]
-            ).tolist()
-        else:
-            index = self.genes
+            index = np.unique(index + [g for ct, genes in self.marker_list.items() for g in genes]).tolist()
+        # Add pre selected genes that are not in adata
+        if self.selection["pre"]:
+            index = np.unique(index + self.selection["pre"]).tolist()
+        # Init table
         probeset = pd.DataFrame(index=index)
         # Get rank and importance score from last trained forest
         probeset = pd.concat([probeset, self.selection["forest"][["rank", "importance_score"]]], axis=1)
@@ -607,7 +613,7 @@ class ProbesetSelector:  # (object)
                 return (a or "") + ("," if (a and b) else "") + (b or "")
 
             probeset["celltypes_marker"] = ""
-            if self.selection["marker"]:
+            if isinstance(self.selection["marker"], pd.DataFrame) or self.selection["marker"]:  # TODO check this
                 probeset["celltypes_marker"] = probeset["celltypes_DE"].combine(
                     self.selection["marker"]["celltype"], str_combiner
                 )
@@ -668,7 +674,7 @@ class ProbesetSelector:  # (object)
                     tmp_rank = np.nanmin([i + 1, probeset.loc[g]["marker_rank"]])
                     probeset.loc[g, ["list_only_ct_marker", "required_marker", "marker_rank"]] = [True, True, tmp_rank]
             for ct in self.celltypes:
-                if self.selection["marker"]:
+                if isinstance(self.selection["marker"], pd.DataFrame) or self.selection["marker"]:  # TODO check this
                     gene_idxs = [
                         g
                         for g, is_marker in (
