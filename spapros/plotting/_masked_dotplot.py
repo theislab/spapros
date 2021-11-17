@@ -144,6 +144,9 @@ class MaskedDotPlot(sc.pl.DotPlot):
         tree_genes: Optional[dict] = None,
         marker_genes: Optional[dict] = None,
         further_celltypes: Optional[Sequence[str]] = None,
+        tree_genes_color: Optional[str] = "darkblue",
+        marker_genes_color: Optional[str] = "green",
+        non_adata_celltypes_color: Optional[str] = "grey",
         use_raw: Optional[bool] = None,
         log: bool = False,
         num_categories: int = 7,
@@ -161,12 +164,18 @@ class MaskedDotPlot(sc.pl.DotPlot):
         dot_color_df: Optional[pd.DataFrame] = None,
         dot_size_df: Optional[pd.DataFrame] = None,
         ax: Optional[_AxesSubplot] = None,
+        grid: Optional[bool] = True,
+        grid_linewidth: Optional[float] = 0.1,
         **kwds,
     ):
         self.tree_genes = tree_genes
         self.marker_genes = marker_genes
         self.further_celltypes = further_celltypes
         self.show_marker_legend = True
+        self.tree_genes_color = tree_genes_color
+        self.marker_genes_color = marker_genes_color
+        self.non_adata_celltypes_color = non_adata_celltypes_color
+        self.grid_linewidth = grid_linewidth
         sc.pl.DotPlot.__init__(
             self,
             adata,
@@ -202,7 +211,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
             # dot_edge_color='black',
             # dot_edge_lw=0.2,
             # size_exponent=1.5,
-            grid=True,
+            grid=grid,  # True,
             # x_padding=0.8,
             # y_padding=1.0)
         )
@@ -275,6 +284,9 @@ class MaskedDotPlot(sc.pl.DotPlot):
             _trees_df,
             _marker_df,
             _other_celltypes_df,
+            tree_genes_color=self.tree_genes_color,
+            marker_genes_color=self.marker_genes_color,
+            non_adata_celltypes_color=self.non_adata_celltypes_color,
             cmap=self.cmap,
             dot_max=self.dot_max,
             dot_min=self.dot_min,
@@ -285,6 +297,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
             largest_dot=self.largest_dot,
             size_exponent=self.size_exponent,
             grid=self.grid,
+            grid_linewidth=self.grid_linewidth,
             x_padding=self.plot_x_padding,
             y_padding=self.plot_y_padding,
             **self.kwds,
@@ -301,6 +314,9 @@ class MaskedDotPlot(sc.pl.DotPlot):
         tree_genes,
         marker_genes,
         grey_celltypes,
+        tree_genes_color="darkblue",
+        marker_genes_color="green",
+        non_adata_celltypes_color="grey",
         cmap: str = "Reds",
         color_on: Optional[str] = "dot",
         y_label: Optional[str] = None,
@@ -313,6 +329,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
         edge_color: Optional[ColorLike] = None,
         edge_lw: Optional[float] = None,
         grid: Optional[bool] = False,
+        grid_linewidth: Optional[float] = 0.1,
         x_padding: Optional[float] = 0.8,
         y_padding: Optional[float] = 1.0,
         **kwds,
@@ -329,6 +346,12 @@ class MaskedDotPlot(sc.pl.DotPlot):
         dot_color: Data frame containing the dot_color, should have the same,
                 shape, columns and indices as dot_size.
         dot_ax: matplotlib axis
+        tree_genes_color
+            Color for tree genes.
+        marker_genes_color
+            Color for marker genes
+        non_adata_celltypes_color
+            Color for celltypes that don't occur in adata
         cmap
             String denoting matplotlib color map.
         color_on
@@ -488,7 +511,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
                     marker="s",
                     color="none",
                     linewidth=2,
-                    edgecolor="darkblue",
+                    edgecolor=tree_genes_color,
                 )
                 # dot_ax.scatter(x[~tree_genes_mask], y[~tree_genes_mask], s=np.max(size)*1.85, marker='s',
                 # color='white',edgecolor='none')
@@ -499,7 +522,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
                     y[grey_celltypes_mask],
                     s=np.max(size) * 1.95,
                     marker="s",
-                    color="grey",
+                    color=non_adata_celltypes_color,
                     edgecolor="none",
                     alpha=0.3,
                 )
@@ -509,7 +532,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
                     y[marker_genes_mask],
                     s=np.max(size) * 1.85,
                     marker="s",
-                    color="green",
+                    color=marker_genes_color,
                     edgecolor="none",
                     alpha=0.3,
                 )
@@ -561,24 +584,31 @@ class MaskedDotPlot(sc.pl.DotPlot):
             dot_ax.set_xlim(-x_padding, dot_color.shape[1] + x_padding)
 
         if grid:
-            dot_ax.grid(True, color="gray", linewidth=0.1)
+            dot_ax.grid(True, color="gray", linewidth=grid_linewidth)  # linewidth=0.1)
             dot_ax.set_axisbelow(True)
 
         return normalize, dot_min, dot_max
 
-    def _plot_marker_legend(self, marker_legend_ax: Axes, i=0):
+    def _plot_marker_legend(
+        self,
+        marker_legend_ax: Axes,
+        tree_genes_color="darkblue",
+        marker_genes_color="green",
+        non_adata_celltypes_color="grey",
+        i=0,
+    ):
         """New"""
         size = self.dot_max * 1.55 * 150
 
         ax = marker_legend_ax
         if i == 0:
-            ax.scatter([0], [0], s=size, marker="s", color="none", linewidth=2, edgecolor="darkblue")
-            ax.set_title("most important genes\nto identify celltype", size="small")
+            ax.scatter([0], [0], s=size, marker="s", color="none", linewidth=2, edgecolor=tree_genes_color)
+            ax.set_title("combinatorial marker", size="small")
         elif i == 1:
-            ax.scatter([0], [0], s=size, marker="s", color="green", edgecolor="none", alpha=0.3)
-            ax.set_title("marker genes", size="small")
+            ax.scatter([0], [0], s=size, marker="s", color=marker_genes_color, edgecolor="none", alpha=0.3)
+            ax.set_title("DE or lit. gene", size="small")
         elif i == 2:
-            ax.scatter([0], [0], s=size, marker="s", color="grey", edgecolor="none", alpha=0.3)
+            ax.scatter([0], [0], s=size, marker="s", color=non_adata_celltypes_color, edgecolor="none", alpha=0.3)
             ax.set_title("celltype not in dataset", size="small")
 
         # ymax = ax.get_ylim()[1]
@@ -611,9 +641,9 @@ class MaskedDotPlot(sc.pl.DotPlot):
 
         cbar_legend_height = self.min_figure_height * 0.08
         size_legend_height = self.min_figure_height * 0.27
-        marker_legend_height = self.min_figure_height * 0.20
+        marker_legend_height = self.min_figure_height * 0.17  # 0.20
         spacer_height = self.min_figure_height * 0.3
-        small_spacer_height = self.min_figure_height * 0.15
+        small_spacer_height = self.min_figure_height * 0.12  # 0.15
 
         height_ratios = [
             # self.height - size_legend_height - cbar_legend_height - spacer_height,
@@ -621,14 +651,14 @@ class MaskedDotPlot(sc.pl.DotPlot):
             - 3 * marker_legend_height
             - size_legend_height
             - cbar_legend_height
-            - 2 * spacer_height
-            - 2 * small_spacer_height,
+            - spacer_height  # - 2 * spacer_height
+            - 3 * small_spacer_height,  # - 2 * small_spacer_height,
             marker_legend_height,
             small_spacer_height,
             marker_legend_height,
             small_spacer_height,
             marker_legend_height,
-            spacer_height,
+            small_spacer_height,  # spacer_height,
             size_legend_height,
             spacer_height,
             cbar_legend_height,
@@ -638,8 +668,14 @@ class MaskedDotPlot(sc.pl.DotPlot):
         ### Added
         if self.show_marker_legend:
             for i in range(3):
-                marker_legend_ax = fig.add_subplot(legend_gs[i + 1 + int(i > 0)])
-                self._plot_marker_legend(marker_legend_ax, i=i)
+                marker_legend_ax = fig.add_subplot(legend_gs[i * 2 + 1])  # legend_gs[i + 1 + int(i > 0)])
+                self._plot_marker_legend(
+                    marker_legend_ax,
+                    tree_genes_color=self.tree_genes_color,
+                    marker_genes_color=self.marker_genes_color,
+                    non_adata_celltypes_color=self.non_adata_celltypes_color,
+                    i=i,
+                )
                 return_ax_dict[f"marker_legend_ax_{i}"] = marker_legend_ax
 
         if self.show_size_legend:

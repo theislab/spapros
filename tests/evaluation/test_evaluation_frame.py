@@ -1,9 +1,6 @@
 """Test cases for the ProbesetEvaluator."""
 import anndata
-import pytest
-from spapros.evaluation.metrics import get_metric_default_parameters
 from spapros.evaluation.evaluation import ProbesetEvaluator
-
 
 
 def test_init(small_adata):
@@ -26,7 +23,3 @@ def test_computed_metrics(small_adata, small_probeset):
     for metric in evaluator.metrics:
         assert metric in evaluator.pre_results
         assert metric in evaluator.results
-
-
-
-

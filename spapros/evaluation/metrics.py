@@ -527,6 +527,7 @@ def xgboost_forest_classification(
     verbosity=0,
     return_train_perform=False,
     return_clfs=False,
+    return_predictions=False,
     n_jobs=1,
 ):
     """Measure celltype classification performance with gradient boosted forests.
@@ -571,6 +572,8 @@ def xgboost_forest_classification(
         Wether to also return confusion matrix of training set.
     return_clfs: str
         Wether to return the classifier objects.
+    return_predictions: bool
+        Whether to return a list of prediction dataframes
     n_jobs: int
         Multiprocessing number of processes.
 
@@ -584,6 +587,8 @@ def xgboost_forest_classification(
         pd.DataFrames as above for train set.
     if return_clfs:
         list of XGBClassifier objects of each cross validation step and seed.
+    if return_predictions:
+        list of dataframes with prediction results.
 
     """
 
@@ -629,6 +634,20 @@ def xgboost_forest_classification(
         confusion_matrices_train = []
     if return_clfs:
         clfs = []
+    if return_predictions:
+        pred_dfs = []
+        obs_names = np.array(adata.obs_names[obs])
+        raw_df = pd.DataFrame(
+            index=obs_names,
+            data={
+                "celltype": adata.obs.loc[obs, ct_key],
+                "label": y,
+                "train": False,
+                "test": False,
+                "pred": 0,
+                "correct": False,
+            },
+        )
     n_classes = len(celltypes)
 
     # Cross validated random forest training
@@ -674,11 +693,20 @@ def xgboost_forest_classification(
             confusion_matrices.append(
                 confusion_matrix(test_y, y_pred, normalize="true", sample_weight=sample_weight_test)
             )
+            if return_predictions or return_train_perform:
+                y_pred_train = clf.predict(train_x)
             if return_train_perform:
-                y_pred = clf.predict(train_x)
                 confusion_matrices_train.append(
-                    confusion_matrix(train_y, y_pred, normalize="true", sample_weight=sample_weight_train)
+                    confusion_matrix(train_y, y_pred_train, normalize="true", sample_weight=sample_weight_train)
                 )
+            if return_predictions:
+                df = raw_df.copy()
+                df.loc[obs_names[train_ix], "train"] = True
+                df.loc[obs_names[train_ix], "pred"] = y_pred_train
+                df.loc[obs_names[test_ix], "test"] = True
+                df.loc[obs_names[test_ix], "pred"] = y_pred
+                df["correct"] = df["label"] == df["pred"]
+                pred_dfs.append(df)
 
     # Pool confusion matrices
     confusions_merged = np.concatenate([np.expand_dims(mat, axis=-1) for mat in confusion_matrices], axis=-1)
@@ -697,6 +725,8 @@ def xgboost_forest_classification(
         out += [confusion_mean_train, confusion_std_train]
     if return_clfs:
         out += [clfs]
+    if return_predictions:
+        out += [pred_dfs]
     return out
 
 
@@ -706,9 +736,32 @@ def summary_metric_diagonal_confusion_mean(conf_mat):
     return np.diag(conf_mat).mean()
 
 
-def summary_metric_diagonal_confusion_percentage(conf_mat, threshold=0.9):
-    """Compute percentage of diagonal elements of confusion matrix above threshold"""
-    return np.mean(np.diag(conf_mat) > threshold)
+def linear_step(x, low, high, descending=True):
+    """Step function with linear transition between low and high
+
+    descending:
+        Wether to go from 1 to 0 or the other way around.
+    """
+
+    b = 1.0
+    m = 1 / (high - low)
+
+    if descending:
+        return np.where(x < low, b, np.where(x > high, 0, (x - low) * (-m) + b))
+    else:
+        return np.where(x < low, 0, np.where(x > high, b, (x - low) * m + 0))
+
+
+def summary_metric_diagonal_confusion_percentage(conf_mat, threshold=0.9, tolerance=0.05):
+    """Compute percentage of diagonal elements of confusion matrix above threshold
+
+    To make the metric more stable we smoothen the threshold with a linear transition from
+    threshold - tolerance to threshold + tolerance.
+    """
+    if tolerance:
+        return np.mean(linear_step(np.diag(conf_mat), threshold - tolerance, threshold + tolerance, descending=False))
+    else:
+        return np.mean(np.diag(conf_mat) > threshold)
 
 
 ################################
@@ -920,8 +973,11 @@ def summary_metric_correlation_mean(cor_matrix):
     return 1 - np.nanmean(cor_mat)
 
 
-def summary_metric_correlation_percentage(cor_matrix, threshold=0.8):
+def summary_metric_correlation_percentage(cor_matrix, threshold=0.8, tolerance=0.05):
     """Calculate percentage of genes with max(abs(correlations)) < threshold
+
+    To make the metric more stable we smoothen the threshold with a linear transition from
+    threshold - tolerance to threshold + tolerance.
 
     cor_mat: pd.DataFrame and np.array
         Gene set correlation matrix.
@@ -935,4 +991,9 @@ def summary_metric_correlation_percentage(cor_matrix, threshold=0.8):
     cor_mat = cor_matrix.copy()
     cor_mat = np.abs(cor_mat)
     np.fill_diagonal(cor_mat.values, 0)
-    return np.sum(np.max(cor_mat, axis=0) < threshold) / len(cor_mat)
+    if tolerance:
+        return np.mean(
+            linear_step(np.max(cor_mat, axis=0).values, threshold - tolerance, threshold + tolerance, descending=True)
+        )
+    else:
+        return np.mean(np.max(cor_mat, axis=0).values < threshold)

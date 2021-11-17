@@ -19,6 +19,19 @@ console = Console()
 
 
 def run_selection(adata_path: str, output_path: str) -> None:
+    """Runs Spapros probeset selection.
+
+    Args:
+        adata_path: Path to the AnnData object.
+        output_path: Output path of the selection results.
+
+    Example:
+
+    .. code-block:: python
+
+        import spapros as sp
+        selection_result = sp.run_selection
+    """
     adata = sc.read(adata_path)
 
     a = preprocess_adata(adata, options=["norm", "log1p"], inplace=False)
