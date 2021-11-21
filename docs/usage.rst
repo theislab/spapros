@@ -54,3 +54,60 @@ Selection
     :toctree: selection
 
     selection.run_selection
+
+
+Evaluation
+~~~~~~~~~~
+
+.. currentmodule:: spapros.evaluation
+
+The central class for probe set evaluation, comparison, plotting:
+
+.. autosummary::
+    :toctree: evaluation/ProbesetEvaluator
+    :template: _templates/autosummary/class.rst
+
+    spapros.evaluation.evaluation.ProbesetEvaluator
+
+Other methods in evaluation.py (will be moved or removed)
+
+.. autosummary::
+    :toctree: evaluation/evaluation_methods
+
+    evaluation.combine_tree_results
+    evaluation.eval_ct_tree_helper
+    evaluation.forest_classifications
+    evaluation.forest_rank_table
+    evaluation.get_celltypes_with_too_small_test_sets
+    evaluation.get_outlier_reference_celltypes
+    evaluation.get_reference_masks
+    evaluation.load_forest
+    evaluation.outlier_mask
+    evaluation.plot_gene_expressions
+    evaluation.plot_nmis
+    evaluation.pool_eval_ct_tree_helper
+    evaluation.pool_train_ct_tree_helper
+    evaluation.save_forest
+    evaluation.single_forest_classifications
+    evaluation.split_train_test_sets
+    evaluation.summarize_specs
+    evaluation.train_ct_tree_helper
+    evaluation.uniform_samples
+
+The evaluation metrics:
+
+.. autosummary::
+    :toctree: evaluation/metrics
+
+    spapros.evaluation.metrics
+
+
+Plotting
+~~~~~~~~
+
+.. currentmodule:: spapros.plotting
+
+.. autosummary:: spapros.plotting.plot
+    :toctree: plotting
+
+

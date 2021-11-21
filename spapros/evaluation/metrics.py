@@ -1,3 +1,7 @@
+from typing import List
+from typing import Dict
+from typing import Union
+from typing import Tuple
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -37,16 +41,22 @@ METRICS_PARAMETERS = {
 
 
 # utility functions to get general infos about metrics #
-def get_metric_names():
+def get_metric_names(
+) -> List[str]:
+    """Get a list of all available metric names."""
     return [metric for metric in METRICS_PARAMETERS]
 
 
-def get_metric_parameter_names():
+def get_metric_parameter_names(
+) -> Dict[str, List[str]]:
+    """Get all parameter names for each available metric."""
     names = {metric: [param for param in METRICS_PARAMETERS[metric]] for metric in METRICS_PARAMETERS}
     return names
 
 
-def get_metric_default_parameters():
+def get_metric_default_parameters(
+) -> Dict[str, dict]:
+    """Get the default metric parameters."""
     return METRICS_PARAMETERS
 
 
@@ -59,8 +69,21 @@ def get_metric_default_parameters():
 # 3. summary: Simple final computations (per probe set) that aggregate evaluations to summary metrics
 
 
-def metric_shared_computations(adata=None, metric=None, parameters={}):
-    """ """
+def metric_shared_computations(
+    adata: sc.AnnData = None,
+    metric: str = None,
+    parameters: Dict = {}
+) -> pd.DataFrame:
+    """Calculate the metric compuations that can be shared between probe sets.
+
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        metric:
+            The metric to be calculated.
+        parameters:
+            Parameters for the calculation of the metric.
+    """
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
 
@@ -78,14 +101,26 @@ def metric_shared_computations(adata=None, metric=None, parameters={}):
 
 
 def metric_pre_computations(
-    genes,
-    adata=None,
-    metric=None,
-    parameters={},
-):
-    """
-    Note: If there are no shared results needed at all to calculate a metric the computations are put in
-    `metric_computations`, this is the case for e.g. forest_clfs.
+    genes: list,
+    adata: sc.AnnData = None,
+    metric: str = None,
+    parameters: Dict = {},
+) -> Union[pd.DataFrame, None]:
+    """Calculate the metric computations that are independent of the shared results.
+
+    Note:
+        If there are no shared results needed at all to calculate a metric, the computations are put in
+        `metric_computations`, this is the case for e.g. forest_clfs.
+
+    Args:
+        genes:
+            The selected genes.
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        metric:
+            The metric to be calculated.
+        parameters:
+            Parameters for the calculation of the metric.
     """
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
@@ -103,9 +138,32 @@ def metric_pre_computations(
 
 
 def metric_computations(
-    genes, adata=None, metric=None, shared_results=None, pre_results=None, parameters={}, n_jobs=-1
-):
-    """ """
+    genes: list,
+    adata: sc.AnnData = None,
+    metric: str = None,
+    shared_results: pd.DataFrame = None,
+    pre_results: pd.DataFrame = None,
+    parameters: Dict = {},
+    n_jobs: int = -1
+) -> pd.DataFrame:
+    """Compute the probe set specific evaluation metrics.
+
+    Args:
+        genes:
+            The selected genes.
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        metric:
+            The metric to be calculated.
+        shared_results:
+            The results of the metric calculations, that are not probe set specific.
+        pre_results:
+            The results of the metric calculations, that are independent of the shared calculations.
+        parameters:
+            Parameters for the calculation of the metric.
+        n_jobs:
+            Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+    """
 
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
@@ -134,8 +192,24 @@ def metric_computations(
         return gene_set_correlation_matrix(genes, full_cor_mat, ordered=True)
 
 
-def metric_summary(adata=None, results=None, metric=None, parameters={}):
-    """ """
+def metric_summary(
+    adata: sc.AnnData = None,
+    results: pd.DataFrame = None,
+    metric: str = None,
+    parameters: Dict = {}
+) -> Dict[str, float]:
+    """Simple final computations (per probe set) that aggregate evaluations to summary metrics.
+
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        results:
+            The results of the previously calculated metric.
+        metric:
+            The name of the previously calculated metric.
+        parameters:
+            Parameters for the calculation of the metric.
+    """
 
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
@@ -178,8 +252,34 @@ def metric_summary(adata=None, results=None, metric=None, parameters={}):
 # SHARED AND and PER PROBESET computations
 
 
-def compute_clustering_and_update(adata, annotations, resolution, tried_res_n, found_ns):
-    """ """
+def compute_clustering_and_update(
+    adata: sc.AnnData,
+    annotations: pd.DataFrame,
+    resolution: float,
+    tried_res_n: List[list],
+    found_ns: List[int]
+) -> Tuple[pd.DataFrame, List[List], List[int]]:
+    """Compute a new leiden clustering and save the used resolution and resulting clusters.
+
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        annotations:
+            Contains clusterings for different numbers of clusters. Each row is a list of cluster assignments::
+
+                n , obs1, obs2, obs3, ...
+                2 ,   0 ,   0 ,   1 , ...
+                4 ,   1 ,   0 ,   3 , ...
+                8 ,   7 ,   7 ,   2 , ...
+                3 ,   2 ,   1 ,   0 , ...
+
+        resolution:
+            Resolution to start computing clusterings.
+        tried_res_n:
+            Resolutions that were previously used for computing clusters.
+        found_ns:
+            The numbers of clusters resulting from previous clusters with the resolutions saved in :attr:`tried_res_n`.
+    """
     sc.tl.leiden(adata, resolution=resolution, key_added="tmp")
     n = len(set(adata.obs["tmp"]))
     if n not in found_ns:
@@ -191,41 +291,41 @@ def compute_clustering_and_update(adata, annotations, resolution, tried_res_n, f
     return annotations, tried_res_n, found_ns
 
 
-def leiden_clusterings(adata, ns, start_res=1.0):
-    """Compute leiden clusters for different numbers of clusters
+def leiden_clusterings(
+    adata: sc.AnnData,
+    ns: List[int],
+    start_res: float = 1.0
+) -> pd.DataFrame:
+    """Compute leiden clusters for different numbers of clusters.
 
     Leiden clusters are calculated with different resolutions.
     A search (similar to binary search) is applied to find the right resolutions for all defined n's.
 
-    Arguments
-    ---------
-    adata: anndata object
-        adata object with data to compute clusters on. Need to include a
-        neighbors graph (and PCA?)  TODO: make this clear.
-    ns: list of two ints
-        minimum (`ns[0]`) and maximum (`ns[1]`) number of clusters.
-    start_res: float
-        resolution to start computing clusterings.
-    verbose: bool
-        if True a progress bar is shown
+    Args:
+        adata:
+            Adata object with data to compute clusters on. Need to include a
+            neighbors graph (and PCA?)  TODO: make this clear.
+        ns:
+            The minimum (:attr:`ns[0]`) and maximum (:attr:`ns[1]`) number of clusters.
+        start_res:
+            Resolution to start computing clusterings.
 
-    Return
-    ------
-    pd.DataFrame
+    Returns:
+        pd.DataFrame
 
-    csv file (path including the name of the file is given by save_to)
-        1st column refers to the number of clusters,
-        2nd col refers to the resolution used to calculate the clustering
-        each following column refer to individual cell's cluster assignments
-        e.g.
-        n , res  , <adata.obs.index[0]>, <adata.obs.index[1]>, ...., <adata.obs.index[n_cells-1]>
-        6 , 1.   ,         0           ,          4          , ....,              5
-        2 , 0.67 ,         1           ,          0          , ....,              1
-        13, 2.34 ,         9           ,          7          , ....,             12
-        17, 2.78 ,         7           ,          7          , ....,              3
-        .
-        .
-        .
+        csv file (path including the name of the file is given by save_to):
+            1st column refers to the number of clusters,
+            2nd col refers to the resolution used to calculate the clustering
+            each following column refer to individual cell's cluster assignments e.g.::
+
+                n , res  , <adata.obs.index[0]>, <adata.obs.index[1]>, ...., <adata.obs.index[n_cells-1]>
+                6 , 1.   ,         0           ,          4          , ....,              5
+                2 , 0.67 ,         1           ,          0          , ....,              1
+                13, 2.34 ,         9           ,          7          , ....,             12
+                17, 2.78 ,         7           ,          7          , ....,              3
+                .
+                .
+                .
     """
 
     # Convert min and max n to list of ns
@@ -262,13 +362,13 @@ def leiden_clusterings(adata, ns, start_res=1.0):
         res *= 2
         annotations, tried_res_n, found_ns = compute_clustering_and_update(a, annotations, res, tried_res_n, found_ns)
 
-    # Search missing n's between neighbouring found n's
+    # Search missing n's between neighboring found n's
     found_space = True
     while (not set(ns) <= set([res_n[1] for res_n in tried_res_n])) and (found_space):
         tmp_res_n = tried_res_n
         found_space = False
         for i in range(len(tmp_res_n) - 1):
-            # check if two neighbouring resolutions have different n's
+            # check if two neighboring resolutions have different n's
             cond1 = tmp_res_n[i + 1][1] - tmp_res_n[i][1] > 1
             # check if we search an n between the two n's of the given resolutions
             cond2 = len([n for n in ns if n > tmp_res_n[i][1] and n < tmp_res_n[i + 1][1]]) > 0
@@ -288,44 +388,46 @@ def leiden_clusterings(adata, ns, start_res=1.0):
 
 
 def clustering_nmis(
-    annotations,
-    ref_annotations,
-    ns,
-    method="arithmetic",
-):
+    annotations: pd.DataFrame,
+    ref_annotations: pd.DataFrame,
+    ns: List[int],
+    method: str = "arithmetic",
+) -> pd.DataFrame:
     """Compute NMI between clusterings and a reference set of clusterings.
 
     For different numbers of clusters (`ns`) the normalized mutual information
     NMI based on 2 different cluster annotations are computed.
 
-    Parameters
-    ----------
-    annotations: pd.DataFrame
-        Contains clusterings for different numbers of clusters.
-        n , obs1, obs2, obs3, ...
-        2 ,   0 ,   0 ,   1 , ...
-        4 ,   1 ,   0 ,   3 , ...
-        8 ,   7 ,   7 ,   2 , ...
-        3 ,   2 ,   1 ,   0 , ...
-        (each row is a list of cluster assignments)
-    ref_annotations: pd.DataFrame
-        Same as annotations for reference clusterings.
-    ns: list of two ints
-        minimum (`ns[0]`) and maximum (`ns[1]`) number of clusters.
-    method:
-        NMI implementation
-            'max': scikit method with `average_method='max'`
-            'min': scikit method with `average_method='min'`
-            'geometric': scikit method with `average_method='geometric'`
-            'arithmetic': scikit method with `average_method='arithmetic'`
-            TODO: implement the following (see comment below and scib)
-            'Lancichinetti': implementation by A. Lancichinetti 2009 et al.
-            'ONMI': implementation by Aaron F. McDaid et al. (https://github.com/aaronmcdaid/Overlapping-NMI) Hurley 2011
+    Args:
+        annotations:
+            Contains clusterings for different numbers of clusters. Each row is a list of cluster assignments::
 
-    Returns
-    -------
-    pd.DataFrame
-        Table of NMI results:
+                n , obs1, obs2, obs3, ...
+                2 ,   0 ,   0 ,   1 , ...
+                4 ,   1 ,   0 ,   3 , ...
+                8 ,   7 ,   7 ,   2 , ...
+                3 ,   2 ,   1 ,   0 , ...
+
+        ref_annotations:
+            Same as annotations for reference clusterings.
+        ns:
+            Minimum (:attr:`ns[0]`) and maximum (:attr:`ns[1]`) number of clusters.
+        method:
+            NMI implementation
+
+                - 'max': scikit method with `average_method='max'`
+                - 'min': scikit method with `average_method='min'`
+                - 'geometric': scikit method with `average_method='geometric'`
+                - 'arithmetic': scikit method with `average_method='arithmetic'`
+
+            TODO: implement the following (see comment below and scib)
+
+                - 'Lancichinetti': implementation by A. Lancichinetti 2009 et al.
+                - 'ONMI': implementation by Aaron F. McDaid et al. (https://github.com/aaronmcdaid/Overlapping-NMI) Hurley 2011
+
+    Returns:
+        pd.DataFrame of NMI results::
+
             n (index), nmi
             2        , 1.0
             3        , 0.9989
@@ -362,28 +464,46 @@ def clustering_nmis(
 
 
 # SUMMARY metrics
-def AUC(series, n_min=1, n_max=60):
-    """ """
+def AUC(
+    series: pd.Series,
+    n_min: int = 1,
+    n_max: int = 60
+) -> float:
+    """Calculate the Area Unter the Curve.
+
+    Args:
+        series:
+            Series of values.
+        n_min:
+            Lower border of curve.
+        n_max:
+            Upper border of curve.
+    """
     tmp = series.loc[(series.index >= n_min) & (series.index <= n_max)]
     n = len(tmp)
     return tmp.sum() / n
 
 
-def summary_nmi_AUCs(nmis, AUC_borders):
-    """Calculate AUC over range of nmi values
+def summary_nmi_AUCs(
+    nmis: pd.DataFrame,
+    AUC_borders: List[list]
+) -> Dict[str, float]:
+    """Calculate AUC over range of nmi values.
 
-    nmis: pd.DataFrame
+    Args:
+        nmis:
+            Table of NMI results::
 
-            n (index), nmi
-            2        , 1.0
-            3        , 0.9643
-            4        , NaN
-            5        , 0.98
-            ...
-    AUC_borders: list of lists of two ints
-        Calculates nmi AUCs over given borders. E.g. `AUC_borders = [[2,4],[5,20]]` calculates nmi over n ranges
-        2 to 4 and 5 to 20. Defined border shouldn't exceed values in `nmis`.
+                n (index), nmi
+                2        , 1.0
+                3        , 0.9643
+                4        , NaN
+                5        , 0.98
+                ...
 
+        AUC_borders:
+            Calculates nmi AUCs over given borders. E.g. :attr:`AUC_borders = [[2,4],[5,20]]` calculates nmi over n
+            ranges 2 to 4 and 5 to 20. Defined border shouldn't exceed values in :attr:`nmis`.
     """
     AUCs = {}
     for ths in AUC_borders:
@@ -398,22 +518,29 @@ def summary_nmi_AUCs(nmis, AUC_borders):
 # SHARED AND and PER PROBESET computations
 
 
-def knns(adata, genes="all", ks=[10, 20]):
-    """Compute nearest neighbors of observations for different ks
+def knns(
+    adata: sc.AnnData,
+    genes: Union[List, str] = "all",
+    ks: List[int] = [10, 20]
+) -> pd.DataFrame:
+    """Compute nearest neighbors of observations for different ks.
 
-    adata: AnnData
-    genes: "all" or list of strs
-    ks: list of ints
-        Calculate knn graphs for each k in `ks`.
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        genes:
+            A list of selected genes or "all".
+        ks:
+            Calculate knn graphs for each k in :attr:`ks`.
 
-    Returns
-    -------
-    pd.DataFrame
-        Includes nearest neighbors for all ks
-        gene (index), k10_1, k10_2, ..., k20_1, k20_2, ...
-        ISG15       , 3789 , 512  ,    , 9720 , 15   , ...
-        TNFRSF4     , 678  , 713  ,    , 7735 , 6225 , ...
-        ...
+    Returns:
+        pd.DataFrame:
+            Includes nearest neighbors for all ks::
+
+                gene (index), k10_1, k10_2, ..., k20_1, k20_2, ...
+                ISG15       , 3789 , 512  ,    , 9720 , 15   , ...
+                TNFRSF4     , 678  , 713  ,    , 7735 , 6225 , ...
+                ...
     """
 
     # Subset adata to gene set
@@ -460,17 +587,25 @@ def knns(adata, genes="all", ks=[10, 20]):
     return df
 
 
-def mean_overlaps(knn_df, ref_knn_df, ks):
-    """Calculate mean overlaps of knn graphs of different ks
+def mean_overlaps(
+    knn_df: pd.DataFrame,
+    ref_knn_df: pd.DataFrame,
+    ks: List[int]
+) -> pd.DataFrame:
+    """Calculate mean overlaps of knn graphs of different ks.
 
-    knn_df: pd.DataFrame
-    ref_knn_df: pd.DataFrame
+    Args:
+        knn_df:
+            The results of the knn calculations, that are independent of the shared calculations.
+        ref_knn_df:
+            The results of the metric calculations, that are not probe set specific.
+        ks:
+            Calculate knn graphs for each k in `ks`.
 
 
-    Returns
-    -------
-    pd.DataFrame
-        k (index), mean
+    Returns:
+        pd.DataFrame:
+            k (index), mean
 
     """
     df = pd.DataFrame(index=ks, data={"mean": 0.0})
@@ -492,8 +627,14 @@ def mean_overlaps(knn_df, ref_knn_df, ks):
 # SUMMARY metrics
 
 
-def summary_knn_AUC(means_df):
-    """Calculate AUC of mean overlaps over ks"""
+def summary_knn_AUC(
+    means_df: pd.DataFrame
+) -> float:
+    """Calculate AUC of mean overlaps over ks.
+
+    Args:
+        means_df: The results of the previously calculated metric (knn_overlap mean_overlap_AUC).
+    """
     x = [int(x) for x in means_df.index.values]
     y = means_df["mean"].values
     tmp = pd.Series(index=range(np.min(x), np.max(x)), dtype="float64")
@@ -511,85 +652,85 @@ def summary_knn_AUC(means_df):
 
 # PER PROBESET computations
 def xgboost_forest_classification(
-    adata,
-    selection,
-    celltypes="all",
-    ct_key="Celltypes",
-    n_cells_min=40,
-    max_depth=3,
-    lr=0.2,
-    colsample_bytree=1,
-    cv_splits=5,
-    min_child_weight=None,
-    gamma=None,
-    seed=0,
-    n_seeds=5,
-    verbosity=0,
-    return_train_perform=False,
-    return_clfs=False,
-    return_predictions=False,
-    n_jobs=1,
-):
+    adata: sc.AnnData,
+    selection: Union[list, pd.DataFrame],
+    celltypes: Union[list, "all"] = "all",
+    ct_key: str = "Celltypes",
+    n_cells_min: int = 40,
+    max_depth: str = 3,
+    lr: float = 0.2,
+    colsample_bytree: float = 1,
+    cv_splits: int = 5,
+    min_child_weight: Union[float, None] = None,
+    gamma: float = None,
+    seed: int = 0,
+    n_seeds: int = 5,
+    verbosity: int = 0,
+    return_train_perform: bool = False,
+    return_clfs: bool = False,
+    return_predictions: bool = False,
+    n_jobs: int = 1,
+) -> list:
     """Measure celltype classification performance with gradient boosted forests.
 
     We train extreme gradient boosted forest classifiers on multi class classification of cell types. Cross validation
     is performed to get an average confusion matrix (normalised by ground truth counts and sample weights to weight cell
-    types in a balanced way). To make the performance measure robust only cell types with at least `n_cells_min` are
-    taken into account. To make the cross validation more robust we run it with `n_seeds`. I.e. `cv_splits` x `n_seeds`
-    classifiers are trained and evaluated.
+    types in a balanced way). To make the performance measure robust only cell types with at least :attr:`n_cells_min`
+    are taken into account. To make the cross validation more robust we run it with :attr:`n_seeds`. I.e.
+    :attr:`cv_splits x :attr:n_seeds` classifiers are trained and evaluated.
 
-    Parameters
-    ----------
-    adata: AnnData
-        We expect log normalised data in adata.X.
-    selection: list or pd.DataFrame
-        Forests are trained on genes of the list or genes defined in the bool column selection['selection'].
-    celltypes: 'all' or list
-        Forests are trained on the given celltypes.
-    ct_key: str
-        Column name of adata.obs with cell type info.
-    n_cells_min: int
-        Minimal number of cells to filter out cell types from the training set. Performance results are not robust
-        for low `n_cells_min`.
-    max_depth: str
-        max_depth argument of XGBClassifier.
-    cv_splits: int
-        Number of cross validation splits.
-    lr: float
-        Learning rate of XGBClassifier.
-    colsample_bytree: float
-        Fraction of features (randomly selected) that will be used to train each tree of XGBClassifier.
-    gamma: float
-        Regularisation parameter of XGBClassifier. Instruct trees to add nodes only if the associated loss gain is
-        larger or equal to gamma.
-    seed: int
-    n_seeds: int
-        Number of training repetitions with different seeds. We use multiple seeds to make results more robust.
-        Also we don't want to increase the number of CV splits to keep a minimal test size.
-    verbosity: int
-        Set to 2 for progress bar. Set to 3 to print test performance of each tree during training.
-    return_train_perform: bool
-        Wether to also return confusion matrix of training set.
-    return_clfs: str
-        Wether to return the classifier objects.
-    return_predictions: bool
-        Whether to return a list of prediction dataframes
-    n_jobs: int
-        Multiprocessing number of processes.
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        selection:
+            Forests are trained on genes of the list or genes defined in the bool column selection['selection'].
+        celltypes:
+            Forests are trained on the given celltypes.
+        ct_key:
+            Column name of adata.obs with cell type info.
+        n_cells_min:
+            Minimal number of cells to filter out cell types from the training set. Performance results are not robust
+            for low :attr:`n_cells_min`.
+        max_depth:
+            The max_depth argument of XGBClassifier.
+        lr:
+            Learning rate of XGBClassifier.
+        colsample_bytree:
+            Fraction of features (randomly selected) that will be used to train each tree of XGBClassifier.
+        cv_splits:
+            Number of cross validation splits.
+        min_child_weight:
+            Minimum sum of instance weight(hessian) needed in a child.
+        gamma:
+            Regularisation parameter of XGBClassifier. Instruct trees to add nodes only if the associated loss gain is
+            larger or equal to gamma.
+        seed:
+            Random number seed.
+        n_seeds:
+            Number of training repetitions with different seeds. We use multiple seeds to make results more robust.
+            Also we don't want to increase the number of CV splits to keep a minimal test size.
+        verbosity:
+            Set to 2 for progress bar. Set to 3 to print test performance of each tree during training.
+        return_train_perform:
+            Wether to also return confusion matrix of training set.
+        return_clfs:
+            Wether to return the classifier objects.
+        return_predictions:
+            Whether to return a list of prediction dataframes
+        n_jobs:
+            Multiprocessing number of processes.
 
-    Returns
-    -------
-    pd.DataFrame:
-        confusion matrix averaged over cross validations and seeds.
-    pd.DataFrame:
-        confusion matrix standard deviation over cross validations and seeds.
-    if return_train_perform:
-        pd.DataFrames as above for train set.
-    if return_clfs:
-        list of XGBClassifier objects of each cross validation step and seed.
-    if return_predictions:
-        list of dataframes with prediction results.
-
+    Returns:
+        pd.DataFrame:
+            confusion matrix averaged over cross validations and seeds.
+        pd.DataFrame:
+            confusion matrix standard deviation over cross validations and seeds.
+        if return_train_perform:
+            pd.DataFrames as above for train set.
+        if return_clfs:
+            list of XGBClassifier objects of each cross validation step and seed.
+        if return_predictions:
+            list of dataframes with prediction results.
     """
 
     if verbosity > 1:
@@ -731,16 +872,34 @@ def xgboost_forest_classification(
 
 
 # SUMMARY metrics
-def summary_metric_diagonal_confusion_mean(conf_mat):
-    """Compute mean of diagonal elements of confusion matrix"""
+def summary_metric_diagonal_confusion_mean(
+    conf_mat: pd.DataFrame):
+    """Compute mean of diagonal elements of confusion matrix.
+
+    Args:
+        conf_mat:
+            The results of the previously calculated metric (forest_clfs accuracy).
+    """
     return np.diag(conf_mat).mean()
 
 
-def linear_step(x, low, high, descending=True):
-    """Step function with linear transition between low and high
+def linear_step(
+    x: np.array,
+    low: float,
+    high: float,
+    descending: bool = True
+) -> np.array:
+    """Step function with linear transition between low and high.
 
-    descending:
-        Wether to go from 1 to 0 or the other way around.
+    Args:
+        x:
+            Data.
+        low:
+            Lower border.
+        high:
+            Upper border.
+        descending:
+            Wether to go from 1 to 0 or the other way around.
     """
 
     b = 1.0
@@ -752,11 +911,24 @@ def linear_step(x, low, high, descending=True):
         return np.where(x < low, 0, np.where(x > high, b, (x - low) * m + 0))
 
 
-def summary_metric_diagonal_confusion_percentage(conf_mat, threshold=0.9, tolerance=0.05):
-    """Compute percentage of diagonal elements of confusion matrix above threshold
+def summary_metric_diagonal_confusion_percentage(
+    conf_mat: pd.DataFrame,
+    threshold: float = 0.9,
+    tolerance: float = 0.05
+) -> np.array:
+    """Compute percentage of diagonal elements of confusion matrix above threshold.
 
-    To make the metric more stable we smoothen the threshold with a linear transition from
-    threshold - tolerance to threshold + tolerance.
+    Note:
+        To make the metric more stable we smoothen the threshold with a linear transition from
+        :attr:`threshold - tolerance` to :attr:`threshold + tolerance`.
+
+    Args:
+        conf_mat:
+            The results of the previously calculated metric (forest_clfs accuracy).
+        threshold:
+            TODO add description
+        tolerance:
+            TODO add description
     """
     if tolerance:
         return np.mean(linear_step(np.diag(conf_mat), threshold - tolerance, threshold + tolerance, descending=False))
@@ -769,27 +941,32 @@ def summary_metric_diagonal_confusion_percentage(conf_mat, threshold=0.9, tolera
 ################################
 
 # SHARED computations
-def marker_correlation_matrix(adata, marker_list):
-    """
-    adata: AnnData
-    marker_list: str or dict
-        Either path to marker list or dict, e.g. {celltype1:[marker1,marker2], celltype2:[marker3,..], ..}.
-        If a path is provided the marker list needs to be a csv formatted as:
-            celltype1, celltype2, ...
-            marker11,  marker21,
-            marker12,  marker22,
-                    ,  marker23,
-                    ,  marker24,
+def marker_correlation_matrix(
+    adata: sc.AnnData,
+    marker_list: Union[str, dict]
+) -> pd.DataFrame:
+    """Compute the correlation of each marker with all genes.
 
-    Returns
-    -------
-    pd.DataFrame
-        index: genes of marker list
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        marker_list:
+            Either path to marker list or dict, e.g. {celltype1:[marker1,marker2], celltype2:[marker3,..], ..}.
+            If a path is provided the marker list needs to be a csv formatted as::
+
+                celltype1, celltype2, ...
+                marker11,  marker21,
+                marker12,  marker22,
+                        ,  marker23,
+                        ,  marker24,
+
+    Returns:
+        pd.DataFrame with genes of marker list as index
+
         columns:
-            "celltype" - cell type annotations of marker genes
-            "mean" - mean expression of markers
-            genes - for all genes of adata.var_names correlations with markers
-
+            - "celltype" - cell type annotations of marker genes
+            - "mean" - mean expression of markers
+            - genes - for all genes of adata.var_names correlations with markers
     """
 
     full_cor_mat = correlation_matrix(adata)
@@ -829,38 +1006,44 @@ def marker_correlation_matrix(adata, marker_list):
 
 # PER PROBESET computations
 def max_marker_correlations(
-    genes, marker_cor, per_celltype=True, per_marker=True, per_marker_min_mean=None, per_celltype_min_mean=None
-):
-    """Get maximal correlations with marker genes
+    genes: List[str],
+    marker_cor: pd.DataFrame,
+    per_celltype: bool = True,
+    per_marker: float = True,
+    per_marker_min_mean: float = None,
+    per_celltype_min_mean: float = None
+) -> pd.DataFrame:
+    """Get maximal correlations with marker genes.
 
-    genes: list
-        Gene set list.
-    marker_cor: pd.DataFrame
-        Marker correlation matrix plus cell type annotations and mean expression (see output of
-        `marker_correlation_matrix`)
-    per_celltype: bool
-        Wether to return columns with per cell type max correlations.
-    per_marker: bool
-        Wether to return columns with per marker max correlations.
-    per_marker_min_mean: float
-        Add a column for correlation per marker that only takes into accounts markers with mean expression >
-        min_mean_per_marker
-    per_celltype_min_mean: float
-        Add a column for correlation per cell type that only takes into accounts markers with mean expression >
-        min_mean_per_marker
+    Args:
+        genes:
+            The selected genes.
+        marker_cor:
+            Marker correlation matrix plus cell type annotations and mean expression (see output of
+            :attr:`marker_correlation_matrix`).
+        per_celltype:
+            Wether to return columns with per cell type max correlations.
+        per_marker:
+            Wether to return columns with per marker max correlations.
+        per_marker_min_mean:
+            Add a column for correlation per marker that only takes into accounts markers with mean expression >
+            min_mean_per_marker
+        per_celltype_min_mean:
+            Add a column for correlation per cell type that only takes into accounts markers with mean expression >
+            min_mean_per_marker
 
-    Returns
-    -------
-    pd.DataFrame
-        index: marker_genes
-        columns:
-            - "celltype" - cell type annotations
-            - "mean" - mean expression of marker genes
-            - max correlations:
-                - "per marker" maximal correlation of probeset and marker
-                - "per celltype" only highest correlation per cell type is not nan
-                - f"... mean > {min_mean}" filtered out markers with mean expression <= min_mean
+    Returns:
+            pd.DataFrame with marker_genes as index
 
+            columns:
+                - "celltype":
+                    cell type annotations
+                - "mean":
+                    mean expression of marker genes
+                - max correlations:
+                    - "per marker" maximal correlation of probeset and marker
+                    - "per celltype" only highest correlation per cell type is not nan
+                    - f"... mean > {min_mean}" filtered out markers with mean expression <= min_mean
     """
     cor_df = marker_cor[["celltype", "mean"]].copy()
     cor_df["per marker"] = marker_cor[genes].max(axis=1)
@@ -889,16 +1072,16 @@ def max_marker_correlations(
 
 
 # SUMMARY metrics
-def summary_marker_corr(cor_df):
-    """Means of maximal correlations with marker genes
-
+def summary_marker_corr(
     cor_df: pd.DataFrame
-        Table with maximal correlations with marker genes. cor_df typically has multiple columns where different
-        correlations are filtered out. See `max_marker_correlations` output for expected `cor_df`.
+ ) -> dict:
+    """Means of maximal correlations with marker genes:
 
-    Returns
-    -------
-    dict of floats:
+    Args:
+        cor_df:
+            Table with maximal correlations with marker genes. :attr:`cor_df` typically has multiple columns where
+            different correlations are filtered out. See :attr:`max_marker_correlations` output for expected
+            :attr:`cor_df`.
     """
     summaries = cor_df[[col for col in cor_df.columns if (col != "mean")]].mean(axis=0)
     return {summary: val for summary, val in summaries.items()}
@@ -909,17 +1092,20 @@ def summary_marker_corr(cor_df):
 ##############################
 
 # SHARED computations
-def correlation_matrix(adata, var_names=None):
+def correlation_matrix(
+    adata: sc.AnnData,
+    var_names: list = None
+) -> pd.DataFrame:
     """Compute correlation matrix of adata.X
 
-    adata: AnnData
-    var_names: list
-        Calculate correlation on subset of variables
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        var_names:
+            Calculate correlation on subset of variables.
 
-    Return
-    ------
-    pd.DataFrame:
-        Index and columns are adata.var_names or var_names subset if defined. Values are correlations between genes
+    Returns:
+        pd.DataFrame where index and columns are adata.var_names or var_names subset if defined. Values are correlations between genes.
     """
     if var_names:
         a = adata[:, var_names]
@@ -934,19 +1120,20 @@ def correlation_matrix(adata, var_names=None):
 
 
 # PER PROBESET computations
-def gene_set_correlation_matrix(genes, full_cor_mat, ordered=True):
-    """Return (ordered) correlation matrix of genes
+def gene_set_correlation_matrix(
+    genes: list,
+    full_cor_mat: pd.DataFrame,
+    ordered: bool = True
+) -> pd.DataFrame:
+    """Return (ordered) correlation matrix of genes.
 
-    genes: list
-        Gene set list
-    full_cor_mat: pd.DataFrame
-        Correlation matrix of genes that include at least `genes`.
-    ordered: bool
-        Wether to order the correlation matrix by a linkage clustering.
-
-    Return
-    ------
-
+    Args:
+        genes:
+            The selected genes.
+        full_cor_mat:
+            Correlation matrix of genes that include at least `genes`.
+        ordered:
+            Wether to order the correlation matrix by a linkage clustering.
     """
     cor_mat = full_cor_mat.loc[genes, genes].copy()
     if ordered:
@@ -955,16 +1142,18 @@ def gene_set_correlation_matrix(genes, full_cor_mat, ordered=True):
 
 
 # SUMMARY metrics
-def summary_metric_correlation_mean(cor_matrix):
-    """Calculate 1 - mean correlation
+def summary_metric_correlation_mean(
+    cor_matrix: Union[pd.DataFrame, np.array]
+) -> float:
+    """Calculate 1 - mean correlation.
 
-    cor_mat: pd.DataFrame and np.array
-        Gene set correlation matrix.
+    Args:
+        cor_matrix:
+            Gene set correlation matrix.
 
-    Return
-    ------
-    float:
-        1 - mean correlation
+    Returns:
+        float:
+            1 - mean correlation
     """
     cor_mat = cor_matrix.copy()
     cor_mat = np.abs(cor_mat)
@@ -973,20 +1162,27 @@ def summary_metric_correlation_mean(cor_matrix):
     return 1 - np.nanmean(cor_mat)
 
 
-def summary_metric_correlation_percentage(cor_matrix, threshold=0.8, tolerance=0.05):
-    """Calculate percentage of genes with max(abs(correlations)) < threshold
+def summary_metric_correlation_percentage(
+    cor_matrix: Union[pd.DataFrame, np.array],
+    threshold: float = 0.8,
+    tolerance: float = 0.05
+):
+    """Calculate percentage of genes with max(abs(correlations)) < threshold.
 
     To make the metric more stable we smoothen the threshold with a linear transition from
     threshold - tolerance to threshold + tolerance.
 
-    cor_mat: pd.DataFrame and np.array
-        Gene set correlation matrix.
-    threshold: float
+    Args:
+        cor_matrix:
+            Gene set correlation matrix.
+        threshold:
+            TODO add description.
+        tolerance:
+            TODO add description
 
-    Return
-    ------
-    float:
-        percentage of genes with max(abs(correlations)) < threshold
+    Returns:
+        float:
+            percentage of genes with max(abs(correlations)) < threshold
     """
     cor_mat = cor_matrix.copy()
     cor_mat = np.abs(cor_mat)
