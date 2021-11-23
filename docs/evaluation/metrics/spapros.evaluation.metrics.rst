@@ -3,17 +3,17 @@
 
 .. automodule:: spapros.evaluation.metrics
 
-   
-   
-   
 
-   
-   
+
+
+
+
+
    .. rubric:: Functions
 
    .. autosummary::
       :toctree:
-   
+
       AUC
       clustering_nmis
       compute_clustering_and_update
@@ -40,16 +40,16 @@
       summary_metric_diagonal_confusion_percentage
       summary_nmi_AUCs
       xgboost_forest_classification
-   
-   
 
-   
-   
-   
 
-   
-   
-   
+
+
+
+
+
+
+
+
 
 
 

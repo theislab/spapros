@@ -1,7 +1,9 @@
-from typing import List
+from typing import Any
 from typing import Dict
-from typing import Union
+from typing import List
 from typing import Tuple
+from typing import Union
+
 import numpy as np
 import pandas as pd
 import scanpy as sc
@@ -17,7 +19,7 @@ from spapros.util.util import gene_means
 from xgboost import XGBClassifier
 
 
-METRICS_PARAMETERS = {
+METRICS_PARAMETERS: Dict[str, Dict] = {
     "cluster_similarity": {
         "ns": [5, 60],
         "AUC_borders": [[5, 20], [21, 60]],
@@ -41,21 +43,18 @@ METRICS_PARAMETERS = {
 
 
 # utility functions to get general infos about metrics #
-def get_metric_names(
-) -> List[str]:
+def get_metric_names() -> List[str]:
     """Get a list of all available metric names."""
     return [metric for metric in METRICS_PARAMETERS]
 
 
-def get_metric_parameter_names(
-) -> Dict[str, List[str]]:
+def get_metric_parameter_names() -> Dict[str, List[str]]:
     """Get all parameter names for each available metric."""
     names = {metric: [param for param in METRICS_PARAMETERS[metric]] for metric in METRICS_PARAMETERS}
     return names
 
 
-def get_metric_default_parameters(
-) -> Dict[str, dict]:
+def get_metric_default_parameters() -> Dict[str, Dict]:
     """Get the default metric parameters."""
     return METRICS_PARAMETERS
 
@@ -69,11 +68,7 @@ def get_metric_default_parameters(
 # 3. summary: Simple final computations (per probe set) that aggregate evaluations to summary metrics
 
 
-def metric_shared_computations(
-    adata: sc.AnnData = None,
-    metric: str = None,
-    parameters: Dict = {}
-) -> pd.DataFrame:
+def metric_shared_computations(adata: sc.AnnData = None, metric: str = None, parameters: Dict = {}) -> pd.DataFrame:
     """Calculate the metric compuations that can be shared between probe sets.
 
     Args:
@@ -98,11 +93,13 @@ def metric_shared_computations(
         return marker_correlation_matrix(adata, marker_list=parameters["marker_list"])
     elif metric == "gene_corr":
         return correlation_matrix(adata)
+    else:
+        raise ValueError(f"Unsupported metric: {metric}")
 
 
 def metric_pre_computations(
-    genes: list,
-    adata: sc.AnnData = None,
+    genes: List,
+    adata: sc.AnnData,
     metric: str = None,
     parameters: Dict = {},
 ) -> Union[pd.DataFrame, None]:
@@ -135,6 +132,8 @@ def metric_pre_computations(
         return None
     elif metric == "gene_corr":
         return None
+    else:
+        raise ValueError(f"Unsupported metric: {metric}")
 
 
 def metric_computations(
@@ -144,7 +143,7 @@ def metric_computations(
     shared_results: pd.DataFrame = None,
     pre_results: pd.DataFrame = None,
     parameters: Dict = {},
-    n_jobs: int = -1
+    n_jobs: int = -1,
 ) -> pd.DataFrame:
     """Compute the probe set specific evaluation metrics.
 
@@ -193,11 +192,8 @@ def metric_computations(
 
 
 def metric_summary(
-    adata: sc.AnnData = None,
-    results: pd.DataFrame = None,
-    metric: str = None,
-    parameters: Dict = {}
-) -> Dict[str, float]:
+    adata: sc.AnnData = None, results: pd.DataFrame = None, metric: str = None, parameters: Dict = {}
+) -> Dict[str, Any]:
     """Simple final computations (per probe set) that aggregate evaluations to summary metrics.
 
     Args:
@@ -214,7 +210,7 @@ def metric_summary(
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
 
-    summary = {}
+    summary: Dict[str, Any] = {}
 
     if metric == "cluster_similarity":
         nmis = results
@@ -253,11 +249,7 @@ def metric_summary(
 
 
 def compute_clustering_and_update(
-    adata: sc.AnnData,
-    annotations: pd.DataFrame,
-    resolution: float,
-    tried_res_n: List[list],
-    found_ns: List[int]
+    adata: sc.AnnData, annotations: pd.DataFrame, resolution: float, tried_res_n: List[List], found_ns: List[int]
 ) -> Tuple[pd.DataFrame, List[List], List[int]]:
     """Compute a new leiden clustering and save the used resolution and resulting clusters.
 
@@ -291,11 +283,7 @@ def compute_clustering_and_update(
     return annotations, tried_res_n, found_ns
 
 
-def leiden_clusterings(
-    adata: sc.AnnData,
-    ns: List[int],
-    start_res: float = 1.0
-) -> pd.DataFrame:
+def leiden_clusterings(adata: sc.AnnData, ns: Union[range, List[int]], start_res: float = 1.0) -> pd.DataFrame:
     """Compute leiden clusters for different numbers of clusters.
 
     Leiden clusters are calculated with different resolutions.
@@ -342,8 +330,8 @@ def leiden_clusterings(
     # Initialize
     annotations = pd.DataFrame(index=ns, columns=["resolution"] + a.obs_names.tolist())
     annotations.index.name = "n"
-    tried_res_n = []
-    found_ns = []
+    tried_res_n: List[List] = []
+    found_ns: List[int] = []
 
     # First clustering step
     n_min = np.min(ns)
@@ -390,7 +378,7 @@ def leiden_clusterings(
 def clustering_nmis(
     annotations: pd.DataFrame,
     ref_annotations: pd.DataFrame,
-    ns: List[int],
+    ns: Union[range, List[int]],
     method: str = "arithmetic",
 ) -> pd.DataFrame:
     """Compute NMI between clusterings and a reference set of clusterings.
@@ -464,11 +452,7 @@ def clustering_nmis(
 
 
 # SUMMARY metrics
-def AUC(
-    series: pd.Series,
-    n_min: int = 1,
-    n_max: int = 60
-) -> float:
+def AUC(series: pd.Series, n_min: int = 1, n_max: int = 60) -> float:
     """Calculate the Area Unter the Curve.
 
     Args:
@@ -484,10 +468,7 @@ def AUC(
     return tmp.sum() / n
 
 
-def summary_nmi_AUCs(
-    nmis: pd.DataFrame,
-    AUC_borders: List[list]
-) -> Dict[str, float]:
+def summary_nmi_AUCs(nmis: pd.DataFrame, AUC_borders: List[List]) -> Dict[str, float]:
     """Calculate AUC over range of nmi values.
 
     Args:
@@ -518,11 +499,7 @@ def summary_nmi_AUCs(
 # SHARED AND and PER PROBESET computations
 
 
-def knns(
-    adata: sc.AnnData,
-    genes: Union[List, str] = "all",
-    ks: List[int] = [10, 20]
-) -> pd.DataFrame:
+def knns(adata: sc.AnnData, genes: Union[List, str] = "all", ks: List[int] = [10, 20]) -> pd.DataFrame:
     """Compute nearest neighbors of observations for different ks.
 
     Args:
@@ -587,11 +564,7 @@ def knns(
     return df
 
 
-def mean_overlaps(
-    knn_df: pd.DataFrame,
-    ref_knn_df: pd.DataFrame,
-    ks: List[int]
-) -> pd.DataFrame:
+def mean_overlaps(knn_df: pd.DataFrame, ref_knn_df: pd.DataFrame, ks: List[int]) -> pd.DataFrame:
     """Calculate mean overlaps of knn graphs of different ks.
 
     Args:
@@ -627,9 +600,7 @@ def mean_overlaps(
 # SUMMARY metrics
 
 
-def summary_knn_AUC(
-    means_df: pd.DataFrame
-) -> float:
+def summary_knn_AUC(means_df: pd.DataFrame) -> float:
     """Calculate AUC of mean overlaps over ks.
 
     Args:
@@ -653,11 +624,11 @@ def summary_knn_AUC(
 # PER PROBESET computations
 def xgboost_forest_classification(
     adata: sc.AnnData,
-    selection: Union[list, pd.DataFrame],
-    celltypes: Union[list, "all"] = "all",
+    selection: Union[List, pd.DataFrame],
+    celltypes: Union[List, str] = "all",
     ct_key: str = "Celltypes",
     n_cells_min: int = 40,
-    max_depth: str = 3,
+    max_depth: int = 3,
     lr: float = 0.2,
     colsample_bytree: float = 1,
     cv_splits: int = 5,
@@ -670,7 +641,7 @@ def xgboost_forest_classification(
     return_clfs: bool = False,
     return_predictions: bool = False,
     n_jobs: int = 1,
-) -> list:
+) -> List:
     """Measure celltype classification performance with gradient boosted forests.
 
     We train extreme gradient boosted forest classifiers on multi class classification of cell types. Cross validation
@@ -765,7 +736,7 @@ def xgboost_forest_classification(
     # To have more robust results we use multiple seeds (especially important for cell types with low cell count)
     if n_seeds > 1:
         rng = np.random.default_rng(seed)
-        seeds = rng.integers(low=0, high=100000, size=n_seeds)
+        seeds = list(rng.integers(low=0, high=100000, size=n_seeds))
     else:
         seeds = [seed]
 
@@ -872,8 +843,7 @@ def xgboost_forest_classification(
 
 
 # SUMMARY metrics
-def summary_metric_diagonal_confusion_mean(
-    conf_mat: pd.DataFrame):
+def summary_metric_diagonal_confusion_mean(conf_mat: pd.DataFrame) -> np.ndarray:
     """Compute mean of diagonal elements of confusion matrix.
 
     Args:
@@ -883,12 +853,7 @@ def summary_metric_diagonal_confusion_mean(
     return np.diag(conf_mat).mean()
 
 
-def linear_step(
-    x: np.array,
-    low: float,
-    high: float,
-    descending: bool = True
-) -> np.array:
+def linear_step(x: np.ndarray, low: float, high: float, descending: bool = True) -> np.ndarray:
     """Step function with linear transition between low and high.
 
     Args:
@@ -912,10 +877,8 @@ def linear_step(
 
 
 def summary_metric_diagonal_confusion_percentage(
-    conf_mat: pd.DataFrame,
-    threshold: float = 0.9,
-    tolerance: float = 0.05
-) -> np.array:
+    conf_mat: pd.DataFrame, threshold: float = 0.9, tolerance: float = 0.05
+) -> np.ndarray:
     """Compute percentage of diagonal elements of confusion matrix above threshold.
 
     Note:
@@ -941,10 +904,7 @@ def summary_metric_diagonal_confusion_percentage(
 ################################
 
 # SHARED computations
-def marker_correlation_matrix(
-    adata: sc.AnnData,
-    marker_list: Union[str, dict]
-) -> pd.DataFrame:
+def marker_correlation_matrix(adata: sc.AnnData, marker_list: Union[str, Dict]) -> pd.DataFrame:
     """Compute the correlation of each marker with all genes.
 
     Args:
@@ -973,17 +933,19 @@ def marker_correlation_matrix(
 
     # Load marker_list as dict
     if isinstance(marker_list, str):
-        marker_list = pd.read_csv(marker_list)
-        marker_list = dict_to_table(marker_list, genes_as_index=False, reverse=True)
+        marker_list_df = pd.read_csv(marker_list)
+        marker_list_dict = dict_to_table(marker_list_df, genes_as_index=False, reverse=True)
+    else:
+        marker_list_dict = marker_list
 
     # Get markers and their corresponding celltype
-    markers = [g for _, genes in marker_list.items() for g in genes]
+    markers = [g for _, genes in marker_list_dict.items() for g in genes]
     markers = np.unique(markers).tolist()  # TODO: maybe throw a warning if genes occur twice
     # wrt celltype we take the first occuring celltype in marker_list for a given marker
     markers = [g for g in markers if g in adata.var_names]  # TODO: Throw warning if marker genes are not in adata
     ct_annot = []
     for g in markers:
-        for ct, genes in marker_list.items():
+        for ct, genes in marker_list_dict.items():
             if g in genes:
                 ct_annot.append(ct)
                 break  # to only add first celltype in list
@@ -997,7 +959,7 @@ def marker_correlation_matrix(
     # Add mean expression and cell type annotation to dataframe
     df.insert(0, "mean", df_mean["mean"])
     ct_series = pd.Series(
-        index=df.index, data=[ct for gene in df.index for ct, genes in marker_list.items() if (gene in genes)]
+        index=df.index, data=[ct for gene in df.index for ct, genes in marker_list_dict.items() if (gene in genes)]
     )
     df.insert(0, "celltype", ct_series)
 
@@ -1011,7 +973,7 @@ def max_marker_correlations(
     per_celltype: bool = True,
     per_marker: float = True,
     per_marker_min_mean: float = None,
-    per_celltype_min_mean: float = None
+    per_celltype_min_mean: float = None,
 ) -> pd.DataFrame:
     """Get maximal correlations with marker genes.
 
@@ -1072,9 +1034,7 @@ def max_marker_correlations(
 
 
 # SUMMARY metrics
-def summary_marker_corr(
-    cor_df: pd.DataFrame
- ) -> dict:
+def summary_marker_corr(cor_df: pd.DataFrame) -> Dict:
     """Means of maximal correlations with marker genes:
 
     Args:
@@ -1092,10 +1052,7 @@ def summary_marker_corr(
 ##############################
 
 # SHARED computations
-def correlation_matrix(
-    adata: sc.AnnData,
-    var_names: list = None
-) -> pd.DataFrame:
+def correlation_matrix(adata: sc.AnnData, var_names: List = None) -> pd.DataFrame:
     """Compute correlation matrix of adata.X
 
     Args:
@@ -1105,7 +1062,8 @@ def correlation_matrix(
             Calculate correlation on subset of variables.
 
     Returns:
-        pd.DataFrame where index and columns are adata.var_names or var_names subset if defined. Values are correlations between genes.
+        pd.DataFrame where index and columns are adata.var_names or var_names subset if defined. Values are correlations
+        between genes.
     """
     if var_names:
         a = adata[:, var_names]
@@ -1120,11 +1078,7 @@ def correlation_matrix(
 
 
 # PER PROBESET computations
-def gene_set_correlation_matrix(
-    genes: list,
-    full_cor_mat: pd.DataFrame,
-    ordered: bool = True
-) -> pd.DataFrame:
+def gene_set_correlation_matrix(genes: List, full_cor_mat: pd.DataFrame, ordered: bool = True) -> pd.DataFrame:
     """Return (ordered) correlation matrix of genes.
 
     Args:
@@ -1142,9 +1096,7 @@ def gene_set_correlation_matrix(
 
 
 # SUMMARY metrics
-def summary_metric_correlation_mean(
-    cor_matrix: Union[pd.DataFrame, np.array]
-) -> float:
+def summary_metric_correlation_mean(cor_matrix: pd.DataFrame) -> float:
     """Calculate 1 - mean correlation.
 
     Args:
@@ -1162,11 +1114,7 @@ def summary_metric_correlation_mean(
     return 1 - np.nanmean(cor_mat)
 
 
-def summary_metric_correlation_percentage(
-    cor_matrix: Union[pd.DataFrame, np.array],
-    threshold: float = 0.8,
-    tolerance: float = 0.05
-):
+def summary_metric_correlation_percentage(cor_matrix: pd.DataFrame, threshold: float = 0.8, tolerance: float = 0.05):
     """Calculate percentage of genes with max(abs(correlations)) < threshold.
 
     To make the metric more stable we smoothen the threshold with a linear transition from

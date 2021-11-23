@@ -43,7 +43,7 @@
    .. rubric:: {{ _('Exceptions') }}
 
    .. autosummary::
-      :toctree:                                          
+      :toctree:
    {% for item in exceptions %}
       {{ item }}
    {%- endfor %}

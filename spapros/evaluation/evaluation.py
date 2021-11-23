@@ -1,12 +1,12 @@
 import os
 import pickle
 import warnings
+from enum import Enum
 from pathlib import Path
 from typing import Any
-from typing import List
-from typing import Optional
-from typing import Union
 from typing import Dict
+from typing import List
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,6 +24,16 @@ from spapros.evaluation.metrics import metric_summary
 from spapros.util.mp_util import _get_n_cores
 from spapros.util.mp_util import parallelize
 from spapros.util.mp_util import Signal
+
+
+# helper for type checking:
+
+
+class Empty(Enum):
+    token = None
+
+
+_empty = Empty.token
 
 
 class ProbesetEvaluator:
@@ -221,10 +231,10 @@ class ProbesetEvaluator:
         self,
         adata: sc.AnnData,
         celltype_key: Union[str, List[str]] = "celltype",
-        results_dir: Optional[str] = "./probeset_evaluation/",
+        results_dir: str = "./probeset_evaluation/",
         scheme: str = "quick",
-        metrics: List[str] = None,
-        metrics_params: Dict[str, dict] = {},
+        metrics=None,
+        metrics_params: Dict[str, Dict] = {},
         marker_list: Dict[str, List[str]] = None,
         reference_name: str = "adata1",
         reference_dir: str = None,
@@ -238,19 +248,21 @@ class ProbesetEvaluator:
         self.scheme = scheme
         self.marker_list = marker_list
         self.metrics_params = self._prepare_metrics_params(metrics_params)
-        self.metrics = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
+        self.metrics: List[str] = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
         self.ref_name = reference_name
-        self.ref_dir = reference_dir if (reference_dir is not None) else self._default_reference_dir()
+        self.ref_dir: str = (
+            reference_dir if (reference_dir is not None) else os.path.join(results_dir, "references")
+        )  # self._default_reference_dir()
         self.verbosity = verbosity
         self.n_jobs = n_jobs
 
         self.shared_results: Dict[str, Any] = {}
         self.pre_results: Dict[str, Any] = {metric: {} for metric in self.metrics}
         self.results: Dict[str, Any] = {metric: {} for metric in self.metrics}
-        self.summary_results = None
+        self.summary_results = _empty
 
         self._shared_res_file = lambda metric: os.path.join(self.ref_dir, f"{self.ref_name}_{metric}.csv")
-        self._summary_file = os.path.join(self.dir, f"{self.ref_name}_summary.csv") if self.dir else None
+        self._summary_file: str = os.path.join(self.dir, f"{self.ref_name}_summary.csv")  # if self.dir else _empty
 
         # TODO:
         # For the user it could be important to get some warning when reinitializing the Evaluator with new
@@ -276,11 +288,7 @@ class ProbesetEvaluator:
                     self.shared_results[metric].to_csv(self._shared_res_file(metric))
 
     def evaluate_probeset(
-        self,
-        genes: list,
-        set_id: str = "probeset1",
-        update_summary: bool = True,
-        pre_only: bool = False
+        self, genes: List, set_id: str = "probeset1", update_summary: bool = True, pre_only: bool = False
     ) -> None:
         """Compute probe set specific evaluations.
 
@@ -342,11 +350,7 @@ class ProbesetEvaluator:
                 self.summary_statistics(set_ids=[set_id])
 
     def evaluate_probeset_pipeline(
-        self,
-        genes: list,
-        set_id: str,
-        shared_pre_results_path: list,
-        step_specific_results: list
+        self, genes: List, set_id: str, shared_pre_results_path: List, step_specific_results: List
     ) -> None:
         """Pipeline specific adaption of evaluate_probeset.
 
@@ -391,10 +395,7 @@ class ProbesetEvaluator:
                 Path(os.path.dirname(self._res_file(metric, set_id))).mkdir(parents=True, exist_ok=True)
                 self.results[metric][set_id].to_csv(self._res_file(metric, set_id))
 
-    def summary_statistics(
-        self,
-        set_ids: List[str]
-    ) -> None:
+    def summary_statistics(self, set_ids: List[str]) -> None:
         """Compute summary statistics and update summary csv.
         (if :attr:`self.results_dir` is not None)
 
@@ -420,11 +421,7 @@ class ProbesetEvaluator:
 
         self.summary_results = df
 
-    def pipeline_summary_statistics(
-        self,
-        result_files: list,
-        probeset_ids: str
-    ) -> None:
+    def pipeline_summary_statistics(self, result_files: List, probeset_ids: List[str]) -> None:
         """Adaptation of the function summary_statistics for the spapros-pipeline.
 
         Takes the input files directly to calculate the summary statistics.
@@ -433,7 +430,7 @@ class ProbesetEvaluator:
             result_files:
                 Probeset evaluation result file paths
             probeset_ids:
-                IDs of the current probesets as a single string in the format: `probe_id1,probe_id2,probe_id3`
+                IDs of the current probesets.
         """
         df = self._init_summary_table(probeset_ids)
 
@@ -465,10 +462,7 @@ class ProbesetEvaluator:
 
         self.summary_results = df
 
-    def _prepare_metrics_params(
-        self,
-        new_params: Dict[str, dict]
-    ) -> Dict[str, dict]:
+    def _prepare_metrics_params(self, new_params: Dict[str, Dict]) -> Dict[str, Dict]:
         """Set metric parameters to default values and overwrite defaults in case user defined param is given.
 
         Args:
@@ -488,7 +482,7 @@ class ProbesetEvaluator:
 
     def _get_metrics_of_scheme(
         self,
-    ) -> Dict[str, dict]:
+    ) -> List[str]:
         """Get the metrics according to the chosen scheme."""
 
         if self.scheme == "quick":
@@ -503,10 +497,7 @@ class ProbesetEvaluator:
 
         return metrics
 
-    def _init_summary_table(
-        self,
-        set_ids: List[str]
-    ) -> pd.DataFrame:
+    def _init_summary_table(self, set_ids: List[str]) -> pd.DataFrame:
         """Initialize or load table with summary results.
 
         Note that column names for the summary metrics are not initialized here (except of the ones that already exist
@@ -546,14 +537,11 @@ class ProbesetEvaluator:
         pre_str = "_pre" if pre else ""
         return os.path.join(self.dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
 
-    def _default_reference_dir(
-        self,
-    ) -> Union[str, None]:
-        """Get the default name for the reference directory."""
-        if self.dir:
-            return os.path.join(self.dir, "references")
-        else:
-            return None
+    # def _default_reference_dir(
+    #     self,
+    # ) -> str:
+    #     """Get the default name for the reference directory."""
+    #     return os.path.join(self.dir, "references")
 
     def plot_summary(
         self,
@@ -568,12 +556,16 @@ class ProbesetEvaluator:
             **plot_kwargs:
                 Keyword arguments for :meth:`summary_table`.
         """
-        if (self.summary_results is None) and self.dir:
-            self.summary_results = pd.read_csv((self._summary_file), index_col=0)
-        if set_ids == "all":
-            set_ids = self.summary_results.index.tolist()
-        table = self.summary_results.loc[set_ids]
-        pl.summary_table(table, **plot_kwargs)
+        if self.summary_results is _empty:
+            if self.dir:
+                self.summary_results = pd.read_csv(self._summary_file, index_col=0)
+            else:
+                raise ValueError("No summaries found.")
+        else:
+            if set_ids == "all":
+                set_ids = self.summary_results.index.tolist()
+            table = self.summary_results.loc[set_ids]
+            pl.summary_table(table, **plot_kwargs)
 
     def plot_evaluations(
         self,
@@ -594,6 +586,7 @@ class ProbesetEvaluator:
                 ID of the current probeset or "all". Check out :attr:`self.summary_results` for available sets.
             metrics:
                 List of calculated metrics or "all". Check out :attr:`self.metrics` for available metrics.
+            TODO unused parameters show and save
         """
 
         if set_ids == "all":
