@@ -191,7 +191,9 @@ def metric_computations(
         return gene_set_correlation_matrix(genes, full_cor_mat, ordered=True)
 
 
-def metric_summary(results: pd.DataFrame = None, metric: str = None, parameters: Dict = {}) -> Dict[str, Any]:
+def metric_summary(
+    results: pd.DataFrame = None, metric: str = None, parameters: Dict = {}
+) -> Dict[str, Any]:
     """Simple final computations (per probe set) that aggregate evaluations to summary metrics.
 
     Args:

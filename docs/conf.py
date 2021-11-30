@@ -17,6 +17,7 @@ sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
 sys.path.insert(0, os.path.abspath(".."))
 
 
+
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -113,11 +114,11 @@ html_theme = "sphinx_rtd_theme"
 # green = '#4cc61e'
 # brighter_green = '#99c712'
 html_theme_options = {
-    "style_nav_header_background": "black",
+    'style_nav_header_background': 'black',
 }
 
 home_page_in_toc = True
-html_logo = "_static/logo.png"
+html_logo = '_static/logo.png'
 html_favicon = "_static/logo.png"
 html_title = "spapros docs"
 
