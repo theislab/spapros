@@ -219,7 +219,7 @@ class ProbesetEvaluator:
         reference_name:
             Name of reference dataset. This is chosen automatically if `None` is given.
         reference_dir:
-            Directory where reference results are saved. If `None` is given `:attr:reference_dir` is set to
+            Directory where reference results are saved. If `None` is given :attr:`reference_dir` is set to
             `results_dir+"reference/"`.
         verbosity:
             Verbosity level.
@@ -411,9 +411,7 @@ class ProbesetEvaluator:
                     results = self.results[metric][set_id]
                 elif self.dir and os.path.isfile(self._res_file(metric, set_id)):
                     results = pd.read_csv(self._res_file(metric, set_id), index_col=0)
-                summary = metric_summary(
-                    adata=self.adata, results=results, metric=metric, parameters=self.metrics_params[metric]
-                )
+                summary = metric_summary(results=results, metric=metric, parameters=self.metrics_params[metric])
                 for key in summary:
                     df.loc[set_id, key] = summary[key]
         if self.dir:
@@ -446,9 +444,7 @@ class ProbesetEvaluator:
             else:
                 results = pd.read_csv(result_file, index_col=0)
 
-            summary = metric_summary(
-                adata=self.adata, results=results, metric=metric, parameters=self.metrics_params[metric]
-            )
+            summary = metric_summary(results=results, metric=metric, parameters=self.metrics_params[metric])
             for key in summary:
                 df.loc[set_id, key] = summary[key]
 

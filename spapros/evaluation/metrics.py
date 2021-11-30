@@ -191,14 +191,10 @@ def metric_computations(
         return gene_set_correlation_matrix(genes, full_cor_mat, ordered=True)
 
 
-def metric_summary(
-    adata: sc.AnnData = None, results: pd.DataFrame = None, metric: str = None, parameters: Dict = {}
-) -> Dict[str, Any]:
+def metric_summary(results: pd.DataFrame = None, metric: str = None, parameters: Dict = {}) -> Dict[str, Any]:
     """Simple final computations (per probe set) that aggregate evaluations to summary metrics.
 
     Args:
-        adata:
-            An already preprocessed annotated data matrix. Typically we use log normalised data.
         results:
             The results of the previously calculated metric.
         metric:
@@ -291,8 +287,7 @@ def leiden_clusterings(adata: sc.AnnData, ns: Union[range, List[int]], start_res
 
     Args:
         adata:
-            Adata object with data to compute clusters on. Need to include a
-            neighbors graph (and PCA?)  TODO: make this clear.
+            Adata object with data to compute clusters on.
         ns:
             The minimum (:attr:`ns[0]`) and maximum (:attr:`ns[1]`) number of clusters.
         start_res:
@@ -300,8 +295,6 @@ def leiden_clusterings(adata: sc.AnnData, ns: Union[range, List[int]], start_res
 
     Returns:
         pd.DataFrame
-
-        csv file (path including the name of the file is given by save_to):
             1st column refers to the number of clusters,
             2nd col refers to the resolution used to calculate the clustering
             each following column refer to individual cell's cluster assignments e.g.::
