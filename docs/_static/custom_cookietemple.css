@@ -4,3 +4,7 @@
 .wy-nav-content {
     max-width: none;
 }
+
+ div.body td {
+     text-align: left;
+ }
