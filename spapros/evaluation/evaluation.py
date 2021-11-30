@@ -250,7 +250,9 @@ class ProbesetEvaluator:
         self.metrics_params = self._prepare_metrics_params(metrics_params)
         self.metrics: List[str] = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
         self.ref_name = reference_name
-        self.ref_dir: str = reference_dir if (reference_dir is not None) else os.path.join(results_dir, "references")  # self._default_reference_dir()
+        self.ref_dir: str = (
+            reference_dir if (reference_dir is not None) else os.path.join(results_dir, "references")
+        )  # self._default_reference_dir()
         self.verbosity = verbosity
         self.n_jobs = n_jobs
 
@@ -409,8 +411,7 @@ class ProbesetEvaluator:
                     results = self.results[metric][set_id]
                 elif self.dir and os.path.isfile(self._res_file(metric, set_id)):
                     results = pd.read_csv(self._res_file(metric, set_id), index_col=0)
-                summary = metric_summary(results=results, metric=metric, parameters=self.metrics_params[metric]
-                )
+                summary = metric_summary(results=results, metric=metric, parameters=self.metrics_params[metric])
                 for key in summary:
                     df.loc[set_id, key] = summary[key]
         if self.dir:
@@ -443,8 +444,7 @@ class ProbesetEvaluator:
             else:
                 results = pd.read_csv(result_file, index_col=0)
 
-            summary = metric_summary(results=results, metric=metric, parameters=self.metrics_params[metric]
-            )
+            summary = metric_summary(results=results, metric=metric, parameters=self.metrics_params[metric])
             for key in summary:
                 df.loc[set_id, key] = summary[key]
 

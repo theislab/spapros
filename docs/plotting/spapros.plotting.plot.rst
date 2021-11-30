@@ -3,17 +3,17 @@
 
 .. automodule:: spapros.plotting.plot
 
-   
-   
-   
 
-   
-   
+
+
+
+
+
    .. rubric:: Functions
 
    .. autosummary::
       :toctree:
-   
+
       confusion_heatmap
       correlation_matrix
       format_time
@@ -21,20 +21,20 @@
       ordered_confusion_matrices
       summary_table
       truncate_colormap
-   
-   
 
-   
-   
-   
 
-   
-   
-   
 
-   
-   
-   
+
+
+
+
+
+
+
+
+
+
+
 
 
 

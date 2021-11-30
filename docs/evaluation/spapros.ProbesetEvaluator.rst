@@ -14,12 +14,12 @@
 
 
 =======
-   
-   
-   
 
-   
-   
+
+
+
+
+
 >>>>>>> 9ee7bcc8ecbf748375ef6f27e04ac8d1f88c3509
    .. rubric:: Methods
 
@@ -28,7 +28,7 @@
 <<<<<<< HEAD
 
 =======
-   
+
 >>>>>>> 9ee7bcc8ecbf748375ef6f27e04ac8d1f88c3509
       ~spapros.ProbesetEvaluator.compute_or_load_shared_results
       ~spapros.ProbesetEvaluator.evaluate_probeset
@@ -40,6 +40,6 @@
 <<<<<<< HEAD
 
 =======
-   
-   
+
+
 >>>>>>> 9ee7bcc8ecbf748375ef6f27e04ac8d1f88c3509

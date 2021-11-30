@@ -9,4 +9,3 @@ from spapros.selection.selection_procedure import ProbesetSelector
 from spapros.plotting import plot as pl
 
 __all__ = ["ProbesetSelector", "ProbesetEvaluator", "pl"]
-
