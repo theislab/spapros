@@ -1,5 +1,6 @@
 {{ fullname | escape | underline}}
-.. currentmodule:: {{ module }}
+
+.. currentmodule:: {{ fullname }}
 
 .. automodule:: {{ fullname }}
 
@@ -20,23 +21,9 @@
    .. rubric:: {{ _('Functions') }}
 
    .. autosummary::
-      :toctree:
+      :toctree: .
    {% for item in functions %}
-   {{ item }}
-   {%- endfor %}
-   {% endif %}
-   {% endblock %}
-
-   {% block methods %}
-   {% if methods %}
-   .. rubric:: Methods
-
-   .. autosummary::
-      :toctree:
-   {% for item in methods %}
-      {%- if item != '__init__' %}
       ~{{ fullname }}.{{ item }}
-      {%- endif -%}
    {%- endfor %}
    {% endif %}
    {% endblock %}

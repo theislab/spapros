@@ -1,4 +1,4 @@
-﻿spapros.ProbesetEvaluator.plot\_summary
+spapros.ProbesetEvaluator.plot\_summary
 =======================================
 
 .. currentmodule:: spapros

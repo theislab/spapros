@@ -1,4 +1,4 @@
-﻿spapros.ProbesetEvaluator.evaluate\_probeset
+spapros.ProbesetEvaluator.evaluate\_probeset
 ============================================
 
 .. currentmodule:: spapros

@@ -18,6 +18,7 @@ The central class for probe set selection:
 
    selector = sp.ProbesetSelector(adata)
    selector.select_probeset()
+   selected_probeset = selector.probeset
 
 .. autosummary::
     :toctree: selection
@@ -33,7 +34,7 @@ The central class for probe set evaluation and comparison:
 .. code:: python
 
    evaluator = sp.ProbesetEvaluator()
-   evaluator.evaluate_probeset(adata, selector.probeset)
+   evaluator.evaluate_probeset(adata, selected_probeset)
 
 .. autosummary::
     :toctree: evaluation
@@ -44,16 +45,16 @@ The central class for probe set evaluation and comparison:
 Plotting
 ----------
 
-Subsequently, visualize the results with the plotting module:
+The plotting module provides several method to visualize the results:
 
 .. code:: python
 
-   sp.plot.cool_fancy_plot()
+   sp.pl.cool_fancy_plot()
 
 .. autosummary::
     :toctree: plotting
 
-    spapros.plotting.plot
+    spapros.pl
 
 
 

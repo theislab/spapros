@@ -1,4 +1,4 @@
-﻿spapros.ProbesetEvaluator.compute\_or\_load\_shared\_results
+spapros.ProbesetEvaluator.compute\_or\_load\_shared\_results
 ============================================================
 
 .. currentmodule:: spapros
