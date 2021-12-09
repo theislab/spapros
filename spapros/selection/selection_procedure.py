@@ -66,6 +66,7 @@ class ProbesetSelector:  # (object)
         seed=0,
         save_dir=None,
         n_jobs=-1,
+        reference_selections=[]
     ):
         # Should we add a "copy_adata" option? If False we can use less memory, if True adata will be changed at the end
         """
@@ -106,6 +107,8 @@ class ProbesetSelector:  # (object)
             If you want to select a different number of markers for celltypes in adata and celltypes only in the marker
             list, set e.g.: n_list_markers = {'adata_celltypes':2,'list_celltypes':3}
         marker_penalties: str, list or dict of strs
+        reference_selections: list(str)
+            whether to additionally select highly variable genes ("hvg") or random genes as reference.
 
         save_dir: str
             Directory path where all results are saved and loaded from if results already exist.
@@ -139,6 +142,8 @@ class ProbesetSelector:  # (object)
             "prior": prior_genes,
             "pca": None,
             "DE": None,
+            "hvg": None,
+            "random": None,
             "forest_DEs": None,
             "DE_baseline_forest": None,
             "forest": None,
@@ -174,6 +179,9 @@ class ProbesetSelector:  # (object)
         self.n_jobs = n_jobs
         if "n_jobs" not in self.forest_hparams:
             self.forest_hparams["n_jobs"] = self.n_jobs
+
+        # Reference gene sets
+        self.reference_selections = reference_selections
 
         self.forest_results = {
             "DE_prior_forest": None,
@@ -213,6 +221,13 @@ class ProbesetSelector:  # (object)
             tmp_str = "adata[:,adata.var[genes_key]]" if self.g_key else "adata"
             print(f"{tmp_str} contains many genes, consider reducing the number to fewer highly variable genes.")
 
+        # Check that reference selections are available
+        available_ref_selections = ["hvg", "random"]
+        for selection in self.reference_selections:
+            if selection not in available_ref_selections:
+                self.reference_selections.remove(selection)
+                print(f"Selecting {selection} genes as reference is not available. Options are 'hvg' and 'random'.")
+
         # Mean difference constraint
         self._prepare_mean_diff_constraint()
 
@@ -230,7 +245,40 @@ class ProbesetSelector:  # (object)
         self.probeset = self._compile_probeset_list()
         if self.save_dir:
             self.probeset.to_csv(self.probeset_path)
+        if 'hvg' in self.reference_selections:
+            self._hvg_selection()
+        if 'random' in self.reference_selections:
+            self._random_selection()
         # TODO: we haven't included the checks to load the probeset if it already exists
+
+    def _hvg_selection(self):
+        """Select highly variable genes"""
+        if self.selection["hvg"] is None:
+            if self.verbosity > 0:
+                print("Select hvg genes...")
+            self.selection["hvg"] = select.select_highly_variable_features(self.adata[:, self.genes], self.n,
+                                                                           inplace=False)
+            if self.verbosity > 1:
+                print("\t ...finished.")
+            if self.save_dir:
+                self.selection["hvg"].to_csv(self.selections_paths["pca"])
+        else:
+            if self.verbosity > 0:
+                print("HVG genes already selected...")
+
+    def _random_selection(self):
+        """Select random genes"""
+        if self.selection["random"] is None:
+            if self.verbosity > 0:
+                print("Select random genes...")
+            self.selection["random"] = select.random_selection(self.adata, self.n, seed=self.seed, inplace=False)
+            if self.verbosity > 1:
+                print("\t ...finished.")
+            if self.save_dir:
+                self.selection["random"].to_csv(self.selections_paths["random"])
+        else:
+            if self.verbosity > 0:
+                print("Random genes already selected...")
 
     def _pca_selection(self):
         """Select genes based on pca loadings"""
@@ -852,6 +900,8 @@ class ProbesetSelector:  # (object)
         self.selections_paths["prior"] = os.path.join(selections_dir, "prior_genes.txt")
         self.selections_paths["pca"] = os.path.join(selections_dir, "pca_selected.csv")
         self.selections_paths["DE"] = os.path.join(selections_dir, "DE_selected.csv")
+        self.selections_paths["hvg"] = os.path.join(selections_dir, "hvg_selected.csv")
+        self.selections_paths["random"] = os.path.join(selections_dir, "random_selected.csv")
         self.selections_paths["forest_DEs"] = os.path.join(selections_dir, "forest_DEs_selected.csv")
         self.selections_paths["DE_baseline_forest"] = os.path.join(selections_dir, "DE_baseline_forest_selected.csv")
         self.selections_paths["forest"] = os.path.join(selections_dir, "forest_selected.csv")
