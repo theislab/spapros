@@ -15,6 +15,7 @@ from pathlib import Path
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
 sys.path.insert(0, os.path.abspath(".."))
+sys.path.insert(0, os.path.abspath("../tutorials"))
 
 
 # -- General configuration ---------------------------------------------
@@ -34,8 +35,20 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_click",
     "sphinx_rtd_dark_mode",
+    "nbsphinx",
+    "sphinx_gallery.load_style",
+    "nbsphinx_link",
     *[p.stem for p in (HERE / "_extensions").glob("*.py")],
 ]
+
+# nbsphinx setup (for tutorial gallery)
+
+# html_show_sourcelink = True
+# html_sourcelink_suffix = ""
+# suppress_warnings = [
+#     'nbsphinx',
+# ]
+# nbsphinx_execute = "never"
 
 autosummary_generate = True
 autodoc_member_order = "groupwise"
@@ -55,7 +68,7 @@ default_dark_mode = False
 templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
-source_suffix = ".rst"
+source_suffix = [".rst"]  # , ".ipynb"]
 
 # The master toctree document.
 master_doc = "index"

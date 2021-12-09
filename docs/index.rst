@@ -45,7 +45,7 @@ Key Features
 
 .. toctree::
    :maxdepth: 1
-   :caption: MAIN:
+   :caption: CONTENTS:
    :hidden:
 
    installation
@@ -55,25 +55,8 @@ Key Features
    authors
    changelog
    code_of_conduct
+   tutorial_gallery
 
-.. toctree::
-   :maxdepth: 1
-   :caption: TUTORIALS
-   :hidden:
-
-   basic_feature_selection
-   advanced_feature_selection
-   plotting_selected_features
-   probe_designment
-
-.. toctree::
-   :caption: Perspectives/Gallery
-   :maxdepth: 1
-   :hidden:
-
-   examples
-   challenges and perspectives
-   reproducing paper results
 
 Indices and tables
 ==================

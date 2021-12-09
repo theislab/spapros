@@ -989,6 +989,3 @@ class ProbesetSelector:  # (object)
 
     def info(self):
         print("No info yet")
-
-
-
