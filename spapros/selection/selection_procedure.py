@@ -66,7 +66,7 @@ class ProbesetSelector:  # (object)
         seed=0,
         save_dir=None,
         n_jobs=-1,
-        reference_selections=[]
+        reference_selections=[],
     ):
         # Should we add a "copy_adata" option? If False we can use less memory, if True adata will be changed at the end
         """
@@ -225,7 +225,9 @@ class ProbesetSelector:  # (object)
             self.selection[f"ref_selection_{ref_selection_name}"] = None
             if ref_selection_name not in available_ref_selections:
                 self.reference_selections.remove(ref_selection_name)
-                print(f"Selecting {ref_selection_name} genes as reference is not available. Options are 'hvg' and 'random'.")
+                print(
+                    f"Selecting {ref_selection_name} genes as reference is not available. Options are 'hvg' and 'random'."
+                )
 
         # Mean difference constraint
         self._prepare_mean_diff_constraint()
@@ -243,26 +245,26 @@ class ProbesetSelector:  # (object)
             self._marker_selection()
 
         # select reference sets
-        if 'hvg' in self.reference_selections:
-            self._ref_wrapper(select.select_highly_variable_features, 'ref_selection_hvg')
-        if 'random' in self.reference_selections:
-            self._ref_wrapper(select.random_selection, 'ref_selection_random')
-        if 'pca' in self.reference_selections:
-            self._ref_wrapper(select.select_pca_genes, 'ref_selection_pca')
-        if 'de' in self.reference_selections:
-            self._ref_wrapper(select.select_DE_genes, 'ref_selection_de')
+        if "hvg" in self.reference_selections:
+            self._ref_wrapper(select.select_highly_variable_features, "ref_selection_hvg")
+        if "random" in self.reference_selections:
+            self._ref_wrapper(select.random_selection, "ref_selection_random")
+        if "pca" in self.reference_selections:
+            self._ref_wrapper(select.select_pca_genes, "ref_selection_pca")
+        if "de" in self.reference_selections:
+            self._ref_wrapper(select.select_DE_genes, "ref_selection_de", obs_key=self.ct_key)
 
         self.probeset = self._compile_probeset_list()
         if self.save_dir:
             self.probeset.to_csv(self.probeset_path)
         # TODO: we haven't included the checks to load the probeset if it already exists
 
-    def _ref_wrapper(self, selection_fun, selection_name):
+    def _ref_wrapper(self, selection_fun, selection_name, **kwargs):
         """Select highly variable genes"""
         if self.selection[selection_name] is None:
             if self.verbosity > 0:
                 print(f"Select {selection_name} genes...")
-            self.selection[selection_name] = selection_fun(self.adata[:, self.genes], self.n, inplace=False)
+            self.selection[selection_name] = selection_fun(self.adata[:, self.genes], self.n, inplace=False, **kwargs)
             if self.verbosity > 1:
                 print("\t ...finished.")
             if self.save_dir:
@@ -270,35 +272,6 @@ class ProbesetSelector:  # (object)
         else:
             if self.verbosity > 0:
                 print(f"{selection_name} genes already selected...")
-
-    def _hvg_selection(self):
-        """Select highly variable genes"""
-        if self.selection["hvg"] is None:
-            if self.verbosity > 0:
-                print("Select hvg genes...")
-            self.selection["hvg"] = select.select_highly_variable_features(self.adata[:, self.genes], self.n,
-                                                                           inplace=False)
-            if self.verbosity > 1:
-                print("\t ...finished.")
-            if self.save_dir:
-                self.selection["hvg"].to_csv(self.selections_paths["hvg"])
-        else:
-            if self.verbosity > 0:
-                print("HVG genes already selected...")
-
-    def _random_selection(self):
-        """Select random genes"""
-        if self.selection["random"] is None:
-            if self.verbosity > 0:
-                print("Select random genes...")
-            self.selection["random"] = select.random_selection(self.adata, self.n, seed=self.seed, inplace=False)
-            if self.verbosity > 1:
-                print("\t ...finished.")
-            if self.save_dir:
-                self.selection["random"].to_csv(self.selections_paths["random"])
-        else:
-            if self.verbosity > 0:
-                print("Random genes already selected...")
 
     def _pca_selection(self):
         """Select genes based on pca loadings"""
@@ -655,7 +628,10 @@ class ProbesetSelector:  # (object)
         for selection_name in self.reference_selections:
             ref_selection_name = f"ref_selection_{selection_name}"
             probeset[ref_selection_name] = False
-            probeset.loc[self.selection[ref_selection_name][self.selection[ref_selection_name]["selection"]].index, ref_selection_name] = True
+            probeset.loc[
+                self.selection[ref_selection_name][self.selection[ref_selection_name]["selection"]].index,
+                ref_selection_name,
+            ] = True
 
         # get celltypes of the 1-vs-all DE tests
         tmp_cts = [ct for ct in self.celltypes if ct in self.selection["DE"].columns]
