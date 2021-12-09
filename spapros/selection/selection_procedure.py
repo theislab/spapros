@@ -142,8 +142,6 @@ class ProbesetSelector:  # (object)
             "prior": prior_genes,
             "pca": None,
             "DE": None,
-            "hvg": None,
-            "random": None,
             "forest_DEs": None,
             "DE_baseline_forest": None,
             "forest": None,
@@ -221,12 +219,13 @@ class ProbesetSelector:  # (object)
             tmp_str = "adata[:,adata.var[genes_key]]" if self.g_key else "adata"
             print(f"{tmp_str} contains many genes, consider reducing the number to fewer highly variable genes.")
 
-        # Check that reference selections are available
-        available_ref_selections = ["hvg", "random"]
-        for selection in self.reference_selections:
-            if selection not in available_ref_selections:
-                self.reference_selections.remove(selection)
-                print(f"Selecting {selection} genes as reference is not available. Options are 'hvg' and 'random'.")
+        # Check that reference selections are available, add keys to selection dict
+        available_ref_selections = ["hvg", "random", "de", "pca"]
+        for ref_selection_name in self.reference_selections:
+            self.selection[f"ref_selection_{ref_selection_name}"] = None
+            if ref_selection_name not in available_ref_selections:
+                self.reference_selections.remove(ref_selection_name)
+                print(f"Selecting {ref_selection_name} genes as reference is not available. Options are 'hvg' and 'random'.")
 
         # Mean difference constraint
         self._prepare_mean_diff_constraint()
@@ -242,14 +241,35 @@ class ProbesetSelector:  # (object)
         self._forest_selection()
         if self.marker_list:
             self._marker_selection()
+
+        # select reference sets
+        if 'hvg' in self.reference_selections:
+            self._ref_wrapper(select.select_highly_variable_features, 'ref_selection_hvg')
+        if 'random' in self.reference_selections:
+            self._ref_wrapper(select.random_selection, 'ref_selection_random')
+        if 'pca' in self.reference_selections:
+            self._ref_wrapper(select.select_pca_genes, 'ref_selection_pca')
+        if 'de' in self.reference_selections:
+            self._ref_wrapper(select.select_DE_genes, 'ref_selection_de')
+
         self.probeset = self._compile_probeset_list()
         if self.save_dir:
             self.probeset.to_csv(self.probeset_path)
-        if 'hvg' in self.reference_selections:
-            self._hvg_selection()
-        if 'random' in self.reference_selections:
-            self._random_selection()
         # TODO: we haven't included the checks to load the probeset if it already exists
+
+    def _ref_wrapper(self, selection_fun, selection_name):
+        """Select highly variable genes"""
+        if self.selection[selection_name] is None:
+            if self.verbosity > 0:
+                print(f"Select {selection_name} genes...")
+            self.selection[selection_name] = selection_fun(self.adata[:, self.genes], self.n, inplace=False)
+            if self.verbosity > 1:
+                print("\t ...finished.")
+            if self.save_dir:
+                self.selection[selection_name].to_csv(self.selections_paths[selection_name])
+        else:
+            if self.verbosity > 0:
+                print(f"{selection_name} genes already selected...")
 
     def _hvg_selection(self):
         """Select highly variable genes"""
@@ -261,7 +281,7 @@ class ProbesetSelector:  # (object)
             if self.verbosity > 1:
                 print("\t ...finished.")
             if self.save_dir:
-                self.selection["hvg"].to_csv(self.selections_paths["pca"])
+                self.selection["hvg"].to_csv(self.selections_paths["hvg"])
         else:
             if self.verbosity > 0:
                 print("HVG genes already selected...")
@@ -631,6 +651,12 @@ class ProbesetSelector:  # (object)
         probeset.loc[self.selection["pca"][self.selection["pca"]["selection"]].index, "pca_selected"] = True
         probeset.loc[self.selection["pca"].index, "pca_score"] = self.selection["pca"]["selection_score"]
 
+        # Reference selections
+        for selection_name in self.reference_selections:
+            ref_selection_name = f"ref_selection_{selection_name}"
+            probeset[ref_selection_name] = False
+            probeset.loc[self.selection[ref_selection_name][self.selection[ref_selection_name]["selection"]].index, ref_selection_name] = True
+
         # get celltypes of the 1-vs-all DE tests
         tmp_cts = [ct for ct in self.celltypes if ct in self.selection["DE"].columns]
         df_tmp = self.selection["DE"].loc[self.genes, tmp_cts].copy()
@@ -900,13 +926,16 @@ class ProbesetSelector:  # (object)
         self.selections_paths["prior"] = os.path.join(selections_dir, "prior_genes.txt")
         self.selections_paths["pca"] = os.path.join(selections_dir, "pca_selected.csv")
         self.selections_paths["DE"] = os.path.join(selections_dir, "DE_selected.csv")
-        self.selections_paths["hvg"] = os.path.join(selections_dir, "hvg_selected.csv")
-        self.selections_paths["random"] = os.path.join(selections_dir, "random_selected.csv")
         self.selections_paths["forest_DEs"] = os.path.join(selections_dir, "forest_DEs_selected.csv")
         self.selections_paths["DE_baseline_forest"] = os.path.join(selections_dir, "DE_baseline_forest_selected.csv")
         self.selections_paths["forest"] = os.path.join(selections_dir, "forest_selected.csv")
         self.selections_paths["marker"] = os.path.join(selections_dir, "marker_list_selection.csv")
         self.selections_paths["final"] = os.path.join(self.save_dir, "probeset.csv")
+
+        # reference selections
+        for selection_name in self.reference_selections:
+            ref_selection_name = f"ref_selection_{selection_name}"
+            self.selections_paths[ref_selection_name] = os.path.join(selections_dir, ref_selection_name)
 
         # forest results, and for final forest: sklearn tree class instances
         forest_dir = os.path.join(self.save_dir, "trees")
