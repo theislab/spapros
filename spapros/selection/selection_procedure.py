@@ -66,7 +66,7 @@ class ProbesetSelector:  # (object)
         seed=0,
         save_dir=None,
         n_jobs=-1,
-        reference_selections=[],
+        reference_selections={},
     ):
         # Should we add a "copy_adata" option? If False we can use less memory, if True adata will be changed at the end
         """
@@ -107,9 +107,10 @@ class ProbesetSelector:  # (object)
             If you want to select a different number of markers for celltypes in adata and celltypes only in the marker
             list, set e.g.: n_list_markers = {'adata_celltypes':2,'list_celltypes':3}
         marker_penalties: str, list or dict of strs
-        reference_selections: list(str)
-            whether to additionally select highly variable genes ("hvg") or random genes as reference.
-
+        reference_selections: dict(str)
+            A dictionary where the keys are basic selecion methods, that should be used to create reference probesets.
+            Available are `pca_selection`, `DE_selection`, `random_selection` and `hvg_selection`
+            The values are dictionaries of parameters for a metric or {}.
         save_dir: str
             Directory path where all results are saved and loaded from if results already exist.
             Note for the case that results already exist:
@@ -219,15 +220,17 @@ class ProbesetSelector:  # (object)
             tmp_str = "adata[:,adata.var[genes_key]]" if self.g_key else "adata"
             print(f"{tmp_str} contains many genes, consider reducing the number to fewer highly variable genes.")
 
-        # Check that reference selections are available, add keys to selection dict
-        available_ref_selections = ["hvg", "random", "de", "pca"]
-        for ref_selection_name in self.reference_selections:
-            self.selection[f"ref_selection_{ref_selection_name}"] = None
-            if ref_selection_name not in available_ref_selections:
-                self.reference_selections.remove(ref_selection_name)
+        # Check that reference selections are available, check their parameters, add keys to selection dict
+        available_ref_selections = ["hvg_selection", "random_selection", "DE_selection", "pca_selection"]
+        for selection_name in self.reference_selections:
+            if selection_name not in available_ref_selections:
+                del self.reference_selections[selection_name]
                 print(
-                    f"Selecting {ref_selection_name} genes as reference is not available. Options are 'hvg' and 'random'."
+                    f"Selecting {selection_name} genes as reference is not available. Options are 'hvg' and 'random'."
                 )
+            else:
+                self.selection[f"ref_{selection_name}"] = None
+                self.reference_selections[selection_name] = self._get_hparams(self.reference_selections[selection_name], subject=selection_name)
 
         # Mean difference constraint
         self._prepare_mean_diff_constraint()
@@ -237,6 +240,7 @@ class ProbesetSelector:  # (object)
 
     def select_probeset(self):
         """Run full selection procedure"""
+
         if self.n_pca_genes and (self.n_pca_genes > 0):
             self._pca_selection()
         self._forest_DE_baseline_selection()
@@ -245,14 +249,17 @@ class ProbesetSelector:  # (object)
             self._marker_selection()
 
         # select reference sets
-        if "hvg" in self.reference_selections:
-            self._ref_wrapper(select.select_highly_variable_features, "ref_selection_hvg")
-        if "random" in self.reference_selections:
-            self._ref_wrapper(select.random_selection, "ref_selection_random")
-        if "pca" in self.reference_selections:
-            self._ref_wrapper(select.select_pca_genes, "ref_selection_pca")
-        if "de" in self.reference_selections:
-            self._ref_wrapper(select.select_DE_genes, "ref_selection_de", obs_key=self.ct_key)
+        if "hvg_selection" in self.reference_selections:
+            self._ref_wrapper(select.select_highly_variable_features, "ref_hvg_selection", **self.reference_selections["hvg_selection"])
+        if "random_selection" in self.reference_selections:
+            self._ref_wrapper(select.random_selection, "ref_random_selection",  **self.reference_selections["random_selection"])
+        if "pca_selection" in self.reference_selections:
+            self._ref_wrapper(select.select_pca_genes, "ref_pca_selection", **self.reference_selections["pca_selection"])
+        if "DE_selection" in self.reference_selections:
+            if "n" in self.reference_selections["DE_selection"]:
+                del self.reference_selections["DE_selection"]["n"]
+                self.reference_selections["DE_selection"]["obs_key"] = self.ct_key
+            self._ref_wrapper(select.select_DE_genes, "ref_DE_selection", **self.reference_selections["DE_selection"])
 
         self.probeset = self._compile_probeset_list()
         if self.save_dir:
@@ -626,7 +633,7 @@ class ProbesetSelector:  # (object)
 
         # Reference selections
         for selection_name in self.reference_selections:
-            ref_selection_name = f"ref_selection_{selection_name}"
+            ref_selection_name = f"ref_{selection_name}"
             probeset[ref_selection_name] = False
             probeset.loc[
                 self.selection[ref_selection_name][self.selection[ref_selection_name]["selection"]].index,
@@ -871,7 +878,10 @@ class ProbesetSelector:  # (object)
             defaults = {"n_max_per_it": 5, "performance_th": 0.02, "importance_th": 0}
         elif subject == "marker_selection":
             defaults = {"penalty_threshold": 1}
-
+        elif subject == "hvg_selection":
+            defaults = {"flavor": "cell_ranger"}
+        elif subject == "random_selection":
+            defaults = {"seed": 0}
         params.update({k: v for k, v in defaults.items() if k not in params})
         return params
 
@@ -910,7 +920,7 @@ class ProbesetSelector:  # (object)
 
         # reference selections
         for selection_name in self.reference_selections:
-            ref_selection_name = f"ref_selection_{selection_name}"
+            ref_selection_name = f"ref_{selection_name}"
             self.selections_paths[ref_selection_name] = os.path.join(selections_dir, ref_selection_name)
 
         # forest results, and for final forest: sklearn tree class instances
