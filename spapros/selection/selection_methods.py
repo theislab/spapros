@@ -165,7 +165,7 @@ def select_pca_genes(
         return selection
 
 
-def marker_scores(adata, obs_key="cell_types", groups="all", reference="rest", rankby_abs=False):
+def marker_scores(adata, obs_key="celltype", groups="all", reference="rest", rankby_abs=False):
     """Compute marker scores for genes in adata
 
     adata: AnnData
@@ -210,7 +210,7 @@ def select_DE_genes(
     adata,
     n,
     per_group=False,
-    obs_key="cell_types",
+    obs_key="celltype",
     penalty_keys=[],
     groups="all",
     reference="rest",

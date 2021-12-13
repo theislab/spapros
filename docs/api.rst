@@ -16,15 +16,16 @@ The central class for probe set selection:
 
 .. code:: python
 
-   selector = sp.ProbesetSelector(adata)
+   selector = sp.se.ProbesetSelector(adata)
    selector.select_probeset()
    selected_probeset = selector.probeset
 
 .. autosummary::
     :toctree: selection
 
-    spapros.ProbesetSelector
-    spapros.ProbesetSelector.select_probeset
+    spapros.se.ProbesetSelector
+    spapros.se.ProbesetSelector.select_probesets
+    spapros.se.select_reference_probesets
 
 Evaluation
 ------------
@@ -33,14 +34,14 @@ The central class for probe set evaluation and comparison:
 
 .. code:: python
 
-   evaluator = sp.ProbesetEvaluator()
+   evaluator = sp.ev.ProbesetEvaluator()
    evaluator.evaluate_probeset(adata, selected_probeset)
 
 .. autosummary::
     :toctree: evaluation
 
-    spapros.ProbesetEvaluator
-    spapros.ProbesetEvaluator.evaluate_probeset
+    spapros.ev.ProbesetEvaluator
+    spapros.ev.ProbesetEvaluator.evaluate_probeset
 
 Plotting
 ----------

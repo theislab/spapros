@@ -5,6 +5,11 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from typing import List
+from typing import Union
+from typing import Dict
+import scanpy as sc
+
 import spapros.evaluation.evaluation as ev
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
@@ -66,7 +71,6 @@ class ProbesetSelector:  # (object)
         seed=0,
         save_dir=None,
         n_jobs=-1,
-        reference_selections={},
     ):
         # Should we add a "copy_adata" option? If False we can use less memory, if True adata will be changed at the end
         """
@@ -179,9 +183,6 @@ class ProbesetSelector:  # (object)
         if "n_jobs" not in self.forest_hparams:
             self.forest_hparams["n_jobs"] = self.n_jobs
 
-        # Reference gene sets
-        self.reference_selections = reference_selections
-
         self.forest_results = {
             "DE_prior_forest": None,
             "DE_baseline_forest": None,
@@ -220,18 +221,6 @@ class ProbesetSelector:  # (object)
             tmp_str = "adata[:,adata.var[genes_key]]" if self.g_key else "adata"
             print(f"{tmp_str} contains many genes, consider reducing the number to fewer highly variable genes.")
 
-        # Check that reference selections are available, check their parameters, add keys to selection dict
-        available_ref_selections = ["hvg_selection", "random_selection", "DE_selection", "pca_selection"]
-        for selection_name in self.reference_selections:
-            if selection_name not in available_ref_selections:
-                del self.reference_selections[selection_name]
-                print(
-                    f"Selecting {selection_name} genes as reference is not available. Options are 'hvg' and 'random'."
-                )
-            else:
-                self.selection[f"ref_{selection_name}"] = None
-                self.reference_selections[selection_name] = self._get_hparams(self.reference_selections[selection_name], subject=selection_name)
-
         # Mean difference constraint
         self._prepare_mean_diff_constraint()
 
@@ -240,45 +229,16 @@ class ProbesetSelector:  # (object)
 
     def select_probeset(self):
         """Run full selection procedure"""
-
-        # select reference sets
-        if "hvg_selection" in self.reference_selections:
-            self._ref_wrapper(select.select_highly_variable_features, "ref_hvg_selection", **self.reference_selections["hvg_selection"])
-        if "random_selection" in self.reference_selections:
-            self._ref_wrapper(select.random_selection, "ref_random_selection",  **self.reference_selections["random_selection"])
-        if "pca_selection" in self.reference_selections:
-            self._ref_wrapper(select.select_pca_genes, "ref_pca_selection", **self.reference_selections["pca_selection"])
-        if "DE_selection" in self.reference_selections:
-            if "n" in self.reference_selections["DE_selection"]:
-                del self.reference_selections["DE_selection"]["n"]
-                self.reference_selections["DE_selection"]["obs_key"] = self.ct_key
-            self._ref_wrapper(select.select_DE_genes, "ref_DE_selection", **self.reference_selections["DE_selection"])
-
         if self.n_pca_genes and (self.n_pca_genes > 0):
             self._pca_selection()
         self._forest_DE_baseline_selection()
         self._forest_selection()
         if self.marker_list:
             self._marker_selection()
-
         self.probeset = self._compile_probeset_list()
         if self.save_dir:
             self.probeset.to_csv(self.probeset_path)
         # TODO: we haven't included the checks to load the probeset if it already exists
-
-    def _ref_wrapper(self, selection_fun, selection_name, **kwargs):
-        """Select highly variable genes"""
-        if self.selection[selection_name] is None:
-            if self.verbosity > 0:
-                print(f"Select {selection_name} genes...")
-            self.selection[selection_name] = selection_fun(self.adata[:, self.genes], self.n, inplace=False, **kwargs)
-            if self.verbosity > 1:
-                print("\t ...finished.")
-            if self.save_dir:
-                self.selection[selection_name].to_csv(self.selections_paths[selection_name])
-        else:
-            if self.verbosity > 0:
-                print(f"{selection_name} genes already selected...")
 
     def _pca_selection(self):
         """Select genes based on pca loadings"""
@@ -631,15 +591,6 @@ class ProbesetSelector:  # (object)
         probeset.loc[self.selection["pca"][self.selection["pca"]["selection"]].index, "pca_selected"] = True
         probeset.loc[self.selection["pca"].index, "pca_score"] = self.selection["pca"]["selection_score"]
 
-        # Reference selections
-        for selection_name in self.reference_selections:
-            ref_selection_name = f"ref_{selection_name}"
-            probeset[ref_selection_name] = False
-            probeset.loc[
-                self.selection[ref_selection_name][self.selection[ref_selection_name]["selection"]].index,
-                ref_selection_name,
-            ] = True
-
         # get celltypes of the 1-vs-all DE tests
         tmp_cts = [ct for ct in self.celltypes if ct in self.selection["DE"].columns]
         df_tmp = self.selection["DE"].loc[self.genes, tmp_cts].copy()
@@ -860,12 +811,7 @@ class ProbesetSelector:  # (object)
         """
         params = new_params.copy()
         if subject == "pca_selection":
-            defaults = {
-                "variance_scaled": False,
-                "absolute": True,
-                "n_pcs": 20,
-                "penalty_keys": [],
-                "corr_penalty": None}
+            defaults = {}
         elif subject == "DE_selection":
             defaults = {"n": 3, "per_group": True}
         elif subject == "forest":
@@ -883,10 +829,6 @@ class ProbesetSelector:  # (object)
             defaults = {"n_max_per_it": 5, "performance_th": 0.02, "importance_th": 0}
         elif subject == "marker_selection":
             defaults = {"penalty_threshold": 1}
-        elif subject == "hvg_selection":
-            defaults = {"flavor": "cell_ranger"}
-        elif subject == "random_selection":
-            defaults = {"seed": 0}
         params.update({k: v for k, v in defaults.items() if k not in params})
         return params
 
@@ -922,11 +864,6 @@ class ProbesetSelector:  # (object)
         self.selections_paths["forest"] = os.path.join(selections_dir, "forest_selected.csv")
         self.selections_paths["marker"] = os.path.join(selections_dir, "marker_list_selection.csv")
         self.selections_paths["final"] = os.path.join(self.save_dir, "probeset.csv")
-
-        # reference selections
-        for selection_name in self.reference_selections:
-            ref_selection_name = f"ref_{selection_name}"
-            self.selections_paths[ref_selection_name] = os.path.join(selections_dir, ref_selection_name)
 
         # forest results, and for final forest: sklearn tree class instances
         forest_dir = os.path.join(self.save_dir, "trees")
@@ -1059,3 +996,74 @@ class ProbesetSelector:  # (object)
 
     def info(self):
         print("No info yet")
+
+
+def select_reference_probesets(
+    adata: sc.AnnData,
+    n: int,
+    genes_key: str = 'highly_variable',
+    seeds: List[int] = [0],
+    verbosity: int = 2,
+    save_dir: Union[str, None] = None,
+    reference_selections: Dict[str, Dict] = {
+        "hvg_selection": {"flavor": "seurat"},
+        "random_selection": {"seed": 0},
+        "pca_selection": {"variance_scaled": False,
+                          "absolute": True,
+                          "n_pcs": 20,
+                          "penalty_keys": [],
+                          "corr_penalty": None},
+        "DE_selection": {"per_group": "True"}}):
+    """Select reference probeset with basic selection methods.
+
+    Args:
+        adata:
+            Data with log normalised counts in adata.X. The selection runs with an adata subsetted on fewer genes. It
+            might be helpful though to keep all genes. The genes can be subsetted for selection via `genes_key`.
+        n:
+            Set the number of selected genes.
+        genes_key:
+            adata.var key for preselected genes (typically 'highly_variable_genes').
+        seeds:
+            List of random seeds. For each seed, one random gene set is selected.
+        verbosity:
+            Verbosity level.
+        save_dir:
+            Directory path where all results are saved.
+        reference_selections:
+
+    Returns:
+
+    """
+    reference_methods = {
+        "pca_selection": select.select_pca_genes,
+        "DE_selection": select.select_DE_genes,
+        "random_selection": select.random_selection,
+        "hvg_selection": select.select_highly_variable_features,
+    }
+    available_ref_selections = ["hvg_selection", "random_selection", "DE_selection", "pca_selection"]
+    reference_probesets = {}
+
+    # check whether to create more than one random set
+    if "random_selection" in reference_selections and len(seeds) > 1:
+        del reference_selections["random_selection"]
+        for seed in seeds:
+            reference_selections[f"random_selection_seed_{seed}"] = {"seed": seed}
+            available_ref_selections.append(f"random_selection_seed_{seed}")
+
+    for selection_name in reference_selections:
+        if selection_name not in available_ref_selections:
+            del reference_selections[selection_name]
+            print(
+                f'Selecting {selection_name} genes as reference is not available. Options are "hvg_selection", "random_selection", "DE_selection", "pca_selection".'
+            )
+        else:
+            if verbosity > 0:
+                print(f"Select reference {selection_name} genes...")
+            reference_probesets[f"ref_{selection_name}"] = reference_methods[selection_name](
+                adata[:, adata.var[genes_key]], n, inplace=False, **reference_selections[selection_name])
+            if verbosity > 1:
+                print("\t ...finished.")
+            if save_dir:
+                reference_probesets[f"ref_{selection_name}"].to_csv(os.path.join(save_dir, f"ref_{selection_name}"))
+    return reference_probesets
