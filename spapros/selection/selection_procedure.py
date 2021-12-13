@@ -241,13 +241,6 @@ class ProbesetSelector:  # (object)
     def select_probeset(self):
         """Run full selection procedure"""
 
-        if self.n_pca_genes and (self.n_pca_genes > 0):
-            self._pca_selection()
-        self._forest_DE_baseline_selection()
-        self._forest_selection()
-        if self.marker_list:
-            self._marker_selection()
-
         # select reference sets
         if "hvg_selection" in self.reference_selections:
             self._ref_wrapper(select.select_highly_variable_features, "ref_hvg_selection", **self.reference_selections["hvg_selection"])
@@ -260,6 +253,13 @@ class ProbesetSelector:  # (object)
                 del self.reference_selections["DE_selection"]["n"]
                 self.reference_selections["DE_selection"]["obs_key"] = self.ct_key
             self._ref_wrapper(select.select_DE_genes, "ref_DE_selection", **self.reference_selections["DE_selection"])
+
+        if self.n_pca_genes and (self.n_pca_genes > 0):
+            self._pca_selection()
+        self._forest_DE_baseline_selection()
+        self._forest_selection()
+        if self.marker_list:
+            self._marker_selection()
 
         self.probeset = self._compile_probeset_list()
         if self.save_dir:
@@ -860,7 +860,12 @@ class ProbesetSelector:  # (object)
         """
         params = new_params.copy()
         if subject == "pca_selection":
-            defaults = {}
+            defaults = {
+                "variance_scaled": False,
+                "absolute": True,
+                "n_pcs": 20,
+                "penalty_keys": [],
+                "corr_penalty": None}
         elif subject == "DE_selection":
             defaults = {"n": 3, "per_group": True}
         elif subject == "forest":
