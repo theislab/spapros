@@ -49,6 +49,7 @@ Key Features
    :hidden:
 
    installation
+   usage
    api
    cli
    reference

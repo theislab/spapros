@@ -7,55 +7,68 @@ Import the spapros API as follows:
 
    import spapros as sp
 
-You can then access the main classes like this:
-
 Selection
 -----------
 
-The central class for probe set selection:
+.. module:: spapros.se
 
-.. code:: python
+.. currentmodule:: spapros
 
-   selector = sp.se.ProbesetSelector(adata)
-   selector.select_probeset()
-   selected_probeset = selector.probeset
+.. rubric:: Main Class
 
 .. autosummary::
-    :toctree: selection
+  :toctree: se
 
-    spapros.se.ProbesetSelector
-    spapros.se.ProbesetSelector.select_probesets
-    spapros.se.select_reference_probesets
+    se.ProbesetSelector
+
+.. rubric:: Other Functions
+
+.. autosummary::
+  :toctree: se
+
+  se.select_reference_probesets
+
 
 Evaluation
 ------------
 
-The central class for probe set evaluation and comparison:
+.. module:: spapros.ev
 
-.. code:: python
+.. currentmodule:: spapros
 
-   evaluator = sp.ev.ProbesetEvaluator()
-   evaluator.evaluate_probeset(adata, selected_probeset)
+.. rubric:: Main Class
 
 .. autosummary::
-    :toctree: evaluation
+  :toctree: ev
 
-    spapros.ev.ProbesetEvaluator
-    spapros.ev.ProbesetEvaluator.evaluate_probeset
+    ev.ProbesetEvaluator
+
+.. rubric:: Other Functions
+
+.. autosummary::
+  :toctree: ev
+
+    ev.get_metric_default_parameters
+    ev.forest_classifications
+    ev.single_forest_classifications
 
 Plotting
 ----------
 
-The plotting module provides several method to visualize the results:
+.. module:: spapros.pl
 
-.. code:: python
-
-   sp.pl.cool_fancy_plot()
+.. currentmodule:: spapros
 
 .. autosummary::
-    :toctree: plotting
+    :toctree: pl
 
-    spapros.pl
+    pl.correlation_matrix
+    pl.confusion_heatmap
+    pl.summary_table
+    pl.masked_dotplot
+    pl.MaskedDotPlot
+
+
 
 
 
