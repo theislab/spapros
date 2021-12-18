@@ -1,14 +1,14 @@
 {{ fullname | escape | underline}}
 .. currentmodule:: {{ module }}
 
-.. autoclass:: {{ objname }}
+.. autoclass:: {{ fullname }}
 
    {% block attributes %}
    {% if attributes %}
    .. rubric:: Attributes
 
    .. autosummary::
-      :toctree: .
+      :toctree:
    {% for item in attributes %}
       {{ item }}
    {%- endfor %}

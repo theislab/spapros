@@ -2,7 +2,7 @@
 ===========================
 .. currentmodule:: spapros
 
-.. autoclass:: se.ProbesetSelector
+.. autoclass:: spapros.se.ProbesetSelector
 
    
    

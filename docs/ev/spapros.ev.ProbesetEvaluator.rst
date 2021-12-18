@@ -2,7 +2,7 @@
 ============================
 .. currentmodule:: spapros
 
-.. autoclass:: ev.ProbesetEvaluator
+.. autoclass:: spapros.ev.ProbesetEvaluator
 
    
    

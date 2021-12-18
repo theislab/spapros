@@ -156,7 +156,15 @@ def docs_build(session: Session) -> None:
     """Build the documentation."""
     args = session.posargs or ["docs", "docs/_build"]
     session.install(".")
-    session.install("sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinx-rtd-dark-mode", "nbsphinx", "sphinx_gallery", "nbsphinx-link")
+    session.install(
+        "sphinx",
+        "sphinx-click",
+        "sphinx-rtd-theme",
+        "sphinx-rtd-dark-mode",
+        "nbsphinx",
+        "sphinx_gallery",
+        "nbsphinx-link",
+    )
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():
@@ -170,7 +178,16 @@ def docs(session: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]
     session.install(".")
-    session.install("sphinx", "sphinx-autobuild", "sphinx-click", "sphinx-rtd-theme", "sphinx-rtd-dark-mode", "nbsphinx", "sphinx_gallery", "nbsphinx-link")
+    session.install(
+        "sphinx",
+        "sphinx-autobuild",
+        "sphinx-click",
+        "sphinx-rtd-theme",
+        "sphinx-rtd-dark-mode",
+        "nbsphinx",
+        "sphinx_gallery",
+        "nbsphinx-link",
+    )
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():

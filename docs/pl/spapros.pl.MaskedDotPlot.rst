@@ -2,14 +2,14 @@
 ========================
 .. currentmodule:: spapros
 
-.. autoclass:: pl.MaskedDotPlot
+.. autoclass:: spapros.pl.MaskedDotPlot
 
    
    
    .. rubric:: Attributes
 
    .. autosummary::
-      :toctree: .
+      :toctree:
    
       DEFAULT_CATEGORY_HEIGHT
       DEFAULT_CATEGORY_WIDTH

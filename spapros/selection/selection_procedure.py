@@ -2,14 +2,13 @@ import json
 import os
 import pickle
 from pathlib import Path
+from typing import Dict
+from typing import List
+from typing import Union
 
 import numpy as np
 import pandas as pd
-from typing import List
-from typing import Union
-from typing import Dict
 import scanpy as sc
-
 import spapros.evaluation.evaluation as ev
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
@@ -1001,19 +1000,23 @@ class ProbesetSelector:  # (object)
 def select_reference_probesets(
     adata: sc.AnnData,
     n: int,
-    genes_key: str = 'highly_variable',
+    genes_key: str = "highly_variable",
     seeds: List[int] = [0],
     verbosity: int = 2,
     save_dir: Union[str, None] = None,
     reference_selections: Dict[str, Dict] = {
-        "hvg_selection": {"flavor": "seurat"},
-        "random_selection": {"seed": 0},
-        "pca_selection": {"variance_scaled": False,
-                          "absolute": True,
-                          "n_pcs": 20,
-                          "penalty_keys": [],
-                          "corr_penalty": None},
-        "DE_selection": {"per_group": "True"}}):
+        "hvg_selection": {"flavor": "cell_ranger"},
+        "random_selection": {},
+        "pca_selection": {
+            "variance_scaled": False,
+            "absolute": True,
+            "n_pcs": 20,
+            "penalty_keys": [],
+            "corr_penalty": None,
+        },
+        "DE_selection": {"per_group": "True"},
+    },
+):
     """Select reference probeset with basic selection methods.
 
     Args:
@@ -1061,7 +1064,8 @@ def select_reference_probesets(
             if verbosity > 0:
                 print(f"Select reference {selection_name} genes...")
             reference_probesets[f"ref_{selection_name}"] = reference_methods[selection_name](
-                adata[:, adata.var[genes_key]], n, inplace=False, **reference_selections[selection_name])
+                adata[:, adata.var[genes_key]], n, inplace=False, **reference_selections[selection_name]
+            )
             if verbosity > 1:
                 print("\t ...finished.")
             if save_dir:
