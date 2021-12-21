@@ -81,6 +81,7 @@ def select_pca_genes(
     penalty_keys=[],
     corr_penalty=None,
     inplace=True,
+    progress=None
 ):
     """Select n features based on pca loadings
 

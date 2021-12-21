@@ -4,6 +4,11 @@ import pandas as pd
 import pytest
 import scanpy as sc
 from spapros.evaluation.metrics import correlation_matrix
+from spapros.evaluation.metrics import gene_set_correlation_matrix
+from spapros.evaluation.metrics import max_marker_correlations
+from spapros.evaluation.metrics import xgboost_forest_classification
+from spapros.evaluation.metrics import mean_overlaps
+from spapros.evaluation.metrics import clustering_nmis
 from spapros.evaluation.metrics import knns
 from spapros.evaluation.metrics import leiden_clusterings
 from spapros.evaluation.metrics import marker_correlation_matrix
@@ -122,45 +127,59 @@ def test_knns_shared_comp(small_adata):
 # test metric computations #
 ############################
 
-
-def test_clustering_nmis():
-    # nmis = clustering_nmis()
-    # ideas what to test:
-    # equals small example
-    # minimal example
-    # independence of permutation
-    # symmetric (switch ref and true)
-    # size of df
-    pass
-
-
-def test_mean_overlaps():
-    # ideas what to test:
-    # equals small example
-    # minimal example
-    # size of df
-    pass
+def test_clustering_nmis(small_adata, small_probeset):
+    ns = [2, 3]
+    annotations_ref = leiden_clusterings(small_adata, ns, start_res=1.0)
+    annotations = leiden_clusterings(small_adata[:, small_probeset], ns, start_res=1.0)
+    annotations_perm = leiden_clusterings(small_adata[:, small_probeset[::-1]], ns, start_res=1.0)
+    nmis = clustering_nmis(annotations, annotations_ref, ns)
+    nmis_sym = clustering_nmis(annotations_ref, annotations, ns)
+    nmis_perm = clustering_nmis(annotations_perm, annotations_ref, ns)
+    ref = pd.DataFrame({"nmi": [0.940299, 0.946526]}, index=[2, 3])
+    # assert equals ref
+    assert pd.testing.assert_frame_equal(nmis, ref, check_exact=False) is None
+    # assert symmety
+    assert pd.testing.assert_frame_equal(nmis, nmis_sym) is None
+    # assert independence of permutation
+    assert pd.testing.assert_frame_equal(nmis, nmis_perm) is None
 
 
-def test_xgboost_forest_class():
-    # ideas what to test:
-    # equals small example
-    # size of df
-    pass
+def test_clustering_nmis_minimal():
+    minimal_adata = sc.AnnData(X=np.array([[1, 0, 0], [2, 0, 0], [0, 1, 0], [0, 2, 0], [1, 2, 0], [2, 2, 0]]))
+    annotations_ref = leiden_clusterings(minimal_adata, ns=[3, 3], start_res=1.0)
+    annotations_1 = leiden_clusterings(minimal_adata[:, :2], ns=[2, 2], start_res=1.0)
+    annotations_2 = leiden_clusterings(minimal_adata[:, 1:], ns=[2, 2], start_res=1.0)
+    nmis_1 = clustering_nmis(annotations_1, annotations_ref, ns=[2, 2])
+    nmis_2 = clustering_nmis(annotations_2, annotations_ref, ns=[2, 2])
+    assert nmis_1["nmi"][2] == 1.0
+    assert nmis_2["nmi"][2].round(6) == 0.478704
 
 
-def test_max_marker_corr():
-    # ideas what to test:
-    # similiar like correlation tests above
-    # size of df
-    pass
+def test_mean_overlaps(small_adata, small_probeset):
+    knn_df = knns(small_adata, genes=small_probeset)
+    ref_knn_df = knns(small_adata, genes="all")
+    mean_df = mean_overlaps(knn_df, ref_knn_df, ks=[10, 20])
+    mean_ref = pd.DataFrame({"mean": [0.491728, 0.566959]}, index=[10, 20])
+    assert pd.testing.assert_frame_equal(mean_df, mean_ref, check_exact=False) is None
 
 
-def test_gene_set_correlation_matrix():
-    # ideas what to test:
-    # similiar like correlation tests above
-    # size of df
-    pass
+def test_xgboost_forest_classification(small_adata, small_probeset):
+    dfs = xgboost_forest_classification(small_adata, small_probeset, ct_key="celltype")
+    # dfs[0].to_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv")
+    # dfs[1].to_csv("tests/evaluation/test_data/xgboost_forest_classification_1.csv")
+    df_0 = pd.read_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv", index_col=0)
+    df_1 = pd.read_csv("tests/evaluation/test_data/xgboost_forest_classification_1.csv", index_col=0)
+    assert pd.testing.assert_frame_equal(dfs[0], df_0) is None
+    assert pd.testing.assert_frame_equal(dfs[1], df_1) is None
+
+
+def test_max_marker_correlations(small_adata, marker_list, small_probeset):
+    cor_matrix = marker_correlation_matrix(small_adata, marker_list)
+    mmc = max_marker_correlations(small_probeset, cor_matrix)
+    # mmc.to_csv("tests/evaluation/test_data/max_marker_correlation.csv")
+    mmc_ref = pd.read_csv("tests/evaluation/test_data/max_marker_correlation.csv", index_col=0)
+    mmc_ref.columns.name = "index"
+    assert pd.testing.assert_frame_equal(mmc, mmc_ref) is None
 
 
 ########################
@@ -184,7 +203,7 @@ Where I see no need for testing:
 - utils
 
 Questions:
-- test for the parameter types and return types? I think no
+- test for the parameter types and return types? I think no -> type hinting
 - are the "...equals_ref" tests usefull or too time consuming? eg. test_leiden_clustering_shared_comp_equals_ref
 - smaller anndata than small_adata
 - time for all tests currently > 3.5 min

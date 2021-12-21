@@ -507,11 +507,11 @@ class ProbesetEvaluator:
 
         if "forest_clfs" in metrics:
             conf_plt_kwargs = plt_kwargs["forest_clfs"] if ("forest_clfs" in plt_kwargs) else {}
-            pl.confusion_heatmap(set_ids, self.results["forest_clfs"], **conf_plt_kwargs)
+            pl.confusion_heatmap(set_ids, self.results["forest_clfs"], show=show, save=save, **conf_plt_kwargs)
 
         if "gene_corr" in metrics:
             corr_plt_kwargs = plt_kwargs["gene_corr"] if ("gene_corr" in plt_kwargs) else {}
-            pl.correlation_matrix(set_ids, self.results["gene_corr"], **corr_plt_kwargs)
+            pl.correlation_matrix(set_ids, self.results["gene_corr"], show=show, save=save, **corr_plt_kwargs)
 
 
 ########################################################################################################
