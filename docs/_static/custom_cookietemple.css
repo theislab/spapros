@@ -4,3 +4,17 @@
 .wy-nav-content {
     max-width: none;
 }
+
+div.body td {
+    text-align: left;
+}
+
+.longtable {
+    text-align: left;
+}
+
+table.align-default {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+}

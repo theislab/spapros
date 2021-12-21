@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
+from rich.progress import Progress
 from sklearn.decomposition import SparsePCA
 from spapros.evaluation.evaluation import forest_classifications
 from spapros.util.util import clean_adata
@@ -107,6 +108,7 @@ def select_pca_genes(
         recomputed after each selected gene)
     inplace: bool
         Save results in adata.var or return dataframe
+    progress:
 
     Returns
     -------
@@ -117,6 +119,7 @@ def select_pca_genes(
         - 'selection_ranking': ranking according selection scores
     if inplace:
         Save results in adata.var[['selection','selection_score','selection_ranking']]
+
     """
 
     a = adata.copy()
@@ -126,6 +129,7 @@ def select_pca_genes(
 
     clean_adata(a)
 
+    pca_task = progress.add_task("Select pca genes...", total=1)
     sc.pp.pca(
         a,
         n_comps=n_pcs,
@@ -135,6 +139,7 @@ def select_pca_genes(
         return_info=True,
         copy=False,
     )
+    progress.advance(pca_task)
 
     loadings = a.varm["PCs"].copy()[:, :n_pcs]
     if variance_scaled:
@@ -166,7 +171,7 @@ def select_pca_genes(
         return selection
 
 
-def marker_scores(adata, obs_key="cell_types", groups="all", reference="rest", rankby_abs=False):
+def marker_scores(adata, obs_key="celltype", groups="all", reference="rest", rankby_abs=False):
     """Compute marker scores for genes in adata
 
     adata: AnnData
@@ -211,12 +216,13 @@ def select_DE_genes(
     adata,
     n,
     per_group=False,
-    obs_key="cell_types",
+    obs_key="celltype",
     penalty_keys=[],
     groups="all",
     reference="rest",
     rankby_abs=False,
     inplace=True,
+    progress=None,
 ):
     """Select genes based on wilxocon rank genes test
 
@@ -254,14 +260,20 @@ def select_DE_genes(
     scores = marker_scores(a, obs_key=obs_key, groups=groups, reference=reference, rankby_abs=rankby_abs)
     scores = apply_penalties(scores, a, penalty_keys=penalty_keys)
     if per_group:
+        if progress:
+            de_task = progress.add_task("Select differentially expressed genes...", total=len(scores.columns))
         for group in scores.columns:
             scores.loc[scores.index.difference(scores.nlargest(n, group).index), group] = 0
+            if progress:
+                progress.advance(de_task)
         genes = scores.loc[(scores > 0).any(axis=1)].index.tolist()
     else:
         genes = []
         groups_of_genes = {}
         tmp_scores = scores.copy()
         while len(genes) < n:
+            if progress:
+                de_task = progress.add_task("Select differentially expressed genes...", total=n)
             for group in scores.columns:
                 gene = tmp_scores[group].idxmax()
                 if (len(genes) < n) and (gene not in genes):
@@ -270,6 +282,8 @@ def select_DE_genes(
                 elif gene in genes:
                     groups_of_genes[gene].append(group)
             tmp_scores = scores.loc[~scores.index.isin(genes)].copy()
+            if progress:
+                progress.advance(de_task)
         scores.loc[~scores.index.isin(list(groups_of_genes.keys()))] = 0
         for gene, groups in groups_of_genes.items():
             scores.loc[gene, [group for group in scores.columns if group not in groups]] = 0

@@ -4,7 +4,6 @@ import pandas as pd
 import pytest
 import scanpy as sc
 from spapros.evaluation.metrics import correlation_matrix
-from spapros.evaluation.metrics import gene_set_correlation_matrix
 from spapros.evaluation.metrics import max_marker_correlations
 from spapros.evaluation.metrics import xgboost_forest_classification
 from spapros.evaluation.metrics import mean_overlaps

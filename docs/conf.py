@@ -9,8 +9,17 @@
 #
 import os
 import sys
+from pathlib import Path
 
+
+HERE = Path(__file__).parent
+sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
 sys.path.insert(0, os.path.abspath(".."))
+sys.path.append(os.path.abspath("../.."))
+sys.path.append(os.path.abspath("../spapros"))
+sys.path.append(os.path.abspath("../spapros/evaluation"))
+sys.path.append(os.path.abspath("../spapros/selection"))
+sys.path.append(os.path.abspath("../tutorials"))
 
 
 # -- General configuration ---------------------------------------------
@@ -30,7 +39,20 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx_click",
     "sphinx_rtd_dark_mode",
+    "nbsphinx",
+    "sphinx_gallery.load_style",
+    "nbsphinx_link",
+    *[p.stem for p in (HERE / "_extensions").glob("*.py")],
 ]
+
+# nbsphinx setup (for tutorial gallery)
+
+# html_show_sourcelink = True
+# html_sourcelink_suffix = ""
+# suppress_warnings = [
+#     'nbsphinx',
+# ]
+# nbsphinx_execute = "never"
 
 autosummary_generate = True
 autodoc_member_order = "groupwise"
@@ -44,13 +66,13 @@ napoleon_use_param = True
 napoleon_custom_sections = [("Params", "Parameters")]
 todo_include_todos = False
 
-default_dark_mode = True
+default_dark_mode = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
 # The suffix(es) of source filenames.
-source_suffix = ".rst"
+source_suffix = [".rst"]
 
 # The master toctree document.
 master_doc = "index"
@@ -99,13 +121,27 @@ html_theme = "sphinx_rtd_theme"
 # theme further.  For a list of options available for each theme, see the
 # documentation.
 #
-# html_theme_options = {}
+
+# colors from spapros logo:
+# brigth_blue = '#8dcaff'
+# purple = '#a55fc1'
+# darker_blue = '#1761a0'
+# darker_purple = '##6360b2'
+# green = '#4cc61e'
+# brighter_green = '#99c712'
+html_theme_options = {
+    "style_nav_header_background": "black",
+}
+
+home_page_in_toc = True
+html_logo = "_static/logo.png"
+html_favicon = "_static/logo.png"
+html_title = "spapros docs"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-
 
 # -- Options for HTMLHelp output ---------------------------------------
 
@@ -181,3 +217,11 @@ texinfo_documents = [
 html_css_files = [
     "custom_cookietemple.css",
 ]
+
+suppress_warnings = [
+    "nbsphinx",
+]
+
+
+def setup(app):
+    app.add_css_file("custom_cookietemple.css")

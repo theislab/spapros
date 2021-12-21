@@ -1,3 +1,4 @@
+"""Plotting Module."""
 import itertools
 
 import matplotlib.colors as colors
@@ -8,6 +9,7 @@ import pandas as pd
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
 from spapros.plotting._masked_dotplot import MaskedDotPlot
+
 
 # from spapros.util.util import plateau_penalty_kernel
 # TODO: Fix explore_constraint plot. The following circular import is causing problems atm:

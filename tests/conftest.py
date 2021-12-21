@@ -57,7 +57,8 @@ def evaluator(small_adata):
 # selection #
 #############
 
-@pytest.fixture()
-def selector(small_adata):
-    selector = se.ProbesetSelector(small_adata, n=50, celltype_key="celltype", verbosity=0)
-    return selector
+# @pytest.fixture()
+# def selector(small_adata):
+#     selector = se.ProbesetSelector(small_adata, n=50, celltype_key="celltype", verbosity=0)
+#     selector.select_probeset()
+#     return selector

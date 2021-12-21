@@ -1,9 +1,12 @@
 import os
 import pickle
 import warnings
+from enum import Enum
 from pathlib import Path
 from typing import Any
 from typing import Dict
+from typing import List
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,184 +26,243 @@ from spapros.util.mp_util import parallelize
 from spapros.util.mp_util import Signal
 
 
+# helper for type checking:
+
+
+class Empty(Enum):
+    token = None
+
+
+_empty = Empty.token
+
+
 class ProbesetEvaluator:
-    """General class for probe set evaluation, comparison, plotting
+    """General class for probe set evaluation, comparison, plotting.
 
-    The evaluator works on one given dataset and calculates metrics/analyses with respect to that dataset.
-
-    The calculation steps of the metrics can be divided into:
-    1. calculations that need to be run one time for the given dataset (not all metrics have this step)
-    2. calculations that need to be run for each probe set
-        2.1 calculations independent of 1.
-        2.2 calculations dependent on 1. (if 1. existed for a given metric)
-    3. Summarize results into summary statistics
-
-    ###################
-    # Run evaluations #
-    ###################
-
-    Evaluate a single probeset:
-        evaluator = ProbesetEvaluator(adata)
-        evaluator.evaluate_probeset(gene_set)
-
-    In a pipeline to evaluate multiple probesets you would run
-        - sequential setup:
-            evaluator = ProbesetEvaluator(adata)
-            for i,gene_set in enumerate(sets):
-                evaluator.evaluate_probeset(gene_set,set_id=f"set_{i}")
-        - parallelised setup:
-            evaluator = ProbesetEvaluator(adata)
-            # 1. step:
-            evaluator.compute_or_load_shared_results()
-            # 2. step: parallelised processes
-            evaluator.evaluate_probeset(gene_set,set_id,update_summary=False,pre=True) # parallelised over set_ids
-            # 3. step: parallelised processes (needs 1. to be finished)
-            evaluator.evaluate_probeset(gene_set,set_id,update_summary=False) # parallelised over set_ids
-            # 4. step: (needs 3. to be finished)
-            evaluator.summary_statistics()
-
-    #########################
-    # Reference evaluations #
-    #########################
-
-    In practice the evaluations are meaningful when having reference evaluations to compare to.
-
-    A simple way to get reference probe sets:
-        reference_sets = spapros.selection.select_reference_probesets(adata)
-    Evaluate them (we also provide ids to keep track of the probesets):
-        evaluator = ProbesetEvaluator(adata)
-        for set_id, gene_set in reference_sets.items():
-            evaluator.evaluate_probeset(gene_set,set_id=set_id)
-        evaluator.plot_summary()
-
-    ######################
-    # Evaluation schemes #
-    ######################
-
-    Some metrics take very long to compute, we prepared different metric sets for a quick or a full evaluation.
-    You can also specify the list of metrics yourself by setting scheme="custom". Note that in any scheme it might
-    still be reasonable to adjust `metrics_params`.
-
-    #####################
-    # Saving of results #
-    #####################
-
-    If `results_dir` is not None we save the results in files.
-    Why:
-    - some computations are time demanding, especially when you evaluate multiple sets it's reasonable to keep results.
-    - load previous results when initializing a ProbesetEvaluator. Makes it very easy to access and compare old results.
-
-    Two saving directories need to be distinguished:
-    1. `results_dir`: each probeset's evaluation results are saved here
-    2. `reference_dir`: for shared reference dataset results (default is reference_dir = results_dir + reference_name)
-
-    In which files the results are saved:
-    - Shared computations are saved as
-        reference_dir # (default: results_dir+"references")
-        └── {reference_name}_{metric}.csv # shared computations for given reference dataset
-    - The final probeset specific results are saved as
-        results_dir
-        ├── {metric} # one folder for each metric
-        │   ├── {reference_name}_{set_id}_pre.csv # pre results file for given set_id, reference dataset, and metric
-        │   │                                     # (only for some metrics)
-        │   └── {reference_name}_{set_id}.csv # result file for given set_id, reference dataset, and metric
-        └── {reference_name}_summary.csv # summary statistics
-
-    ############
-    # Plotting #
-    ############
-
-    Plot a summary metrics table to get an overall performance overview:
-        evaluator.plot_summary()
-
-    For each evaluation we provide a detailed plot, e.g.:
-    - forest_clfs: heatmap of normalised confusion matrix
-    - gene_corr: heatmap of ordered correlation matrix
-
-    Create detailed plots with:
-        evaluator.plot_evaluations()
-
-    """
-
-    def __init__(
-        self,
-        adata,
-        celltype_key="celltype",
-        results_dir="./probeset_evaluation/",
-        scheme="quick",
-        metrics=None,
-        metrics_params={},
-        marker_list=None,
-        reference_name="adata1",
-        reference_dir=None,
-        verbosity=1,
-        n_jobs=-1,
-    ) -> None:
-        """
-        adata: AnnData
-            Already preprocessed. Typically we use log normalised data.
-        celltype_key: str or list of strs
-            adata.obs key for cell type annotations. Provide a list of keys to calculate the according metrics on
-            multiple keys.
-        results_dir: str
-            Directory where probeset results are saved. Set to `None` if you don't want to save results. When
-            initializing the class we also check for existing results
-
-            Note if
-            TODO: Decide: saving results is nice since we don't need to keep them in memory. On the other hand the stuff
-                          doesn't need that much memory I think. Even if you have 100 probesets, it's not that much
-        scheme: str
+    Attributes:
+        adata (sc.AnnData):
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        celltype_key (typing.Union[str, List[str]]):
+            The adata.obs key for cell type annotations or list of keys.
+        dir (str, optional):
+            Directory where probeset results are saved.
+        scheme (str):
             Defines which metrics are calculated
+        marker_list (dict(str, list(str)):
+            Celltypes and the respective markers.
+        metrics_params (dict(dict)):
+            Parameters for the calculation of each metric. Either default or user specified.
+        metrics (list(str)):
+            The metrics to be calculated. Either custom of defined according to :attr:`scheme`.
+        ref_name (str):
+            Name of reference dataset.
+        ref_dir (str):
+            Directory where reference results are saved.
+        verbosity (int):
+            Verbosity level.
+        n_jobs (int):
+            Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+        shared_results (dict(str, Any)):
+            Results of shared metric computations.
+        pre_results (dict(str, Any)):
+            Results of metric pre computations.
+        results dict(str, Any)):
+            Results of probe set specific metric computations.
+
+    Notes:
+        The evaluator works on one given dataset and calculates metrics/analyses with respect to that dataset.
+
+        The calculation steps of the metrics can be divided into:
+
+        1. calculations that need to be run one time for the given dataset (not all metrics have this step)
+        2. calculations that need to be run for each probe set
+
+           2.1 calculations independent of 1.
+           2.2 calculations dependent on 1. (if 1. existed for a given metric)
+
+        3. Summarize results into summary statistics
+
+        **Run evaluations**
+
+            Evaluate a single probeset::
+
+                evaluator = ProbesetEvaluator(adata)
+                evaluator.evaluate_probeset(gene_set)
+
+            In a pipeline to evaluate multiple probesets you would run
+
+                - sequential setup::
+
+                    evaluator = ProbesetEvaluator(adata)
+                    for i,gene_set in enumerate(sets):
+                        evaluator.evaluate_probeset(gene_set,set_id=f"set_{i}")
+
+                - parallelised setup::
+
+                    evaluator = ProbesetEvaluator(adata)
+                    # 1. step:
+                    evaluator.compute_or_load_shared_results()
+                    # 2. step: parallelised processes
+                    evaluator.evaluate_probeset(gene_set,set_id,update_summary=False,pre=True) # parallelised over set_ids
+                    # 3. step: parallelised processes (needs 1. to be finished)
+                    evaluator.evaluate_probeset(gene_set,set_id,update_summary=False) # parallelised over set_ids
+                    # 4. step: (needs 3. to be finished)
+                    evaluator.summary_statistics()
+
+        **Reference evaluations**
+
+        In practice the evaluations are meaningful when having reference evaluations to compare to.
+
+        A simple way to get reference probe sets::
+
+            reference_sets = spapros.selection.select_reference_probesets(adata)
+
+        Evaluate them (we also provide ids to keep track of the probesets)::
+
+            evaluator = ProbesetEvaluator(adata)
+            for set_id, gene_set in reference_sets.items():
+                evaluator.evaluate_probeset(gene_set,set_id=set_id)
+            evaluator.plot_summary()
+
+        **Evaluation schemes**
+
+        Some metrics take very long to compute, we prepared different metric sets for a quick or a full evaluation.
+        You can also specify the list of metrics yourself by setting :attr:`scheme="custom"`.
+        Note that in any scheme it might still be reasonable to adjust :attr:`metrics_params`.
+
+        **Saving of results**
+
+        If :attr:`results_dir` is not None we save the results in files.
+
+        Why:
+
+        - some computations are time demanding, especially when you evaluate multiple sets it's reasonable to keep results.
+        - load previous results when initializing a ProbesetEvaluator. Makes it very easy to access and compare old results.
+
+        Two saving directories need to be distinguished:
+
+        1. :attr:`results_dir`: each probeset's evaluation results are saved here
+        2. :attr:`reference_dir`: for shared reference dataset results (default is reference_dir = results_dir + reference_name)
+
+        In which files the results are saved:
+
+        - Shared computations are saved as::
+
+            reference_dir # (default: results_dir+"references")
+            └── {reference_name}_{metric}.csv # shared computations for given reference dataset
+
+        - The final probeset specific results are saved as::
+
+            results_dir
+            ├── {metric} # one folder for each metric
+            │   ├── {reference_name}_{set_id}_pre.csv # pre results file for given set_id, reference dataset, and metric
+            │   │                                     # (only for some metrics)
+            │   └── {reference_name}_{set_id}.csv # result file for given set_id, reference dataset, and metric
+            └── {reference_name}_summary.csv # summary statistics
+
+        **Plotting**
+
+        Plot a summary metrics table to get an overall performance overview::
+
+            evaluator.plot_summary()
+
+        For each evaluation we provide a detailed plot, e.g.:
+
+        - forest_clfs: heatmap of normalised confusion matrix
+        - gene_corr: heatmap of ordered correlation matrix
+
+        Create detailed plots with::
+
+            evaluator.plot_evaluations()
+
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        celltype_key (typing.Union[str, List[str]]):
+            The adata.obs key for cell type annotations. Provide a list of keys to calculate the according metrics on
+            multiple keys.
+        results_dir:
+            Directory where probeset results are saved. Defaults to `./probeset_evaluation/`. Set to `None` if you don't
+            want to save results. When initializing the class we also check for existing results.
+            Note if
+            TODO: Decide: saving results is nice since we don't need to keep them in memory. On the other hand the
+                stuff doesn't need that much memory I think. Even if you have 100 probesets, it's not that much
+        scheme: Defines which metrics are calculated
+
             - "quick" : knn, forest classification, marker correlation (if marker list given), gene correlation
             - "full" : nmi, knn, forest classification, marker correlation (if marker list given), gene correlation
-            - "custom": define metrics of intereset in `metrics`
-        metrics: list of strs
-            Define which metrics are calculated. This is set automatically if `scheme != "custom"`. Supported are
+            - "custom": define metrics of intereset in :attr:`metrics`
+
+        metrics: Define which metrics are calculated. This is set automatically if :attr:`scheme != "custom"`.
+            Supported are
+
             - "nmi"
             - "knn"
             - "forest_clfs"
             - "marker_corr"
             - "gene_corr"
-        metrics_params: dict of dicts
-            Provide parameters for the calculation of each metric. E.g.
-            metrics_params = {
-                "nmi":{
-                    "ns": [5,20],
-                    "AUC_borders": [[7, 14], [15, 20]],
+
+        metrics_params:
+            Provide parameters for the calculation of each metric. E.g.::
+
+                metrics_params = {
+                    "nmi":{
+                        "ns": [5,20],
+                        "AUC_borders": [[7, 14], [15, 20]],
+                        }
                     }
-                }
-            This overwrites the arguments `ns` and `AUC_borders` of the nmi metric. See
-            spapros.evaluation.get_metric_default_parameters() for the default values of each metric
-        reference_name: str
+
+            This overwrites the arguments :attr:`ns` and :attr:`AUC_borders` of the nmi metric. See
+            :meth: `spapros.evaluation.get_metric_default_parameters()` for the default values of each metric
+        marker_list:
+            Dictionary containing celltypes as keys and the respective markers as a list as values.
+        reference_name:
             Name of reference dataset. This is chosen automatically if `None` is given.
-        reference_dir: str
-            Directory where reference results are saved. If `None` is given `reference_dir` is set to
-            `results_dir+"reference/"`
-        n_jobs: int
+        reference_dir:
+            Directory where reference results are saved. If `None` is given :attr:`reference_dir` is set to
+            `results_dir+"reference/"`.
+        verbosity:
+            Verbosity level.
+        n_jobs:
             Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+    """
 
+    def __init__(
+        self,
+        adata: sc.AnnData,
+        celltype_key: Union[str, List[str]] = "celltype",
+        results_dir: str = "./probeset_evaluation/",
+        scheme: str = "quick",
+        metrics=None,
+        metrics_params: Dict[str, Dict] = {},
+        marker_list: Dict[str, List[str]] = None,
+        reference_name: str = "adata1",
+        reference_dir: str = None,
+        verbosity: int = 1,
+        n_jobs: int = -1,
+    ) -> None:
 
-        metrics_params: list of dicts
-        """
         self.adata = adata
         self.celltype_key = celltype_key
         self.dir = results_dir
         self.scheme = scheme
         self.marker_list = marker_list
         self.metrics_params = self._prepare_metrics_params(metrics_params)
-        self.metrics = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
+        self.metrics: List[str] = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
         self.ref_name = reference_name
-        self.ref_dir = reference_dir if (reference_dir is not None) else self._default_reference_dir()
+        self.ref_dir: str = (
+            reference_dir if (reference_dir is not None) else os.path.join(results_dir, "references")
+        )  # self._default_reference_dir()
         self.verbosity = verbosity
         self.n_jobs = n_jobs
 
         self.shared_results: Dict[str, Any] = {}
         self.pre_results: Dict[str, Any] = {metric: {} for metric in self.metrics}
         self.results: Dict[str, Any] = {metric: {} for metric in self.metrics}
-        self.summary_results = None
+        self.summary_results = _empty
 
         self._shared_res_file = lambda metric: os.path.join(self.ref_dir, f"{self.ref_name}_{metric}.csv")
-        self._summary_file = os.path.join(self.dir, f"{self.ref_name}_summary.csv") if self.dir else None
+        self._summary_file: str = os.path.join(self.dir, f"{self.ref_name}_summary.csv")  # if self.dir else _empty
 
         # TODO:
         # For the user it could be important to get some warning when reinitializing the Evaluator with new
@@ -209,8 +271,8 @@ class ProbesetEvaluator:
 
     def compute_or_load_shared_results(
         self,
-    ):
-        """Compute results that are potentially reused for evaluations of different probesets"""
+    ) -> None:
+        """Compute results that are potentially reused for evaluations of different probesets."""
 
         for metric in self.metrics:
             if self.ref_dir and os.path.isfile(self._shared_res_file(metric)):
@@ -225,22 +287,29 @@ class ProbesetEvaluator:
                     Path(self.ref_dir).mkdir(parents=True, exist_ok=True)
                     self.shared_results[metric].to_csv(self._shared_res_file(metric))
 
-    def evaluate_probeset(self, genes, set_id="probeset1", update_summary=True, pre_only=False):
-        """Compute probe set specific evaluations
+    def evaluate_probeset(
+        self, genes: List, set_id: str = "probeset1", update_summary: bool = True, pre_only: bool = False
+    ) -> None:
+        """Compute probe set specific evaluations.
 
-        For some metrics the computations are split up in pre computations (independent of shared results) and the
-        computations where the shared results are used.
+        Note:
+            For some metrics, the computations are split up in pre computations (independent of shared results) and the
+            computations where the shared results are used.
 
-        probeset_name: str
-            Name of probeset. This is chosen automatically if `None` is given.
-        update_summary: bool
-            Whether to compute summary statistics, update the summary table and also update the summary csv file if
-            self.dir is not None. This option is interesting when using ProbesetEvaluator in a distributed pipeline
-            since multiple processes would access the same file in parallel.
-        pre_only: bool
-            For some metrics there are computationally expensive calculations that can be started independent of
-            the shared results being finished. This is interesting for a parallelised pipeline.
-            If `pre_only` is set to True only these pre calculations are computed.
+        Args:
+            genes:
+                The selected genes.
+            set_id:
+                ID of the current probeset. This is chosen automatically if `None` is given.
+            update_summary:
+                Whether to compute summary statistics, update the summary table and also update the summary csv file if
+                :attr:`self.dir` is not None. This option is interesting when using
+                :class:`~evaluation.ProbesetEvaluator` in a distributed pipeline since multiple processes would access
+                the same file in parallel.
+            pre_only:
+                For some metrics there are computationally expensive calculations that can be started independent of
+                the shared results being finished. This is interesting for a parallelised pipeline. If :attr:`pre_only`
+                is set to `True` only these pre calculations are computed.
         """
         if not pre_only:
             self.compute_or_load_shared_results()
@@ -281,17 +350,21 @@ class ProbesetEvaluator:
                 self.summary_statistics(set_ids=[set_id])
 
     def evaluate_probeset_pipeline(
-        self, genes, set_id: str, shared_pre_results_path: list, step_specific_results: list
-    ):
+        self, genes: List, set_id: str, shared_pre_results_path: List, step_specific_results: List
+    ) -> None:
         """Pipeline specific adaption of evaluate_probeset.
 
         Computes probeset specific evaluations. The parameters for this function are adapted for the spapros-pipeline
 
         Args:
-            genes: Genes by the 'get_genes' function.
-            set_id: ID of the current probeset
-            shared_pre_results_path: Path to the shared results
-            step_specific_results: List of paths to the specific results
+            genes:
+                Genes by the :meth:`get_genes` function.
+            set_id:
+                ID of the current probeset.
+            shared_pre_results_path:
+                Path to the shared results
+            step_specific_results:
+                List of paths to the specific results
         """
         # Load shared and pre results
         for metric in self.metrics:
@@ -322,8 +395,14 @@ class ProbesetEvaluator:
                 Path(os.path.dirname(self._res_file(metric, set_id))).mkdir(parents=True, exist_ok=True)
                 self.results[metric][set_id].to_csv(self._res_file(metric, set_id))
 
-    def summary_statistics(self, set_ids):
-        """Compute summary statistics and update summary csv (if self.results_dir is not None)"""
+    def summary_statistics(self, set_ids: List[str]) -> None:
+        """Compute summary statistics and update summary csv.
+        (if :attr:`self.results_dir` is not None)
+
+        Args:
+            set_ids:
+                IDs of the current probesets.
+        """
         df = self._init_summary_table(set_ids)
 
         for set_id in set_ids:
@@ -332,9 +411,7 @@ class ProbesetEvaluator:
                     results = self.results[metric][set_id]
                 elif self.dir and os.path.isfile(self._res_file(metric, set_id)):
                     results = pd.read_csv(self._res_file(metric, set_id), index_col=0)
-                summary = metric_summary(
-                    adata=self.adata, results=results, metric=metric, parameters=self.metrics_params[metric]
-                )
+                summary = metric_summary(results=results, metric=metric, parameters=self.metrics_params[metric])
                 for key in summary:
                     df.loc[set_id, key] = summary[key]
         if self.dir:
@@ -342,14 +419,16 @@ class ProbesetEvaluator:
 
         self.summary_results = df
 
-    def pipeline_summary_statistics(self, result_files: list, probeset_ids: str) -> None:
+    def pipeline_summary_statistics(self, result_files: List, probeset_ids: List[str]) -> None:
         """Adaptation of the function summary_statistics for the spapros-pipeline.
 
         Takes the input files directly to calculate the summary statistics.
 
         Args:
-            result_files: Probeset evaluation result file paths
-            probeset_ids: Probeset ids as a single string in the format: probe_id1,probe_id2,probe_id3
+            result_files:
+                Probeset evaluation result file paths
+            probeset_ids:
+                IDs of the current probesets.
         """
         df = self._init_summary_table(probeset_ids)
 
@@ -365,9 +444,7 @@ class ProbesetEvaluator:
             else:
                 results = pd.read_csv(result_file, index_col=0)
 
-            summary = metric_summary(
-                adata=self.adata, results=results, metric=metric, parameters=self.metrics_params[metric]
-            )
+            summary = metric_summary(results=results, metric=metric, parameters=self.metrics_params[metric])
             for key in summary:
                 df.loc[set_id, key] = summary[key]
 
@@ -381,8 +458,12 @@ class ProbesetEvaluator:
 
         self.summary_results = df
 
-    def _prepare_metrics_params(self, new_params):
-        """Set metric parameters to default values and overwrite defaults in case user defined param is given"""
+    def _prepare_metrics_params(self, new_params: Dict[str, Dict]) -> Dict[str, Dict]:
+        """Set metric parameters to default values and overwrite defaults in case user defined param is given.
+
+        Args:
+            new_params: User specified parameters for the calculation of the metrics.
+        """
         params = get_metric_default_parameters()
         for metric in params:
             if metric in new_params:
@@ -397,8 +478,8 @@ class ProbesetEvaluator:
 
     def _get_metrics_of_scheme(
         self,
-    ):
-        """ """
+    ) -> List[str]:
+        """Get the metrics according to the chosen scheme."""
 
         if self.scheme == "quick":
             metrics = ["knn_overlap", "forest_clfs", "gene_corr"]
@@ -412,18 +493,19 @@ class ProbesetEvaluator:
 
         return metrics
 
-    def _init_summary_table(self, set_ids):
-        """Initialize or load table with summary results
+    def _init_summary_table(self, set_ids: List[str]) -> pd.DataFrame:
+        """Initialize or load table with summary results.
 
         Note that column names for the summary metrics are not initialized here (except of the ones that already exist
         in the csv).
 
-        set_ids: list of strs
-            Initialize dataframe with set_ids as index. We also keep all set_ids that already exist in the summary csv.
+        Args:
+            set_ids:
+                IDs of the current probesets. Initialize dataframe with set_ids as index. We also keep all set_ids that
+                already exist in the summary csv.
 
         Returns
-        -------
-        pd.DataFrame with set_ids as index
+            pd.DataFrame with set_ids as index
         """
         if self.dir:
             if os.path.isfile(self._summary_file):
@@ -434,38 +516,52 @@ class ProbesetEvaluator:
 
     def _res_file(
         self,
-        metric,
-        set_id,
-        pre=False,
-    ):
-        """ """
+        metric: str,
+        set_id: str,
+        pre: bool = False,
+    ) -> str:
+        """Get the default name for a result file.
+
+        Args:
+            metric:
+                The calculated evaluation metric, for which the results will be stored.
+            set_id:
+                ID of the current probeset.
+            pre:
+                Whether the file will should pre calculations or probeset specific metric calculations.
+        """
         pre_str = "_pre" if pre else ""
         return os.path.join(self.dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
 
-    def _default_reference_dir(
-        self,
-    ):
-        """ """
-        if self.dir:
-            return os.path.join(self.dir, "references")
-        else:
-            return None
+    # def _default_reference_dir(
+    #     self,
+    # ) -> str:
+    #     """Get the default name for the reference directory."""
+    #     return os.path.join(self.dir, "references")
 
     def plot_summary(
         self,
-        set_ids="all",
+        set_ids: Union[str, List[str]] = "all",
         **plot_kwargs,
-    ):
-        """Plot heatmap of summary metrics
+    ) -> None:
+        """Plot heatmap of summary metrics.
 
-        set_ids: "all" or list of strs
+        Args:
+            set_ids:
+                IDs of the current probesets or "all". Check out self.summary_results for available sets.
+            **plot_kwargs:
+                Keyword arguments for :meth:`summary_table`.
         """
-        if (self.summary_results is None) and self.dir:
-            self.summary_results = pd.read_csv((self._summary_file), index_col=0)
-        if set_ids == "all":
-            set_ids = self.summary_results.index.tolist()
-        table = self.summary_results.loc[set_ids]
-        pl.summary_table(table, **plot_kwargs)
+        if self.summary_results is _empty:
+            if self.dir:
+                self.summary_results = pd.read_csv(self._summary_file, index_col=0)
+            else:
+                raise ValueError("No summaries found.")
+        else:
+            if set_ids == "all":
+                set_ids = self.summary_results.index.tolist()
+            table = self.summary_results.loc[set_ids]
+            pl.summary_table(table, **plot_kwargs)
 
     def plot_evaluations(
         self,
@@ -475,16 +571,18 @@ class ProbesetEvaluator:
         save=False,
         plt_kwargs={},
     ):
-        """Plot detailed results plots for specified metrics
+        """Plot detailed results plots for specified metrics.
 
-        Note: not all plots can be supported here. If we want to plot a penalty kernel for example we're missing the
-              kernel info. For such plots we need separate functions.
+        Note:
+            Not all plots can be supported here. If we want to plot a penalty kernel for example we're missing the
+            kernel info. For such plots we need separate functions.
 
-        set_ids: "all" or list of strs
-            Check out self.summary_results for available sets.
-        metrics: "all" or list of strs
-            Check out
-
+        Args:
+            set_ids:
+                ID of the current probeset or "all". Check out :attr:`self.summary_results` for available sets.
+            metrics:
+                List of calculated metrics or "all". Check out :attr:`self.metrics` for available metrics.
+            TODO unused parameters show and save
         """
 
         if set_ids == "all":
