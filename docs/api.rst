@@ -26,7 +26,7 @@ Selection
 .. autosummary::
   :toctree: se
 
-  se.select_reference_probesets
+    se.select_reference_probesets
 
 
 Evaluation

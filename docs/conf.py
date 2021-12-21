@@ -15,7 +15,11 @@ from pathlib import Path
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
 sys.path.insert(0, os.path.abspath(".."))
-sys.path.insert(0, os.path.abspath("../tutorials"))
+sys.path.append(os.path.abspath("../.."))
+sys.path.append(os.path.abspath("../spapros"))
+sys.path.append(os.path.abspath("../spapros/evaluation"))
+sys.path.append(os.path.abspath("../spapros/selection"))
+sys.path.append(os.path.abspath("../tutorials"))
 
 
 # -- General configuration ---------------------------------------------
@@ -212,6 +216,10 @@ texinfo_documents = [
 
 html_css_files = [
     "custom_cookietemple.css",
+]
+
+suppress_warnings = [
+    "nbsphinx",
 ]
 
 

@@ -9,25 +9,6 @@ Use either the spapros CLI or the spapros API to invoke the pipline:
     :local:
     :backlinks: none
 
-CLI
-====
-
-Selection
------------------
-
-
-.. code-block:: bash
-
-    spapros selection data/small_data_raw_counts.h5ad
-
-
-Evaluation
---------------
-
-.. code-block:: bash
-
-    spapros evaluation data/small_data_raw_counts.h5ad results/selections_genesets_1.csv data/small_data_marker_list.csv genesets_1_0 genesets_1_1 genesets_1_13 --parameters data/parameters.yml
-
 API
 =====
 
@@ -71,6 +52,24 @@ The plotting module provides several methods to visualize the results:
    sp.pl.cool_fancy_plot()
 
 
+CLI
+====
+
+Selection
+-----------------
+
+
+.. code-block:: bash
+
+    spapros selection data/small_data_raw_counts.h5ad
+
+
+Evaluation
+--------------
+
+.. code-block:: bash
+
+    spapros evaluation data/small_data_raw_counts.h5ad results/selections_genesets_1.csv data/small_data_marker_list.csv genesets_1_0 genesets_1_1 genesets_1_13 --parameters data/parameters.yml
 
 
 

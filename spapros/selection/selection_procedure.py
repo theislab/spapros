@@ -12,10 +12,12 @@ import scanpy as sc
 import spapros.evaluation.evaluation as ev
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
+from rich.progress import Progress
 from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
-from tqdm.autonotebook import tqdm
+
+# from tqdm.autonotebook import tqdm
 
 
 class ProbesetSelector:  # (object)
@@ -226,20 +228,24 @@ class ProbesetSelector:  # (object)
         # Marker list
         self._prepare_marker_list()
 
+        # show progress bars for verbosity levels >0
+        self.disable_pbars = self.verbosity < 1
+
     def select_probeset(self):
         """Run full selection procedure"""
-        if self.n_pca_genes and (self.n_pca_genes > 0):
-            self._pca_selection()
-        self._forest_DE_baseline_selection()
-        self._forest_selection()
-        if self.marker_list:
-            self._marker_selection()
-        self.probeset = self._compile_probeset_list()
-        if self.save_dir:
-            self.probeset.to_csv(self.probeset_path)
+        with Progress(disable=self.disable_pbars) as progress:
+            if self.n_pca_genes and (self.n_pca_genes > 0):
+                self._pca_selection(progress)
+            self._forest_DE_baseline_selection(progress)
+            self._forest_selection()
+            if self.marker_list:
+                self._marker_selection()
+            self.probeset = self._compile_probeset_list()
+            if self.save_dir:
+                self.probeset.to_csv(self.probeset_path)
         # TODO: we haven't included the checks to load the probeset if it already exists
 
-    def _pca_selection(self):
+    def _pca_selection(self, progress):
         """Select genes based on pca loadings"""
         if self.selection["pca"] is None:
             if self.verbosity > 0:
@@ -249,6 +255,7 @@ class ProbesetSelector:  # (object)
                 self.n_pca_genes,
                 penalty_keys=self.pca_penalties,
                 inplace=False,
+                progress=progress,
                 **self.pca_selection_hparams,
             )
             self.selection["pca"] = self.selection["pca"].sort_values("selection_ranking")
@@ -260,7 +267,7 @@ class ProbesetSelector:  # (object)
             if self.verbosity > 0:
                 print("PCA genes already selected...")
 
-    def _forest_DE_baseline_selection(self):
+    def _forest_DE_baseline_selection(self, progress):
         """Select genes based on forests and differentially expressed genes"""
         if self.verbosity > 0:
             print("Select genes based on differential expression and forests as baseline for the final forests...")
@@ -277,6 +284,7 @@ class ProbesetSelector:  # (object)
                 reference="rest",
                 rankby_abs=False,
                 inplace=False,
+                progress=progress,
             )
             if self.verbosity > 1:
                 print("\t\t ...finished.")
@@ -934,9 +942,9 @@ class ProbesetSelector:  # (object)
                     )
                 self.loaded_attributes.append(f"forest_clfs_{f}")
 
-    def _tqdm(self, iterator):
-        """Wrapper for tqdm with verbose condition"""
-        return tqdm(iterator) if self.verbosity > 1 else iterator
+    # def _tqdm(self, iterator):
+    #     """Wrapper for tqdm with verbose condition"""
+    #     return tqdm(iterator) if self.verbosity > 1 else iterator
 
     def plot_histogram(self, x_axis_key="quantile_0.99", selections=["pca", "DE", "marker"]):
         """Plot histograms of (basic) selections under given penalties
@@ -1034,8 +1042,6 @@ def select_reference_probesets(
         save_dir:
             Directory path where all results are saved.
         reference_selections:
-
-    Returns:
 
     """
     reference_methods = {

@@ -1,5 +1,6 @@
 ﻿spapros.pl.MaskedDotPlot
 ========================
+
 .. currentmodule:: spapros
 
 .. autoclass:: spapros.pl.MaskedDotPlot

@@ -52,11 +52,11 @@ Key Features
    usage
    api
    cli
+   tutorials
    reference
    authors
    changelog
    code_of_conduct
-   tutorial_gallery
 
 
 Indices and tables
