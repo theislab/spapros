@@ -129,7 +129,8 @@ def select_pca_genes(
 
     clean_adata(a)
 
-    pca_task = progress.add_task("Select pca genes...", total=1)
+    if progress:
+        pca_task = progress.add_task("Select pca genes...", total=1)
     sc.pp.pca(
         a,
         n_comps=n_pcs,
@@ -139,7 +140,8 @@ def select_pca_genes(
         return_info=True,
         copy=False,
     )
-    progress.advance(pca_task)
+    if progress:
+        progress.advance(pca_task)
 
     loadings = a.varm["PCs"].copy()[:, :n_pcs]
     if variance_scaled:

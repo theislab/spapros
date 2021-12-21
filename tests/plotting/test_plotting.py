@@ -8,16 +8,31 @@ from spapros import pl
 #############
 
 
-# def test_masked_dotplot(small_adata, selector):
-#     pl.masked_dotplot(small_adata, selector, save="tests/plotting/test_data/masked_dotplot.png")
+def test_masked_dotplot(small_adata, selector):
+    pl.masked_dotplot(small_adata, selector, save="tests/plotting/test_data/tmp_masked_dotplot.png")
+    with open(f"tests/plotting/test_data/tmp_masked_dotplot.png", "rb") as file:
+        plot = file.read()
+    os.remove(f"tests/plotting/test_data/tmp_masked_dotplot.png")
+    with open(f"tests/plotting/test_data/masked_dotplot.png", "rb") as file:
+        ref_plot = file.read()
+    assert plot == ref_plot
 
 
 ##############
-# evaluation # 
+# evaluation #
 ##############
 
-def test_plot_summary():
-    pass
+
+def test_plot_summary(evaluator):
+    ref_name = "tests/plotting/test_data/plot_summary.png"
+    fig_name = "tests/plotting/test_data/tmp_plot_summary.png"
+    evaluator.plot_summary(show=False, save=fig_name)
+    with open(fig_name, "rb") as file:
+        plot = file.read()
+    os.remove(fig_name)
+    with open(ref_name, "rb") as file:
+        ref_plot = file.read()
+    assert plot == ref_plot
 
 
 @pytest.mark.parametrize("metric", ["gene_corr", "forest_clfs"])

@@ -6,6 +6,15 @@ from spapros import ev
 from spapros import se
 
 
+#############
+# selection #
+#############
+
+@pytest.fixture()
+def selector(small_adata):
+    selector = se.ProbesetSelector(small_adata, n=50, celltype_key="celltype", verbosity=0)
+    selector.select_probeset()
+    return selector
 
 
 @pytest.fixture()
@@ -45,20 +54,12 @@ def marker_list():
 
 
 @pytest.fixture()
-def evaluator(small_adata):
+def evaluator(small_adata, small_probeset):
     evaluator = ev.ProbesetEvaluator(small_adata,
                                      scheme="quick",
                                      verbosity=0,
                                      results_dir=None)
+    evaluator.evaluate_probeset(small_probeset)
     return evaluator
 
 
-#############
-# selection #
-#############
-
-# @pytest.fixture()
-# def selector(small_adata):
-#     selector = se.ProbesetSelector(small_adata, n=50, celltype_key="celltype", verbosity=0)
-#     selector.select_probeset()
-#     return selector

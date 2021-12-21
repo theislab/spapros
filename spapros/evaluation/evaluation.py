@@ -231,7 +231,7 @@ class ProbesetEvaluator:
         self,
         adata: sc.AnnData,
         celltype_key: Union[str, List[str]] = "celltype",
-        results_dir: str = "./probeset_evaluation/",
+        results_dir: Union[str, None] = "./probeset_evaluation/",
         scheme: str = "quick",
         metrics=None,
         metrics_params: Dict[str, Dict] = {},
@@ -250,9 +250,7 @@ class ProbesetEvaluator:
         self.metrics_params = self._prepare_metrics_params(metrics_params)
         self.metrics: List[str] = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
         self.ref_name = reference_name
-        self.ref_dir: str = (
-            reference_dir if (reference_dir is not None) else os.path.join(results_dir, "references")
-        )  # self._default_reference_dir()
+        self.ref_dir = reference_dir if (reference_dir is not None) else self._default_reference_dir()
         self.verbosity = verbosity
         self.n_jobs = n_jobs
 
@@ -262,7 +260,7 @@ class ProbesetEvaluator:
         self.summary_results = _empty
 
         self._shared_res_file = lambda metric: os.path.join(self.ref_dir, f"{self.ref_name}_{metric}.csv")
-        self._summary_file: str = os.path.join(self.dir, f"{self.ref_name}_summary.csv")  # if self.dir else _empty
+        self._summary_file: str = os.path.join(self.dir, f"{self.ref_name}_summary.csv") if self.dir else _empty
 
         # TODO:
         # For the user it could be important to get some warning when reinitializing the Evaluator with new
@@ -533,11 +531,14 @@ class ProbesetEvaluator:
         pre_str = "_pre" if pre else ""
         return os.path.join(self.dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
 
-    # def _default_reference_dir(
-    #     self,
-    # ) -> str:
-    #     """Get the default name for the reference directory."""
-    #     return os.path.join(self.dir, "references")
+    def _default_reference_dir(
+        self,
+    ):
+        """Get the default reference directory."""
+        if self.dir:
+            return os.path.join(self.dir, "references")
+        else:
+            return None
 
     def plot_summary(
         self,
