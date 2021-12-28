@@ -18,7 +18,7 @@ from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
 
-# from tqdm.autonotebook import tqdm
+from tqdm.autonotebook import tqdm
 
 
 class ProbesetSelector:  # (object)

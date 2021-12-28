@@ -11,16 +11,21 @@ from spapros import se
 #############
 
 @pytest.fixture()
-def selector(small_adata):
-    selector = se.ProbesetSelector(small_adata, n=50, celltype_key="celltype", verbosity=0)
-    selector.select_probeset()
+def raw_selector(small_adata):
+    raw_selector = se.ProbesetSelector(small_adata, n=50, celltype_key="celltype", verbosity=0, save_dir=None)
+    return raw_selector
+
+
+@pytest.fixture()
+def selector(raw_selector):
+    raw_selector.select_probeset()
     return selector
+
 
 
 @pytest.fixture()
 def small_adata():
     adata = sc.read_h5ad("data/small_data_raw_counts.h5ad")
-
     return adata
 
 
@@ -54,12 +59,17 @@ def marker_list():
 
 
 @pytest.fixture()
-def evaluator(small_adata, small_probeset):
-    evaluator = ev.ProbesetEvaluator(small_adata,
-                                     scheme="quick",
-                                     verbosity=0,
-                                     results_dir=None)
-    evaluator.evaluate_probeset(small_probeset)
-    return evaluator
+def raw_evaluator(small_adata):
+    raw_evaluator = ev.ProbesetEvaluator(small_adata,
+                                         scheme="quick",
+                                         verbosity=0,
+                                         results_dir=None)
+    return raw_evaluator
+
+
+@pytest.fixture()
+def evaluator(raw_evaluator, small_probeset):
+    raw_evaluator.evaluate_probeset(small_probeset)
+    return raw_evaluator
 
 

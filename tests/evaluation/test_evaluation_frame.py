@@ -1,25 +1,21 @@
 """Test cases for the ProbesetEvaluator."""
 import anndata
-from spapros.evaluation.evaluation import ProbesetEvaluator
 
 
-def test_init(small_adata):
-    evaluator = ProbesetEvaluator(small_adata)
-    adata = evaluator.adata
+def test_init(raw_evaluator):
+    adata = raw_evaluator.adata
     assert type(adata) == anndata.AnnData
-    assert evaluator.celltype_key in adata.obs_keys()
+    assert raw_evaluator.celltype_key in adata.obs_keys()
 
 
-def test_shared_computations(small_adata):
-    evaluator = ProbesetEvaluator(small_adata)
-    evaluator.compute_or_load_shared_results()
-    for metric in evaluator.metrics:
-        assert metric in evaluator.shared_results
+def test_shared_computations(raw_evaluator):
+    raw_evaluator.compute_or_load_shared_results()
+    for metric in raw_evaluator.metrics:
+        assert metric in raw_evaluator.shared_results
 
 
-def test_computed_metrics(small_adata, small_probeset):
-    evaluator = ProbesetEvaluator(small_adata, results_dir=None)
-    evaluator.evaluate_probeset(small_probeset, set_id="testset")
-    for metric in evaluator.metrics:
-        assert metric in evaluator.pre_results
-        assert metric in evaluator.results
+def test_computed_metrics(raw_evaluator, small_probeset):
+    raw_evaluator.evaluate_probeset(small_probeset, set_id="testset")
+    for metric in raw_evaluator.metrics:
+        assert metric in raw_evaluator.pre_results
+        assert metric in raw_evaluator.results

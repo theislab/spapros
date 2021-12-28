@@ -3,14 +3,14 @@ import numpy as np
 import pandas as pd
 import pytest
 import scanpy as sc
-from spapros.evaluation.metrics import correlation_matrix
-from spapros.evaluation.metrics import max_marker_correlations
-from spapros.evaluation.metrics import xgboost_forest_classification
-from spapros.evaluation.metrics import mean_overlaps
 from spapros.evaluation.metrics import clustering_nmis
+from spapros.evaluation.metrics import correlation_matrix
 from spapros.evaluation.metrics import knns
 from spapros.evaluation.metrics import leiden_clusterings
 from spapros.evaluation.metrics import marker_correlation_matrix
+from spapros.evaluation.metrics import max_marker_correlations
+from spapros.evaluation.metrics import mean_overlaps
+from spapros.evaluation.metrics import xgboost_forest_classification
 
 ############################
 # test shared computations #
@@ -125,6 +125,7 @@ def test_knns_shared_comp(small_adata):
 ############################
 # test metric computations #
 ############################
+
 
 def test_clustering_nmis(small_adata, small_probeset):
     ns = [2, 3]
