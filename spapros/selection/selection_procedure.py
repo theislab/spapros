@@ -802,6 +802,8 @@ class ProbesetSelector:  # (object)
         dict
         """
         params = new_params.copy()
+        
+        # Here we define default values
         if subject == "pca_selection":
             defaults = {}
         elif subject == "DE_selection":
@@ -822,7 +824,13 @@ class ProbesetSelector:  # (object)
         elif subject == "marker_selection":
             defaults = {"penalty_threshold": 1}
 
+        # Set parameters with default values if they weren't provided
         params.update({k: v for k, v in defaults.items() if k not in params})
+        
+        # Force some parameters to certain defaults
+        if subject == "forest":
+            params["return_clfs"] = False # this only applies to intermediate forests. Final forest clfs are returned.
+        
         return params
 
     def _initialize_file_paths(self):

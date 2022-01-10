@@ -375,6 +375,11 @@ def add_DE_genes_to_trees(
             - column.names = "celltypes (ref)": if celltype was in the reference of a given DE test (these might include
                                                 pooled references of multiple tests which yielded the same selected DE gene)
     """
+    
+    # Throw out "return_clfs" from forest_kwargs since we set them to False except for the last forest
+    if "return_clfs" in tree_clf_kwargs:
+        del tree_clf_kwargs["return_clfs"]    
+    
     # Note: in specificities we have celltype keys and dataframes with reference celltypes as index
     # the ct keys might be fewer and in a different order then the reference cts in the index
     # - we want to create an "outlier" dataframe with symmetric celltype order in index (references) and columns (celltypes of
@@ -474,6 +479,7 @@ def add_DE_genes_to_trees(
             save=False,
             **tree_clf_kwargs,
             verbosity=verbosity,
+            return_clfs=False,
         )
         if verbosity > 1:
             print("\t\t Training finished.")
@@ -625,6 +631,11 @@ def add_tree_genes_from_reference_trees(
         dict: keys are celltypes, values are list of sklearn tree classifiers.
 
     """
+    
+    # Throw out "return_clfs" from forest_kwargs since we set them to False except for the last forest
+    if "return_clfs" in tree_clf_kwargs:
+        del tree_clf_kwargs["return_clfs"]
+    
     initial_summary, initial_ct_spec_summary, im = tree_results
     initial_summary_ref, _, im_ref = ref_tree_results
     # get summary metrics from best trees
@@ -702,6 +713,7 @@ def add_tree_genes_from_reference_trees(
             ct_key=ct_key,
             save=False,
             verbosity=verbosity,
+            return_clfs=False,
             **tree_clf_kwargs,
         )
         f1 = summary["0"].copy()

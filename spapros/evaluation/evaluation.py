@@ -1158,7 +1158,7 @@ def forest_classifications(
 
     ct_spec_ref = None
     res = None
-    with_clfs = "return_clfs" in forest_kwargs
+    with_clfs = ("return_clfs" in forest_kwargs) and forest_kwargs["return_clfs"]
 
     for _ in tqdm(range(max_n_forests), desc="Train hierarchical trees") if tqdm else range(max_n_forests):
         new_res = single_forest_classifications(
