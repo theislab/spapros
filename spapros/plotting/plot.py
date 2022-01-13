@@ -1,11 +1,18 @@
 """Plotting Module."""
 import itertools
+from typing import Dict
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import Union
 
+import matplotlib.colors
 import matplotlib.colors as colors
 import matplotlib.gridspec as gridspec
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import scanpy as sc
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
 from spapros.plotting._masked_dotplot import MaskedDotPlot
@@ -95,20 +102,20 @@ from spapros.plotting._masked_dotplot import MaskedDotPlot
 #    plt.show()
 
 
-def ordered_confusion_matrices(conf_mats):
-    """Rearranges confusion matrices by a linkage clustering
+def ordered_confusion_matrices(conf_mats: List[pd.DataFrame]) -> List[pd.DataFrame]:
+    """Rearranges confusion matrices by a linkage clustering.
 
-    The matrices in conf_mats must have the same indices (and columns). We calculate the clustering on
-    a concatenated list of confusion matrices and then reorder each matrix by the resulting order.
+    Notes:
+        The matrices in conf_mats must have the same indices (and columns). We calculate the clustering on
+        a concatenated list of confusion matrices and then reorder each matrix by the resulting order.
 
-    Parameters
-    ----------
-    conf_mats : list of pd.DataFrame
+    Args:
+        conf_mats:
+            The confusion matrices to be reordered.
 
-    Returns
-    -------
-    list of pd.DataFrame
-        Reordered confusion matrices
+    Returns:
+        list of pd.DataFrame:
+            Reordered confusion matrices.
     """
 
     pooled = pd.concat(conf_mats, axis=1)
@@ -124,19 +131,36 @@ def ordered_confusion_matrices(conf_mats):
 
 
 def confusion_heatmap(
-    set_ids, conf_matrices, ordered=True, show=True, save=False, size_factor=6, n_cols=2, rotate_x_labels=True
-):
-    """Plot heatmap of cell type classification confusion matrices
+    set_ids: List[str],
+    conf_matrices: Dict[str, pd.DataFrame],
+    ordered: Union[bool, list] = True,
+    show: bool = True,
+    save: Union[bool, str] = False,
+    size_factor: float = 6,
+    n_cols: int = 2,
+    rotate_x_labels: bool = True,
+) -> None:
+    """Plot heatmap of cell type classification confusion matrices.
 
-    set_ids: list
-        List of probe set ids.
-    conf_matrices: dict of pd.DataFrames
-        Confusion matrix of each probe set given in `set_ids`.
-    ordered: bool or list
-        If set to True a linkage clustering is computed to order cell types together that are hard to distinguish.
-        If multiple set_ids are provided the same order is applied to all of them.
-        Alternatively provide a list with a custom order.
-
+    Args:
+        set_ids:
+            List of probe set ids.
+        conf_matrices:
+            Confusion matrix of each probe set given in `set_ids`.
+        ordered: bool or list
+            If set to True a linkage clustering is computed to order cell types together that are hard to distinguish.
+            If multiple set_ids are provided the same order is applied to all of them.
+            Alternatively provide a list with a custom order.
+        show:
+            Show the figure.
+        save:
+            If `True` or a `str`, save the figure.
+        size_factor:
+             Factor for scaling the figure size.
+        n_cols:
+            Number of subplot columns.
+        rotate_x_labels:
+            Rotate the xticklabels by 45 degrees.
     """
 
     n_plots = len(set_ids)
@@ -205,12 +229,29 @@ def confusion_heatmap(
     plt.close()
 
 
-def correlation_matrix(set_ids, cor_matrices, show=True, save=False, size_factor=6, n_cols=5):
-    """
-    set_ids: list
-        List of probe set ids.
-    cor_matrices: dict of pd.DataFrames
-        Correlation matrix of each probe set given in `set_ids`.
+def correlation_matrix(
+    set_ids: List[str],
+    cor_matrices: Dict[str, pd.DataFrame],
+    show: bool = True,
+    save: Union[bool, str] = False,
+    size_factor: float = 6,
+    n_cols: int = 5,
+) -> None:
+    """Plot heatmap of gene correlation matrix.
+
+    Args:
+        set_ids:
+            List of probe set ids.
+        cor_matrices: dict of pd.DataFrames
+            Correlation matrix of each probe set given in `set_ids`.
+        show:
+            Show the figure.
+        save:
+            If `True` or a `str`, save the figure.
+        size_factor:
+             Factor for scaling the figure size.
+        n_cols:
+            Number of subplot columns.
     """
 
     n_plots = len(set_ids)
@@ -232,15 +273,16 @@ def correlation_matrix(set_ids, cor_matrices, show=True, save=False, size_factor
     plt.close()
 
 
-def format_time(time):
-    """
-    time: float
-        in seconds.
+def format_time(time: float) -> str:
+    """Reformat a time stamp.
 
-    Return
-    ------
-    str
-        formatted time
+    Args:
+        time:
+            Time in seconds.
+
+    Returns:
+        str:
+            The formatted time.
     """
     days = int(time // (3600 * 24))
     hours = int(time // 3600)
@@ -253,7 +295,21 @@ def format_time(time):
     return "0 sec"
 
 
-def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
+def truncate_colormap(
+    cmap: matplotlib.colors.Colormap, minval: float = 0.0, maxval: float = 1.0, n: int = 100
+) -> matplotlib.colors.Colormap:
+    """Truncate a colormap to a given number of colors and an interval.
+
+    Args:
+        cmap:
+            Colormap name.
+        minval:
+            Smallest color value.
+        maxval:
+            Highest color value.
+        n:
+            Number of colors.
+    """
     new_cmap = colors.LinearSegmentedColormap.from_list(
         "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval), cmap(np.linspace(minval, maxval, n))
     )
@@ -261,43 +317,47 @@ def truncate_colormap(cmap, minval=0.0, maxval=1.0, n=100):
 
 
 def summary_table(
-    table,
-    summaries="all",
-    color_maps={},
-    rename_cols={},
-    rename_rows={},
-    time_format=[],
-    log_scale=[],
-    color_limits={},
-    nan_color="lightgrey",
-    threshold_ann={},
-    show=True,
-    save=False,
-):
-    """Plot table of summary statistics
+    table: pd.DataFrame,
+    summaries: Union[Literal["all"], List[str]] = "all",
+    color_maps: Dict[str, matplotlib.colors.Colormap] = {},
+    rename_cols: Dict[str, str] = {},
+    rename_rows: Dict[str, str] = {},
+    time_format: List[str] = [],
+    log_scale: List[str] = [],
+    color_limits: Dict[str, List[float]] = {},
+    nan_color: str = "lightgrey",
+    threshold_ann: Dict = {},
+    show: bool = True,
+    save: Union[bool, str] = False,
+) -> None:
+    """Plot table of summary statistics.
 
-    table: pd.DataFrame
+    Args:
+        table: pd.DataFrame
 
-    summaries: "all" or list of strs
-        List of summary metrics that are plotted.
-    color_maps: dict
-        Color maps assigned to summary metrics. Use the initial name and not the potential new name
-        given via `rename_cols`.
-    rename_cols: dict
-        Rename summary metrics for plot.
-    rename_rows: dict
-        Rename set ids.
-    time_format: list of strs
-        Summary names that are formatted to days, hours, mins and secs (seconds are expected as input).
-    log_scale: list of strs
-        Summary names for which a log scaled colormap is applied.
-    color_limits: dict of lists of two floats
-        For each summary metric optionally provide vmin and vmax for the colormap.
-    nan_color: str
-        Color for nan values.
-    threshold_ann: dict
-        Special annotation for values above defined threshold. E.g. {"time":{"th":1000,"above":True,"ann":"> 1k"}}
-
+        summaries:
+            List of summary metrics that are plotted.
+        color_maps:
+            Color maps assigned to summary metrics. Use the initial name and not the potential new name
+            given via `rename_cols`.
+        rename_cols:
+            Rename summary metrics for plot.
+        rename_rows:
+            Rename set ids.
+        time_format
+            Summary names that are formatted to days, hours, mins and secs (seconds are expected as input).
+        log_scale:
+            Summary names for which a log scaled colormap is applied.
+        color_limits: dict of lists of two floats
+            For each summary metric optionally provide vmin and vmax for the colormap.
+        nan_color:
+            Color for nan values.
+        threshold_ann: dict
+            Special annotation for values above defined threshold. E.g. {"time":{"th":1000,"above":True,"ann":"> 1k"}}
+        show:
+            Show the figure.
+        save:
+            If `True` or a `str`, save the figure.
     """
 
     fsize = 15
@@ -321,9 +381,9 @@ def summary_table(
         "penalty": truncate_colormap(plt.get_cmap("Greys"), minval=0.05, maxval=0.7, n=100),  # "Greys",
         "other": "Greys",
     }
-
     if summaries == "all":
         summaries = table.columns.tolist()
+        assert isinstance(summaries, list)
         for s in summaries:
             if s not in default_order:
                 default_order.append(s.split()[0])
@@ -431,50 +491,51 @@ def summary_table(
 
 
 def masked_dotplot(
-    adata,
+    adata: sc.AnnData,
     selector,
-    ct_key="celltype",
-    imp_threshold=0.05,
-    celltypes=None,
-    n_genes=None,
-    comb_markers_only=False,
-    markers_only=False,
-    cmap="Reds",
-    comb_marker_color="darkblue",
-    marker_color="green",
-    non_adata_celltypes_color="grey",
-    save=None,
+    ct_key: str = "celltype",
+    imp_threshold: float = 0.05,
+    celltypes: Optional[List[str]] = None,
+    n_genes: Optional[int] = None,
+    comb_markers_only: bool = False,
+    markers_only: bool = False,
+    cmap: str = "Reds",
+    comb_marker_color: str = "darkblue",
+    marker_color: str = "green",
+    non_adata_celltypes_color: str = "grey",
+    save: Union[bool, str] = False,
 ):
-    """
-    Arguments
-    ---------
-    adata
-        AnnData with adata.obs[ct_key] cell type annotations
-    selector
-        ProbesetSelector object with selected selector.probeset
-    ct_key
-    imp_threshold
-        Show genes as combinatorial marker only for those genes with importance > `imp_threshold`
-    celltypes
-        Optional subset of celltypes (rows of dotplot)
-    n_genes
-        Optionally plot top `n_genes` genes.
-    comb_markers_only
-        Whether to plot only genes that are combinatorial markers for the plotted cell types. (can be combined with
-        markers_only, in that case markers that are not comb markers are also shown)
-    markers_only
-        Whether to plot only genes that are markers for the plotted cell types. (can be combined with comb_markers_only,
-        in that case comb markers that are not markers are also shown)
-    cmap
-        Colormap of mean expressions
-    comb_marker_color
-        Color for combinatorial markers
-    marker_color
-        Color for marker genes
-    non_adata_celltypes_color
-        Color for celltypes that don't occur in the data set
-    save
-        Save figure to path
+    """Create dotplot with additional annotation masks.
+
+    Args:
+        adata:
+            AnnData with `adata.obs[ct_key]` cell type annotations
+        selector:
+            ProbesetSelector object with selected selector.probeset
+        ct_key:
+            Column of `adata.obs` with cell type annotation.
+        imp_threshold:
+            Show genes as combinatorial marker only for those genes with importance > `imp_threshold`
+        celltypes:
+            Optional subset of celltypes (rows of dotplot)
+        n_genes:
+            Optionally plot top `n_genes` genes.
+        comb_markers_only:
+            Whether to plot only genes that are combinatorial markers for the plotted cell types. (can be combined with
+            markers_only, in that case markers that are not comb markers are also shown)
+        markers_only:
+            Whether to plot only genes that are markers for the plotted cell types. (can be combined with comb_markers_only,
+            in that case comb markers that are not markers are also shown)
+        cmap:
+            Colormap of mean expressions.
+        comb_marker_color:
+            Color for combinatorial markers.
+        marker_color:
+            Color for marker genes.
+        non_adata_celltypes_color:
+            Color for celltypes that don't occur in the data set
+        save:
+            If `True` or a `str`, save the figure.
     """
     from spapros.selection import ProbesetSelector
 
@@ -512,13 +573,16 @@ def masked_dotplot(
 
     # Get tree genes
     tree_genes = {}
+    assert isinstance(selector.forest_results["forest"], list)
+    assert len(selector.forest_results["forest"]) == 3
+    assert isinstance(selector.forest_results["forest"][2], dict)
     for ct, importance_tab in selector.forest_results["forest"][2].items():
         if ct in cts:
             tree_genes[ct] = importance_tab["0"].loc[importance_tab["0"] > imp_threshold].index.tolist()
             tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
 
     # Get markers
-    marker_genes = {ct: [] for ct in (cts)}
+    marker_genes: Dict[str, list] = {ct: [] for ct in (cts)}
     for ct in cts:
         for gene in selector.probeset[selector.probeset["selection"]].index:
             if ct in selector.probeset.loc[gene, "celltypes_marker"].split(",") and (gene in adata.var_names):

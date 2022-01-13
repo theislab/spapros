@@ -5,7 +5,10 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 from typing import Dict
+from typing import Iterable
 from typing import List
+from typing import Sequence
+from typing import Tuple
 from typing import Union
 
 import matplotlib.pyplot as plt
@@ -24,6 +27,7 @@ from spapros.evaluation.metrics import metric_summary
 from spapros.util.mp_util import _get_n_cores
 from spapros.util.mp_util import parallelize
 from spapros.util.mp_util import Signal
+from spapros.util.mp_util import SigQueue
 
 
 # helper for type checking:
@@ -213,7 +217,7 @@ class ProbesetEvaluator:
                     }
 
             This overwrites the arguments :attr:`ns` and :attr:`AUC_borders` of the nmi metric. See
-            :meth: `spapros.evaluation.get_metric_default_parameters()` for the default values of each metric
+            :meth:`spapros.evaluation.get_metric_default_parameters()` for the default values of each metric
         marker_list:
             Dictionary containing celltypes as keys and the respective markers as a list as values.
         reference_name:
@@ -244,7 +248,7 @@ class ProbesetEvaluator:
 
         self.adata = adata
         self.celltype_key = celltype_key
-        self.dir = results_dir
+        self.dir: Union[str, None] = results_dir
         self.scheme = scheme
         self.marker_list = marker_list
         self.metrics_params = self._prepare_metrics_params(metrics_params)
@@ -257,10 +261,12 @@ class ProbesetEvaluator:
         self.shared_results: Dict[str, Any] = {}
         self.pre_results: Dict[str, Any] = {metric: {} for metric in self.metrics}
         self.results: Dict[str, Any] = {metric: {} for metric in self.metrics}
-        self.summary_results = _empty
+        self.summary_results: pd.DataFrame
 
         self._shared_res_file = lambda metric: os.path.join(self.ref_dir, f"{self.ref_name}_{metric}.csv")
-        self._summary_file: str = os.path.join(self.dir, f"{self.ref_name}_summary.csv") if self.dir else _empty
+        self._summary_file: Union[str, Empty] = (
+            os.path.join(self.dir, f"{self.ref_name}_summary.csv") if self.dir else _empty
+        )
 
         # TODO:
         # For the user it could be important to get some warning when reinitializing the Evaluator with new
@@ -290,7 +296,7 @@ class ProbesetEvaluator:
     ) -> None:
         """Compute probe set specific evaluations.
 
-        Note:
+        Notes:
             For some metrics, the computations are split up in pre computations (independent of shared results) and the
             computations where the shared results are used.
 
@@ -314,7 +320,12 @@ class ProbesetEvaluator:
 
         # Probeset specific pre computation (shared results are not needed for these)
         for metric in self.metrics:
-            if (self.dir is None) or (not os.path.isfile(self._res_file(metric, set_id, pre=True))):
+            if self.dir:
+                pre_res_file: str = self._res_file(metric, set_id, pre=True)
+                pre_res_file_isfile = os.path.isfile(pre_res_file)
+            else:
+                pre_res_file_isfile = False
+            if (self.dir is None) or (not pre_res_file_isfile):
                 self.pre_results[metric][set_id] = metric_pre_computations(
                     genes,
                     adata=self.adata,
@@ -352,7 +363,7 @@ class ProbesetEvaluator:
     ) -> None:
         """Pipeline specific adaption of evaluate_probeset.
 
-        Computes probeset specific evaluations. The parameters for this function are adapted for the spapros-pipeline
+        Computes probeset specific evaluations. The parameters for this function are adapted for the spapros-pipeline.
 
         Args:
             genes:
@@ -502,10 +513,11 @@ class ProbesetEvaluator:
                 IDs of the current probesets. Initialize dataframe with set_ids as index. We also keep all set_ids that
                 already exist in the summary csv.
 
-        Returns
+        Returns:
             pd.DataFrame with set_ids as index
         """
         if self.dir:
+            assert isinstance(self._summary_file, str)
             if os.path.isfile(self._summary_file):
                 df = pd.read_csv(self._summary_file, index_col=0)
                 sets_tmp = [s for s in set_ids if (s not in df.index)]
@@ -529,6 +541,7 @@ class ProbesetEvaluator:
                 Whether the file will should pre calculations or probeset specific metric calculations.
         """
         pre_str = "_pre" if pre else ""
+        assert self.dir is not None
         return os.path.join(self.dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
 
     def _default_reference_dir(
@@ -566,10 +579,10 @@ class ProbesetEvaluator:
 
     def plot_evaluations(
         self,
-        set_ids="all",
-        metrics="all",
-        show=True,
-        save=False,
+        set_ids: Union[str, List[str]] = "all",
+        metrics: Union[str, List[str]] = "all",
+        show: bool = True,
+        save: Union[str, bool] = False,
         plt_kwargs={},
     ):
         """Plot detailed results plots for specified metrics.
@@ -583,13 +596,30 @@ class ProbesetEvaluator:
                 ID of the current probeset or "all". Check out :attr:`self.summary_results` for available sets.
             metrics:
                 List of calculated metrics or "all". Check out :attr:`self.metrics` for available metrics.
-            TODO unused parameters show and save
+            save:
+                If `True` or a `str`, save the figure.
+            show:
+                Show the figure.
+            plt_kwargs:
+                Keyword Args for the selection method specific plotting function.
+                The used plotting functions are:
+
+                .. list-table::
+                    :header-rows: 1
+
+                * - selection metric
+                  - plotting function
+                * - forest_clfs
+                  - :meth:`confusion_heatmap`
+                * - gene_corr
+                  - :meth:`correlation_matrix`
         """
 
         if set_ids == "all":
             if self.dir:
                 self.summary_results = pd.read_csv(self._summary_file, index_col=0)
             set_ids = self.summary_results.index.tolist()
+        assert isinstance(set_ids, list)
 
         if metrics == "all":
             metrics = self.metrics
@@ -620,7 +650,23 @@ class ProbesetEvaluator:
 # the following functions will be moved or removed (quite a few dependencies need to be adjusted first though)
 
 
-def plot_gene_expressions(adata, f_idxs, fig_title=None, save_to=None):
+def plot_gene_expressions(
+    adata: sc.AnnData, f_idxs: Iterable[Any], fig_title: str = None, show: bool = True, save: Union[str, bool] = False
+) -> None:
+    """Plot a UMAP of the gene expression.
+
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        f_idxs:
+            Indices of the genes to plot.
+        fig_title:
+            Figure title.
+        show:
+            Show the figure.
+        save:
+            If `True` or a `str`, save the figure.
+    """
     a = adata.copy()  # TODO Think we can get rid of this copy and just work with the views
     gene_obs = []
     for _, f_idx in enumerate(f_idxs):
@@ -630,13 +676,24 @@ def plot_gene_expressions(adata, f_idxs, fig_title=None, save_to=None):
 
     fig = sc.pl.umap(a, color=gene_obs, ncols=4, return_fig=True)
     fig.suptitle(fig_title)
-    if save_to is not None:
-        fig.savefig(save_to)
-    plt.show()
+    if save:
+        fig.savefig(save, bbox_inches="tight")
+    if show:
+        plt.show()
 
 
-def plot_nmis(results_path, cols=None, colors=None, labels=None, legend=None):
-    """Custom legend: e.g. legend = [custom_lines,line_names]
+def plot_nmis(
+    results_path: str,
+    cols: Iterable = None,
+    colors: List[str] = None,
+    labels: List[str] = None,
+    legend: tuple = None,
+    show: bool = True,
+    save: Union[bool, str] = False,
+) -> plt.Figure:
+    """Plot the distribution of NMI values.
+
+    Custom legend: e.g. legend = [custom_lines,line_names]
 
     custom_lines = [Line2D([0], [0], color='red',    lw=linewidth),
                     Line2D([0], [0], color='orange', lw=linewidth),
@@ -646,10 +703,26 @@ def plot_nmis(results_path, cols=None, colors=None, labels=None, legend=None):
                     Line2D([0], [0], color='black',  lw=linewidth),
                     ]
     line_names = ["dropout", "dropout 1 donor", "pca", "marker", "random"]
+
+    Args:
+        results_path:
+            Path where NMI results are stored.
+        cols:
+            Which columns of the table stored at the `results_path` should be plotted.
+        colors:
+            List of a color for each line.
+        labels:
+            List with a label for each line.
+        legend:
+            Handles and Labels of figure legend.
+        show:
+            Show the figure.
+        save:
+            If `True` or a `str`, save the figure.
     """
     df = pd.read_csv(results_path, index_col=0)
     fig = plt.figure(figsize=(10, 6))
-    if cols is not None:
+    if cols is None:
         for col in df.columns:
             plt.plot(df.index, df[col], label=col)
     else:
@@ -674,7 +747,10 @@ def plot_nmis(results_path, cols=None, colors=None, labels=None, legend=None):
         )
     plt.xlabel("n clusters")
     plt.ylabel("NMI")
-    plt.show()
+    if show:
+        plt.show()
+    if save:
+        fig.savefig(save, bbox_inches="tight")
     return fig
 
 
@@ -685,11 +761,22 @@ def plot_nmis(results_path, cols=None, colors=None, labels=None, legend=None):
 # we go with random forest classifications now, picking the best tree
 
 
-def split_train_test_sets(adata, split=4, seed=2020, verbose=True, obs_key=None):
-    """Split data to train and test set
+def split_train_test_sets(
+    adata: sc.AnnData, split: int = 4, seed: int = 2020, verbose: bool = True, obs_key: str = None
+) -> None:
+    """Split data to train and test set.
 
-    obs_key: str
-        Provide a column name of adata.obs. If an obs_key is provided each group is split with the defined ratio.
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        split:
+            Number of splits.
+        seed:
+            Random number seed.
+        verbose:
+            Verbosity level > 1.
+        obs_key:
+            Provide a column name of adata.obs. If an obs_key is provided each group is split with the defined ratio.
     """
     if not obs_key:
         n_train = (adata.n_obs // (split + 1)) * split
@@ -730,28 +817,29 @@ def split_train_test_sets(adata, split=4, seed=2020, verbose=True, obs_key=None)
 ############## FOREST CLASSIFICATIONS ##############
 
 
-def get_celltypes_with_too_small_test_sets(adata, ct_key, min_test_n=20, split_kwargs={"seed": 0, "split": 4}):
-    """Get celltypes whith test set sizes below `min_test_n`
+def get_celltypes_with_too_small_test_sets(
+    adata: sc.AnnData, ct_key: str, min_test_n: int = 20, split_kwargs: Dict[str, int] = {"seed": 0, "split": 4}
+) -> Tuple[List[str], List[int]]:
+    """Get celltypes whith test set sizes below `min_test_n`.
 
     We split the observations in adata into train and test sets for forest training. Check if the resulting
     test sets have at least `min_test_n` samples.
 
-    Arguments
-    ---------
-    adata: AnnData
-    ct_key: str
-        adata.obs key for cell types
-    min_test_n: int
-        Minimal number of samples in each celltype's test set
-    split_kwargs: dict
-        Keyword arguments for ev.split_train_test_sets()
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        ct_key:
+            Column of `adata.obs` with cell type annotation.
+        min_test_n:
+            Minimal number of samples in each celltype's test set
+        split_kwargs:
+            Keyword arguments for ev.split_train_test_sets()
 
-    Returns
-    -------
-    cts_below_min: list
-        celltypes with too small test sets
-    counts_below_min: list
-        test set sample count for each celltype in celltype_list
+    Returns:
+        cts_below_min: list:
+            celltypes with too small test sets
+        counts_below_min: list:
+            test set sample count for each celltype in celltype_list
 
     """
     a = adata.copy()
@@ -765,10 +853,31 @@ def get_celltypes_with_too_small_test_sets(adata, ct_key, min_test_n=20, split_k
     return cts_below_min, counts_below_min
 
 
-def uniform_samples(adata, ct_key, set_key="train_set", subsample=500, seed=2020, celltypes="all"):
-    """Subsample `subsample` cells per celltype
+def uniform_samples(
+    adata: sc.AnnData,
+    ct_key: str,
+    set_key: str = "train_set",
+    subsample: int = 500,
+    seed: int = 2020,
+    celltypes: Union[List[str], str] = "all",
+) -> Tuple[np.ndarray, Dict[str, np.ndarray], list]:
+    """Subsample `subsample` cells per celltype.
 
     If the number of cells of a celltype is lower we're oversampling that celltype.
+
+    Args:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        ct_key:
+            Column of `adata.obs` with cell type annotation.
+        set_key:
+            Column of `adata.obs` with indicating the train set.
+        subsample:
+            Number of random choices.
+        seed:
+            Random number seed.
+        celltypes:
+            List of celltypes to consider or `all`.
     """
     a = adata[adata.obs[set_key], :]
     if celltypes == "all":
@@ -799,36 +908,41 @@ def uniform_samples(adata, ct_key, set_key="train_set", subsample=500, seed=2020
     return X, y, cts
 
 
-def save_forest(results, path):
-    """Save forest results to file
+def save_forest(results: list, path: str) -> None:
+    """Save forest results to file.
 
-    results: list
-        Output from forest_classifications()
-    path: str
-        Path to save file
+    Args:
+        results:
+            Output from forest_classifications().
+        path:
+            Path to save file.
     """
     Path(os.path.dirname(path)).mkdir(parents=True, exist_ok=True)
     with open(path, "wb") as f:
         pickle.dump(results, f)
 
 
-def load_forest(path):
-    """Load forest results from path
+def load_forest(path: str) -> Any:
+    """Load forest results from path.
 
-    path: str
-        Path to file
+    Args:
+        path:
+            Path to file.
     """
     return pickle.load(open(path, "rb"))
 
 
-def get_reference_masks(cts, ct_to_ref):
-    """Get celltype specific boolean masks over celltype annotation vector
+def get_reference_masks(cts: list, ct_to_ref: Dict[str, list]) -> Dict[str, bool]:
+    """Get celltype specific boolean masks over celltype annotation vector.
 
-    cts: list
-        celltype annotations.
-    ct_to_ref: dict
-        Each celltype's list of reference celltypes e.g.:
-        {'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}
+    Args:
+        cts:
+            celltype annotations.
+        ct_to_ref:
+            Each celltype's list of reference celltypes e.g.::
+
+                {'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}
+
     """
     masks = {}
     for ct, ref in ct_to_ref.items():
@@ -836,8 +950,27 @@ def get_reference_masks(cts, ct_to_ref):
     return masks
 
 
-def train_ct_tree_helper(celltypes, X_train, y_train, seed, max_depth=3, masks=None, queue=None):
-    """Train decision trees parallelized over celltypes
+def train_ct_tree_helper(
+    celltypes: List[str],
+    X_train: Any,
+    y_train: Any,
+    seed: int,
+    max_depth: int = 3,
+    masks: Dict[str, bool] = None,
+    queue: SigQueue = None,
+):
+    """Train decision trees parallelized over celltypes.
+
+    Args:
+        celltypes:
+            List of celltypes to consider.
+        X_train:
+        y_train:
+        seed:
+            Random number seed.
+        max_depth:
+        masks:
+        queue:
 
     TODO: Write docstring
     """
@@ -860,8 +993,11 @@ def train_ct_tree_helper(celltypes, X_train, y_train, seed, max_depth=3, masks=N
     return ct_trees
 
 
-def pool_train_ct_tree_helper(ct_trees_dicts):
-    """Combine list of dictonaries to one dict
+def pool_train_ct_tree_helper(ct_trees_dicts: Sequence[Any]) -> Any:
+    """Combine list of dictonaries to one dict.
+
+    Args:
+        ct_trees_dicts:
 
     TODO: Write docstring
     """
@@ -872,13 +1008,33 @@ def pool_train_ct_tree_helper(ct_trees_dicts):
     return ct_trees
 
 
-def eval_ct_tree_helper(ixs, celltypes, ref_celltypes, ct_trees, X_test, y_test, cts_test, masks=None, queue=None):
+def eval_ct_tree_helper(
+    ixs: List[int],
+    celltypes: List[str],
+    ref_celltypes: List[str],
+    ct_trees: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    cts_test: List[str],
+    masks: Dict[str, bool] = None,
+    queue: SigQueue = None,
+) -> Tuple[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """
     TODO: Write docstring
 
+    Args:
+        ixs:
+        celltypes:
+        ref_celltypes:
+        ct_trees:
+        X_test:
+        y_test:
+        cts_test:
+        masks:
+        queue:
+
     Returns
-    -------
-    f1_scores:
+        f1_scores:
     """
     tree_names = [str(i) for i in ixs]
     summary_metric = pd.DataFrame(index=celltypes, columns=tree_names, dtype="float64")
@@ -906,11 +1062,15 @@ def eval_ct_tree_helper(ixs, celltypes, ref_celltypes, ct_trees, X_test, y_test,
     return summary_metric, specificities
 
 
-def pool_eval_ct_tree_helper(f1_and_specificities):
+def pool_eval_ct_tree_helper(f1_and_specificities: Iterable) -> Tuple[pd.DataFrame, Any]:
     """
     TODO: Write docstring
 
-    We parallelize over n_trees
+    Notes:
+        We parallelize over n_trees.
+
+    Args:
+        f1_and_specificities:
     """
     summary_metric_dfs = [val[0] for val in f1_and_specificities]
     specificity_df_dicts = [val[1] for val in f1_and_specificities]
@@ -923,77 +1083,90 @@ def pool_eval_ct_tree_helper(f1_and_specificities):
 
 
 def single_forest_classifications(
-    adata,
-    selection,
-    celltypes="all",
-    ref_celltypes="all",
-    ct_key="Celltypes",
-    ct_spec_ref=None,
-    save=False,
-    seed=0,
-    n_trees=50,
-    max_depth=3,
-    subsample=1000,
-    test_subsample=3000,
-    sort_by_tree_performance=True,
-    verbose=False,
-    return_clfs=False,
-    n_jobs=1,
-    backend="loky",
-):
-    """Compute or load decision tree classification results
+    adata: sc.AnnData,
+    selection: Union[list, pd.DataFrame],
+    celltypes: Union[str, list] = "all",
+    ref_celltypes: Union[str, list] = "all",
+    ct_key: str = "Celltypes",
+    ct_spec_ref: Dict[str, List[str]] = None,
+    save: Union[str, bool] = False,
+    seed: int = 0,
+    n_trees: int = 50,
+    max_depth: int = 3,
+    subsample: int = 1000,
+    test_subsample: int = 3000,
+    sort_by_tree_performance: bool = True,
+    verbose: bool = False,
+    return_clfs: bool = False,
+    n_jobs: int = 1,
+    backend: str = "loky",
+) -> Union[
+    Tuple[List[Union[Union[pd.DataFrame, dict], Any]], dict],  # return_clfs = True
+    Tuple[pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]],
+]:  # return_clfs = False
+    """Compute or load decision tree classification results.
 
     TODO: This doc string is partially from an older version. Update it! (Descripiton and Return is already up to date)
     TODO: Add progress bars to trees, and maybe change verbose to verbosity levels
 
-    As metrics we use:
-    macro f1 score as summary statistic - it's a uniformly weighted statistic wrt celltype groups in 'others' since
-    we sample uniformly.
-    For the reference celltype specific metric we use specificity = TN/(FP+TN) (also because FN and TP are not feasible
-    in the given setting)
+    Notes:
+        As metrics we use:
+        macro f1 score as summary statistic - it's a uniformly weighted statistic wrt celltype groups in 'others' since
+        we sample uniformly.
+        For the reference celltype specific metric we use specificity = TN/(FP+TN) (also because FN and TP are not feasible
+        in the given setting)
 
-    Parameters
-    ----------
-    adata: AnnData
-    selection: list or pd.DataFrame
-        Trees are trained on genes of the list or genes defined in the bool column selection['selection'].
-    celltypes: 'all' or list
-        Trees are trained on the given celltypes
-    ct_key: str
-        Column name of adata.obs with celltype infos
-    ct_spec_ref: dict of lists
-        Celltype specific references (e.g.: {'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}).
-        This argument was introduced to train secondary trees.
-    save: str or False
-        If not False load results if the given file exists, otherwise save results after computation.
-    max_depth: str
-        max_depth argument of DecisionTreeClassifier.
-    subsample: int
-        For each trained tree we use samples of maximal size=`subsample` for each celltype. If fewer cells
-        are present for a given celltype all cells are used.
-    sort_by_tree_performance: str
-        Wether to sort results and trees by tree performance (best first) per celltype
-    return_clfs: str
-        Wether to return the sklearn tree classifier objects. (if `return_clfs` and `save_load` we still on
-        save the results tables, if you want to save the classifiers this needs to be done separately).
-    n_jobs: int
-        Multiprocessing number of processes.
-    backend: str
-        Which backend to use for multiprocessing. See class `joblib.Parallel` for valid options.
+    Args:
+        adata:
+        selection:
+            Trees are trained on genes of the list or genes defined in the bool column selection['selection'].
+        celltypes:
+            Trees are trained on the given celltypes
+        ref_celltypes:
 
-    Returns
-    -------
+        ct_key: str
+            Column name of adata.obs with celltype infos
+        ct_spec_ref:
+            Celltype specific references (e.g.: {'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}).
+            This argument was introduced to train secondary trees.
+        save:
+            If not False load results if the given file exists, otherwise save results after computation.
+        n_trees:
+
+        seed:
+
+        max_depth:
+            max_depth argument of DecisionTreeClassifier.
+        subsample: int
+            For each trained tree we use samples of maximal size=`subsample` for each celltype. If fewer cells
+            are present for a given celltype all cells are used.
+        test_subsample:
+
+        sort_by_tree_performance:
+            Wether to sort results and trees by tree performance (best first) per celltype
+        verbose:
+
+        return_clfs:
+            Wether to return the sklearn tree classifier objects. (if `return_clfs` and `save_load` we still on
+            save the results tables, if you want to save the classifiers this needs to be done separately).
+        n_jobs:
+            Multiprocessing number of processes.
+        backend:
+            Which backend to use for multiprocessing. See class `joblib.Parallel` for valid options.
+
+    Returns:
+
     Note in all output files trees are ordered according macro f1 performance.
 
-    summary_metric: pd.DataFrame
-        macro f1 scores for each celltype's trees (Ordered according best performing trees)
-    ct_specific_metric: dict of pd.DataFrame
-        For each celltype's tree: specificity (= TN / (FP+TN)) wrt each other celltype's test sample
-    importances: dict of pd.DataFrame
-        Gene's feature importances for each tree.
+        summary_metric: pd.DataFrame
+            macro f1 scores for each celltype's trees (Ordered according best performing trees)
+        ct_specific_metric: dict of pd.DataFrame
+            For each celltype's tree: specificity (= TN / (FP+TN)) wrt each other celltype's test sample
+        importances: dict of pd.DataFrame
+            Gene's feature importances for each tree.
 
-    if return_clfs:
-        return [summary_metric,ct_specific_metric,importances], forests
+        if return_clfs:
+            return [summary_metric,ct_specific_metric,importances], forests
 
     """
 
@@ -1058,11 +1231,11 @@ def single_forest_classifications(
         a, ct_key, set_key="test_set", subsample=test_subsample, seed=seed, celltypes=ref_celltypes
     )
     if ct_spec_ref is not None:
-        masks_test = get_reference_masks(cts_test, ct_spec_ref)
+        masks_test: Union[Dict[str, bool], None] = get_reference_masks(cts_test, ct_spec_ref)
     else:
         masks_test = None
 
-    ct_trees = {ct: [] for ct in celltypes}
+    ct_trees: Dict[str, list] = {ct: [] for ct in celltypes}
     np.random.seed(seed=seed)
     seeds = np.random.choice(100000, n_trees, replace=False)
     # Compute trees (for each tree index we parallelize over celltypes)
@@ -1071,7 +1244,7 @@ def single_forest_classifications(
             a, ct_key, set_key="train_set", subsample=subsample, seed=seeds[i], celltypes=ref_celltypes
         )
         if ct_spec_ref is not None:
-            masks = get_reference_masks(cts_train, ct_spec_ref)
+            masks: Union[Dict[str, bool], None] = get_reference_masks(cts_train, ct_spec_ref)
         else:
             masks = None
         ct_trees_i = parallelize(
@@ -1135,6 +1308,7 @@ def single_forest_classifications(
     summary_metric = summarize_specs(ct_specific_metric)
 
     if save:
+        assert isinstance(save, str)
         save_forest([summary_metric, ct_specific_metric, importances], save)
 
     if return_clfs:
@@ -1143,8 +1317,14 @@ def single_forest_classifications(
         return summary_metric, ct_specific_metric, importances
 
 
-def summarize_specs(specs):
-    """Summarize specificities to summary metrics per celltype"""
+def summarize_specs(specs: Dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """Summarize specificities to summary metrics per celltype.
+
+    Args:
+        specs:
+            Each celltype's specificities of reference celltypes.
+
+    """
     cts = [ct for ct in specs]
     df = pd.DataFrame(index=cts, columns=specs[cts[0]].columns)
     for ct in specs:
@@ -1152,25 +1332,50 @@ def summarize_specs(specs):
     return df
 
 
-def combine_tree_results(primary, secondary, with_clfs=False):
-    """Combine results of primary and secondary trees
+def combine_tree_results(
+    primary: Union[list, Tuple[list, dict]],  # with_clfs=False  # with_clfs=True
+    secondary: Union[list, Tuple[list, dict]],  # with_clfs=False  # with_clfs=True
+    with_clfs: bool = False,
+) -> Union[list, Tuple[list, dict]]:  # with_clfs=False  # with_clfs=True
+    """Combine results of primary and secondary trees.
 
-    There are three parts in the forest results:
-    1. f1_table
-    2. classification specificities
-    3. feature_importances
+    Notes:
 
-    The output for 2. and 3. will be in the same form as the input.
-    Specificities are taken from secondary where existend, otherwise from primary.
-    Feature_importances are summed up (reasoning: distinguishing celltypes that are
-    hard to distinguish is very important and therefore good to rank respective genes high).
-    The f1 tables are just aggregated to a list
+        There are three parts in the forest results:
+        1. f1_table
+        2. classification specificities
+        3. feature_importances
 
-    primary: dict of pd.DataFrames
-    secondary: dict of pd.DataFrames
-    with_clfs: bool
-        Whether primary, secondary and the output each contain a list of forest results and the forest classifiers
-        or only the results.
+        The output for 2. and 3. will be in the same form as the input.
+        Specificities are taken from secondary where existend, otherwise from primary.
+        Feature_importances are summed up (reasoning: distinguishing celltypes that are
+        hard to distinguish is very important and therefore good to rank respective genes high).
+        The f1 tables are just aggregated to a list
+
+    Args:
+
+        primary:
+            with_clfs_True:
+                - Results: list:
+                    - pd.DataFrame
+                    - Dict[celltype: str, pd.DataFrame]
+                    - Dict[celltype: str, pd.DataFrame]
+                - Classifiers: Dict[celltype: str, DecisionTreeClassifier]
+
+        secondary:
+            data structure like primary
+
+        with_clfs:
+            Whether primary, secondary and the output each contain a list of forest results and the forest classifiers
+            or only the results.
+
+    Returns:
+        with_clfs_True:
+            - Results: list:
+                - pd.DataFrame
+                - Dict[celltype: str, pd.DataFrame]
+                - Dict[celltype: str, pd.DataFrame]
+            - Classifiers: Dict[celltype: str, DecisionTreeClassifier]
 
     """
     expected_len = 2 if with_clfs else 3
@@ -1181,10 +1386,13 @@ def combine_tree_results(primary, secondary, with_clfs=False):
         )
 
     if with_clfs:
-        primary, primary_clfs = primary
-        secondary, secondary_clfs = secondary
+        primary_res, primary_clfs = primary
+        secondary_res, secondary_clfs = secondary
+    else:
+        primary_res = primary
+        secondary_res = secondary
 
-    combined = [0, {}, {}]
+    combined: List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]] = [pd.DataFrame(), {}, {}]
     ## f1 (exchanged by summary stats below)
     # for f1_table in [primary[0],secondary[0]]:
     #    if isinstance(f1_table,list):
@@ -1192,17 +1400,20 @@ def combine_tree_results(primary, secondary, with_clfs=False):
     #    else:
     #        combined[0].append(f1_table)
     # specificities
-    celltypes = [key for key in secondary[1]]
-    combined[1] = {ct: df.copy() for ct, df in primary[1].items()}
+    celltypes = [key for key in secondary_res[1]]
+    combined[1] = {ct: df.copy() for ct, df in primary_res[1].items()}
+    assert isinstance(combined[1], dict)
     for ct in celltypes:
-        filt = ~secondary[1][ct].isnull().all(axis=1)
-        combined[1][ct].loc[filt] = secondary[1][ct].loc[filt]
+        filt = ~secondary_res[1][ct].isnull().all(axis=1)
+        combined[1][ct].loc[filt] = secondary_res[1][ct].loc[filt]
     # summary stats
+    assert isinstance(combined[0], pd.DataFrame)
     combined[0] = summarize_specs(combined[1])
     # feature importance
-    combined[2] = {ct: df.copy() for ct, df in primary[2].items()}
+    combined[2] = {ct: df.copy() for ct, df in primary_res[2].items()}
+    assert isinstance(combined[2], dict)
     for ct in celltypes:
-        combined[2][ct] += secondary[2][ct].fillna(0)
+        combined[2][ct] += secondary_res[2][ct].fillna(0)
         combined[2][ct] = combined[2][ct].div(combined[2][ct].sum(axis=0), axis=1)
 
     if with_clfs:
@@ -1215,19 +1426,37 @@ def combine_tree_results(primary, secondary, with_clfs=False):
         return combined
 
 
-def outlier_mask(df, n_stds=1, min_outlier_dif=0.02, min_score=0.9):
-    """Get mask over df.index based on values in df columns"""
+def outlier_mask(
+    df: pd.DataFrame, n_stds: int = 1, min_outlier_dif: float = 0.02, min_score: float = 0.9
+) -> pd.DataFrame:
+    """Get mask over df.index based on values in df columns.
+
+    # TODO write docstring
+
+    Args:
+        df:
+        n_stds:
+        min_outlier_dif:
+        min_score:"""
     crit1 = df < (df.mean(axis=0) - (n_stds * df.std(axis=0))).values[np.newaxis, :]
     crit2 = df < (df.mean(axis=0) - min_outlier_dif).values[np.newaxis, :]
     crit3 = df < min_score
     return (crit1 & crit2) | crit3
 
 
-def get_outlier_reference_celltypes(specs, n_stds=1, min_outlier_dif=0.02, min_score=0.9):
-    """For each celltype's best tree get reference celltypes with low performance
+def get_outlier_reference_celltypes(
+    specs: Dict[str, pd.DataFrame], n_stds: int = 1, min_outlier_dif: float = 0.02, min_score: float = 0.9
+) -> Dict[str, pd.DataFrame]:
+    """For each celltype's best tree get reference celltypes with low performance.
 
-    specs: dict of pd.DataFrames
+    specs:
         Each celltype's specificities of reference celltypes.
+    n_stds:
+
+    min_outlier_dif:
+
+    min_score:
+
     """
     outliers = {}
     for ct, df in specs.items():
@@ -1238,12 +1467,31 @@ def get_outlier_reference_celltypes(specs, n_stds=1, min_outlier_dif=0.02, min_s
 
 
 def forest_classifications(
-    adata, selection, max_n_forests=3, verbosity=1, save=False, outlier_kwargs={}, **forest_kwargs
-):
-    """Train best trees including secondary trees
+    adata: sc.AnnData,
+    selection: Union[list, pd.DataFrame],
+    max_n_forests: int = 3,
+    verbosity: int = 1,
+    save: Union[str, bool] = False,
+    outlier_kwargs: dict = {},
+    **forest_kwargs,
+) -> Union[
+    list,  # with_clfs=False
+    Tuple[list, dict],  # with_clfs=True
+    Tuple[pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]],
+]:  # from single_forest_classifications()
+    """Train best trees including secondary trees.
 
-    max_n_forests: int
-        Number of best trees considered as a tree group. Including the primary tree.
+    # TODO write docstring
+
+    Args:
+        adata:
+        selection:
+        max_n_forests:
+            Number of best trees considered as a tree group. Including the primary tree.
+        verbosity:
+        save:
+        outlier_kwargs:
+        **forest_kwargs:
 
     """
 
@@ -1257,43 +1505,62 @@ def forest_classifications(
 
     ct_spec_ref = None
     res = None
-    with_clfs = "return_clfs" in forest_kwargs
+    with_clfs = "return_clfs" in forest_kwargs and forest_kwargs["return_clfs"]
 
     for _ in tqdm(range(max_n_forests), desc="Train hierarchical trees") if tqdm else range(max_n_forests):
         new_res = single_forest_classifications(
             adata, selection, ct_spec_ref=ct_spec_ref, verbose=verbosity > 1, save=False, **forest_kwargs
         )
-        res = new_res if (res is None) else combine_tree_results(res, new_res, with_clfs=with_clfs)
+        assert isinstance(new_res, tuple)
+        if res is None:
+            res = new_res
+        else:
+            res = combine_tree_results(res, new_res, with_clfs=with_clfs)
         specs = res[0][1] if with_clfs else res[1]
         ct_spec_ref = get_outlier_reference_celltypes(specs, **outlier_kwargs)
 
     if save:
+        assert isinstance(save, str)
         if with_clfs:
+            assert isinstance(res, tuple)
             save_forest(res[0], save)
         else:
+            assert isinstance(res, list)
             save_forest(res, save)
-
+    assert res is not None
     return res
 
 
-def forest_rank_table(importances, celltypes="all", return_ct_specific_rankings=False):
-    """Rank genes according importances of the celltypes' forests
+def forest_rank_table(
+    importances: Dict[str, pd.DataFrame],
+    celltypes: Union[str, List[str]] = "all",
+    return_ct_specific_rankings: bool = False,
+) -> Union[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    """Rank genes according importances of the celltypes' forests.
 
-    celltypes: str or list of strs
-        If 'all' create ranking based on all celltypes in importances. Otherwise base the ranking only on
-        the trees of the subset `celltypes`.
-    importances: dict of pd.DataFrame
-        Output from `forest_classifications()`. DataFrame for each celltype's forest.
-        Each column refers to genes of one tree. The columns are sorted according performance (best first)
+    # TODO complete docstring
 
-    Returns
-    -------
-    pd.DataFrame
-        index: Genes found in `importances`
-        columns:
-            - 'rank': integer, tree rank in which a gene occured the first time (best over all celltypes)
-            - 'importance_score': max feature importance of gene over celltypes where the gene occured at `rank`
-            - ct in celltypes:
+    Args:
+        importances:
+
+        celltypes: str or list of strs
+            If 'all' create ranking based on all celltypes in importances. Otherwise base the ranking only on
+            the trees of the subset `celltypes`.
+        importances: dict of pd.DataFrame
+            Output from `forest_classifications()`. DataFrame for each celltype's forest.
+            Each column refers to genes of one tree. The columns are sorted according performance (best first)
+        return_ct_specific_rankings:
+
+
+    Returns:
+        pd.DataFrame
+            index:
+                Genes found in :attr:`importances`
+            columns:
+
+                - 'rank': integer, tree rank in which a gene occured the first time (best over all celltypes)
+                - 'importance_score': max feature importance of gene over celltypes where the gene occured at `rank`
+                - ct in celltypes:
     """
     im = (
         importances.copy()

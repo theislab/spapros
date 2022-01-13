@@ -2,9 +2,12 @@ import json
 import os
 import pickle
 from pathlib import Path
-from typing import Dict
 from typing import Any
+from typing import cast
+from typing import Dict
 from typing import List
+from typing import Optional
+from typing import Tuple
 from typing import Union
 
 import numpy as np
@@ -18,67 +21,53 @@ from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
 
-from tqdm.autonotebook import tqdm
+# from tqdm.autonotebook import tqdm
 
 
 class ProbesetSelector:  # (object)
-    """Class for probeset selection
+    """General class for probeset selection.
 
-    Attributes
-    ----------
+    Attributes:
+        # TODO for documentation in the end
+        ct_key
+        g_key
+        n
+        genes
+        selection
+        n_pca_genes
+        min_mean_difference
+        n_min_markers
+        celltypes
+        adata_celltypes
+        obs
+        marker_list
+        n_list_markers
+        marker_corr_th
+        pca_penalties
+        DE_penalties
+        m_penalties_adata_celltypes
+        m_penalties_list_celltypes
+        pca_selection_hparams
+        DE_selection_hparams
+        forest_hparams
+        forest_DE_baseline_hparams
+        add_forest_genes_hparams
+        m_selection_hparams
+        verbosity
+        seed
+        save_dir
+        n_jobs
+        forest_results
+        forest_clfs
+        min_test_n
+        loaded_attributes
+        disable_pbars
+        probeset
 
-    Methods
-    -------
-    """
+    Notes:
+        # TODO
 
-    def __init__(
-        self,
-        adata,
-        celltype_key,
-        genes_key="highly_variable",
-        n=None,
-        preselected_genes=[],
-        prior_genes=[],
-        n_pca_genes=100,
-        min_mean_difference=None,
-        n_min_markers=2,
-        # TODO TODO: add this feature, it means we have at least 3 genes per celltype that we consider as celltype
-        # marker and this time we define markers based on DE & list and min_mean_diff. pca that also occur in DE list
-        # are also markers and the other pca genes not? Might be difficult than to achieve the number
-        # Priorities: best tree genes (pca included), fill up n_min_markers (from 2nd trees), fill up from further trees
-        # without n_min_markers condiseration.
-        # I still think it would be nice to have a better marker criteria, but idk what
-        celltypes="all",
-        marker_list=None,
-        n_list_markers=2,
-        marker_corr_th=0.5,
-        pca_penalties=[],
-        DE_penalties=[],
-        m_penalties_adata_celltypes=[],  # reasonable choice: positive lower and upper threshold
-        m_penalties_list_celltypes=[],  # reasonable choice: only upper threshold
-        pca_selection_hparams={},
-        DE_selection_hparams={"n": 3, "per_group": True},
-        forest_hparams={"n_trees": 50, "subsample": 1000, "test_subsample": 3000},
-        forest_DE_baseline_hparams={
-            "n_DE": 1,
-            "min_score": 0.9,
-            "n_stds": 1.0,
-            "max_step": 3,
-            "min_outlier_dif": 0.02,
-            "n_terminal_repeats": 3,
-        },
-        add_forest_genes_hparams={"n_max_per_it": 5, "performance_th": 0.02, "importance_th": 0},
-        marker_selection_hparams={"penalty_threshold": 1},
-        verbosity=2,
-        seed=0,
-        save_dir=None,
-        n_jobs=-1,
-    ):
-        # Should we add a "copy_adata" option? If False we can use less memory, if True adata will be changed at the end
-        """
-
-        Parameters
-        ----------
+    Args:
         adata: AnnData
             Data with log normalised counts in adata.X. The selection runs with an adata subsetted on fewer genes. It
             might be helpful though to keep all genes (when a marker_list and penalties are provided). The genes can be
@@ -95,10 +84,16 @@ class ProbesetSelector:  # (object)
             are added based on the theoretically added genes without list_markers.
         preselected_genes: list of strs
             Pre selected genes (these will also have the highest ranking in the final list).
+        prior_genes: list of strs
+            Prioritized genes.
+        n_pca_genes: int
+            Optionally set the number of preselected pca genes. If not set or set <1, this step will be skipped.
         min_mean_difference: float
             Minimal difference of mean expression between at least one celltype and the background. In this test only
             cell types from `celltypes` are taken into account (also for the background). This minimal difference is
             applied as an additional binary penalty in pca_penalties, DE_penalties and m_penalties_adata_celltypes.
+        n_min_markers:
+
         celltypes: str or list of strs
             Cell types for which trees are trained.
             - The probeset is optimised to be able to distinguish each of these cell types from all other cells occuring
@@ -106,17 +101,54 @@ class ProbesetSelector:  # (object)
             - The pca selection is based on all cell types in the dataset (not only on `celltypes`)
             - The optionally provided marker list can include additional cell types not listed in `celltypes` (and
               adata.obs[celltype_key])
+        marker_list:
+            List of marker genes. Can either be the a dictionary like this::
+
+                {
+                "celltype_1": ["S100A8", "S100A9", "LYZ", "BLVRB"],
+                "celltype_6": ["BIRC3", "TMEM116", "CD3D"],
+                "celltype_7": ["CD74", "CD79B", "MS4A1"],
+                "celltype_2": ["C5AR1"],
+                "celltype_5": ["RNASE6"],
+                "celltype_4": ["PPBP", "SPARC", "CDKN2D"],
+                "celltype_8": ["NCR3"],
+                "celltype_9": ["NAPA-AS1"],
+            }
+
+            Or the path to a csv-file containing the one column of markers for each celltype. The column names need to
+            be the celltype identifiers used in `adata_obs['::attr::celltype_key']`.
         n_list_markers: int or dict
             Minimal number of markers per celltype that are at least selected. Selected means either selecting genes
             from the marker list or having correlated genes in the already selected panel. (Set the correlation
             threshold with marker_selection_hparams['penalty_threshold']).
             If you want to select a different number of markers for celltypes in adata and celltypes only in the marker
             list, set e.g.: n_list_markers = {'adata_celltypes':2,'list_celltypes':3}
-        marker_penalties: str, list or dict of strs
-        reference_selections: dict(str)
-            A dictionary where the keys are basic selecion methods, that should be used to create reference probesets.
-            Available are `pca_selection`, `DE_selection`, `random_selection` and `hvg_selection`
-            The values are dictionaries of parameters for a metric or {}.
+        marker_corr_th: float
+
+        pca_penalties: str, list or dict of strs
+
+        DE_penalties:
+
+        m_penalties_adata_celltypes:
+
+        m_penalties_list_celltypes:
+
+        pca_selection_hparams:
+
+        DE_selection_hparams
+
+        forest_hparams
+
+        forest_DE_baseline_hparams:
+
+        add_forest_genes_hparams:
+
+        marker_selection_hparams:
+
+        verbosity:
+
+        seed:
+
         save_dir: str
             Directory path where all results are saved and loaded from if results already exist.
             Note for the case that results already exist:
@@ -125,8 +157,57 @@ class ProbesetSelector:  # (object)
             - if only partial results were generated, make sure that the initialization arguments are the same as
               before!
 
+        n_jobs:
 
-        """
+        marker_penalties: str, list or dict of strs
+            #TODO: add parameter or remove docstring?
+    """
+
+    def __init__(
+        self,
+        adata: sc.AnnData,
+        celltype_key: str,
+        genes_key: str = "highly_variable",
+        n: Optional[int] = None,
+        preselected_genes: List[str] = [],
+        prior_genes: List[str] = [],
+        n_pca_genes: int = 100,
+        min_mean_difference: float = None,
+        n_min_markers: int = 2,
+        # TODO TODO: add this feature, it means we have at least 3 genes per celltype that we consider as celltype
+        # marker and this time we define markers based on DE & list and min_mean_diff. pca that also occur in DE list
+        # are also markers and the other pca genes not? Might be difficult than to achieve the number
+        # Priorities: best tree genes (pca included), fill up n_min_markers (from 2nd trees), fill up from further trees
+        # without n_min_markers condiseration.
+        # I still think it would be nice to have a better marker criteria, but idk what
+        celltypes: Union[List[str], str] = "all",
+        marker_list: Union[str, Dict[str, List[str]]] = None,
+        n_list_markers: Union[int, Dict[str, int]] = 2,
+        marker_corr_th: float = 0.5,
+        pca_penalties: list = [],
+        DE_penalties: list = [],
+        m_penalties_adata_celltypes: list = [],  # reasonable choice: positive lower and upper threshold
+        m_penalties_list_celltypes: list = [],  # reasonable choice: only upper threshold
+        pca_selection_hparams: Dict[str, Any] = {},
+        DE_selection_hparams: Dict[str, Any] = {"n": 3, "per_group": True},
+        forest_hparams: Dict[str, Any] = {"n_trees": 50, "subsample": 1000, "test_subsample": 3000},
+        forest_DE_baseline_hparams: Dict[str, Any] = {
+            "n_DE": 1,
+            "min_score": 0.9,
+            "n_stds": 1.0,
+            "max_step": 3,
+            "min_outlier_dif": 0.02,
+            "n_terminal_repeats": 3,
+        },
+        add_forest_genes_hparams: Dict[str, Any] = {"n_max_per_it": 5, "performance_th": 0.02, "importance_th": 0},
+        marker_selection_hparams: Dict[str, Any] = {"penalty_threshold": 1},
+        verbosity: int = 2,
+        seed: int = 0,
+        save_dir: Optional[str] = None,
+        n_jobs: int = -1,
+    ):
+        # TODO Should we add a "copy_adata" option? If False we can use less memory, if True adata will be changed at the end
+
         self.adata = adata.copy()
         self.ct_key = celltype_key
         self.g_key = genes_key
@@ -143,7 +224,7 @@ class ProbesetSelector:  # (object)
             self.genes.append(
                 pd.Index([g for g in prior_genes if (not (g in self.genes)) and (g in self.adata.var_names)])
             )
-        self.selection = {
+        self.selection: Dict[str, Any] = {
             "final": None,
             "pre": preselected_genes,
             "prior": prior_genes,
@@ -185,13 +266,22 @@ class ProbesetSelector:  # (object)
         if "n_jobs" not in self.forest_hparams:
             self.forest_hparams["n_jobs"] = self.n_jobs
 
-        self.forest_results = {
+        self.forest_results: Dict[
+            str,
+            Union[
+                Union[list, Tuple[list, dict], None, Tuple[Any, Dict[str, Any], Dict[str, Any]]],
+                Optional[List[Union[int, Dict[str, pd.DataFrame]]]],
+                Union[list, Tuple[list, dict], None],
+                Optional[list],
+            ],
+        ] = {
             "DE_prior_forest": None,
             "DE_baseline_forest": None,
             "pca_prior_forest": None,
             "forest": None,
         }
-        self.forest_clfs = {"DE_baseline_forest": None, "forest": None}
+
+        self.forest_clfs: Dict[str, Union[dict, list, None]] = {"DE_baseline_forest": None, "forest": None}
 
         self.min_test_n = 20
 
@@ -207,7 +297,7 @@ class ProbesetSelector:  # (object)
             for i, ct in enumerate(cts_below_min_test_size):
                 print(f"\t {ct:<{max_length}} : {counts_below_min_test_size[i]}")
 
-        self.loaded_attributes = []
+        self.loaded_attributes: list = []
         if self.save_dir:
             self._initialize_file_paths()
             if self.verbosity > 0:
@@ -232,8 +322,8 @@ class ProbesetSelector:  # (object)
         # show progress bars for verbosity levels >0
         self.disable_pbars = self.verbosity < 1
 
-    def select_probeset(self):
-        """Run full selection procedure"""
+    def select_probeset(self) -> None:
+        """Run full selection procedure."""
         with Progress(disable=self.disable_pbars) as progress:
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._pca_selection(progress)
@@ -246,7 +336,7 @@ class ProbesetSelector:  # (object)
                 self.probeset.to_csv(self.probeset_path)
         # TODO: we haven't included the checks to load the probeset if it already exists
 
-    def _pca_selection(self, progress):
+    def _pca_selection(self, progress: Progress) -> None:
         """Select genes based on pca loadings"""
         if self.selection["pca"] is None:
             if self.verbosity > 0:
@@ -259,6 +349,7 @@ class ProbesetSelector:  # (object)
                 progress=progress,
                 **self.pca_selection_hparams,
             )
+            assert self.selection["pca"] is not None
             self.selection["pca"] = self.selection["pca"].sort_values("selection_ranking")
             if self.verbosity > 1:
                 print("\t ...finished.")
@@ -268,8 +359,8 @@ class ProbesetSelector:  # (object)
             if self.verbosity > 0:
                 print("PCA genes already selected...")
 
-    def _forest_DE_baseline_selection(self, progress):
-        """Select genes based on forests and differentially expressed genes"""
+    def _forest_DE_baseline_selection(self, progress: Progress) -> None:
+        """Select genes based on forests and differentially expressed genes."""
         if self.verbosity > 0:
             print("Select genes based on differential expression and forests as baseline for the final forests...")
 
@@ -305,7 +396,9 @@ class ProbesetSelector:  # (object)
             )
             DE_prior_forest_genes = [g for g in np.unique(DE_prior_forest_genes).tolist() if g in self.genes]
 
-            save_DE_prior_forest = self.forest_results_paths["DE_prior_forest"] if self.save_dir else False
+            save_DE_prior_forest: Union[str, bool] = (
+                self.forest_results_paths["DE_prior_forest"] if self.save_dir else False
+            )
             self.forest_results["DE_prior_forest"] = ev.forest_classifications(
                 self.adata[:, self.genes],
                 DE_prior_forest_genes,
@@ -328,12 +421,11 @@ class ProbesetSelector:  # (object)
                     "\t Train DE_baseline forest by iteratively selecting specific differentially expressed genes for "
                     "celltypes that are hard to distinguish..."
                 )
-            save_DE_baseline_forest = self.forest_results_paths["DE_baseline_forest"] if self.save_dir else False
-            (
-                self.forest_results["DE_baseline_forest"],
-                self.forest_clfs["DE_baseline_forest"],
-                self.selection["forest_DEs"],
-            ) = select.add_DE_genes_to_trees(
+            save_DE_baseline_forest: Union[str, bool] = (
+                self.forest_results_paths["DE_baseline_forest"] if self.save_dir else False
+            )
+            assert isinstance(self.forest_results["DE_prior_forest"], list)
+            de_forest_results = select.add_DE_genes_to_trees(
                 self.adata[:, self.genes],
                 self.forest_results["DE_prior_forest"],
                 ct_key=self.ct_key,
@@ -344,6 +436,13 @@ class ProbesetSelector:  # (object)
                 return_clfs=True,
                 **self.forest_DE_baseline_hparams,
             )
+            assert isinstance(de_forest_results, tuple)
+            self.forest_results["DE_baseline_forest"] = de_forest_results[0]
+            self.forest_clfs["DE_baseline_forest"] = de_forest_results[1]
+            assert len(de_forest_results) == 3
+            de_forest_results = cast(Tuple[list, pd.DataFrame, pd.DataFrame], de_forest_results)
+            self.selection["forest_DEs"] = de_forest_results[2]
+
             if self.save_dir:
                 self.selection["forest_DEs"].to_csv(self.selections_paths["forest_DEs"])
                 with open(self.forest_clfs_paths["DE_baseline_forest"], "wb") as f:
@@ -351,12 +450,14 @@ class ProbesetSelector:  # (object)
 
         # might be interesting for utility plots:
         if not isinstance(self.selection["DE_baseline_forest"], pd.DataFrame):
+            assert isinstance(self.forest_results["DE_baseline_forest"], list)
+            assert isinstance(self.forest_results["DE_baseline_forest"][2], dict)
             self.selection["DE_baseline_forest"] = ev.forest_rank_table(self.forest_results["DE_baseline_forest"][2])
             if self.save_dir:
                 self.selection["DE_baseline_forest"].to_csv(self.selections_paths["DE_baseline_forest"])
 
-    def _forest_selection(self):
-        """ """
+    def _forest_selection(self) -> None:
+        """Select genes based on forests and differentially expressed genes."""
         # - eventually put this "test set size"-test somewhere (ideally at __init__)
 
         if self.verbosity > 0:
@@ -374,7 +475,9 @@ class ProbesetSelector:  # (object)
                     + self.selection["pca"].loc[self.selection["pca"]["selection"]].index.tolist()
                 )
                 pca_prior_forest_genes = [g for g in np.unique(pca_prior_forest_genes).tolist() if g in self.genes]
-                save_pca_prior_forest = self.forest_results_paths["pca_prior_forest"] if self.save_dir else False
+                save_pca_prior_forest: Union[str, bool] = (
+                    self.forest_results_paths["pca_prior_forest"] if self.save_dir else False
+                )
                 self.forest_results["pca_prior_forest"] = ev.forest_classifications(
                     self.adata[:, self.genes],
                     pca_prior_forest_genes,
@@ -395,8 +498,10 @@ class ProbesetSelector:  # (object)
             if self.verbosity > 1:
                 print("\t Iteratively add genes from DE_baseline_forest...")
             if (not self.forest_results["forest"]) or (not self.forest_clfs["forest"]):
-                save_forest = self.forest_results_paths["forest"] if self.save_dir else False
-                self.forest_results["forest"], self.forest_clfs["forest"] = select.add_tree_genes_from_reference_trees(
+                save_forest: Union[str, bool] = self.forest_results_paths["forest"] if self.save_dir else False
+                assert isinstance(self.forest_results["pca_prior_forest"], list)
+                assert isinstance(self.forest_results["DE_baseline_forest"], list)
+                forest_results = select.add_tree_genes_from_reference_trees(
                     self.adata[:, self.genes],
                     self.forest_results["pca_prior_forest"],
                     self.forest_results["DE_baseline_forest"],
@@ -408,6 +513,11 @@ class ProbesetSelector:  # (object)
                     save=save_forest,
                     return_clfs=True,
                 )
+                assert isinstance(forest_results[0], list)
+                assert isinstance(forest_results[1], dict)
+                assert len(forest_results) == 2
+                self.forest_results["forest"] = forest_results[0]
+                self.forest_clfs["forest"] = forest_results[1]
                 if self.save_dir:
                     with open(self.forest_clfs_paths["forest"], "wb") as f:
                         pickle.dump(self.forest_clfs["forest"], f)
@@ -418,19 +528,22 @@ class ProbesetSelector:  # (object)
                     print("\t\t ...were already added.")
 
             if not isinstance(self.selection["forest"], pd.DataFrame):
+                assert isinstance(self.forest_results["forest"], list)
+                assert len(self.forest_results["forest"]) == 3
+                assert isinstance(self.forest_results["forest"][2], dict)
                 self.selection["forest"] = ev.forest_rank_table(self.forest_results["forest"][2])
                 if self.save_dir:
                     self.selection["forest"].to_csv(self.selections_paths["forest"])
 
     def _save_preselected_and_prior_genes(self):
-        """Save pre selected and prior genes to files"""
+        """Save pre selected and prior genes to files."""
         for s in ["pre", "prior"]:
             if self.selection[s] and not (f"selection_{s}" in self.loaded_attributes):
                 with open(self.selections_paths[s], "w") as file:
                     json.dump(self.selection[s], file)
 
-    def _prepare_marker_list(self):
-        """Process marker list if not loaded and save to file"""
+    def _prepare_marker_list(self) -> None:
+        """Process marker list if not loaded and save to file."""
         # Eventually reformat n_list_markers
         if self.marker_list and isinstance(self.n_list_markers, int):
             self.n_list_markers = {"adata_celltypes": self.n_list_markers, "list_celltypes": self.n_list_markers}
@@ -449,22 +562,22 @@ class ProbesetSelector:  # (object)
             if self.verbosity > 1:
                 self._check_number_of_markers_per_celltype()
 
-    def _filter_and_save_marker_list(self):
-        """Get marker list in shape if necessary
+    def _filter_and_save_marker_list(self) -> None:
+        """Get marker list in shape if necessary.
 
         The following steps are applied to the marker list:
         - Filter out markers that occur multiple times
         - Filter out genes based on penalties (self.marker_penalties)
             - Warn the user if markers don't occur in adata and can't be tested on penalties
 
-        Returns
-        -------
-        Modifies self.marker_list
+        Returns:
+            Modifies self.marker_list
         """
         # Filter genes that occur multiple times # TODO: if a genes occurs multiple times for the same celltype we
         # should actually keep it!...
         if self.verbosity > 0:
             print("Filter out genes in marker dict that occur multiple times.")
+        assert isinstance(self.marker_list, dict)
         self.marker_list = filter_marker_dict_by_shared_genes(self.marker_list, verbose=(self.verbosity > 1))
 
         # filter genes based on penalties
@@ -508,9 +621,11 @@ class ProbesetSelector:  # (object)
             with open(self.marker_list_path, "w") as file:
                 json.dump([self.marker_list, self.marker_list_filtered_out], file)
 
-    def _check_number_of_markers_per_celltype(self):
-        """Check if given markers per celltype are below the number of marker we want to add eventually"""
+    def _check_number_of_markers_per_celltype(self) -> None:
+        """Check if given markers per celltype are below the number of marker we want to add eventually."""
         low_gene_numbers = {}
+        assert isinstance(self.n_list_markers, dict)
+        assert isinstance(self.marker_list, dict)
         for ct, genes in self.marker_list.items():
             if (ct in self.adata_celltypes) and (len(genes) < self.n_list_markers["adata_celltypes"]):
                 low_gene_numbers[ct] = [len(genes), self.n_list_markers["adata_celltypes"]]
@@ -525,12 +640,13 @@ class ProbesetSelector:  # (object)
             for ct in low_gene_numbers:
                 print(f"\t {ct:<{max_length}}: {low_gene_numbers[ct][0]} (expected: {low_gene_numbers[ct][1]})")
 
-    def _marker_selection(self):
-        """Select genes from marker list based on correlations with already selected genes"""
+    def _marker_selection(self) -> None:
+        """Select genes from marker list based on correlations with already selected genes."""
         pre_pros = self._compile_probeset_list(with_markers_from_list=False)
 
         # Check which genes are already selected
         selected_genes = pre_pros.loc[pre_pros["selection"]].index.tolist()
+        assert isinstance(self.marker_list, dict)
         marker_list_genes = [g for _, genes in self.marker_list.items() for g in genes]
 
         # Compute correlation matrix for potentially selected markers and genes in the selection
@@ -550,6 +666,7 @@ class ProbesetSelector:  # (object)
                 # selected_markers = [g for g in selected_genes if (ct in probeset.loc[g,'celltypes_DE'].split(','))]
                 # max_rank_of_ct = prepros.loc[selected_genes,'marker_rank']
                 # Get correlated genes (they are considered as markers) and the necessary missing numbers of markers
+                assert isinstance(self.n_list_markers, dict)
                 marker, cor_genes = select.get_markers_and_correlated_genes(
                     cor_mat, genes, selected_genes, n_min=self.n_list_markers["adata_celltypes"], th=self.marker_corr_th
                 )
@@ -563,13 +680,25 @@ class ProbesetSelector:  # (object)
             else:
                 # just add the necessary number
                 marker = [g for g in selected_genes if g in genes] + [g for g in genes if not (g in selected_genes)]
+                assert isinstance(self.n_list_markers, dict)
                 marker = genes[: min([len(genes), self.n_list_markers["list_celltypes"]])]
                 self.selection["marker"].loc[marker, ["selection", "celltype"]] = [True, ct]
                 # print("MARKER SELECTION (list only): ",ct,marker)
                 # for i,g in enumerate(marker):
                 #    self.selection['marker'].loc[g,['selection','celltype','marker_rank']] = [True,ct,i+1]
 
-    def _compile_probeset_list(self, with_markers_from_list=True):
+    def _compile_probeset_list(self, with_markers_from_list: bool = True) -> pd.DataFrame:
+        """Compile the probeset list.
+
+        Args:
+            with_markers_from_list:
+                Indikate all markers from the marker list.
+
+        Returns:
+            pd.DataFrame:
+                compiled probeset list
+
+        """
 
         # How/where to add genes from marker_list that are not in adata? --> Oh btw, same with pre and prior selected
         # genes.
@@ -578,6 +707,7 @@ class ProbesetSelector:  # (object)
         index = self.genes.tolist()
         # Add marker genes that are not in adata
         if self.marker_list:
+            assert isinstance(self.marker_list, dict)
             index = np.unique(index + [g for ct, genes in self.marker_list.items() for g in genes]).tolist()
         # Add pre selected genes that are not in adata
         if self.selection["pre"]:
@@ -682,6 +812,7 @@ class ProbesetSelector:  # (object)
                     if is_marker
                 ]
                 gene_idxs += [g for g, cts in probeset["celltypes_marker"].str.split(",").items() if ct in cts]
+                assert isinstance(self.n_list_markers, dict)
                 n_min_markers = max([self.n_min_markers, self.n_list_markers["list_celltypes"]])
                 gene_idxs = gene_idxs[: min([len(gene_idxs), n_min_markers])]
                 # print("COMPILE LIST: ",ct, probeset.loc[gene_idxs])
@@ -701,11 +832,12 @@ class ProbesetSelector:  # (object)
                 else:
                     gene_idxs = []
                 gene_idxs += [g for g, cts in probeset["celltypes_marker"].str.split(",").items() if ct in cts]
-                n_min_markers = (
-                    max([self.n_min_markers, self.n_list_markers["adata_celltypes"]])
-                    if (ct in shared_cts)
-                    else self.n_min_markers
-                )
+                if ct in shared_cts:
+                    assert isinstance(self.n_list_markers, dict)
+                    n_min_markers = max([self.n_min_markers, self.n_list_markers["adata_celltypes"]])
+                else:
+                    assert isinstance(self.n_list_markers, int)
+                    n_min_markers = self.n_min_markers
                 gene_idxs = gene_idxs[: min([len(gene_idxs), n_min_markers])]
                 for i, g in enumerate(gene_idxs):
                     tmp_rank = np.nanmin([i + 1, probeset.loc[g]["marker_rank"]])
@@ -716,11 +848,13 @@ class ProbesetSelector:  # (object)
             for ct in self.celltypes:
                 # For the given cell type get all genes that are markers
                 gene_idxs = [g for g, cts in probeset["celltypes_DE"].str.split(",").items() if ct in cts]
-                n_min_markers = (
-                    max([self.n_min_markers, self.n_list_markers["adata_celltypes"]])
-                    if (ct in shared_cts)
-                    else self.n_min_markers
-                )
+                assert isinstance(self.n_list_markers, dict)
+                if ct in shared_cts:
+                    assert isinstance(self.n_list_markers, dict)
+                    n_min_markers = max([self.n_min_markers, self.n_list_markers["adata_celltypes"]])
+                else:
+                    assert isinstance(self.n_list_markers, int)
+                    n_min_markers = self.n_min_markers
                 gene_idxs = gene_idxs[: min([len(gene_idxs), n_min_markers])]
                 for i, g in enumerate(gene_idxs):
                     # Assign the rank according index of gene in gene_idxs in case there isn't already a lower rank
@@ -760,8 +894,8 @@ class ProbesetSelector:  # (object)
 
         return probeset[cols].copy()
 
-    def _prepare_mean_diff_constraint(self):
-        """Compute if mean difference constraint is fullfilled"""
+    def _prepare_mean_diff_constraint(self) -> None:
+        """Compute if mean difference constraint is fullfilled."""
         if self.min_mean_difference:
             # Check if already loaded
             if not ("mean_diff_constraint" in self.loaded_attributes):  # not 'mean_diff_constraint' in self.__dict__:
@@ -796,8 +930,8 @@ class ProbesetSelector:  # (object)
             self.DE_penalties += ["mean_diff_constraint"]
             self.m_penalties_adata_celltypes += ["mean_diff_constraint"]
 
-    def _get_hparams(self, new_params, subject="DE_selection"):
-        """Add missing default parameters to dictionary in case they are not given
+    def _get_hparams(self, new_params: dict, subject: str = "DE_selection") -> dict:
+        """Add missing default parameters to dictionary in case they are not given.
 
         Example: forest_hparams are given in the class init definition as {"n_trees": 50, "subsample": 1000,
         "test_subsample": 3000}. If the class is called with forest_hparams={"n_trees": 100} we would actually like
@@ -807,19 +941,20 @@ class ProbesetSelector:  # (object)
         Why we keep parameters in init is that you directly see values that can be set. The laternative would be to
         provide empty dicts in __init__.
 
-        Arguments
-        ---------
-        new_params: dict
-        subject: str
-            type of hyper parameters of interest.
+        Args:
+            new_params:
+            subject:
+                type of hyper parameters of interest.
 
-        Returns
-        -------
-        dict
+        Returns:
+            dict:
+                Hyperparameters
         """
         params = new_params.copy()
+
+        # Here we define default values
         if subject == "pca_selection":
-            defaults = {}
+            defaults: Dict[str, Any] = {}
         elif subject == "DE_selection":
             defaults = {"n": 3, "per_group": True}
         elif subject == "forest":
@@ -837,16 +972,24 @@ class ProbesetSelector:  # (object)
             defaults = {"n_max_per_it": 5, "performance_th": 0.02, "importance_th": 0}
         elif subject == "marker_selection":
             defaults = {"penalty_threshold": 1}
+
+        # Set parameters with default values if they weren't provided
         params.update({k: v for k, v in defaults.items() if k not in params})
+
+        # Force some parameters to certain defaults
+        if subject == "forest":
+            params["return_clfs"] = False  # this only applies to intermediate forests. Final forest clfs are returned.
+
         return params
 
-    def _initialize_file_paths(self):
-        """Initialize path variables and set up folder hierarchy
+    def _initialize_file_paths(self) -> None:
+        """Initialize path variables and set up folder hierarchy.
 
         Call this function in the initialization to define all file names that are eventually saved.
         This function also aims to have all possibly generated file names organised in one place.
         """
         # Create base directory
+        assert self.save_dir is not None
         Path(self.save_dir).mkdir(parents=True, exist_ok=True)
 
         # marker list
@@ -889,8 +1032,8 @@ class ProbesetSelector:  # (object)
         # Final probeset result
         self.probeset_path = os.path.join(self.save_dir, "probeset.csv")
 
-    def _load_from_disk(self):
-        """Load existing files into variables"""
+    def _load_from_disk(self) -> None:
+        """Load existing files into variables."""
 
         # marker list
         if os.path.exists(self.marker_list_path):
@@ -947,8 +1090,10 @@ class ProbesetSelector:  # (object)
     #     """Wrapper for tqdm with verbose condition"""
     #     return tqdm(iterator) if self.verbosity > 1 else iterator
 
-    def plot_histogram(self, x_axis_key="quantile_0.99", selections=["pca", "DE", "marker"]):
-        """Plot histograms of (basic) selections under given penalties
+    def plot_histogram(
+        self, x_axis_key: str = "quantile_0.99", selections: List[str] = ["pca", "DE", "marker"]
+    ) -> None:
+        """Plot histograms of (basic) selections under given penalties.
 
         The full selection procedure consists of steps partially based on basic score based selection procedures.
         This is an interactive plotting function to investigate if the constructed penalty kernels are well chosen.
@@ -956,20 +1101,25 @@ class ProbesetSelector:  # (object)
         (Atm I think I won't include the penalt kernels into the class therefore this plotting function simply plots
         histograms - a little boring but better than nothing)
 
-        Parameters
-        ----------
-        x_axis_key: str
-            adata.obs key that is used for the x axis of the plotted histograms
-        selections: str
-            Plot the histograms of selections based on
-            - 'pca' : pca loadings based selection of prior genes
-            - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
-            - 'marker' : genes from the marker list
+        Args:
+            x_axis_key:
+                Key of adata.obs that is used for the x axis of the plotted histograms.
+            selections:
+                Plot the histograms of selections based on
+                - 'pca' : pca loadings based selection of prior genes
+                - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
+                - 'marker' : genes from the marker list
         """
 
-    def plot_coexpression(self, selections=["pca", "DE", "marker"]):
-        """Plot gene correlations of basic selections
+    def plot_coexpression(self, selections: List[str] = ["pca", "DE", "marker"]) -> None:
+        """Plot gene correlations of basic selections.
 
+        Args:
+            selections:
+                Plot the coexpression of selections based on
+                - 'pca' : pca loadings based selection of prior genes
+                - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
+                - 'marker' : genes from the marker list
 
         # When plotting for some selection: Print where these genes are used
         # - pca -> first genes on which the forests are trained
@@ -978,20 +1128,19 @@ class ProbesetSelector:  # (object)
         #   for marker you could use max nr of markers (2?) from each celltype
         """
 
-    def plot_decision_genes(self, add_markers=True, tree_levels=[1]):
-        """Plot umaps of genes that are used for celltype classification
+    def plot_decision_genes(self, add_markers: bool = True, tree_levels: List[int] = [1]) -> None:
+        """Plot umaps of genes that are used for celltype classification.
 
-        Parameters
-        ----------
-        add_markers: bool
-            Also plot genes originating from selection from marker list
-        tree_levels: int
-            In case that genes were added not only based on the best performing tree we can plot more genes
-            TODO: maybe find a better way than this variable to control this
+        Args:
+            add_markers: bool
+                Also plot genes originating from selection from marker list
+            tree_levels: int
+                In case that genes were added not only based on the best performing tree we can plot more genes
+                TODO: maybe find a better way than this variable to control this
         """
 
-    def plot_tree_performances(self):
-        """Plot histograms of tree performances of DE baseline and final forests
+    def plot_tree_performances(self) -> None:
+        """Plot histograms of tree performances of DE baseline and final forests.
 
         This function is important as a sanity check to see if the tree performances show proper statistical
         behavior.
@@ -1002,7 +1151,7 @@ class ProbesetSelector:  # (object)
 
         """
 
-    def info(self):
+    def info(self) -> None:
         print("No info yet")
 
 
@@ -1010,22 +1159,11 @@ def select_reference_probesets(
     adata: sc.AnnData,
     n: int,
     genes_key: str = "highly_variable",
-    seeds: List[int] = [0],
+    seeds: List[int] = None,
     verbosity: int = 2,
     save_dir: Union[str, None] = None,
-    reference_selections: Dict[str, Dict] = {
-        "hvg_selection": {"flavor": "cell_ranger"},
-        "random_selection": {},
-        "pca_selection": {
-            "variance_scaled": False,
-            "absolute": True,
-            "n_pcs": 20,
-            "penalty_keys": [],
-            "corr_penalty": None,
-        },
-        "DE_selection": {"per_group": "True"},
-    },
-):
+    reference_selections: Dict[str, Dict] = None,
+) -> Dict[str, pd.DataFrame]:
     """Select reference probeset with basic selection methods.
 
     Args:
@@ -1043,31 +1181,58 @@ def select_reference_probesets(
         save_dir:
             Directory path where all results are saved.
         reference_selections:
+            Dictionary with the names of selection methods as keys and their parameters as dictionaries of their
+            parameters as values.
 
+    Returns:
+        Dictionary with one entry for each reference method. The key is the selection method name and the value is
+        a DataFrame with the same index as the adata and at least one boolean column called 'selection' representing
+        the selected probeset. For some methods, additional information is provided in other columns.
     """
+    seeds = [0] if seeds is None else seeds
+    default_reference_selections: Dict[str, Dict] = {
+        "hvg_selection": {"flavor": "cell_ranger"},
+        "random_selection": {},
+        "pca_selection": {
+            "variance_scaled": False,
+            "absolute": True,
+            "n_pcs": 20,
+            "penalty_keys": [],
+            "corr_penalty": None,
+        },
+        "DE_selection": {"per_group": "True"},
+    }
     reference_methods: Dict[str, Any] = {
         "pca_selection": select.select_pca_genes,
         "DE_selection": select.select_DE_genes,
         "random_selection": select.random_selection,
         "hvg_selection": select.select_highly_variable_features,
     }
-    available_ref_selections = ["hvg_selection", "random_selection", "DE_selection", "pca_selection"]
     reference_probesets = {}
+
+    if reference_selections is None:
+        reference_selections = default_reference_selections
+    assert reference_selections is not None
 
     # check whether to create more than one random set
     if "random_selection" in reference_selections and len(seeds) > 1:
         del reference_selections["random_selection"]
         for seed in seeds:
             reference_selections[f"random_selection_seed_{seed}"] = {"seed": seed}
-            available_ref_selections.append(f"random_selection_seed_{seed}")
+            default_reference_selections[f"random_selection_seed_{seed}"] = {"seed": seed}
 
     for selection_name in reference_selections:
-        if selection_name not in available_ref_selections:
+        if selection_name not in default_reference_selections:
             del reference_selections[selection_name]
             print(
-                f'Selecting {selection_name} genes as reference is not available. Options are "hvg_selection", "random_selection", "DE_selection", "pca_selection".'
+                f'Selecting {selection_name} genes as reference is not available. Options are "hvg_selection", '
+                f'"random_selection", "DE_selection", "pca_selection".'
             )
         else:
+            # check parameters
+            for param in default_reference_selections:
+                if param not in reference_selections[selection_name]:
+                    reference_selections[selection_name][param] = default_reference_selections[selection_name][param]
             if verbosity > 0:
                 print(f"Select reference {selection_name} genes...")
             reference_probesets[f"ref_{selection_name}"] = reference_methods[selection_name](

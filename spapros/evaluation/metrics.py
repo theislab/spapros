@@ -68,7 +68,7 @@ def get_metric_default_parameters() -> Dict[str, Dict]:
 # 3. summary: Simple final computations (per probe set) that aggregate evaluations to summary metrics
 
 
-def metric_shared_computations(adata: sc.AnnData = None, metric: str = None, parameters: Dict = {}) -> pd.DataFrame:
+def metric_shared_computations(adata: sc.AnnData, metric: str, parameters: Dict = {}) -> pd.DataFrame:
     """Calculate the metric compuations that can be shared between probe sets.
 
     Args:
@@ -1107,7 +1107,9 @@ def summary_metric_correlation_mean(cor_matrix: pd.DataFrame) -> float:
     return 1 - np.nanmean(cor_mat)
 
 
-def summary_metric_correlation_percentage(cor_matrix: pd.DataFrame, threshold: float = 0.8, tolerance: float = 0.05):
+def summary_metric_correlation_percentage(
+    cor_matrix: pd.DataFrame, threshold: float = 0.8, tolerance: float = 0.05
+) -> np.ndarray:
     """Calculate percentage of genes with max(abs(correlations)) < threshold.
 
     To make the metric more stable we smoothen the threshold with a linear transition from

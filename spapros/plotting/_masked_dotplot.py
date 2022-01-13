@@ -66,25 +66,28 @@ class _AxesSubplot(Axes, axes.SubplotBase, ABC):
 #    savefig_or_show("matrix", show=show, save=save)
 
 
-def fix_kwds(kwds_dict, **kwargs):
+def fix_kwds(kwds_dict: dict, **kwargs):
     """
     Given a dictionary of plot parameters (kwds_dict) and a dict of kwds,
     merge the parameters into a single consolidated dictionary to avoid
     argument duplication errors.
     If kwds_dict an kwargs have the same key, only the value in kwds_dict is kept.
-    Parameters
-    ----------
-    kwds_dict kwds_dictionary
-    kwargs
-    Returns
-    -------
-    kwds_dict merged with kwargs
-    Examples
-    --------
-    >>> def _example(**kwds):
-         return fix_kwds(kwds, key1="value1", key2="value2")
-    >>> example(key1="value10", key3="value3")
-        {'key1': 'value10, 'key2': 'value2', 'key3': 'value3'}
+
+    Args:
+        kwds_dict:
+            kwds_dictionary
+        kwargs
+
+    Returns:
+        kwds_dict merged with kwargs
+
+    Examples::
+
+        >>> def _example(**kwds):
+             return fix_kwds(kwds, key1="value1", key2="value2")
+        >>> example(key1="value10", key3="value3")
+            {'key1': 'value10, 'key2': 'value2', 'key3': 'value3'}
+
     """
 
     kwargs.update(kwds_dict)
@@ -340,60 +343,58 @@ class MaskedDotPlot(sc.pl.DotPlot):
         columns of the data frame are used to label the output image
         The dots are plotted using :func:`matplotlib.pyplot.scatter`. Thus, additional
         arguments can be passed.
-        Parameters
-        ----------
-        dot_size: Data frame containing the dot_size.
-        dot_color: Data frame containing the dot_color, should have the same,
-                shape, columns and indices as dot_size.
-        dot_ax: matplotlib axis
-        tree_genes_color
-            Color for tree genes.
-        marker_genes_color
-            Color for marker genes
-        non_adata_celltypes_color
-            Color for celltypes that don't occur in adata
-        cmap
-            String denoting matplotlib color map.
-        color_on
-            Options are 'dot' or 'square'. Be default the colomap is applied to
-            the color of the dot. Optionally, the colormap can be applied to an
-            square behind the dot, in which case the dot is transparent and only
-            the edge is shown.
-        y_label: String. Label for y axis
-        dot_max
-            If none, the maximum dot size is set to the maximum fraction value found
-            (e.g. 0.6). If given, the value should be a number between 0 and 1.
-            All fractions larger than dot_max are clipped to this value.
-        dot_min
-            If none, the minimum dot size is set to 0. If given,
-            the value should be a number between 0 and 1.
-            All fractions smaller than dot_min are clipped to this value.
-        standard_scale
-            Whether or not to standardize that dimension between 0 and 1,
-            meaning for each variable or group,
-            subtract the minimum and divide each by its maximum.
-        smallest_dot
-            If none, the smallest dot has size 0.
-            All expression levels with `dot_min` are plotted with this size.
-        edge_color
-            Dot edge color. When `color_on='dot'` the default is no edge. When
-            `color_on='square'`, edge color is white
-        edge_lw
-            Dot edge line width. When `color_on='dot'` the default is no edge. When
-            `color_on='square'`, line width = 1.5
-        grid
-            Adds a grid to the plot
-        x_paddding
-            Space between the plot left/right borders and the dots center. A unit
-            is the distance between the x ticks. Only applied when color_on = dot
-        y_paddding
-            Space between the plot top/bottom borders and the dots center. A unit is
-            the distance between the y ticks. Only applied when color_on = dot
-        kwds
-            Are passed to :func:`matplotlib.pyplot.scatter`.
-        Returns
-        -------
-        matplotlib.colors.Normalize, dot_min, dot_max
+        Args:
+            dot_size: Data frame containing the dot_size.
+            dot_color: Data frame containing the dot_color, should have the same,
+                    shape, columns and indices as dot_size.
+            dot_ax: matplotlib axis
+            tree_genes_color
+                Color for tree genes.
+            marker_genes_color
+                Color for marker genes
+            non_adata_celltypes_color
+                Color for celltypes that don't occur in adata
+            cmap
+                String denoting matplotlib color map.
+            color_on
+                Options are 'dot' or 'square'. Be default the colomap is applied to
+                the color of the dot. Optionally, the colormap can be applied to an
+                square behind the dot, in which case the dot is transparent and only
+                the edge is shown.
+            y_label: String. Label for y axis
+            dot_max
+                If none, the maximum dot size is set to the maximum fraction value found
+                (e.g. 0.6). If given, the value should be a number between 0 and 1.
+                All fractions larger than dot_max are clipped to this value.
+            dot_min
+                If none, the minimum dot size is set to 0. If given,
+                the value should be a number between 0 and 1.
+                All fractions smaller than dot_min are clipped to this value.
+            standard_scale
+                Whether or not to standardize that dimension between 0 and 1,
+                meaning for each variable or group,
+                subtract the minimum and divide each by its maximum.
+            smallest_dot
+                If none, the smallest dot has size 0.
+                All expression levels with `dot_min` are plotted with this size.
+            edge_color
+                Dot edge color. When `color_on='dot'` the default is no edge. When
+                `color_on='square'`, edge color is white
+            edge_lw
+                Dot edge line width. When `color_on='dot'` the default is no edge. When
+                `color_on='square'`, line width = 1.5
+            grid
+                Adds a grid to the plot
+            x_paddding
+                Space between the plot left/right borders and the dots center. A unit
+                is the distance between the x ticks. Only applied when color_on = dot
+            y_paddding
+                Space between the plot top/bottom borders and the dots center. A unit is
+                the distance between the y ticks. Only applied when color_on = dot
+            kwds
+                Are passed to :func:`matplotlib.pyplot.scatter`.
+        Returns:
+            matplotlib.colors.Normalize, dot_min, dot_max
         """
         assert dot_size.shape == dot_color.shape, (
             "please check that dot_size " "and dot_color dataframes have the same shape"

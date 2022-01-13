@@ -1,3 +1,5 @@
+from typing import Dict
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -503,10 +505,10 @@ def filter_marker_dict_by_penalty(marker_dict, adata, penalty_keys, threshold=1,
         return filtered_marker_dict
 
 
-def filter_marker_dict_by_shared_genes(marker_dict, verbose=True):
+def filter_marker_dict_by_shared_genes(marker_dict: dict, verbose=True) -> dict:
     """Filter out genes in marker_dict that occur multiple times"""
     genes = np.unique([g for _, gs in marker_dict.items() for g in gs])
-    gene_cts_dict = {g: [] for g in genes}
+    gene_cts_dict: Dict[str, list] = {g: [] for g in genes}
     for ct, gs in marker_dict.items():
         for g in gs:
             gene_cts_dict[g].append(ct)
@@ -560,3 +562,11 @@ def correlation_matrix(adata, genes="all", absolute=True, diag_zero=True, unknow
             cor_mat[g] = 0.0
 
     return cor_mat
+
+
+def marker_mean_difference(adata, celltype, ct_key, genes="all"):
+    if genes == "all":
+        genes = list(adata.var.index)
+    mean_ct = adata[adata.obs[ct_key] == celltype, genes].X.mean(axis=0)
+    mean_other = adata[~(adata.obs[ct_key] == celltype), genes].X.mean(axis=0)
+    return mean_ct - mean_other
