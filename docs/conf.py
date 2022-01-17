@@ -44,7 +44,7 @@ napoleon_use_param = True
 napoleon_custom_sections = [("Params", "Parameters")]
 todo_include_todos = False
 
-default_dark_mode = True
+default_dark_mode = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
