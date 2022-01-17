@@ -3,4 +3,4 @@ spapros.pl.MaskedDotPlot.getdoc
 
 .. currentmodule:: spapros
 
-.. automethod:: pl.MaskedDotPlot.getdoc
+.. automethod:: spapros.pl.MaskedDotPlot.getdoc

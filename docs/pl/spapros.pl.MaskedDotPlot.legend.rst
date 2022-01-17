@@ -3,4 +3,4 @@ spapros.pl.MaskedDotPlot.legend
 
 .. currentmodule:: spapros
 
-.. automethod:: pl.MaskedDotPlot.legend
+.. automethod:: spapros.pl.MaskedDotPlot.legend

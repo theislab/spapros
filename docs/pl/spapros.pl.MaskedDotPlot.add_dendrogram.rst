@@ -3,4 +3,4 @@ spapros.pl.MaskedDotPlot.add\_dendrogram
 
 .. currentmodule:: spapros
 
-.. automethod:: pl.MaskedDotPlot.add_dendrogram
+.. automethod:: spapros.pl.MaskedDotPlot.add_dendrogram

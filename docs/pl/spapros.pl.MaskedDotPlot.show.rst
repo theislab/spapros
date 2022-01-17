@@ -3,4 +3,4 @@ spapros.pl.MaskedDotPlot.show
 
 .. currentmodule:: spapros
 
-.. automethod:: pl.MaskedDotPlot.show
+.. automethod:: spapros.pl.MaskedDotPlot.show

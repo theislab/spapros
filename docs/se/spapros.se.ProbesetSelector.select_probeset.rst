@@ -3,4 +3,4 @@ spapros.se.ProbesetSelector.select\_probeset
 
 .. currentmodule:: spapros
 
-.. automethod:: se.ProbesetSelector.select_probeset
+.. automethod:: spapros.se.ProbesetSelector.select_probeset
