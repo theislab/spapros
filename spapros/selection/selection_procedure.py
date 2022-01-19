@@ -16,10 +16,10 @@ import scanpy as sc
 import spapros.evaluation.evaluation as ev
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
-from rich.progress import Progress
 from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
+
 
 # from tqdm.autonotebook import tqdm
 
@@ -68,39 +68,41 @@ class ProbesetSelector:  # (object)
         # TODO
 
     Args:
-        adata: AnnData
-            Data with log normalised counts in adata.X. The selection runs with an adata subsetted on fewer genes. It
+        adata:
+            Data with log normalised counts in `adata.X`. The selection runs with an adata subsetted on fewer genes. It
             might be helpful though to keep all genes (when a marker_list and penalties are provided). The genes can be
-            subsetted for selection via `genes_key`.
-        celltype_key: str
-            adata.obs key with celltypes annotations.
-        genes_key: str
-            adata.var key for preselected genes (typically 'highly_variable_genes')
-        n: integer (default = None)
-            Optionally set the number of finally selected genes. Note that when `n is None` we automatically infer `n`
-            as the minimal number of recommended genes. This includes all preselected genes, genes in the best decision
-            tree of each celltype, and the minimal number of identified and added markers defined by `n_min_markers` and
-            `n_list_markers`. Als note that setting `n` might change the gene ranking since the final added list_markers
-            are added based on the theoretically added genes without list_markers.
-        preselected_genes: list of strs
+            subsetted for selection via :attr:`genes_key`.
+        celltype_key:
+            Key in `adata.obs` with celltypes annotations.
+        genes_key:
+            Key in `adata.var` for preselected genes (typically 'highly_variable_genes').
+        n:
+            Optionally set the number of finally selected genes. Note that when `n is None` we automatically infer
+            :attr:`n` as the minimal number of recommended genes. This includes all preselected genes, genes in the
+            best decision tree of each celltype, and the minimal number of identified and added markers defined by
+            :attr:`n_min_markers` and :attr:`n_list_markers`. Als note that setting :attr:`n` might change the gene
+            ranking since the final added list_markers are added based on the theoretically added genes without
+            :attr`list_markers`.
+        preselected_genes:
             Pre selected genes (these will also have the highest ranking in the final list).
-        prior_genes: list of strs
+        prior_genes:
             Prioritized genes.
-        n_pca_genes: int
+        n_pca_genes:
             Optionally set the number of preselected pca genes. If not set or set <1, this step will be skipped.
-        min_mean_difference: float
+        min_mean_difference:
             Minimal difference of mean expression between at least one celltype and the background. In this test only
             cell types from `celltypes` are taken into account (also for the background). This minimal difference is
             applied as an additional binary penalty in pca_penalties, DE_penalties and m_penalties_adata_celltypes.
         n_min_markers:
-
-        celltypes: str or list of strs
+            The minimal number of identified and added markers.
+        celltypes:
             Cell types for which trees are trained.
-            - The probeset is optimised to be able to distinguish each of these cell types from all other cells occuring
-              in the dataset
-            - The pca selection is based on all cell types in the dataset (not only on `celltypes`)
-            - The optionally provided marker list can include additional cell types not listed in `celltypes` (and
-              adata.obs[celltype_key])
+
+                - The probeset is optimised to be able to distinguish each of these cell types from all other cells
+                  occuring in the dataset.
+                - The pca selection is based on all cell types in the dataset (not only on :attr:`celltypes`).
+                - The optionally provided marker list can include additional cell types not listed in :attr:`celltypes`
+                  (and `adata.obs[celltype_key])`.
         marker_list:
             List of marker genes. Can either be the a dictionary like this::
 
@@ -113,52 +115,59 @@ class ProbesetSelector:  # (object)
                 "celltype_4": ["PPBP", "SPARC", "CDKN2D"],
                 "celltype_8": ["NCR3"],
                 "celltype_9": ["NAPA-AS1"],
-            }
+                }
 
             Or the path to a csv-file containing the one column of markers for each celltype. The column names need to
-            be the celltype identifiers used in `adata_obs['::attr::celltype_key']`.
-        n_list_markers: int or dict
+            be the celltype identifiers used in `adata_obs[:attr:celltype_key]`.
+        n_list_markers:
             Minimal number of markers per celltype that are at least selected. Selected means either selecting genes
             from the marker list or having correlated genes in the already selected panel. (Set the correlation
-            threshold with marker_selection_hparams['penalty_threshold']).
+            threshold with `marker_selection_hparams['penalty_threshold'])`.
             If you want to select a different number of markers for celltypes in adata and celltypes only in the marker
-            list, set e.g.: n_list_markers = {'adata_celltypes':2,'list_celltypes':3}
-        marker_corr_th: float
-
-        pca_penalties: str, list or dict of strs
-
+            list, set e.g.: `n_list_markers = {'adata_celltypes':2,'list_celltypes':3}`.
+        marker_corr_th:
+            Minimal correlation to consider a gene as captures.
+        pca_penalties:
+            List of keys for columns in adata.var containing penalty factors that are multiplied with the scores for
+            PCA based gene selection.
         DE_penalties:
-
+            List of keys for columns in adata.var containing penalty factors that are multiplied with the scores for DE
+            based gene selection.
         m_penalties_adata_celltypes:
-
+            List of keys for columns in adata.var containing penalty factors to filter out marker genes if a gene's
+            penalty < threshold for celltypes in adata.
         m_penalties_list_celltypes:
-
+            List of keys for columns in adata.var containing penalty factors to filter out marker genes if a gene's
+            penalty < threshold for celltypes not in adata.
+            Filter marker dict by penalties for markers of celltypes not in adata
         pca_selection_hparams:
-
+            Dictionary with hyperparameters for the PCA based gene selection.
         DE_selection_hparams
-
+            Dictionary with hyperparameters for the DE based gene selection.
         forest_hparams
-
+            Dictionary with hyperparameters for the forest based gene selection.
         forest_DE_baseline_hparams:
-
+            Dictionary with hyperparameters for adding DE genes to decision trees.
         add_forest_genes_hparams:
-
+            Dictionary with hyperparameters for adding marker genes to decision trees.
         marker_selection_hparams:
-
+            Dictionary with hyperparameters (so far only the threshold) for the penalty filtering of marker genes if a
+            gene's penalty < threshold.
         verbosity:
-
+            Verbosity level.
         seed:
-
-        save_dir: str
+            Random number seed.
+        save_dir:
             Directory path where all results are saved and loaded from if results already exist.
             Note for the case that results already exist:
-            - if self.select_probeset() was fully run through and all results exist: then the initialization arguments
-              don't matter much
-            - if only partial results were generated, make sure that the initialization arguments are the same as
-              before!
+
+                - if self.select_probeset() was fully run through and all results exist: then the initialization arguments
+                  don't matter much
+                - if only partial results were generated, make sure that the initialization arguments are the same as
+                  before!
 
         n_jobs:
-
+            Number of cpus for multi processing computations. Set to -1 to use all available cpus.
         marker_penalties: str, list or dict of strs
             #TODO: add parameter or remove docstring?
     """
@@ -324,19 +333,18 @@ class ProbesetSelector:  # (object)
 
     def select_probeset(self) -> None:
         """Run full selection procedure."""
-        with Progress(disable=self.disable_pbars) as progress:
-            if self.n_pca_genes and (self.n_pca_genes > 0):
-                self._pca_selection(progress)
-            self._forest_DE_baseline_selection(progress)
-            self._forest_selection()
-            if self.marker_list:
-                self._marker_selection()
-            self.probeset = self._compile_probeset_list()
-            if self.save_dir:
-                self.probeset.to_csv(self.probeset_path)
+        if self.n_pca_genes and (self.n_pca_genes > 0):
+            self._pca_selection()
+        self._forest_DE_baseline_selection()
+        self._forest_selection()
+        if self.marker_list:
+            self._marker_selection()
+        self.probeset = self._compile_probeset_list()
+        if self.save_dir:
+            self.probeset.to_csv(self.probeset_path)
         # TODO: we haven't included the checks to load the probeset if it already exists
 
-    def _pca_selection(self, progress: Progress) -> None:
+    def _pca_selection(self) -> None:
         """Select genes based on pca loadings"""
         if self.selection["pca"] is None:
             if self.verbosity > 0:
@@ -346,7 +354,6 @@ class ProbesetSelector:  # (object)
                 self.n_pca_genes,
                 penalty_keys=self.pca_penalties,
                 inplace=False,
-                progress=progress,
                 **self.pca_selection_hparams,
             )
             assert self.selection["pca"] is not None
@@ -359,7 +366,7 @@ class ProbesetSelector:  # (object)
             if self.verbosity > 0:
                 print("PCA genes already selected...")
 
-    def _forest_DE_baseline_selection(self, progress: Progress) -> None:
+    def _forest_DE_baseline_selection(self) -> None:
         """Select genes based on forests and differentially expressed genes."""
         if self.verbosity > 0:
             print("Select genes based on differential expression and forests as baseline for the final forests...")
@@ -376,7 +383,6 @@ class ProbesetSelector:  # (object)
                 reference="rest",
                 rankby_abs=False,
                 inplace=False,
-                progress=progress,
             )
             if self.verbosity > 1:
                 print("\t\t ...finished.")
@@ -566,9 +572,10 @@ class ProbesetSelector:  # (object)
         """Get marker list in shape if necessary.
 
         The following steps are applied to the marker list:
+
         - Filter out markers that occur multiple times
         - Filter out genes based on penalties (self.marker_penalties)
-            - Warn the user if markers don't occur in adata and can't be tested on penalties
+        - Warn the user if markers don't occur in adata and can't be tested on penalties
 
         Returns:
             Modifies self.marker_list
@@ -585,13 +592,13 @@ class ProbesetSelector:  # (object)
         marker_list_other_cts = {
             ct: genes for ct, genes in self.marker_list.items() if not (ct in self.adata_celltypes)
         }
-        m_list_adata_cts_dropped = {}
-        m_list_other_cts_dropped = {}
+        m_list_adata_cts_dropped: dict = {}
+        m_list_other_cts_dropped: dict = {}
         if self.m_penalties_adata_celltypes:
             if marker_list_adata_cts:
                 if self.verbosity > 0:
                     print("Filter marker dict by penalties for markers of celltypes in adata")
-                marker_list_adata_cts, m_list_adata_cts_dropped = filter_marker_dict_by_penalty(
+                filtered_marker_tuple = filter_marker_dict_by_penalty(
                     marker_list_adata_cts,
                     self.adata,
                     self.m_penalties_adata_celltypes,
@@ -599,11 +606,13 @@ class ProbesetSelector:  # (object)
                     verbose=(self.verbosity > 1),
                     return_filtered=True,
                 )
+                assert isinstance(filtered_marker_tuple, tuple)
+                marker_list_adata_cts, m_list_adata_cts_dropped = filtered_marker_tuple
         if self.m_penalties_list_celltypes:
             if marker_list_other_cts:
                 if self.verbosity > 0:
                     print("Filter marker dict by penalties for markers of celltypes not in adata")
-                marker_list_other_cts, m_list_other_cts_dropped = filter_marker_dict_by_penalty(
+                filtered_other_marker_tuple = filter_marker_dict_by_penalty(
                     marker_list_other_cts,
                     self.adata,
                     self.m_penalties_list_celltypes,
@@ -611,6 +620,8 @@ class ProbesetSelector:  # (object)
                     verbose=(self.verbosity > 1),
                     return_filtered=True,
                 )
+                assert isinstance(filtered_other_marker_tuple, tuple)
+                marker_list_other_cts, m_list_other_cts_dropped = filtered_other_marker_tuple
 
         # Combine differently penalized markers to filtered marker dict and out filtered marker dict
         self.marker_list = dict(marker_list_adata_cts, **marker_list_other_cts)
@@ -1106,9 +1117,10 @@ class ProbesetSelector:  # (object)
                 Key of adata.obs that is used for the x axis of the plotted histograms.
             selections:
                 Plot the histograms of selections based on
-                - 'pca' : pca loadings based selection of prior genes
-                - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
-                - 'marker' : genes from the marker list
+
+                    - 'pca' : pca loadings based selection of prior genes
+                    - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
+                    - 'marker' : genes from the marker list
         """
 
     def plot_coexpression(self, selections: List[str] = ["pca", "DE", "marker"]) -> None:
@@ -1117,9 +1129,10 @@ class ProbesetSelector:  # (object)
         Args:
             selections:
                 Plot the coexpression of selections based on
-                - 'pca' : pca loadings based selection of prior genes
-                - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
-                - 'marker' : genes from the marker list
+
+                    - 'pca' : pca loadings based selection of prior genes
+                    - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
+                    - 'marker' : genes from the marker list
 
         # When plotting for some selection: Print where these genes are used
         # - pca -> first genes on which the forests are trained

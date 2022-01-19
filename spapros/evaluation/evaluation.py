@@ -217,7 +217,7 @@ class ProbesetEvaluator:
                     }
 
             This overwrites the arguments :attr:`ns` and :attr:`AUC_borders` of the nmi metric. See
-            :meth:`spapros.evaluation.get_metric_default_parameters()` for the default values of each metric
+            :meth:`spapros.evaluation.metrics.get_metric_default_parameters()` for the default values of each metric
         marker_list:
             Dictionary containing celltypes as keys and the respective markers as a list as values.
         reference_name:
@@ -1156,8 +1156,6 @@ def single_forest_classifications(
 
     Returns:
 
-    Note in all output files trees are ordered according macro f1 performance.
-
         summary_metric: pd.DataFrame
             macro f1 scores for each celltype's trees (Ordered according best performing trees)
         ct_specific_metric: dict of pd.DataFrame
@@ -1167,6 +1165,9 @@ def single_forest_classifications(
 
         if return_clfs:
             return [summary_metric,ct_specific_metric,importances], forests
+
+    Note:
+        In all output files trees are ordered according macro f1 performance.
 
     """
 

@@ -945,7 +945,9 @@ def marker_correlation_matrix(adata: sc.AnnData, marker_list: Union[str, Dict]) 
 
     # Dataframes for calculations and potential min mean expression filters
     df = full_cor_mat.loc[markers]
-    df_mean = gene_means(adata, genes=markers, key="mean", inplace=False).loc[markers]
+    df_mean_tmp = gene_means(adata, genes=markers, key="mean", inplace=False)
+    assert isinstance(df_mean_tmp, pd.DataFrame)
+    df_mean = df_mean_tmp.loc[markers]
     # TODO: we might need to calculate the means at a previous point in case adata.X was scaled
     #      (or we just say this metric only makes sense on unscaled data if a min_mean is given)
 
