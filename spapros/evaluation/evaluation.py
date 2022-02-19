@@ -7,6 +7,7 @@ from typing import Any
 from typing import Dict
 from typing import Iterable
 from typing import List
+from typing import Optional
 from typing import Sequence
 from typing import Tuple
 from typing import Union
@@ -17,6 +18,7 @@ import pandas as pd
 import scanpy as sc
 import scipy
 import spapros.plotting as pl
+from rich.progress import Progress
 from sklearn import tree
 from sklearn.metrics import classification_report
 from spapros.evaluation.metrics import get_metric_default_parameters
@@ -44,33 +46,34 @@ class ProbesetEvaluator:
     """General class for probe set evaluation, comparison, plotting.
 
     Attributes:
-        adata (sc.AnnData):
+        adata:
             An already preprocessed annotated data matrix. Typically we use log normalised data.
-        celltype_key (typing.Union[str, List[str]]):
+        celltype_key:
             The adata.obs key for cell type annotations or list of keys.
-        dir (str, optional):
+        dir:
             Directory where probeset results are saved.
-        scheme (str):
+        scheme:
             Defines which metrics are calculated
-        marker_list (dict(str, list(str)):
+        marker_list:
             Celltypes and the respective markers.
-        metrics_params (dict(dict)):
+        metrics_params:
             Parameters for the calculation of each metric. Either default or user specified.
-        metrics (list(str)):
+        metrics:
             The metrics to be calculated. Either custom of defined according to :attr:`scheme`.
-        ref_name (str):
+        ref_name:
             Name of reference dataset.
-        ref_dir (str):
+        ref_dir:
             Directory where reference results are saved.
-        verbosity (int):
+        verbosity:
             Verbosity level.
-        n_jobs (int):
+        n_jobs:
             Number of cpus for multi processing computations. Set to -1 to use all available cpus.
-        shared_results (dict(str, Any)):
+            Verbosity level.
+        shared_results:
             Results of shared metric computations.
-        pre_results (dict(str, Any)):
+        pre_results:
             Results of metric pre computations.
-        results dict(str, Any)):
+        results:
             Results of probe set specific metric computations.
 
     Notes:
@@ -182,23 +185,21 @@ class ProbesetEvaluator:
     Args:
         adata:
             An already preprocessed annotated data matrix. Typically we use log normalised data.
-        celltype_key (typing.Union[str, List[str]]):
+        celltype_key:
             The adata.obs key for cell type annotations. Provide a list of keys to calculate the according metrics on
             multiple keys.
         results_dir:
             Directory where probeset results are saved. Defaults to `./probeset_evaluation/`. Set to `None` if you don't
             want to save results. When initializing the class we also check for existing results.
             Note if
-            TODO: Decide: saving results is nice since we don't need to keep them in memory. On the other hand the
-                stuff doesn't need that much memory I think. Even if you have 100 probesets, it's not that much
-        scheme: Defines which metrics are calculated
+        scheme:
+            Defines which metrics are calculated
 
-            - "quick" : knn, forest classification, marker correlation (if marker list given), gene correlation
-            - "full" : nmi, knn, forest classification, marker correlation (if marker list given), gene correlation
-            - "custom": define metrics of intereset in :attr:`metrics`
+                - "quick" : knn, forest classification, marker correlation (if marker list given), gene correlation
+                - "full" : nmi, knn, forest classification, marker correlation (if marker list given), gene correlation
+                - "custom": define metrics of intereset in :attr:`metrics`
 
-        metrics: Define which metrics are calculated. This is set automatically if :attr:`scheme != "custom"`.
-            Supported are
+        metrics: Define which metrics are calculated. This is set automatically if :attr:`scheme != "custom"`. Supported are:
 
             - "nmi"
             - "knn"
@@ -206,18 +207,17 @@ class ProbesetEvaluator:
             - "marker_corr"
             - "gene_corr"
 
-        metrics_params:
-            Provide parameters for the calculation of each metric. E.g.::
+        metrics_params: Provide parameters for the calculation of each metric. E.g.::
 
-                metrics_params = {
-                    "nmi":{
-                        "ns": [5,20],
-                        "AUC_borders": [[7, 14], [15, 20]],
-                        }
-                    }
+            metrics_params = {
+                "nmi":{
+                    "ns": [5,20],
+                    "AUC_borders": [[7, 14], [15, 20]],
+                }
+            }
 
             This overwrites the arguments :attr:`ns` and :attr:`AUC_borders` of the nmi metric. See
-            :meth:`spapros.evaluation.metrics.get_metric_default_parameters()` for the default values of each metric
+            :meth:`get_metric_default_parameters()` for the default values of each metric
         marker_list:
             Dictionary containing celltypes as keys and the respective markers as a list as values.
         reference_name:
@@ -231,6 +231,10 @@ class ProbesetEvaluator:
             Number of cpus for multi processing computations. Set to -1 to use all available cpus.
     """
 
+    # TODO:
+    #  Decide: saving results is nice since we don't need to keep them in memory. On the other hand the
+    #  stuff doesn't need that much memory I think. Even if you have 100 probesets, it's not that much
+
     def __init__(
         self,
         adata: sc.AnnData,
@@ -239,7 +243,7 @@ class ProbesetEvaluator:
         scheme: str = "quick",
         metrics=None,
         metrics_params: Dict[str, Dict] = {},
-        marker_list: Dict[str, List[str]] = None,
+        marker_list: Union[str, Dict[str, List[str]]] = None,
         reference_name: str = "adata1",
         reference_dir: str = None,
         verbosity: int = 1,
@@ -471,7 +475,8 @@ class ProbesetEvaluator:
         """Set metric parameters to default values and overwrite defaults in case user defined param is given.
 
         Args:
-            new_params: User specified parameters for the calculation of the metrics.
+            new_params:
+                User specified parameters for the calculation of the metrics.
         """
         params = get_metric_default_parameters()
         for metric in params:
@@ -607,12 +612,12 @@ class ProbesetEvaluator:
                 .. list-table::
                     :header-rows: 1
 
-                * - selection metric
-                  - plotting function
-                * - forest_clfs
-                  - :meth:`confusion_heatmap`
-                * - gene_corr
-                  - :meth:`correlation_matrix`
+                    * - selection metric
+                      - plotting function
+                    * - forest_clfs
+                      - :meth:`confusion_heatmap`
+                    * - gene_corr
+                      - :meth:`correlation_matrix`
         """
 
         if set_ids == "all":
@@ -693,16 +698,20 @@ def plot_nmis(
 ) -> plt.Figure:
     """Plot the distribution of NMI values.
 
-    Custom legend: e.g. legend = [custom_lines,line_names]
+    Notes:
 
-    custom_lines = [Line2D([0], [0], color='red',    lw=linewidth),
-                    Line2D([0], [0], color='orange', lw=linewidth),
-                    Line2D([0], [0], color='green',  lw=linewidth),
-                    Line2D([0], [0], color='blue',   lw=linewidth),
-                    Line2D([0], [0], color='cyan',   lw=linewidth),
-                    Line2D([0], [0], color='black',  lw=linewidth),
-                    ]
-    line_names = ["dropout", "dropout 1 donor", "pca", "marker", "random"]
+        Custom legend: e.g. ``legend = [custom_lines,line_names]``
+
+        Custom lines: eg::
+
+            custom_lines = [Line2D([0], [0], color='red',    lw=linewidth),
+                            Line2D([0], [0], color='orange', lw=linewidth),
+                            Line2D([0], [0], color='green',  lw=linewidth),
+                            Line2D([0], [0], color='blue',   lw=linewidth),
+                            Line2D([0], [0], color='cyan',   lw=linewidth),
+                            Line2D([0], [0], color='black',  lw=linewidth),
+                        ]
+            line_names = ["dropout", "dropout 1 donor", "pca", "marker", "random"]
 
     Args:
         results_path:
@@ -831,9 +840,9 @@ def get_celltypes_with_too_small_test_sets(
         ct_key:
             Column of `adata.obs` with cell type annotation.
         min_test_n:
-            Minimal number of samples in each celltype's test set
+            Minimal number of samples in each celltype's test set.
         split_kwargs:
-            Keyword arguments for ev.split_train_test_sets()
+            Keyword arguments for ev.split_train_test_sets().
 
     Returns:
         cts_below_min: list:
@@ -1100,6 +1109,8 @@ def single_forest_classifications(
     return_clfs: bool = False,
     n_jobs: int = 1,
     backend: str = "loky",
+    progress: Optional[Progress] = None,
+    task: Optional[str] = None,
 ) -> Union[
     Tuple[List[Union[Union[pd.DataFrame, dict], Any]], dict],  # return_clfs = True
     Tuple[pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]],
@@ -1153,6 +1164,11 @@ def single_forest_classifications(
             Multiprocessing number of processes.
         backend:
             Which backend to use for multiprocessing. See class `joblib.Parallel` for valid options.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        task:
+            Description of progress task.
+
 
     Returns:
 
@@ -1171,13 +1187,13 @@ def single_forest_classifications(
 
     """
 
-    if verbose:
-        try:
-            from tqdm.notebook import tqdm
-        except ImportError:
-            from tqdm import tqdm_notebook as tqdm
-    else:
-        tqdm = None
+    # if verbose:
+    #     try:
+    #         from tqdm.notebook import tqdm
+    #     except ImportError:
+    #         from tqdm import tqdm_notebook as tqdm
+    # else:
+    #     tqdm = None
 
     n_jobs = _get_n_cores(n_jobs)
 
@@ -1240,7 +1256,10 @@ def single_forest_classifications(
     np.random.seed(seed=seed)
     seeds = np.random.choice(100000, n_trees, replace=False)
     # Compute trees (for each tree index we parallelize over celltypes)
-    for i in tqdm(range(n_trees), desc="Train trees") if tqdm else range(n_trees):
+    # for i in tqdm(range(n_trees), desc="Train trees") if tqdm else range(n_trees):
+    if progress and task:
+        forest_task = progress.add_task(task, total=n_trees)
+    for i in range(n_trees):
         X_train, y_train, cts_train = uniform_samples(
             a, ct_key, set_key="train_set", subsample=subsample, seed=seeds[i], celltypes=ref_celltypes
         )
@@ -1258,6 +1277,8 @@ def single_forest_classifications(
         )(X_train=X_train, y_train=y_train, seed=seeds[i], max_depth=max_depth, masks=masks)
         for ct in celltypes:
             ct_trees[ct].append(ct_trees_i[ct])
+        if progress:
+            progress.advance(forest_task)
     # Get feature importances
     importances = {
         ct: pd.DataFrame(index=a.var.index, columns=[str(i) for i in range(n_trees)], dtype="float64")
@@ -1438,7 +1459,8 @@ def outlier_mask(
         df:
         n_stds:
         min_outlier_dif:
-        min_score:"""
+        min_score:
+    """
     crit1 = df < (df.mean(axis=0) - (n_stds * df.std(axis=0))).values[np.newaxis, :]
     crit2 = df < (df.mean(axis=0) - min_outlier_dif).values[np.newaxis, :]
     crit3 = df < min_score
@@ -1474,6 +1496,8 @@ def forest_classifications(
     verbosity: int = 1,
     save: Union[str, bool] = False,
     outlier_kwargs: dict = {},
+    progress: Optional[Progress] = None,
+    task: Optional[str] = None,
     **forest_kwargs,
 ) -> Union[
     list,  # with_clfs=False
@@ -1490,25 +1514,33 @@ def forest_classifications(
         max_n_forests:
             Number of best trees considered as a tree group. Including the primary tree.
         verbosity:
+            Verbosity level.
         save:
         outlier_kwargs:
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        task:
+            Description of progress task.
         **forest_kwargs:
 
     """
 
-    if verbosity > 0:
-        try:
-            from tqdm.notebook import tqdm
-        except ImportError:
-            from tqdm import tqdm_notebook as tqdm
-    else:
-        tqdm = None
+    # if verbosity > 0:
+    #     try:
+    #         from tqdm.notebook import tqdm
+    #     except ImportError:
+    #         from tqdm import tqdm_notebook as tqdm
+    # else:
+    #     tqdm = None
 
     ct_spec_ref = None
     res = None
     with_clfs = "return_clfs" in forest_kwargs and forest_kwargs["return_clfs"]
 
-    for _ in tqdm(range(max_n_forests), desc="Train hierarchical trees") if tqdm else range(max_n_forests):
+    # for _ in tqdm(range(max_n_forests), desc="Train hierarchical trees") if tqdm else range(max_n_forests):
+    if progress and task:
+        forest_task = progress.add_task(task, total=max_n_forests)
+    for _ in range(max_n_forests):
         new_res = single_forest_classifications(
             adata, selection, ct_spec_ref=ct_spec_ref, verbose=verbosity > 1, save=False, **forest_kwargs
         )
@@ -1519,6 +1551,8 @@ def forest_classifications(
             res = combine_tree_results(res, new_res, with_clfs=with_clfs)
         specs = res[0][1] if with_clfs else res[1]
         ct_spec_ref = get_outlier_reference_celltypes(specs, **outlier_kwargs)
+        if progress:
+            progress.advance(forest_task)
 
     if save:
         assert isinstance(save, str)

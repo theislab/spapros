@@ -45,14 +45,21 @@ extensions = [
     *[p.stem for p in (HERE / "_extensions").glob("*.py")],
 ]
 
+
 # nbsphinx setup (for tutorial gallery)
+
+sphinx_gallery_conf = {
+    "thumbnail_size": (400, 300),
+}
+
+nbsphinx_timeout = -1
 
 # html_show_sourcelink = True
 # html_sourcelink_suffix = ""
 # suppress_warnings = [
 #     'nbsphinx',
 # ]
-# nbsphinx_execute = "never"
+nbsphinx_execute = "never"
 
 autosummary_generate = True
 autodoc_member_order = "groupwise"

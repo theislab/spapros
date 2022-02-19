@@ -1,10 +1,10 @@
-from typing import Dict, Optional
-from typing import Optional
+from typing import Callable
+from typing import Dict
 from typing import List
 from typing import Literal
-from typing import Union
+from typing import Optional
 from typing import Tuple
-from typing import Callable
+from typing import Union
 
 import matplotlib.pyplot
 import matplotlib.pyplot as plt
@@ -14,7 +14,6 @@ import scanpy as sc
 import scipy
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
-from numpy import matrix
 from scipy.sparse import issparse
 from sklearn.utils import sparsefuncs
 
@@ -115,7 +114,7 @@ def preprocess_adata(
     Returns:
         sc.Anndata (if not inplace):
             AnnData with preprocessed AnnData.X.
-        """
+    """
     a = adata if inplace else adata.copy()
 
     all_options = ["norm", "log1p", "scale"]
@@ -142,11 +141,7 @@ def preprocess_adata(
 
 
 def get_expression_quantile(
-    adata: sc.AnnData,
-    q: float = 0.9,
-    normalise: bool = True,
-    log1p: bool = True,
-    zeros_to_nan: bool = False
+    adata: sc.AnnData, q: float = 0.9, normalise: bool = True, log1p: bool = True, zeros_to_nan: bool = False
 ) -> None:
     """Compute each genes q'th quantile on normalised (and log1p) data.
 
@@ -181,10 +176,7 @@ def get_expression_quantile(
 
 
 def gene_means(
-    adata: sc.AnnData,
-    genes: Union[Literal["all"], List[str]] = "all",
-    key: str = "mean",
-    inplace: bool = False
+    adata: sc.AnnData, genes: Union[Literal["all"], List[str]] = "all", key: str = "mean", inplace: bool = False
 ) -> Optional[pd.DataFrame]:
     """Compute each gene's mean expression.
 
@@ -215,11 +207,8 @@ def gene_means(
 
 
 def gene_stds(
-    adata: sc.AnnData,
-    genes: Union[Literal["all"], List[str]] = "all",
-    key: str = "std",
-    inplace: bool = False
-) -> Optional[pd.DatFrame]:
+    adata: sc.AnnData, genes: Union[Literal["all"], List[str]] = "all", key: str = "std", inplace: bool = False
+) -> Optional[pd.DataFrame]:
     """Compute each gene's expression standard deviation.
 
     Args:
@@ -283,7 +272,7 @@ def coexpression_plot(
     adata: sc.AnnData,
     figsize: Tuple[float, float] = (5, 5),
     colorbar: Optional[matplotlib.pyplot.colorbar] = None,
-    return_mean_abs: bool = False
+    return_mean_abs: bool = False,
 ) -> Optional[np.ndarray]:
     """Creates a coexpression plot.
 
@@ -328,7 +317,7 @@ def transfered_expression_thresholds(
     tolerance: float = 0.05,
     target_sum: float = 10000,
     output_path: str = "./results/",
-    plot: bool = True
+    plot: bool = True,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """Transfer expression thresholds between different normalisations.
 
@@ -427,9 +416,7 @@ def transfered_expression_thresholds(
 
 
 def plateau_penalty_kernel(
-    var: Union[float, List[float]],
-    x_min: np.ndarray = None,
-    x_max: np.ndarray = None
+    var: Union[float, List[float]], x_min: np.ndarray = None, x_max: np.ndarray = None
 ) -> Callable:
     """Return penalty function.
 
@@ -501,9 +488,7 @@ def plateau_penalty_kernel(
 
 
 def dict_to_table(
-    marker_dict: Union[dict, pd.DataFrame],
-    genes_as_index: bool = False,
-    reverse: bool = False
+    marker_dict: Union[dict, pd.DataFrame], genes_as_index: bool = False, reverse: bool = False
 ) -> Union[pd.DataFrame, dict]:
     """Convert marker dictonary to pandas dataframe or reverse.
 
@@ -514,7 +499,7 @@ def dict_to_table(
 
     Args:
         marker_dict:
-            Dict of the form `{'celltype':list of markers of celltype}`. A DataFrame can be provided to reverse the
+            Dictionary of the form `{'celltype':list of markers of celltype}`. A DataFrame can be provided to reverse the
             transformation (:attr:`reverse`=True).
         genes_as_index:
             Wether to have genes in the dataframe index and one column for celltype annotations or genes listed in
@@ -552,13 +537,13 @@ def filter_marker_dict_by_penalty(
     penalty_keys: Union[str, List[str]],
     threshold: float = 1,
     verbose: bool = True,
-    return_filtered: bool = False
+    return_filtered: bool = False,
 ) -> Union[Dict[str, List[str]], Tuple[Dict[str, List[str]], Dict[str, List[str]]]]:
     """Filter out genes in marker_dict if a gene's penalty < :attr:`threshold`.
 
     Args:
         marker_dict:
-            Dict of the form `{'celltype':list of markers of celltype}`.
+            Dictionary of the form `{'celltype':list of markers of celltype}`.
         adata:
             Anndata with data in :attr:`adata.X` and penalty values in :attr:`adata.var`.
         penalty_keys:
@@ -605,15 +590,12 @@ def filter_marker_dict_by_penalty(
         return filtered_marker_dict
 
 
-def filter_marker_dict_by_shared_genes(
-    marker_dict: Dict[str, List[str]],
-    verbose: bool = True
-) -> Dict[str, List[str]]:
+def filter_marker_dict_by_shared_genes(marker_dict: Dict[str, List[str]], verbose: bool = True) -> Dict[str, List[str]]:
     """Filter out genes in marker_dict that occur multiple times.
 
     Args:
         marker_dict:
-            Dict of the form `{'celltype':list of markers of celltype}`.
+            Dictionary of the form `{'celltype':list of markers of celltype}`.
         verbose:
             Optionally print infos.
 
@@ -644,7 +626,7 @@ def correlation_matrix(
     genes: Union[Literal["all"], List[str]] = "all",
     absolute: bool = True,
     diag_zero: bool = True,
-    unknown_genes_to_zero: bool = False
+    unknown_genes_to_zero: bool = False,
 ) -> pd.DataFrame:
     """Calculate gene correlation matrix.
 
@@ -690,10 +672,7 @@ def correlation_matrix(
 
 
 def marker_mean_difference(
-    adata: sc.AnnData,
-    celltype: str,
-    ct_key: str,
-    genes: Union[Literal["all"], List[str]] = "all"
+    adata: sc.AnnData, celltype: str, ct_key: str, genes: Union[Literal["all"], List[str]] = "all"
 ) -> np.ndarray:
     """Calculate the difference of the mean expression between the genes of one celltype.
 

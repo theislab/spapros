@@ -1,10 +1,11 @@
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import Iterable
 from typing import List
 from typing import Literal
+from typing import Optional
 from typing import Tuple
 from typing import Union
 
@@ -12,6 +13,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
+from rich.progress import Progress
 from sklearn.decomposition import SparsePCA
 from spapros.evaluation.evaluation import forest_classifications
 from spapros.util.util import clean_adata
@@ -37,9 +39,9 @@ def apply_correlation_penalty(
             Pre selected genes (these will also have the highest ranking in the final list).
 
     """
-#     TODO: proofread dodstring
-#     Note that the param preselected_genes is never set!
-#     This function is thoroughly tested.
+    #     TODO: proofread dodstring
+    #     Note that the param preselected_genes is never set!
+    #     This function is thoroughly tested.
 
     penalized_scores = scores.copy()
 
@@ -104,6 +106,7 @@ def select_pca_genes(
     penalty_keys: list = [],
     corr_penalty: Callable = None,
     inplace: bool = True,
+    progress: Optional[Progress] = None,
 ) -> pd.DataFrame:
     """Select n features based on pca loadings.
 
@@ -127,7 +130,9 @@ def select_pca_genes(
             to the next selected genes are penalized according the given function. (max correlation is
             recomputed after each selected gene).
         inplace:
-            Save results in adata.var or return dataframe.
+            Save results in :attr:`adata.var` or return dataframe.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
 
     Returns:
 
@@ -150,6 +155,9 @@ def select_pca_genes(
 
     clean_adata(a)
 
+    if progress:
+        pca_task = progress.add_task("Select pca genes...", total=1)
+
     sc.pp.pca(
         a,
         n_comps=n_pcs,
@@ -159,6 +167,9 @@ def select_pca_genes(
         return_info=True,
         copy=False,
     )
+
+    if progress:
+        progress.advance(pca_task)
 
     loadings = a.varm["PCs"].copy()[:, :n_pcs]
     if variance_scaled:
@@ -252,6 +263,7 @@ def select_DE_genes(
     reference: str = "rest",
     rankby_abs: bool = False,
     inplace: bool = True,
+    progress: Optional[Progress] = None,
 ) -> pd.DataFrame:
     """Select genes based on wilxocon rank genes test.
 
@@ -273,7 +285,11 @@ def select_DE_genes(
             See sc.tl.rank_genes_groups() but extended to lists of reference groups. Note that in case of providing
             such a list you need to include all elements of `groups` in `reference`.
         rankby_abs:
-            See sc.tl.rank_genes_groups().
+            See :meth:`sc.tl.rank_genes_groups()`.
+        inplace:
+            Save results in :attr:`adata.var` or return dataframe.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
 
     Returns:
         pd.DataFrame:
@@ -293,13 +309,19 @@ def select_DE_genes(
     scores = marker_scores(a, obs_key=obs_key, groups=groups, reference=reference, rankby_abs=rankby_abs)
     scores = apply_penalties(scores, a, penalty_keys=penalty_keys)
     if per_group:
+        if progress:
+            de_task = progress.add_task("\tSelect DE genes...", total=len(scores.columns))
         for group in scores.columns:
             scores.loc[scores.index.difference(scores.nlargest(n, group).index), group] = 0
+            if progress:
+                progress.advance(de_task)
         genes = scores.loc[(scores > 0).any(axis=1)].index.tolist()
     else:
         genes = []
         groups_of_genes = {}
         tmp_scores = scores.copy()
+        if progress:
+            de_task = progress.add_task("\tSelect DE genes...", total=n)
         while len(genes) < n:
             for group in scores.columns:
                 gene = tmp_scores[group].idxmax()
@@ -309,6 +331,8 @@ def select_DE_genes(
                 elif gene in genes:
                     groups_of_genes[gene].append(group)
             tmp_scores = scores.loc[~scores.index.isin(genes)].copy()
+            if progress:
+                progress.advance(de_task)
         scores.loc[~scores.index.isin(list(groups_of_genes.keys()))] = 0
         for gene_g, groups in groups_of_genes.items():
             scores.loc[gene_g, [group for group in scores.columns if group not in groups]] = 0
@@ -372,6 +396,7 @@ def add_DE_genes_to_trees(
     verbosity: int = 1,
     save: Union[str, bool] = False,
     return_clfs: bool = False,
+    progress: Optional[Progress] = None,
 ) -> Union[
     Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], pd.DataFrame, pd.DataFrame],  # return_clfs = True
     Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], pd.DataFrame],  # return_clfs = False
@@ -445,10 +470,10 @@ def add_DE_genes_to_trees(
                 - columns:
 
                     - column = 'step': iteration step where DE gene was selected
-                    - column.names = "celltypes": float DE scores for each selected gene (the score is only > 0 if a gene was selected
-                                                  for a given celltype)
-                    - column.names = "celltypes (ref)": if celltype was in the reference of a given DE test (these might include
-                                                    pooled references of multiple tests which yielded the same selected DE gene)
+                    - column.names = "celltypes": float DE scores for each selected gene (the score is only > 0 if a
+                      gene was selected for a given celltype)
+                    - column.names = "celltypes (ref)": if celltype was in the reference of a given DE test (these might
+                      include pooled references of multiple tests which yielded the same selected DE gene)
     """
 
     # Throw out "return_clfs" from forest_kwargs since we set them to False except for the last forest
@@ -457,17 +482,18 @@ def add_DE_genes_to_trees(
 
     # Note: in specificities we have celltype keys and dataframes with reference celltypes as index
     # the ct keys might be fewer and in a different order then the reference cts in the index
-    # - we want to create an "outlier" dataframe with symmetric celltype order in index (references) and columns (celltypes of
-    #   interest)
-    # - therefore we need to add columns that are actually not used to identify outliers (we just set the performance to 1 in
-    #   those cols)
-    # - the design could have been different (but i first only regarded the case where cts_oi and reference_cts were the same...)
+    # - we want to create an "outlier" dataframe with symmetric celltype order in index (references) and columns
+    #   (celltypes of interest)
+    # - therefore we need to add columns that are actually not used to identify outliers (we just set the performance
+    #   to 1 in those cols)
+    # - the design could have been different (but i first only regarded the case where cts_oi and reference_cts were the
+    #   same...)
     init_summary, specificities, im = tree_results
     all_celltypes = specificities[list(specificities)[0]].index.tolist()
     # all_celltypes = [ct for ct in specificities]
 
-    # Get all input genes of the initial forest training (the `genes` variable will be updated with new selected DE genes each
-    # iteration)
+    # Get all input genes of the initial forest training (the `genes` variable will be updated with new selected DE
+    # genes each iteration)
     genes = im[list(im)[0]].index.tolist()
 
     # Specificities table (True negative rates) of best trees
@@ -479,8 +505,8 @@ def add_DE_genes_to_trees(
     # TN_rates = pd.concat([d['0'] for ct,d in specificities.items()],axis=1)
     # TN_rates.columns = [ct for ct in all_celltypes]
 
-    # Get outlier mask. Note the columns are the celltypes of interest, and the index are potential outlier celltypes for a
-    # given celltype of interest
+    # Get outlier mask. Note the columns are the celltypes of interest, and the index are potential outlier celltypes
+    # for a given celltype of interest
     outliers = outlier_mask(TN_rates, n_stds, min_outlier_dif, min_score)
     celltypes = outliers.columns[outliers.any(axis=0)].tolist()
 
@@ -493,9 +519,11 @@ def add_DE_genes_to_trees(
 
     step = 1
 
-    if verbosity > 0:
-        print("Add DE genes with specific reference groups to improve tree performance...")
+    # if verbosity > 0:
+    #     print("Add DE genes with specific reference groups to improve tree performance...")
 
+    if progress:
+        DE_tree_task = progress.add_task("\tTrain DE_baseline forest...", total=max_step)
     while (outliers.values.sum() > 0) and celltypes and (step < max_step + 1):
         if verbosity > 1:
             print(f"  Iteration step {step}:")
@@ -577,6 +605,11 @@ def add_DE_genes_to_trees(
 
         step += 1
 
+        if progress:
+            progress.advance(DE_tree_task)
+    if progress:
+        progress.update(DE_tree_task, completed=3)
+
     # Sort DE info
     DE_info = DE_info.sort_values("step")
 
@@ -649,7 +682,7 @@ def add_tree_genes_from_reference_trees(
     Tuple[
         pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]
     ],  # (len(f1_diffs) == 0 && return_clfs=False) | return_clfs=False
-    Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], dict],   # return_clfs=True
+    Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], dict],  # return_clfs=True
 ]:
     """Add markers till reaching classification performance of reference.
 
