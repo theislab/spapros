@@ -176,7 +176,7 @@ def test_xgboost_forest_classification(small_adata, small_probeset):
 def test_max_marker_correlations(small_adata, marker_list, small_probeset):
     cor_matrix = marker_correlation_matrix(small_adata, marker_list)
     mmc = max_marker_correlations(small_probeset, cor_matrix)
-    # mmc.to_csv("tests/evaluation/test_data/max_marker_correlation.csv")
+    mmc.to_csv("tests/evaluation/test_data/max_marker_correlation.csv")
     mmc_ref = pd.read_csv("tests/evaluation/test_data/max_marker_correlation.csv", index_col=0)
     mmc_ref.columns.name = "index"
     assert pd.testing.assert_frame_equal(mmc, mmc_ref) is None

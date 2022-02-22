@@ -14,6 +14,10 @@ import scanpy as sc
 import scipy
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
+from rich.progress import BarColumn
+from rich.progress import Progress
+from rich.progress import TextColumn
+from rich.progress import TimeElapsedColumn
 from scipy.sparse import issparse
 from sklearn.utils import sparsefuncs
 
@@ -695,3 +699,43 @@ def marker_mean_difference(
     mean_ct = adata[adata.obs[ct_key] == celltype, genes].X.mean(axis=0)
     mean_other = adata[~(adata.obs[ct_key] == celltype), genes].X.mean(axis=0)
     return mean_ct - mean_other
+
+
+class NestedProgress(Progress):
+    def get_renderables(self):
+        for task in self.tasks:
+            level = task.fields.get("level") if task.fields.get("level") else 1
+            steps_column = TextColumn("[progress.percentage]{task.completed}/{task.total}", justify="right")
+            percentage_column = TextColumn("[progress.percentage]{task.percentage:>3.0f}%", justify="right")
+            if level == 1:
+                self.columns = (
+                    "[bold blue][progress.description]{task.description:.<50}",
+                    BarColumn(),
+                    percentage_column if task.total == 1 else steps_column,
+                    TimeElapsedColumn(),
+                )
+            if level == 2:
+                self.columns = (
+                    "  ",
+                    "[dim cyan][progress.description]{task.description:.<50}",
+                    BarColumn(),
+                    percentage_column if task.total == 1 else steps_column,
+                    TimeElapsedColumn(),
+                )
+            if level == 3:
+                self.columns = (
+                    "    ",
+                    "[bold green][progress.description]{task.description:.<50}",
+                    BarColumn(),
+                    percentage_column if task.total == 1 else steps_column,
+                    TimeElapsedColumn(),
+                )
+            if level == 4:
+                self.columns = (
+                    "      ",
+                    "[green][progress.description]{task.description:.<50}",
+                    BarColumn(),
+                    percentage_column if task.total == 1 else steps_column,
+                    TimeElapsedColumn(),
+                )
+            yield self.make_tasks_table([task])

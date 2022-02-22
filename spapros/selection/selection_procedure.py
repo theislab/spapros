@@ -16,10 +16,7 @@ import scanpy as sc
 import spapros.evaluation.evaluation as ev
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
-from rich.console import Group
 from rich.console import RichCast
-from rich.live import Live
-from rich.progress import Progress
 from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
@@ -386,17 +383,9 @@ class ProbesetSelector:  # (object)
         # Marker list
         self._prepare_marker_list()
 
-        # show progress bars for verbosity levels >0
+        # show progress bars for verbosity levels > 0
         # self.disable_pbars = self.verbosity < 1
-        self.progress1 = Progress(disable=self.verbosity < 1)
-        self.progress2 = Progress(disable=self.verbosity < 2)
-        # self.progress2 =  Progress(disable=self.verbosity < 1)
-        # Progress(
-        # "[progress.description]{task.description}",
-        # BarColumn(),
-        # "[progress.percentage]{task.percentage:>3.0f}%",
-        # TimeRemainingColumn(),
-        # disable=self.verbosity < 2)
+        self.progress = util.NestedProgress()  # redirect_stdout=False
 
     def select_probeset(self) -> None:
         """Run full selection procedure.
@@ -418,9 +407,8 @@ class ProbesetSelector:  # (object)
             For further examples, see our tutorials: https://spapros.readthedocs.io/en/latest/tutorials.html
 
         """
-        assert isinstance(self.progress1, RichCast)
-        assert isinstance(self.progress2, RichCast)
-        with Live(Group(self.progress1, self.progress2)):
+        assert isinstance(self.progress, RichCast)
+        with self.progress:
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._pca_selection()
             self._forest_DE_baseline_selection()
@@ -442,7 +430,8 @@ class ProbesetSelector:  # (object)
                 self.n_pca_genes,
                 penalty_keys=self.pca_penalties,
                 inplace=False,
-                progress=self.progress1,
+                progress=self.progress,
+                level=1,
                 **self.pca_selection_hparams,
             )
             assert self.selection["pca"] is not None
@@ -459,7 +448,8 @@ class ProbesetSelector:  # (object)
         """Select genes based on forests and differentially expressed genes."""
         # if self.verbosity > 0:
         #     print("Select genes based on differential expression and forests as baseline for the final forests...")
-        baseline_task = self.progress1.add_task("Train baseline forest based on DE genes...", total=3)
+        if self.progress and self.verbosity > 0:
+            baseline_task = self.progress.add_task("Train baseline forest based on DE genes...", total=3, level=1)
 
         if not isinstance(self.selection["DE"], pd.DataFrame):
             # if self.verbosity > 1:
@@ -473,7 +463,9 @@ class ProbesetSelector:  # (object)
                 reference="rest",
                 rankby_abs=False,
                 inplace=False,
-                progress=self.progress2,
+                progress=self.progress,
+                verbosity=self.verbosity,
+                level=2,
             )
             # if self.verbosity > 1:
             #     print("\t\t ...finished.")
@@ -482,8 +474,8 @@ class ProbesetSelector:  # (object)
         else:
             if self.verbosity > 1:
                 print("\t Differentially expressed genes already selected...")
-        if self.progress1:
-            self.progress1.advance(baseline_task)
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(baseline_task)
 
         if not self.forest_results["DE_prior_forest"]:
             # if self.verbosity > 1:
@@ -507,15 +499,16 @@ class ProbesetSelector:  # (object)
                 save=save_DE_prior_forest,
                 seed=0,
                 verbosity=self.verbosity,
-                progress=self.progress2,
-                task="\tTrain prior forest for DE_baseline forest...",
+                progress=self.progress,
+                task="Train prior forest for DE_baseline forest...",
+                level=2,
                 **self.forest_hparams,
             )
         else:
             if self.verbosity > 1:
                 print("\t Prior forest for DE_baseline forest already trained...")
-        if self.progress1:
-            self.progress1.advance(baseline_task)
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(baseline_task)
 
         if not (
             self.forest_results["DE_baseline_forest"]
@@ -540,7 +533,8 @@ class ProbesetSelector:  # (object)
                 verbosity=self.verbosity,
                 save=save_DE_baseline_forest,
                 return_clfs=True,
-                progress=self.progress2,
+                progress=self.progress,
+                level=2,
                 **self.forest_DE_baseline_hparams,
             )
             assert isinstance(de_forest_results, tuple)
@@ -557,8 +551,8 @@ class ProbesetSelector:  # (object)
         else:
             if self.verbosity > 1:
                 print("\t DE_baseline forest already trained...")
-        if self.progress1:
-            self.progress1.advance(baseline_task)
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(baseline_task)
 
         # might be interesting for utility plots:
         if not isinstance(self.selection["DE_baseline_forest"], pd.DataFrame):
@@ -568,18 +562,20 @@ class ProbesetSelector:  # (object)
             if self.save_dir:
                 self.selection["DE_baseline_forest"].to_csv(self.selections_paths["DE_baseline_forest"])
 
-    def _forest_selection(self, progress: Progress = None) -> None:
+    def _forest_selection(self) -> None:
         """Select genes based on forests and differentially expressed genes."""
         # TODO
         #  - eventually put this "test set size"-test somewhere (ideally at __init__)
 
-        if self.verbosity > 0:
-            print(
-                "Train final forests by adding genes from the DE_baseline forest for celltypes with low performance..."
-            )
+        # if self.verbosity > 0:
+        #     print(
+        #         "Train final forests by adding genes from the DE_baseline forest for celltypes with low performance..."
+        #     )
+        if self.progress and self.verbosity > 0:
+            final_forest_task = self.progress.add_task("Train final forests...", total=3, level=1)
         if self.n_pca_genes and (self.n_pca_genes > 0):
-            if self.verbosity > 1:
-                print("\t Train forest on pre/prior/pca selected genes...")
+            # if self.verbosity > 1:
+            #     print("\t Train forest on pre/prior/pca selected genes...")
             if not self.forest_results["pca_prior_forest"]:
                 pca_prior_forest_genes = (
                     self.selection["pre"]
@@ -599,16 +595,20 @@ class ProbesetSelector:  # (object)
                     save=save_pca_prior_forest,
                     seed=self.seed,  # TODO!!! same seeds for all forests!
                     verbosity=self.verbosity,
+                    progress=self.progress,
+                    level=2,
+                    task="Train forest on pre/prior/pca selected genes...",
                     **self.forest_hparams,
                 )
-                if self.verbosity > 2:
-                    print("\t\t ...finished.")
+                # if self.verbosity > 2:
+                #     print("\t\t ...finished.")
             else:
                 if self.verbosity > 2:
                     print("\t\t ...was already trained.")
-
-            if self.verbosity > 1:
-                print("\t Iteratively add genes from DE_baseline_forest...")
+            if self.progress and self.verbosity > 0:
+                self.progress.advance(final_forest_task)
+            # if self.verbosity > 1:
+            #     print("\t Iteratively add genes from DE_baseline_forest...")
             if (not self.forest_results["forest"]) or (not self.forest_clfs["forest"]):
                 save_forest: Union[str, bool] = self.forest_results_paths["forest"] if self.save_dir else False
                 assert isinstance(self.forest_results["pca_prior_forest"], list)
@@ -624,6 +624,10 @@ class ProbesetSelector:  # (object)
                     verbosity=self.verbosity,
                     save=save_forest,
                     return_clfs=True,
+                    final_forest_task=final_forest_task if (self.progress and self.verbosity > 0) else None,
+                    progress=self.progress,
+                    level=2,
+                    task="Iteratively add genes from DE_baseline_forest...",
                 )
                 assert isinstance(forest_results[0], list)
                 # assert isinstance(forest_results[1], dict)
@@ -633,12 +637,13 @@ class ProbesetSelector:  # (object)
                 if self.save_dir:
                     with open(self.forest_clfs_paths["forest"], "wb") as f:
                         pickle.dump(self.forest_clfs["forest"], f)
-                if self.verbosity > 2:
-                    print("\t\t ...finished.")
+                # if self.verbosity > 2:
+                #     print("\t\t ...finished.")
             else:
                 if self.verbosity > 2:
                     print("\t\t ...were already added.")
-
+            if self.progress:
+                self.progress.advance(final_forest_task)
             if not isinstance(self.selection["forest"], pd.DataFrame):
                 assert isinstance(self.forest_results["forest"], list)
                 assert len(self.forest_results["forest"]) == 3
@@ -759,6 +764,8 @@ class ProbesetSelector:  # (object)
 
     def _marker_selection(self) -> None:
         """Select genes from marker list based on correlations with already selected genes."""
+        if self.progress and self.verbosity > 0 and self.marker_list:
+            marker_task = self.progress.add_task("Marker selection...", total=len(self.marker_list), level=1)
         pre_pros = self._compile_probeset_list(with_markers_from_list=False)
 
         # Check which genes are already selected
@@ -803,6 +810,8 @@ class ProbesetSelector:  # (object)
                 # print("MARKER SELECTION (list only): ",ct,marker)
                 # for i,g in enumerate(marker):
                 #    self.selection['marker'].loc[g,['selection','celltype','marker_rank']] = [True,ct,i+1]
+            if self.progress and self.verbosity > 0:
+                self.progress.advance(marker_task)
 
     def _compile_probeset_list(self, with_markers_from_list: bool = True) -> pd.DataFrame:
         """Compile the probeset list.
@@ -821,6 +830,8 @@ class ProbesetSelector:  # (object)
         #  How/where to add genes from marker_list that are not in adata?
         #  --> Oh btw, same with pre and prior selected genes.
 
+        if self.progress and self.verbosity > 0:
+            list_task = self.progress.add_task("Compile probeset list...", total=1, level=1)
         # Initialize probeset table
         index = self.genes.tolist()
         # Add marker genes that are not in adata
@@ -954,7 +965,7 @@ class ProbesetSelector:  # (object)
                     assert isinstance(self.n_list_markers, dict)
                     n_min_markers = max([self.n_min_markers, self.n_list_markers["adata_celltypes"]])
                 else:
-                    assert isinstance(self.n_list_markers, int)
+                    assert isinstance(self.n_min_markers, int)
                     n_min_markers = self.n_min_markers
                 gene_idxs = gene_idxs[: min([len(gene_idxs), n_min_markers])]
                 for i, g in enumerate(gene_idxs):
@@ -971,7 +982,7 @@ class ProbesetSelector:  # (object)
                     assert isinstance(self.n_list_markers, dict)
                     n_min_markers = max([self.n_min_markers, self.n_list_markers["adata_celltypes"]])
                 else:
-                    assert isinstance(self.n_list_markers, int)
+                    assert isinstance(self.n_min_markers, int)
                     n_min_markers = self.n_min_markers
                 gene_idxs = gene_idxs[: min([len(gene_idxs), n_min_markers])]
                 for i, g in enumerate(gene_idxs):
@@ -1009,6 +1020,9 @@ class ProbesetSelector:  # (object)
         first_cols = ["gene_nr", "selection", "rank", "marker_rank", "tree_rank", "importance_score", "pca_score"]
         other_cols = [col for col in probeset.columns if col not in first_cols]
         cols = first_cols + other_cols
+
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(list_task)
 
         return probeset[cols].copy()
 
@@ -1357,8 +1371,8 @@ def select_reference_probesets(
             reference_probesets[f"ref_{selection_name}"] = reference_methods[selection_name](
                 adata[:, adata.var[genes_key]], n, inplace=False, **reference_selections[selection_name]
             )
-            if verbosity > 1:
-                print("\t ...finished.")
+            # if verbosity > 1:
+            #     print("\t ...finished.")
             if save_dir:
                 reference_probesets[f"ref_{selection_name}"].to_csv(os.path.join(save_dir, f"ref_{selection_name}"))
     return reference_probesets

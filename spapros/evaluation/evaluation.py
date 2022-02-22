@@ -30,6 +30,7 @@ from spapros.util.mp_util import _get_n_cores
 from spapros.util.mp_util import parallelize
 from spapros.util.mp_util import Signal
 from spapros.util.mp_util import SigQueue
+from spapros.util.util import NestedProgress
 
 
 # helper for type checking:
@@ -1110,7 +1111,8 @@ def single_forest_classifications(
     n_jobs: int = 1,
     backend: str = "loky",
     progress: Optional[Progress] = None,
-    task: Optional[str] = None,
+    level: int = 3,
+    task: str = "Train trees...",
 ) -> Union[
     Tuple[List[Union[Union[pd.DataFrame, dict], Any]], dict],  # return_clfs = True
     Tuple[pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]],
@@ -1166,6 +1168,8 @@ def single_forest_classifications(
             Which backend to use for multiprocessing. See class `joblib.Parallel` for valid options.
         progress:
             :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
         task:
             Description of progress task.
 
@@ -1257,8 +1261,8 @@ def single_forest_classifications(
     seeds = np.random.choice(100000, n_trees, replace=False)
     # Compute trees (for each tree index we parallelize over celltypes)
     # for i in tqdm(range(n_trees), desc="Train trees") if tqdm else range(n_trees):
-    if progress and task:
-        forest_task = progress.add_task(task, total=n_trees)
+    if progress and verbose:
+        forest_task = progress.add_task(task, total=n_trees, level=level)
     for i in range(n_trees):
         X_train, y_train, cts_train = uniform_samples(
             a, ct_key, set_key="train_set", subsample=subsample, seed=seeds[i], celltypes=ref_celltypes
@@ -1273,11 +1277,11 @@ def single_forest_classifications(
             n_jobs=n_jobs,
             backend=backend,
             extractor=pool_train_ct_tree_helper,
-            show_progress_bar=False,  # verbose,
+            show_progress_bar=False,  # verbose, # False
         )(X_train=X_train, y_train=y_train, seed=seeds[i], max_depth=max_depth, masks=masks)
         for ct in celltypes:
             ct_trees[ct].append(ct_trees_i[ct])
-        if progress:
+        if progress and verbose:
             progress.advance(forest_task)
     # Get feature importances
     importances = {
@@ -1295,7 +1299,7 @@ def single_forest_classifications(
         n_jobs=n_jobs,
         backend=backend,
         extractor=pool_eval_ct_tree_helper,
-        show_progress_bar=verbose,
+        show_progress_bar=False,  # =verbose,
         desc="Evaluate trees",
     )(
         celltypes=celltypes,
@@ -1497,7 +1501,8 @@ def forest_classifications(
     save: Union[str, bool] = False,
     outlier_kwargs: dict = {},
     progress: Optional[Progress] = None,
-    task: Optional[str] = None,
+    task: str = "Train hierarchical trees...",
+    level: int = 2,
     **forest_kwargs,
 ) -> Union[
     list,  # with_clfs=False
@@ -1521,6 +1526,8 @@ def forest_classifications(
             :attr:`rich.Progress` object if progress bars should be shown.
         task:
             Description of progress task.
+        level:
+            Progress bar level.
         **forest_kwargs:
 
     """
@@ -1536,13 +1543,24 @@ def forest_classifications(
     ct_spec_ref = None
     res = None
     with_clfs = "return_clfs" in forest_kwargs and forest_kwargs["return_clfs"]
-
+    stop_progress = False
+    if not progress and 2 * verbosity >= level:
+        progress = NestedProgress()
+        progress.start()
+        stop_progress = True
+    if progress and 2 * verbosity >= level:
+        forest_task = progress.add_task(task, total=max_n_forests, level=level)
     # for _ in tqdm(range(max_n_forests), desc="Train hierarchical trees") if tqdm else range(max_n_forests):
-    if progress and task:
-        forest_task = progress.add_task(task, total=max_n_forests)
     for _ in range(max_n_forests):
         new_res = single_forest_classifications(
-            adata, selection, ct_spec_ref=ct_spec_ref, verbose=verbosity > 1, save=False, **forest_kwargs
+            adata,
+            selection,
+            ct_spec_ref=ct_spec_ref,
+            verbose=verbosity > 1,
+            save=False,
+            progress=progress,
+            level=level + 1,
+            **forest_kwargs,
         )
         assert isinstance(new_res, tuple)
         if res is None:
@@ -1551,7 +1569,7 @@ def forest_classifications(
             res = combine_tree_results(res, new_res, with_clfs=with_clfs)
         specs = res[0][1] if with_clfs else res[1]
         ct_spec_ref = get_outlier_reference_celltypes(specs, **outlier_kwargs)
-        if progress:
+        if progress and 2 * verbosity >= level:
             progress.advance(forest_task)
 
     if save:
@@ -1562,6 +1580,9 @@ def forest_classifications(
         else:
             assert isinstance(res, list)
             save_forest(res, save)
+
+    if progress and 2 * verbosity >= level and stop_progress:
+        progress.stop()
     assert res is not None
     return res
 
