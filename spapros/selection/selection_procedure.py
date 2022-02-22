@@ -642,7 +642,7 @@ class ProbesetSelector:  # (object)
             else:
                 if self.verbosity > 2:
                     print("\t\t ...were already added.")
-            if self.progress:
+            if self.progress and self.verbosity > 0:
                 self.progress.advance(final_forest_task)
             if not isinstance(self.selection["forest"], pd.DataFrame):
                 assert isinstance(self.forest_results["forest"], list)
