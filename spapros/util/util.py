@@ -704,38 +704,40 @@ def marker_mean_difference(
 class NestedProgress(Progress):
     def get_renderables(self):
         for task in self.tasks:
+
+            # extract those self devined fields
             level = task.fields.get("level") if task.fields.get("level") else 1
-            steps_column = TextColumn("[progress.percentage]{task.completed}/{task.total}", justify="right")
-            percentage_column = TextColumn("[progress.percentage]{task.percentage:>3.0f}%", justify="right")
-            if level == 1:
+            only_text = task.fields.get("only_text") if task.fields.get("only_text") else False
+
+            # layout
+            indentation = (level - 1) * 2 * " "
+            font_styles = {1: "bold blue", 2: "bold dim cyan", 3: "bold green", 4: "green"}
+
+            # define columns for percentag and step progress
+            steps_column = TextColumn("[progress.percentage]{task.completed: >2}/{task.total: <2}", justify="right")
+            percentage_column = TextColumn("[progress.percentage]{task.percentage:>3.0f}% ", justify="right")
+            fill = 100 if only_text else 58
+            fill = fill - len(indentation)
+            text_column = f"{indentation}[{font_styles[level]}][progress.description]{task.description:.<{fill}}"
+
+            if not only_text:
                 self.columns = (
-                    "[bold blue][progress.description]{task.description:.<50}",
+                    text_column,
                     BarColumn(),
-                    percentage_column if task.total == 1 else steps_column,
+                    steps_column if task.total != 1 else percentage_column,
                     TimeElapsedColumn(),
                 )
-            if level == 2:
-                self.columns = (
-                    "  ",
-                    "[dim cyan][progress.description]{task.description:.<50}",
-                    BarColumn(),
-                    percentage_column if task.total == 1 else steps_column,
-                    TimeElapsedColumn(),
-                )
-            if level == 3:
-                self.columns = (
-                    "    ",
-                    "[bold green][progress.description]{task.description:.<50}",
-                    BarColumn(),
-                    percentage_column if task.total == 1 else steps_column,
-                    TimeElapsedColumn(),
-                )
-            if level == 4:
-                self.columns = (
-                    "      ",
-                    "[green][progress.description]{task.description:.<50}",
-                    BarColumn(),
-                    percentage_column if task.total == 1 else steps_column,
-                    TimeElapsedColumn(),
-                )
+            else:
+                self.columns = (text_column, "")
             yield self.make_tasks_table([task])
+
+
+def init_progress(progress, verbosity, level):
+    started = False
+    if verbosity < level:
+        return None, started
+    if not progress:
+        progress = NestedProgress()
+        progress.start()
+        started = True
+    return progress, started

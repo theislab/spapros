@@ -8,6 +8,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from rich import print
+from rich.progress import Progress as Progress
 from scipy.sparse import issparse
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold
@@ -16,8 +17,8 @@ from spapros.util.util import clean_adata
 from spapros.util.util import cluster_corr
 from spapros.util.util import dict_to_table
 from spapros.util.util import gene_means
+from spapros.util.util import init_progress
 from xgboost import XGBClassifier
-
 
 METRICS_PARAMETERS: Dict[str, Dict] = {
     "cluster_similarity": {
@@ -68,7 +69,14 @@ def get_metric_default_parameters() -> Dict[str, Dict]:
 # 3. summary: Simple final computations (per probe set) that aggregate evaluations to summary metrics
 
 
-def metric_shared_computations(adata: sc.AnnData, metric: str, parameters: Dict = {}) -> pd.DataFrame:
+def metric_shared_computations(
+    adata: sc.AnnData,
+    metric: str,
+    parameters: Dict = {},
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
+) -> pd.DataFrame:
     """Calculate the metric compuations that can be shared between probe sets.
 
     Args:
@@ -78,23 +86,53 @@ def metric_shared_computations(adata: sc.AnnData, metric: str, parameters: Dict 
             The metric to be calculated.
         parameters:
             Parameters for the calculation of the metric.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
     """
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
 
+    progress, started = init_progress(progress, verbosity, level)
+
+    description = "Computing shared compuations for " + metric + "..."
+
     if metric == "cluster_similarity":
-        return leiden_clusterings(adata, parameters["ns"])
+        return leiden_clusterings(
+            adata, parameters["ns"], progress=progress, level=level, verbosity=verbosity, description=description
+        )
 
     elif metric == "knn_overlap":
-        return knns(adata, genes="all", ks=parameters["ks"])
+        return knns(
+            adata,
+            genes="all",
+            ks=parameters["ks"],
+            progress=progress,
+            level=level,
+            verbosity=verbosity,
+            description=description,
+        )
     elif metric == "forest_clfs":
         pass
     elif metric == "marker_corr":
-        return marker_correlation_matrix(adata, marker_list=parameters["marker_list"])
+        return marker_correlation_matrix(
+            adata,
+            marker_list=parameters["marker_list"],
+            progress=progress,
+            level=level,
+            verbosity=verbosity,
+            description=description,
+        )
     elif metric == "gene_corr":
-        return correlation_matrix(adata)
+        return correlation_matrix(adata, progress=progress, level=level, verbosity=verbosity, description=description)
     else:
         raise ValueError(f"Unsupported metric: {metric}")
+
+    if progress and started:
+        progress.stop()
 
 
 def metric_pre_computations(
@@ -102,6 +140,9 @@ def metric_pre_computations(
     adata: sc.AnnData,
     metric: str = None,
     parameters: Dict = {},
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
 ) -> Union[pd.DataFrame, None]:
     """Calculate the metric computations that are independent of the shared results.
 
@@ -118,14 +159,39 @@ def metric_pre_computations(
             The metric to be calculated.
         parameters:
             Parameters for the calculation of the metric.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
     """
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
 
+    progress, started = init_progress(progress, verbosity, level)
+
+    description = "Computing pre compuations for " + metric + ".."
+
     if metric == "cluster_similarity":
-        return leiden_clusterings(adata[:, genes], parameters["ns"])
+        return leiden_clusterings(
+            adata[:, genes],
+            parameters["ns"],
+            progress=progress,
+            level=level,
+            verbosity=verbosity,
+            description=description,
+        )
     elif metric == "knn_overlap":
-        return knns(adata, genes=genes, ks=parameters["ks"])
+        return knns(
+            adata,
+            genes=genes,
+            ks=parameters["ks"],
+            progress=progress,
+            level=level,
+            verbosity=verbosity,
+            description=description,
+        )
     elif metric == "forest_clfs":
         return None
     elif metric == "marker_corr":
@@ -134,6 +200,9 @@ def metric_pre_computations(
         return None
     else:
         raise ValueError(f"Unsupported metric: {metric}")
+
+    if progress and started:
+        progress.stop()
 
 
 def metric_computations(
@@ -144,6 +213,9 @@ def metric_computations(
     pre_results: pd.DataFrame = None,
     parameters: Dict = {},
     n_jobs: int = -1,
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
 ) -> pd.DataFrame:
     """Compute the probe set specific evaluation metrics.
 
@@ -162,33 +234,74 @@ def metric_computations(
             Parameters for the calculation of the metric.
         n_jobs:
             Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
     """
 
     if metric not in get_metric_names():
         raise ValueError(f"Unsupported metric: {metric}")
 
+    progress, started = init_progress(progress, verbosity, level)
+
+    description = "Computing final compuations for " + metric + "..."
+
     if metric == "cluster_similarity":
         ann = pre_results
         ref_ann = shared_results
-        nmis = clustering_nmis(ann, ref_ann, parameters["ns"])
+        nmis = clustering_nmis(
+            ann, ref_ann, parameters["ns"], progress=progress, level=level, verbosity=verbosity, description=description
+        )
         return nmis
     elif metric == "knn_overlap":
         knn_df = pre_results
         ref_knn_df = shared_results
-        return mean_overlaps(knn_df, ref_knn_df, parameters["ks"])
+        return mean_overlaps(
+            knn_df,
+            ref_knn_df,
+            parameters["ks"],
+            progress=progress,
+            level=level,
+            verbosity=verbosity,
+            description=description,
+        )
     elif metric == "forest_clfs":
         results = xgboost_forest_classification(
-            adata, genes, celltypes="all", ct_key=parameters["ct_key"], n_jobs=n_jobs
+            adata,
+            genes,
+            celltypes="all",
+            ct_key=parameters["ct_key"],
+            n_jobs=n_jobs,
+            progress=progress,
+            level=level,
+            verbosity=verbosity,
+            description=description,
         )
         conf_mat = results[0]
         return conf_mat
     elif metric == "marker_corr":
         marker_cor = shared_results
         params = {k: v for k, v in parameters.items() if (k != "marker_list")}
-        return max_marker_correlations(genes, marker_cor, **params)
+        return max_marker_correlations(
+            genes, marker_cor, **params, progress=progress, level=level, verbosity=verbosity, description=description
+        )
     elif metric == "gene_corr":
         full_cor_mat = shared_results
-        return gene_set_correlation_matrix(genes, full_cor_mat, ordered=True)
+        return gene_set_correlation_matrix(
+            genes,
+            full_cor_mat,
+            ordered=True,
+            progress=progress,
+            level=level,
+            verbosity=verbosity,
+            description=description,
+        )
+
+    if progress and started:
+        progress.stop()
 
 
 def metric_summary(results: pd.DataFrame = None, metric: str = None, parameters: Dict = {}) -> Dict[str, Any]:
@@ -279,7 +392,15 @@ def compute_clustering_and_update(
     return annotations, tried_res_n, found_ns
 
 
-def leiden_clusterings(adata: sc.AnnData, ns: Union[range, List[int]], start_res: float = 1.0) -> pd.DataFrame:
+def leiden_clusterings(
+    adata: sc.AnnData,
+    ns: Union[range, List[int]],
+    start_res: float = 1.0,
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
+    description: str = "Leiden clusterings...",
+) -> pd.DataFrame:
     """Compute leiden clusters for different numbers of clusters.
 
     Leiden clusters are calculated with different resolutions.
@@ -292,6 +413,14 @@ def leiden_clusterings(adata: sc.AnnData, ns: Union[range, List[int]], start_res
             The minimum (:attr:`ns[0]`) and maximum (:attr:`ns[1]`) number of clusters.
         start_res:
             Resolution to start computing clusterings.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
+        description:
+            Description for progress bar.
 
     Returns:
         pd.DataFrame
@@ -308,6 +437,10 @@ def leiden_clusterings(adata: sc.AnnData, ns: Union[range, List[int]], start_res
                 .
                 .
     """
+
+    progress, started = init_progress(progress, verbosity, level)
+    if progress:
+        task_leiden = progress.add_task(description, level=level, total=1)
 
     # Convert min and max n to list of ns
     if len(ns) != 2:
@@ -365,6 +498,12 @@ def leiden_clusterings(adata: sc.AnnData, ns: Union[range, List[int]], start_res
                     a, annotations, res, tried_res_n, found_ns
                 )
                 found_space = True
+
+    if progress:
+        progress.advance(task_leiden)
+        if started:
+            progress.stop()
+
     return annotations
 
 
@@ -373,6 +512,10 @@ def clustering_nmis(
     ref_annotations: pd.DataFrame,
     ns: Union[range, List[int]],
     method: str = "arithmetic",
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
+    description: str = "Cluster NMIs...",
 ) -> pd.DataFrame:
     """Compute NMI between clusterings and a reference set of clusterings.
 
@@ -406,6 +549,15 @@ def clustering_nmis(
                 - 'Lancichinetti': implementation by A. Lancichinetti 2009 et al.
                 - 'ONMI': implementation by Aaron F. McDaid et al. (https://github.com/aaronmcdaid/Overlapping-NMI) Hurley 2011
 
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
+        description:
+            Description for progress bar.
+
     Returns:
         pd.DataFrame of NMI results::
 
@@ -416,6 +568,8 @@ def clustering_nmis(
     """
 
     from sklearn.metrics import normalized_mutual_info_score
+
+    progress, started = init_progress(progress, verbosity, level)
 
     # Convert min and max n to list of ns
     if len(ns) != 2:
@@ -435,11 +589,20 @@ def clustering_nmis(
     ref_ns = ref_found_ns_df.loc[ref_found_ns_df].index.tolist()
     valid_ns = [n for n in found_ns if (n in ref_ns) and (n in ns)]
 
+    if progress:
+        task_nmi = progress.add_task(description, total=len(valid_ns), level=level)
+
     # Calculate nmis
     for n in valid_ns:
         labels = ann.loc[n].values
         ref_labels = ref_ann.loc[n].values
         nmis.loc[n, "nmi"] = normalized_mutual_info_score(labels, ref_labels, average_method=method)
+
+        if progress:
+            progress.advance(task_nmi)
+
+    if progress and started:
+        progress.stop()
 
     return nmis
 
@@ -492,7 +655,15 @@ def summary_nmi_AUCs(nmis: pd.DataFrame, AUC_borders: List[List]) -> Dict[str, f
 # SHARED AND and PER PROBESET computations
 
 
-def knns(adata: sc.AnnData, genes: Union[List, str] = "all", ks: List[int] = [10, 20]) -> pd.DataFrame:
+def knns(
+    adata: sc.AnnData,
+    genes: Union[List, str] = "all",
+    ks: List[int] = [10, 20],
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
+    description: str = "KNNS...",
+) -> pd.DataFrame:
     """Compute nearest neighbors of observations for different ks.
 
     Args:
@@ -502,6 +673,14 @@ def knns(adata: sc.AnnData, genes: Union[List, str] = "all", ks: List[int] = [10
             A list of selected genes or "all".
         ks:
             Calculate knn graphs for each k in :attr:`ks`.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
+        description:
+            Description for progress bar.
 
     Returns:
         pd.DataFrame:
@@ -512,6 +691,8 @@ def knns(adata: sc.AnnData, genes: Union[List, str] = "all", ks: List[int] = [10
                 TNFRSF4     , 678  , 713  ,    , 7735 , 6225 , ...
                 ...
     """
+
+    progress, started = init_progress(progress, verbosity, level)
 
     # Subset adata to gene set
     if isinstance(genes, str) and (genes == "all"):
@@ -534,10 +715,12 @@ def knns(adata: sc.AnnData, genes: Union[List, str] = "all", ks: List[int] = [10
     obsp = [key for key in a.obsp]
     for o in obsp:
         del a.obsp[o]
-    sc.tl.pca(a, n_comps=n_pcs)
+    sc.tl.pca(a, n_comps=n_pcs)  # use_highly_variable=False
 
     # Get nearest neighbors for each k
     df = pd.DataFrame(index=a.obs_names)
+    if progress:
+        task_knn = progress.add_task(description, level=level, total=len(ks))
     for k in ks:
         if "neighbors" in a.uns:
             del a.uns["neighbors"]
@@ -554,10 +737,24 @@ def knns(adata: sc.AnnData, genes: Union[List, str] = "all", ks: List[int] = [10
         nn_df.columns = [f"k{k}_{i}" for i in range(len(nn_df.columns))]
         df = pd.concat([df, nn_df], axis=1)
 
+        if progress:
+            progress.advance(task_knn)
+
+    if progress and started:
+        progress.stop()
+
     return df
 
 
-def mean_overlaps(knn_df: pd.DataFrame, ref_knn_df: pd.DataFrame, ks: List[int]) -> pd.DataFrame:
+def mean_overlaps(
+    knn_df: pd.DataFrame,
+    ref_knn_df: pd.DataFrame,
+    ks: List[int],
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
+    description: str = "Mean overlaps...",
+) -> pd.DataFrame:
     """Calculate mean overlaps of knn graphs of different ks.
 
     Args:
@@ -567,6 +764,14 @@ def mean_overlaps(knn_df: pd.DataFrame, ref_knn_df: pd.DataFrame, ks: List[int])
             The results of the metric calculations, that are not probe set specific.
         ks:
             Calculate knn graphs for each k in `ks`.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
+        description:
+            Description for progress bar.
 
 
     Returns:
@@ -574,6 +779,11 @@ def mean_overlaps(knn_df: pd.DataFrame, ref_knn_df: pd.DataFrame, ks: List[int])
             k (index), mean
 
     """
+
+    progress, started = init_progress(progress, verbosity, level)
+
+    if progress:
+        task_meano_verlap = progress.add_task(description, level=level, total=len(ks))
     df = pd.DataFrame(index=ks, data={"mean": 0.0})
     for k in ks:
         overlaps = []
@@ -587,6 +797,13 @@ def mean_overlaps(knn_df: pd.DataFrame, ref_knn_df: pd.DataFrame, ks: List[int])
             max_intersection = np.min([len(set1), len(set2)])
             overlaps.append(len(set1.intersection(set2)) / max_intersection)
         df.loc[k, "mean"] = np.mean(overlaps)
+
+        if progress:
+            progress.advance(task_meano_verlap)
+
+    if progress and started:
+        progress.stop()
+
     return df
 
 
@@ -634,6 +851,9 @@ def xgboost_forest_classification(
     return_clfs: bool = False,
     return_predictions: bool = False,
     n_jobs: int = 1,
+    progress: Progress = None,
+    level: int = 3,
+    description: str = "XGB forest classification",
 ) -> List:
     """Measure celltype classification performance with gradient boosted forests.
 
@@ -683,6 +903,13 @@ def xgboost_forest_classification(
             Whether to return a list of prediction dataframes
         n_jobs:
             Multiprocessing number of processes.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        description:
+            Description of progress bar.
+
 
     Returns:
         pd.DataFrame:
@@ -697,14 +924,16 @@ def xgboost_forest_classification(
             list of dataframes with prediction results.
     """
 
-    if verbosity > 1:
-        try:
-            from tqdm.notebook import tqdm
-        except ImportError:
-            from tqdm import tqdm_notebook as tqdm
-        desc = "XGBClassifier Cross Val."
-    else:
-        tqdm = None
+    # if verbosity > 1:
+    #     try:
+    #         from tqdm.notebook import tqdm
+    #     except ImportError:
+    #         from tqdm import tqdm_notebook as tqdm
+    #     desc = "XGBClassifier Cross Val."
+    # else:
+    #     tqdm = None
+
+    progress, started = init_progress(progress, verbosity, level)
 
     # Define cell type list
     if celltypes == "all":
@@ -756,9 +985,13 @@ def xgboost_forest_classification(
     n_classes = len(celltypes)
 
     # Cross validated random forest training
-    for seed in tqdm(seeds, desc="seeds", total=len(seeds)) if tqdm else seeds:
+    # for seed in tqdm(seeds, desc="seeds", total=len(seeds)) if tqdm else seeds:
+    if progress:
+        task_forest = progress.add_task(description=description, total=len(seeds) * cv_splits, level=level)
+    for seed in seeds:
         k_fold = StratifiedKFold(n_splits=cv_splits, random_state=seed, shuffle=True)
-        for train_ix, test_ix in tqdm(k_fold.split(X, y), desc=desc, total=cv_splits) if tqdm else k_fold.split(X, y):
+        # for train_ix, test_ix in tqdm(k_fold.split(X, y), desc=desc, total=cv_splits) if tqdm else k_fold.split(X, y):
+        for train_ix, test_ix in k_fold.split(X, y):
             # Get train and test sets
             train_x, train_y, test_x, test_y = X[train_ix], y[train_ix], X[test_ix], y[test_ix]
             sample_weight_train = compute_sample_weight("balanced", train_y)
@@ -812,6 +1045,12 @@ def xgboost_forest_classification(
                 df.loc[obs_names[test_ix], "pred"] = y_pred
                 df["correct"] = df["label"] == df["pred"]
                 pred_dfs.append(df)
+
+            if progress:
+                progress.advance(task_forest)
+
+    if started and progress:
+        progress.stop()
 
     # Pool confusion matrices
     confusions_merged = np.concatenate([np.expand_dims(mat, axis=-1) for mat in confusion_matrices], axis=-1)
@@ -897,7 +1136,14 @@ def summary_metric_diagonal_confusion_percentage(
 ################################
 
 # SHARED computations
-def marker_correlation_matrix(adata: sc.AnnData, marker_list: Union[str, Dict]) -> pd.DataFrame:
+def marker_correlation_matrix(
+    adata: sc.AnnData,
+    marker_list: Union[str, Dict],
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
+    description="Marker correlation...",
+) -> pd.DataFrame:
     """Compute the correlation of each marker with all genes.
 
     Args:
@@ -912,6 +1158,14 @@ def marker_correlation_matrix(adata: sc.AnnData, marker_list: Union[str, Dict]) 
                 marker12,  marker22,
                         ,  marker23,
                         ,  marker24,
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
+        description:
+            Description for progress bar.
 
     Returns:
         pd.DataFrame with genes of marker list as index
@@ -922,7 +1176,9 @@ def marker_correlation_matrix(adata: sc.AnnData, marker_list: Union[str, Dict]) 
             - genes - for all genes of adata.var_names correlations with markers
     """
 
-    full_cor_mat = correlation_matrix(adata)
+    full_cor_mat = correlation_matrix(
+        adata, progress=progress, level=level, description=description, verbosity=verbosity
+    )
 
     # Load marker_list as dict
     if isinstance(marker_list, str):
@@ -969,6 +1225,10 @@ def max_marker_correlations(
     per_marker: float = True,
     per_marker_min_mean: float = None,
     per_celltype_min_mean: float = None,
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
+    description: str = "Max marker correlations...",
 ) -> pd.DataFrame:
     """Get maximal correlations with marker genes.
 
@@ -987,7 +1247,15 @@ def max_marker_correlations(
             min_mean_per_marker
         per_celltype_min_mean:
             Add a column for correlation per cell type that only takes into accounts markers with mean expression >
-            min_mean_per_marker
+            min_mean_per_marker.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
+        description:
+            Description for progress bar.
 
     Returns:
             pd.DataFrame with marker_genes as index
@@ -1002,6 +1270,12 @@ def max_marker_correlations(
                     - "per celltype" only highest correlation per cell type is not nan
                     - f"... mean > {min_mean}" filtered out markers with mean expression <= min_mean
     """
+
+    progress, started = init_progress(progress, verbosity, level)
+
+    if progress:
+        task_max_corr = progress.add_task(description, level=level, total=1)
+
     cor_df = marker_cor[["celltype", "mean"]].copy()
     cor_df["per marker"] = marker_cor[genes].max(axis=1)
     if per_celltype:
@@ -1025,6 +1299,11 @@ def max_marker_correlations(
     if not per_marker:
         del cor_df["per marker"]
 
+    if progress:
+        progress.advance(task_max_corr)
+        if started:
+            progress.stop()
+
     return cor_df
 
 
@@ -1047,7 +1326,14 @@ def summary_marker_corr(cor_df: pd.DataFrame) -> Dict:
 ##############################
 
 # SHARED computations
-def correlation_matrix(adata: sc.AnnData, var_names: List = None) -> pd.DataFrame:
+def correlation_matrix(
+    adata: sc.AnnData,
+    var_names: List = None,
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
+    description="Correlation matrix...",
+) -> pd.DataFrame:
     """Compute correlation matrix of adata.X
 
     Args:
@@ -1055,11 +1341,24 @@ def correlation_matrix(adata: sc.AnnData, var_names: List = None) -> pd.DataFram
             An already preprocessed annotated data matrix. Typically we use log normalised data.
         var_names:
             Calculate correlation on subset of variables.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
+        description:
+            Description for progress bar.
 
     Returns:
         pd.DataFrame where index and columns are adata.var_names or var_names subset if defined. Values are correlations
         between genes.
     """
+    progress, started = init_progress(progress, verbosity=verbosity, level=level)
+
+    if progress:
+        task_corr = progress.add_task(description, level=level, total=1)
+
     if var_names:
         a = adata[:, var_names]
     else:
@@ -1069,11 +1368,25 @@ def correlation_matrix(adata: sc.AnnData, var_names: List = None) -> pd.DataFram
         cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X.toarray(), rowvar=False))
     else:
         cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X, rowvar=False))
+
+    if progress:
+        progress.advance(task_corr)
+        if started:
+            progress.stop()
+
     return cor_mat
 
 
 # PER PROBESET computations
-def gene_set_correlation_matrix(genes: List, full_cor_mat: pd.DataFrame, ordered: bool = True) -> pd.DataFrame:
+def gene_set_correlation_matrix(
+    genes: List,
+    full_cor_mat: pd.DataFrame,
+    ordered: bool = True,
+    progress: Progress = None,
+    level: int = 2,
+    verbosity: int = 2,
+    description: str = "Gene set correlation matrix...",
+) -> pd.DataFrame:
     """Return (ordered) correlation matrix of genes.
 
     Args:
@@ -1083,10 +1396,29 @@ def gene_set_correlation_matrix(genes: List, full_cor_mat: pd.DataFrame, ordered
             Correlation matrix of genes that include at least `genes`.
         ordered:
             Wether to order the correlation matrix by a linkage clustering.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
+        description:
+            Description for progress bar.
     """
+    progress, started = init_progress(progress, verbosity, level)
+
+    if progress:
+        task_corr = progress.add_task(description, total=1, level=level)
+
     cor_mat = full_cor_mat.loc[genes, genes].copy()
     if ordered:
         cor_mat = cluster_corr(cor_mat)
+
+    if progress:
+        progress.advance(task_corr)
+        if started:
+            progress.stop()
+
     return cor_mat
 
 

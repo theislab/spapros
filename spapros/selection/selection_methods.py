@@ -720,7 +720,7 @@ def add_tree_genes_from_reference_trees(
     return_clfs: bool = False,
     final_forest_task: Optional[TaskID] = None,
     progress: Optional[Progress] = None,
-    level: int = 1,
+    level: int = 2,
     task: str = "Iteratively add genes from DE_baseline_forest...",
 ) -> Union[
     Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], list],  # len(f1_diffs) == 0 && return_clfs=True
@@ -834,6 +834,14 @@ def add_tree_genes_from_reference_trees(
 
     # Return initial results if all cell types' performances are good enough already
     if len(f1_diffs) == 0:
+
+        if progress and 2 * verbosity >= level:
+            progress.add_task("Initial results are good enough. No genes are added...", only_text=True, level=level + 1)
+
+        if progress and 2 * verbosity >= (level - 1) and final_forest_task:
+            progress.advance(final_forest_task)  # iteratively adding genes is skipped
+            progress.advance(final_forest_task)  # retrain final tree is skipped
+
         if return_clfs:
             # raise ValueError("No classifiers were trained since no cell type needs a performance improvement. "\
             #                 "Set return_clfs=False or scip the function call.")
@@ -951,6 +959,7 @@ def add_tree_genes_from_reference_trees(
     #     print("Train final trees on all celltypes, now with the added genes...")
     if progress and 2 * verbosity >= (level - 1) and final_forest_task:
         progress.advance(final_forest_task)
+
     celltypes = initial_summary.index.tolist()
     forest_results = forest_classifications(
         adata,

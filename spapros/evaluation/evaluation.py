@@ -18,6 +18,7 @@ import pandas as pd
 import scanpy as sc
 import scipy
 import spapros.plotting as pl
+from rich.errors import LiveError
 from rich.progress import Progress
 from sklearn import tree
 from sklearn.metrics import classification_report
@@ -30,6 +31,7 @@ from spapros.util.mp_util import _get_n_cores
 from spapros.util.mp_util import parallelize
 from spapros.util.mp_util import Signal
 from spapros.util.mp_util import SigQueue
+from spapros.util.util import init_progress
 from spapros.util.util import NestedProgress
 
 
@@ -273,6 +275,9 @@ class ProbesetEvaluator:
             os.path.join(self.dir, f"{self.ref_name}_summary.csv") if self.dir else _empty
         )
 
+        self.progress = None
+        self.started = False
+
         # TODO:
         # For the user it could be important to get some warning when reinitializing the Evaluator with new
         # params but still having the old directory. The problem is then that old results are loaded that are
@@ -283,18 +288,37 @@ class ProbesetEvaluator:
     ) -> None:
         """Compute results that are potentially reused for evaluations of different probesets."""
 
+        if self.progress and self.verbosity > 0:
+            task_shared = self.progress.add_task("Shared metric computations...", total=len(self.metrics), level=1)
+
         for metric in self.metrics:
             if self.ref_dir and os.path.isfile(self._shared_res_file(metric)):
+
+                if self.progress and self.verbosity > 1:
+                    task_load = self.progress.add_task(
+                        "Loading shared computations for " + metric + "...", total=1, level=2
+                    )
+
                 self.shared_results[metric] = pd.read_csv(self._shared_res_file(metric), index_col=0)
+
+                if self.progress and self.verbosity > 1:
+                    self.progress.advance(task_load)
+
             else:
                 self.shared_results[metric] = metric_shared_computations(
                     self.adata,
                     metric=metric,
                     parameters=self.metrics_params[metric],
+                    progress=self.progress if self.verbosity > 1 else None,
+                    level=2,
+                    verbosity=self.verbosity,
                 )
                 if self.ref_dir and (self.shared_results[metric] is not None):
                     Path(self.ref_dir).mkdir(parents=True, exist_ok=True)
                     self.shared_results[metric].to_csv(self._shared_res_file(metric))
+
+            if self.progress and self.verbosity > 0:
+                self.progress.advance(task_shared)
 
     def evaluate_probeset(
         self, genes: List, set_id: str = "probeset1", update_summary: bool = True, pre_only: bool = False
@@ -320,48 +344,97 @@ class ProbesetEvaluator:
                 the shared results being finished. This is interesting for a parallelised pipeline. If :attr:`pre_only`
                 is set to `True` only these pre calculations are computed.
         """
-        if not pre_only:
-            self.compute_or_load_shared_results()
 
-        # Probeset specific pre computation (shared results are not needed for these)
-        for metric in self.metrics:
-            if self.dir:
-                pre_res_file: str = self._res_file(metric, set_id, pre=True)
-                pre_res_file_isfile = os.path.isfile(pre_res_file)
-            else:
-                pre_res_file_isfile = False
-            if (self.dir is None) or (not pre_res_file_isfile):
-                self.pre_results[metric][set_id] = metric_pre_computations(
-                    genes,
-                    adata=self.adata,
-                    metric=metric,
-                    parameters=self.metrics_params[metric],
+        try:
+            self.progress, self.started = init_progress(None, verbosity=self.verbosity, level=1)
+
+            if not pre_only:
+                self.compute_or_load_shared_results()
+
+            # Probeset specific pre computation (shared results are not needed for these)
+
+            if self.progress and self.verbosity > 0:
+                task_pre = self.progress.add_task(
+                    "Probeset specific pre computations...", total=len(self.metrics), level=1
                 )
-                if self.dir and (self.pre_results[metric][set_id] is not None):
-                    Path(os.path.dirname(self._res_file(metric, set_id, pre=True))).mkdir(parents=True, exist_ok=True)
-                    self.pre_results[metric][set_id].to_csv(self._res_file(metric, set_id, pre=True))
-            elif os.path.isfile(self._res_file(metric, set_id, pre=True)):
-                self.pre_results[metric][set_id] = pd.read_csv(self._res_file(metric, set_id, pre=True), index_col=0)
 
-        # Probeset specific computation (shared results are needed)
-        if not pre_only:
             for metric in self.metrics:
-                if (self.dir is None) or (not os.path.isfile(self._res_file(metric, set_id))):
-                    self.results[metric][set_id] = metric_computations(
+                if self.dir:
+                    pre_res_file: str = self._res_file(metric, set_id, pre=True)
+                    pre_res_file_isfile = os.path.isfile(pre_res_file)
+                else:
+                    pre_res_file_isfile = False
+                if (self.dir is None) or (not pre_res_file_isfile):
+                    self.pre_results[metric][set_id] = metric_pre_computations(
                         genes,
                         adata=self.adata,
                         metric=metric,
-                        shared_results=self.shared_results[metric],
-                        pre_results=self.pre_results[metric][set_id],
                         parameters=self.metrics_params[metric],
-                        n_jobs=self.n_jobs,
+                        progress=self.progress if self.verbosity > 1 else None,
+                        level=2,
+                        verbosity=self.verbosity,
                     )
-                    if self.dir:
-                        Path(os.path.dirname(self._res_file(metric, set_id))).mkdir(parents=True, exist_ok=True)
-                        self.results[metric][set_id].to_csv(self._res_file(metric, set_id))
+                    if self.dir and (self.pre_results[metric][set_id] is not None):
+                        Path(os.path.dirname(self._res_file(metric, set_id, pre=True))).mkdir(
+                            parents=True, exist_ok=True
+                        )
+                        self.pre_results[metric][set_id].to_csv(self._res_file(metric, set_id, pre=True))
+                elif os.path.isfile(self._res_file(metric, set_id, pre=True)):
 
-            if update_summary:
-                self.summary_statistics(set_ids=[set_id])
+                    if self.progress and self.verbosity > 1:
+                        task_pre_load = self.progress.add_task(
+                            "Loading pre computations for " + metric + "...", total=1, level=2
+                        )
+
+                    self.pre_results[metric][set_id] = pd.read_csv(
+                        self._res_file(metric, set_id, pre=True), index_col=0
+                    )
+
+                    if self.progress and self.verbosity > 1:
+                        self.progress.advance(task_pre_load)
+
+                if self.progress and self.verbosity > 0:
+                    self.progress.advance(task_pre)
+
+            # Probeset specific computation (shared results are needed)
+
+            if self.progress and self.verbosity > 0:
+                task_final = self.progress.add_task(
+                    "Final probeset specific computations...", total=len(self.metrics), level=1
+                )
+
+            if not pre_only:
+                for metric in self.metrics:
+                    if (self.dir is None) or (not os.path.isfile(self._res_file(metric, set_id))):
+                        self.results[metric][set_id] = metric_computations(
+                            genes,
+                            adata=self.adata,
+                            metric=metric,
+                            shared_results=self.shared_results[metric],
+                            pre_results=self.pre_results[metric][set_id],
+                            parameters=self.metrics_params[metric],
+                            n_jobs=self.n_jobs,
+                            progress=self.progress if self.verbosity > 1 else None,
+                            level=2,
+                            verbosity=self.verbosity,
+                        )
+                        if self.dir:
+                            Path(os.path.dirname(self._res_file(metric, set_id))).mkdir(parents=True, exist_ok=True)
+                            self.results[metric][set_id].to_csv(self._res_file(metric, set_id))
+
+                    if self.progress and self.verbosity > 0:
+                        self.progress.advance(task_final)
+
+                if update_summary:
+                    self.summary_statistics(set_ids=[set_id])
+
+            if self.progress and self.started:
+                self.progress.stop()
+
+        except LiveError:
+            if self.progress:
+                self.progress.stop()
+            raise LiveError
 
     def evaluate_probeset_pipeline(
         self, genes: List, set_id: str, shared_pre_results_path: List, step_specific_results: List
