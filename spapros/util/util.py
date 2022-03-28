@@ -21,6 +21,7 @@ from rich.progress import TimeElapsedColumn
 from scipy.sparse import issparse
 from sklearn.utils import sparsefuncs
 
+
 ##############
 # Data Utils #
 ##############
@@ -450,12 +451,10 @@ def plateau_penalty_kernel(
         var_r = var
 
     if not (x_min is None):
-
         def left_kernel(x):
             return np.exp(-np.power(x - x_min, 2.0) / (2 * var_l))
 
     if not (x_max is None):
-
         def right_kernel(x):
             return np.exp(-np.power(x - x_max, 2.0) / (2 * var_r))
 
@@ -708,6 +707,8 @@ class NestedProgress(Progress):
             # extract those self devined fields
             level = task.fields.get("level") if task.fields.get("level") else 1
             only_text = task.fields.get("only_text") if task.fields.get("only_text") else False
+            header = task.fields.get("header") if task.fields.get("header") else False
+            footer = task.fields.get("footer") if task.fields.get("footer") else False
 
             # layout
             indentation = (level - 1) * 2 * " "
@@ -716,19 +717,23 @@ class NestedProgress(Progress):
             # define columns for percentag and step progress
             steps_column = TextColumn("[progress.percentage]{task.completed: >2}/{task.total: <2}", justify="right")
             percentage_column = TextColumn("[progress.percentage]{task.percentage:>3.0f}% ", justify="right")
-            fill = 100 if only_text else 58
+            fill = 92 if only_text else 58
             fill = fill - len(indentation)
             text_column = f"{indentation}[{font_styles[level]}][progress.description]{task.description:.<{fill}}"
+            header_column = f"[bold black][progress.description]{task.description: <96}"
+            footer_column = f"[bold black][progress.description]{task.description}"
 
             if not only_text:
-                self.columns = (
-                    text_column,
-                    BarColumn(),
-                    steps_column if task.total != 1 else percentage_column,
-                    TimeElapsedColumn(),
-                )
+                self.columns = (text_column, BarColumn(),
+                                steps_column if task.total != 1 else percentage_column,
+                                TimeElapsedColumn(),
+                                )
             else:
                 self.columns = (text_column, "")
+            if header:
+                self.columns = (header_column, TimeElapsedColumn())
+            if footer:
+                self.columns = (footer_column, "")
             yield self.make_tasks_table([task])
 
 

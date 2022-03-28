@@ -409,6 +409,9 @@ class ProbesetSelector:  # (object)
         """
         assert isinstance(self.progress, RichCast)
         with self.progress:
+            if self.verbosity > 0:
+                selection_task = self.progress.add_task(description="SPAPROS PROBESET SELECTION:", only_text=True,
+                                                        header=True, total=0)
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._pca_selection()
             self._forest_DE_baseline_selection()
@@ -416,6 +419,9 @@ class ProbesetSelector:  # (object)
             if self.marker_list:
                 self._marker_selection()
             self.probeset = self._compile_probeset_list()
+            if self.verbosity > 0:
+                self.progress.advance(selection_task)
+                self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
             if self.save_dir:
                 self.probeset.to_csv(self.probeset_path)
             # TODO: we haven't included the checks to load the probeset if it already exists
@@ -432,6 +438,7 @@ class ProbesetSelector:  # (object)
                 inplace=False,
                 progress=self.progress,
                 level=1,
+                verbosity=self.verbosity,
                 **self.pca_selection_hparams,
             )
             assert self.selection["pca"] is not None
@@ -441,15 +448,15 @@ class ProbesetSelector:  # (object)
             if self.save_dir:
                 self.selection["pca"].to_csv(self.selections_paths["pca"])
         else:
-            if self.verbosity > 0:
-                print("PCA genes already selected...")
+            if self.progress and 2 * self.verbosity > 0:
+                self.progress.add_task("PCA genes already selected...", only_text=True, level=1)
 
     def _forest_DE_baseline_selection(self) -> None:
         """Select genes based on forests and differentially expressed genes."""
         # if self.verbosity > 0:
         #     print("Select genes based on differential expression and forests as baseline for the final forests...")
         if self.progress and self.verbosity > 0:
-            baseline_task = self.progress.add_task("Train baseline forest based on DE genes...", total=3, level=1)
+            baseline_task = self.progress.add_task("Train baseline forest based on DE genes...", total=4, level=1)
 
         if not isinstance(self.selection["DE"], pd.DataFrame):
             # if self.verbosity > 1:
@@ -472,8 +479,9 @@ class ProbesetSelector:  # (object)
             if self.save_dir:
                 self.selection["DE"].to_csv(self.selections_paths["DE"])
         else:
-            if self.verbosity > 1:
-                print("\t Differentially expressed genes already selected...")
+            if self.progress and 2 * self.verbosity > 1:
+                self.progress.add_task("Differentially expressed genes already selected...", only_text=True, level=2)
+
         if self.progress and self.verbosity > 0:
             self.progress.advance(baseline_task)
 
@@ -505,8 +513,9 @@ class ProbesetSelector:  # (object)
                 **self.forest_hparams,
             )
         else:
-            if self.verbosity > 1:
-                print("\t Prior forest for DE_baseline forest already trained...")
+            if self.progress and 2 * self.verbosity > 1:
+                self.progress.add_task("Prior forest for DE_baseline forest already trained...", only_text=True, level=2)
+
         if self.progress and self.verbosity > 0:
             self.progress.advance(baseline_task)
 
@@ -536,6 +545,7 @@ class ProbesetSelector:  # (object)
                 progress=self.progress,
                 level=2,
                 **self.forest_DE_baseline_hparams,
+                baseline_task=baseline_task if (self.progress and self.verbosity > 0) else None
             )
             assert isinstance(de_forest_results, tuple)
             self.forest_results["DE_baseline_forest"] = de_forest_results[0]
@@ -549,8 +559,12 @@ class ProbesetSelector:  # (object)
                 with open(self.forest_clfs_paths["DE_baseline_forest"], "wb") as f:
                     pickle.dump(self.forest_clfs["DE_baseline_forest"], f)
         else:
-            if self.verbosity > 1:
-                print("\t DE_baseline forest already trained...")
+            if self.progress and 2 * self.verbosity > 1:
+                self.progress.add_task("DE genes already added...", only_text=True, level=2)
+                self.progress.add_task("DE_baseline forest already trained...", only_text=True, level=2)
+                if self.verbosity > 0 and baseline_task:
+                    self.progress.advance(baseline_task)
+
         if self.progress and self.verbosity > 0:
             self.progress.advance(baseline_task)
 
@@ -573,6 +587,7 @@ class ProbesetSelector:  # (object)
         #     )
         if self.progress and self.verbosity > 0:
             final_forest_task = self.progress.add_task("Train final forests...", total=3, level=1)
+
         if self.n_pca_genes and (self.n_pca_genes > 0):
             # if self.verbosity > 1:
             #     print("\t Train forest on pre/prior/pca selected genes...")
@@ -603,8 +618,10 @@ class ProbesetSelector:  # (object)
                 # if self.verbosity > 2:
                 #     print("\t\t ...finished.")
             else:
-                if self.verbosity > 2:
-                    print("\t\t ...was already trained.")
+                if self.progress and 2 * self.verbosity >= 2:
+                    self.progress.add_task("Tree on pre/prior/pca selected genes already trained...", only_text=True,
+                                           level=2)
+
             if self.progress and self.verbosity > 0:
                 self.progress.advance(final_forest_task)
             # if self.verbosity > 1:
@@ -640,10 +657,16 @@ class ProbesetSelector:  # (object)
                 # if self.verbosity > 2:
                 #     print("\t\t ...finished.")
             else:
-                if self.verbosity > 2:
-                    print("\t\t ...were already added.")
+                if self.progress and 2 * self.verbosity >= 2:
+                    self.progress.add_task("Genes from DE_baseline_forest were already added...", only_text=True,
+                                           level=2)
+                    self.progress.add_task("Final forest was alread trained...", only_text=True,
+                                           level=2)
+                    self.progress.advance(final_forest_task)
+
             if self.progress and self.verbosity > 0:
                 self.progress.advance(final_forest_task)
+
             if not isinstance(self.selection["forest"], pd.DataFrame):
                 assert isinstance(self.forest_results["forest"], list)
                 assert len(self.forest_results["forest"]) == 3
@@ -830,8 +853,9 @@ class ProbesetSelector:  # (object)
         #  How/where to add genes from marker_list that are not in adata?
         #  --> Oh btw, same with pre and prior selected genes.
 
-        if self.progress and self.verbosity > 0:
+        if self.progress and self.verbosity > 0 and with_markers_from_list:
             list_task = self.progress.add_task("Compile probeset list...", total=1, level=1)
+
         # Initialize probeset table
         index = self.genes.tolist()
         # Add marker genes that are not in adata
@@ -1021,7 +1045,8 @@ class ProbesetSelector:  # (object)
         other_cols = [col for col in probeset.columns if col not in first_cols]
         cols = first_cols + other_cols
 
-        if self.progress and self.verbosity > 0:
+        if self.progress and self.verbosity > 0 and with_markers_from_list:
+            self.progress.advance(list_task)
             self.progress.advance(list_task)
 
         return probeset[cols].copy()

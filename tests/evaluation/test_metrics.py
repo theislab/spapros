@@ -3,14 +3,15 @@ import numpy as np
 import pandas as pd
 import pytest
 import scanpy as sc
-from spapros.evaluation.metrics import clustering_nmis
 from spapros.evaluation.metrics import correlation_matrix
+from spapros.evaluation.metrics import summary_nmi_AUCs
+from spapros.evaluation.metrics import max_marker_correlations
+from spapros.evaluation.metrics import xgboost_forest_classification
+from spapros.evaluation.metrics import mean_overlaps
+from spapros.evaluation.metrics import clustering_nmis
 from spapros.evaluation.metrics import knns
 from spapros.evaluation.metrics import leiden_clusterings
 from spapros.evaluation.metrics import marker_correlation_matrix
-from spapros.evaluation.metrics import max_marker_correlations
-from spapros.evaluation.metrics import mean_overlaps
-from spapros.evaluation.metrics import xgboost_forest_classification
 
 ############################
 # test shared computations #
@@ -93,13 +94,15 @@ def test_marker_correlation_matrix_shared_comp(small_adata, marker_list):
 
 @pytest.mark.parametrize("var_names", [None, ["PPBP", "SPARC", "S100A8"]])
 def test_correlation_matrix_shared_comp_input_options(small_adata, var_names):
+    small_adata = small_adata[:100, :]
     cor_mat = correlation_matrix(small_adata, var_names)
     n = len(var_names) if var_names is not None else small_adata.n_vars
     assert cor_mat.shape == (n, n)
     # assert diagonal equals one (due to normalization)
-    assert all(np.round(cor_mat.iloc[i, i], 0) == 1 for i in range(n))
+    assert all(np.round(cor_mat.iloc[i, i], 0) == 1 or np.isnan(cor_mat.iloc[i, i]) for i in range(n))
     # assert symmetry
-    assert all(round(cor_mat.iloc[i, j], 5) == round(cor_mat.iloc[j, i], 5) for i in range(n) for j in range(n))
+    if var_names is not None:
+        assert all(round(cor_mat.iloc[i, j], 5) == round(cor_mat.iloc[j, i], 5) or np.isnan(cor_mat.iloc[i, j]) for i in range(n) for j in range(n))
 
 
 def test_correlation_matrix_shared_comp_minimal():
@@ -113,12 +116,13 @@ def test_correlation_matrix_shared_comp_minimal():
     assert round(cor_mat.iloc[2, 1], 5) == 0.87039
 
 
-# @pytest.mark.parametrize("ks", ["all", ['PPBP', 'SPARC', 'S100A8'], ["PPBP"]])
-def test_knns_shared_comp(small_adata):
-    df = knns(small_adata, "all")
+@pytest.mark.parametrize("ks", [[10, 20], [5, 9]])
+@pytest.mark.parametrize("genes", ["all", ['PPBP', 'SPARC', 'S100A8'], ["PPBP", "S100A9", "LYZ", "BLVRB"]])
+def test_knns_shared_comp(small_adata, ks, genes):
+    df = knns(small_adata, genes=genes, ks=ks)
     # to create the reference dataframe
-    # df.to_csv("tests/evaluation/test_data/knn_df.csv")
-    ref_df = pd.read_csv("tests/evaluation/test_data/knn_df.csv", index_col=0)
+    # df.to_csv(f"tests/evaluation/test_data/knn_df_{ks}_{genes}.csv")
+    ref_df = pd.read_csv(f"tests/evaluation/test_data/knn_df_{ks}_{genes}.csv", index_col=0)
     assert df.equals(ref_df)
 
 
@@ -126,15 +130,15 @@ def test_knns_shared_comp(small_adata):
 # test metric computations #
 ############################
 
-
 def test_clustering_nmis(small_adata, small_probeset):
     ns = [2, 3]
+    method = "arithmetic"
     annotations_ref = leiden_clusterings(small_adata, ns, start_res=1.0)
     annotations = leiden_clusterings(small_adata[:, small_probeset], ns, start_res=1.0)
     annotations_perm = leiden_clusterings(small_adata[:, small_probeset[::-1]], ns, start_res=1.0)
-    nmis = clustering_nmis(annotations, annotations_ref, ns)
-    nmis_sym = clustering_nmis(annotations_ref, annotations, ns)
-    nmis_perm = clustering_nmis(annotations_perm, annotations_ref, ns)
+    nmis = clustering_nmis(annotations, annotations_ref, ns, method)
+    nmis_sym = clustering_nmis(annotations_ref, annotations, ns, method)
+    nmis_perm = clustering_nmis(annotations_perm, annotations_ref, ns, method)
     ref = pd.DataFrame({"nmi": [0.940299, 0.946526]}, index=[2, 3])
     # assert equals ref
     assert pd.testing.assert_frame_equal(nmis, ref, check_exact=False) is None
@@ -142,6 +146,14 @@ def test_clustering_nmis(small_adata, small_probeset):
     assert pd.testing.assert_frame_equal(nmis, nmis_sym) is None
     # assert independence of permutation
     assert pd.testing.assert_frame_equal(nmis, nmis_perm) is None
+
+
+@pytest.mark.parametrize("method", ["max", "min", "geometric", "arithmetic"])
+def test_clustering_nmis_methods(small_adata, small_probeset, method):
+    ns = [2, 3]
+    annotations_ref = leiden_clusterings(small_adata, ns, start_res=1.0)
+    annotations = leiden_clusterings(small_adata[:, small_probeset], ns, start_res=1.0)
+    clustering_nmis(annotations, annotations_ref, ns)
 
 
 def test_clustering_nmis_minimal():
@@ -156,15 +168,27 @@ def test_clustering_nmis_minimal():
 
 
 def test_mean_overlaps(small_adata, small_probeset):
-    knn_df = knns(small_adata, genes=small_probeset)
-    ref_knn_df = knns(small_adata, genes="all")
-    mean_df = mean_overlaps(knn_df, ref_knn_df, ks=[10, 20])
-    mean_ref = pd.DataFrame({"mean": [0.491728, 0.566959]}, index=[10, 20])
+    ks = [10, 20]
+    knn_df = knns(small_adata, genes=small_probeset, ks=ks)
+    ref_knn_df = knns(small_adata, genes="all", ks=ks)
+    mean_df = mean_overlaps(knn_df, ref_knn_df, ks=ks)
+    mean_ref = pd.DataFrame({"mean": [0.491728, 0.566959]}, index=ks)
     assert pd.testing.assert_frame_equal(mean_df, mean_ref, check_exact=False) is None
 
 
-def test_xgboost_forest_classification(small_adata, small_probeset):
-    dfs = xgboost_forest_classification(small_adata, small_probeset, ct_key="celltype")
+@pytest.mark.parametrize("celltypes, "
+                         "n_cells_min, "
+                         "max_depth, "
+                         "lr, "
+                         "colsample_bytree, "
+                         "cv_splits, "
+                         "min_child_weight, "
+                         "gamma, seed, n_seeds",
+                         [("all", 49, 3, 0.2, 1, 5, None, None, 0, 5)])
+def test_xgboost_forest_classification(small_adata, small_probeset, celltypes, n_cells_min, max_depth, lr,
+                                       colsample_bytree, cv_splits, min_child_weight, gamma, seed, n_seeds):
+    dfs = xgboost_forest_classification(small_adata, small_probeset, celltypes, "celltype", n_cells_min, max_depth, lr,
+                                        colsample_bytree, cv_splits, min_child_weight, gamma, seed, n_seeds)
     # dfs[0].to_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv")
     # dfs[1].to_csv("tests/evaluation/test_data/xgboost_forest_classification_1.csv")
     df_0 = pd.read_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv", index_col=0)
@@ -176,7 +200,7 @@ def test_xgboost_forest_classification(small_adata, small_probeset):
 def test_max_marker_correlations(small_adata, marker_list, small_probeset):
     cor_matrix = marker_correlation_matrix(small_adata, marker_list)
     mmc = max_marker_correlations(small_probeset, cor_matrix)
-    mmc.to_csv("tests/evaluation/test_data/max_marker_correlation.csv")
+    # mmc.to_csv("tests/evaluation/test_data/max_marker_correlation.csv")
     mmc_ref = pd.read_csv("tests/evaluation/test_data/max_marker_correlation.csv", index_col=0)
     mmc_ref.columns.name = "index"
     assert pd.testing.assert_frame_equal(mmc, mmc_ref) is None
@@ -186,25 +210,21 @@ def test_max_marker_correlations(small_adata, marker_list, small_probeset):
 # test summary metrics #
 ########################
 
-# AUC
-# summary_metric_diagonal_confusion_mean
-# linear_step
-# summary_metric_diagonal_confusion_percentage
-# summary_metric_correlation_mean
-# summary_metric_correlation_percentage
+@pytest.mark.parametrize("ns, AUC_borders", [([10, 20], [[10, 12], [17, 20]]), ([5, 60], [[5, 20], [21, 60]])])
+def test_summary_nmi_AUCs(small_adata, small_probeset, ns, AUC_borders):
+    annotations_ref = leiden_clusterings(small_adata, ns, start_res=1.0)
+    annotations = leiden_clusterings(small_adata[:, small_probeset], ns, start_res=1.0)
+    nmis = clustering_nmis(annotations, annotations_ref, ns)
+    AUCs = summary_nmi_AUCs(nmis, AUC_borders)
+    print(AUCs)
+    assert all([x <= 1 for x in AUCs.values()])
 
 
-# TODO discuss
-"""
-Where I see no need for testing:
-- all the getter (get_metric_names, get_metric_parameter_names, get_metric_default_parameters
-- compute_clustering_and_update
-- summary functions: summary_nmi_AUCs, summary_knn_AUC,
-- utils
+def summary_knn_AUC(small_adata, small_probeset):
+    ks = [10, 20]
+    knn_df = knns(small_adata, genes=small_probeset, ks=ks)
+    ref_knn_df = knns(small_adata, genes="all", ks=ks)
+    mean_df = mean_overlaps(knn_df, ref_knn_df, ks=ks)
+    AUC = summary_knn_AUC(mean_df)
+    assert all([x <= 1 for x in AUC.values()])
 
-Questions:
-- test for the parameter types and return types? I think no -> type hinting
-- are the "...equals_ref" tests usefull or too time consuming? eg. test_leiden_clustering_shared_comp_equals_ref
-- smaller anndata than small_adata
-- time for all tests currently > 3.5 min
-"""

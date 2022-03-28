@@ -414,6 +414,7 @@ def add_DE_genes_to_trees(
     return_clfs: bool = False,
     progress: Optional[Progress] = None,
     level: int = 2,
+    baseline_task=None,
 ) -> Union[
     Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], pd.DataFrame, pd.DataFrame],  # return_clfs = True
     Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], pd.DataFrame],  # return_clfs = False
@@ -479,6 +480,8 @@ def add_DE_genes_to_trees(
             trees.
         level:
             Progress bar level.
+        baseline_task:
+            ID of the supertask.
 
     Returns:
         forest_results: list
@@ -544,7 +547,7 @@ def add_DE_genes_to_trees(
     # if verbosity > 0:
     #     print("Add DE genes with specific reference groups to improve tree performance...")
 
-    if progress and verbosity > 0:
+    if progress and 2 * verbosity >= level:
         DE_tree_task = progress.add_task(
             "Iteratively add DE genes to DE_baseline forest...", total=max_step, level=level
         )
@@ -561,9 +564,9 @@ def add_DE_genes_to_trees(
         # DE selection for celltypes with outliers
         # if verbosity > 1:
         #     print("\t Select DE genes...")
-        if progress and verbosity > 1:
+        if progress and 2 * verbosity >= level+1:
             select_DE_task = progress.add_task(
-                "Select DE genes for celltypes with outliers...", total=len(ct_to_reference), level=level + 1
+                "Select DE genes for celltypes with outliers...", total=len(ct_to_reference), level=level+1
             )
         for ct in ct_to_reference:
             # if verbosity > 2:
@@ -643,10 +646,14 @@ def add_DE_genes_to_trees(
 
         step += 1
 
-        if progress and verbosity > 0:
+        if progress and 2 * verbosity >= level:
             progress.advance(DE_tree_task)
-    if progress and verbosity > 0:
+
+    if progress and 2 * verbosity >= level:
         progress.update(DE_tree_task, completed=3)
+
+    if progress and 2 * verbosity >= level-1 and baseline_task:
+        progress.advance(baseline_task)
 
     # Sort DE info
     DE_info = DE_info.sort_values("step")
@@ -836,10 +843,9 @@ def add_tree_genes_from_reference_trees(
     if len(f1_diffs) == 0:
 
         if progress and 2 * verbosity >= level:
-            progress.add_task("Initial results are good enough. No genes are added...", only_text=True, level=level + 1)
+            progress.add_task("Initial results are good enough. No genes are added...", only_text=True, level=level)
 
         if progress and 2 * verbosity >= (level - 1) and final_forest_task:
-            progress.advance(final_forest_task)  # iteratively adding genes is skipped
             progress.advance(final_forest_task)  # retrain final tree is skipped
 
         if return_clfs:
@@ -850,6 +856,8 @@ def add_tree_genes_from_reference_trees(
             return [initial_summary, initial_ct_spec_summary, im], []
         else:
             return initial_summary, initial_ct_spec_summary, im
+
+
 
     # Get reference importance table of the celltypes' best trees
     importances = pd.concat([im_ref[ct]["0"] for ct in im_ref], axis=1)
@@ -884,6 +892,7 @@ def add_tree_genes_from_reference_trees(
 
     if progress and 2 * verbosity >= level:
         add_ref_task = progress.add_task(task, total=max_step if max_step else 12, level=level)
+
     while celltypes and n_max_unreached and (not selected_all) and (not importances.empty) and (not max_step_reached):
 
         if n_max:
@@ -911,7 +920,7 @@ def add_tree_genes_from_reference_trees(
             verbosity=verbosity,
             return_clfs=False,
             progress=progress,
-            level=level + 1,
+            level=level+1,
             task="Train trees with added genes...",
             **tree_clf_kwargs,
         )
@@ -946,8 +955,11 @@ def add_tree_genes_from_reference_trees(
         step += 1
         if max_step and (step >= max_step):
             max_step_reached = True
-            if verbosity > 1:
-                print(f"\t\t Maximal iteration step ({step}) reached.")
+            if progress and 2 * verbosity >= level+1:
+                progress.add_task(f"Maximal iteration step ({step}) reached.", total=0, level=level+1,
+                                                 only_text=True)
+            # if verbosity > 1:
+            #     print(f"\t\t Maximal iteration step ({step}) reached.")
 
         if progress and 2 * verbosity >= level:
             progress.advance(add_ref_task)
@@ -955,10 +967,11 @@ def add_tree_genes_from_reference_trees(
     if progress and 2 * verbosity >= level:
         progress.update(add_ref_task, completed=max_step if max_step else 12)
 
-    # if verbosity > 0:
-    #     print("Train final trees on all celltypes, now with the added genes...")
     if progress and 2 * verbosity >= (level - 1) and final_forest_task:
         progress.advance(final_forest_task)
+
+    # if verbosity > 0:
+    #     print("Train final trees on all celltypes, now with the added genes...")
 
     celltypes = initial_summary.index.tolist()
     forest_results = forest_classifications(
@@ -971,10 +984,11 @@ def add_tree_genes_from_reference_trees(
         verbosity=verbosity,
         return_clfs=return_clfs,
         progress=progress,
-        level=level + 1,
+        level=level,
         task="Train final trees on all celltypes...",
         **tree_clf_kwargs,
     )
+
     if return_clfs:
         assert isinstance(forest_results, tuple)
         results = forest_results[0]
@@ -1725,3 +1739,5 @@ def select_selfE_features(adata: sc.AnnData, n: int, inplace: bool = True, verbo
         adata.var["selection"] = df["selection"].copy()
     else:
         return df[["selection"]].copy()
+
+

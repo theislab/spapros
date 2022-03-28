@@ -4,12 +4,12 @@ import pytest
 import scanpy as sc
 from spapros import ev
 from spapros import se
+import random
 
 
 #############
 # selection #
 #############
-
 
 @pytest.fixture()
 def raw_selector(small_adata):
@@ -26,7 +26,28 @@ def selector(raw_selector):
 @pytest.fixture()
 def small_adata():
     adata = sc.read_h5ad("data/small_data_raw_counts.h5ad")
+    # random.seed(0)
+    # adata = adata[random.sample(range(adata.n_obs), 100), :]
     return adata
+
+
+@pytest.fixture()
+def adata_pbmc3k():
+    adata = sc.datasets.pbmc3k()
+    adata_tmp = sc.datasets.pbmc3k_processed()
+    adata = adata[adata_tmp.obs_names, adata_tmp.var_names]
+    adata_raw = adata.copy()
+    sc.pp.normalize_total(adata, target_sum=1e4, key_added="size_factors")
+    sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=1000)
+    adata.X = adata_raw.X
+    sc.pp.log1p(adata)
+    adata.obs['celltype'] = adata_tmp.obs['louvain']
+    return adata
+
+
+@pytest.fixture(params=[None, "./probeset_selection"])
+def selection_dir(request):
+    return request.getfixturevalue(request.param)
 
 
 ##############
@@ -60,7 +81,10 @@ def marker_list():
 
 @pytest.fixture()
 def raw_evaluator(small_adata):
-    raw_evaluator = ev.ProbesetEvaluator(small_adata, scheme="quick", verbosity=0, results_dir=None)
+    raw_evaluator = ev.ProbesetEvaluator(small_adata,
+                                         scheme="quick",
+                                         verbosity=0,
+                                         results_dir=None)
     return raw_evaluator
 
 
