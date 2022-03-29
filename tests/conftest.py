@@ -1,19 +1,31 @@
 """Global fixtures for testing."""
+import random
+
 import pandas as pd
 import pytest
 import scanpy as sc
 from spapros import ev
 from spapros import se
-import random
 
 
 #############
 # selection #
 #############
 
+
 @pytest.fixture()
 def raw_selector(small_adata):
-    raw_selector = se.ProbesetSelector(small_adata, n=50, celltype_key="celltype", verbosity=0, save_dir=None)
+    random.seed(0)
+    sc.pp.log1p(small_adata)
+    small_adata = small_adata[random.sample(range(small_adata.n_obs), 100), :]
+    raw_selector = se.ProbesetSelector(
+        small_adata,
+        n=50,
+        celltype_key="celltype",
+        forest_hparams={"n_trees": 10, "subsample": 200, "test_subsample": 400},
+        verbosity=0,
+        save_dir=None,
+    )
     return raw_selector
 
 
@@ -25,7 +37,7 @@ def selector(raw_selector):
 
 @pytest.fixture()
 def small_adata():
-    adata = sc.read_h5ad("data/small_data_raw_counts.h5ad")
+    adata = sc.read_h5ad("tests/selection/test_data/small_data_raw_counts.h5ad")
     # random.seed(0)
     # adata = adata[random.sample(range(adata.n_obs), 100), :]
     return adata
@@ -41,13 +53,8 @@ def adata_pbmc3k():
     sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=1000)
     adata.X = adata_raw.X
     sc.pp.log1p(adata)
-    adata.obs['celltype'] = adata_tmp.obs['louvain']
+    adata.obs["celltype"] = adata_tmp.obs["louvain"]
     return adata
-
-
-@pytest.fixture(params=[None, "./probeset_selection"])
-def selection_dir(request):
-    return request.getfixturevalue(request.param)
 
 
 ##############
@@ -81,10 +88,9 @@ def marker_list():
 
 @pytest.fixture()
 def raw_evaluator(small_adata):
-    raw_evaluator = ev.ProbesetEvaluator(small_adata,
-                                         scheme="quick",
-                                         verbosity=0,
-                                         results_dir=None)
+    # random.seed(0)
+    # small_adata = small_adata[random.sample(range(small_adata.n_obs), 100), :]
+    raw_evaluator = ev.ProbesetEvaluator(small_adata, scheme="quick", verbosity=0, results_dir=None)
     return raw_evaluator
 
 

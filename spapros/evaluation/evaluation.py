@@ -431,10 +431,10 @@ class ProbesetEvaluator:
             if self.progress and self.started:
                 self.progress.stop()
 
-        except LiveError:
+        except LiveError as live_error:
             if self.progress:
                 self.progress.stop()
-            raise LiveError
+            raise live_error
 
     def evaluate_probeset_pipeline(
         self, genes: List, set_id: str, shared_pre_results_path: List, step_specific_results: List

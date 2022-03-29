@@ -410,8 +410,9 @@ class ProbesetSelector:  # (object)
         assert isinstance(self.progress, RichCast)
         with self.progress:
             if self.verbosity > 0:
-                selection_task = self.progress.add_task(description="SPAPROS PROBESET SELECTION:", only_text=True,
-                                                        header=True, total=0)
+                selection_task = self.progress.add_task(
+                    description="SPAPROS PROBESET SELECTION:", only_text=True, header=True, total=0
+                )
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._pca_selection()
             self._forest_DE_baseline_selection()
@@ -514,7 +515,9 @@ class ProbesetSelector:  # (object)
             )
         else:
             if self.progress and 2 * self.verbosity > 1:
-                self.progress.add_task("Prior forest for DE_baseline forest already trained...", only_text=True, level=2)
+                self.progress.add_task(
+                    "Prior forest for DE_baseline forest already trained...", only_text=True, level=2
+                )
 
         if self.progress and self.verbosity > 0:
             self.progress.advance(baseline_task)
@@ -545,7 +548,7 @@ class ProbesetSelector:  # (object)
                 progress=self.progress,
                 level=2,
                 **self.forest_DE_baseline_hparams,
-                baseline_task=baseline_task if (self.progress and self.verbosity > 0) else None
+                baseline_task=baseline_task if (self.progress and self.verbosity > 0) else None,
             )
             assert isinstance(de_forest_results, tuple)
             self.forest_results["DE_baseline_forest"] = de_forest_results[0]
@@ -619,8 +622,9 @@ class ProbesetSelector:  # (object)
                 #     print("\t\t ...finished.")
             else:
                 if self.progress and 2 * self.verbosity >= 2:
-                    self.progress.add_task("Tree on pre/prior/pca selected genes already trained...", only_text=True,
-                                           level=2)
+                    self.progress.add_task(
+                        "Tree on pre/prior/pca selected genes already trained...", only_text=True, level=2
+                    )
 
             if self.progress and self.verbosity > 0:
                 self.progress.advance(final_forest_task)
@@ -658,10 +662,10 @@ class ProbesetSelector:  # (object)
                 #     print("\t\t ...finished.")
             else:
                 if self.progress and 2 * self.verbosity >= 2:
-                    self.progress.add_task("Genes from DE_baseline_forest were already added...", only_text=True,
-                                           level=2)
-                    self.progress.add_task("Final forest was alread trained...", only_text=True,
-                                           level=2)
+                    self.progress.add_task(
+                        "Genes from DE_baseline_forest were already added...", only_text=True, level=2
+                    )
+                    self.progress.add_task("Final forest was alread trained...", only_text=True, level=2)
                     self.progress.advance(final_forest_task)
 
             if self.progress and self.verbosity > 0:
@@ -1377,6 +1381,7 @@ def select_reference_probesets(
         for seed in seeds:
             reference_selections[f"random_selection_seed_{seed}"] = {"seed": seed}
             default_reference_selections[f"random_selection_seed_{seed}"] = {"seed": seed}
+            reference_methods[f"random_selection_seed_{seed}"] = reference_methods["random_selection"]
 
     for selection_name in reference_selections:
         if selection_name not in default_reference_selections:

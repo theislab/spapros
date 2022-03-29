@@ -564,9 +564,9 @@ def add_DE_genes_to_trees(
         # DE selection for celltypes with outliers
         # if verbosity > 1:
         #     print("\t Select DE genes...")
-        if progress and 2 * verbosity >= level+1:
+        if progress and 2 * verbosity >= level + 1:
             select_DE_task = progress.add_task(
-                "Select DE genes for celltypes with outliers...", total=len(ct_to_reference), level=level+1
+                "Select DE genes for celltypes with outliers...", total=len(ct_to_reference), level=level + 1
             )
         for ct in ct_to_reference:
             # if verbosity > 2:
@@ -652,7 +652,7 @@ def add_DE_genes_to_trees(
     if progress and 2 * verbosity >= level:
         progress.update(DE_tree_task, completed=3)
 
-    if progress and 2 * verbosity >= level-1 and baseline_task:
+    if progress and 2 * verbosity >= level - 1 and baseline_task:
         progress.advance(baseline_task)
 
     # Sort DE info
@@ -857,8 +857,6 @@ def add_tree_genes_from_reference_trees(
         else:
             return initial_summary, initial_ct_spec_summary, im
 
-
-
     # Get reference importance table of the celltypes' best trees
     importances = pd.concat([im_ref[ct]["0"] for ct in im_ref], axis=1)
     importances.columns = [ct for ct in im_ref]
@@ -920,7 +918,7 @@ def add_tree_genes_from_reference_trees(
             verbosity=verbosity,
             return_clfs=False,
             progress=progress,
-            level=level+1,
+            level=level + 1,
             task="Train trees with added genes...",
             **tree_clf_kwargs,
         )
@@ -955,9 +953,8 @@ def add_tree_genes_from_reference_trees(
         step += 1
         if max_step and (step >= max_step):
             max_step_reached = True
-            if progress and 2 * verbosity >= level+1:
-                progress.add_task(f"Maximal iteration step ({step}) reached.", total=0, level=level+1,
-                                                 only_text=True)
+            if progress and 2 * verbosity >= level + 1:
+                progress.add_task(f"Maximal iteration step ({step}) reached.", total=0, level=level + 1, only_text=True)
             # if verbosity > 1:
             #     print(f"\t\t Maximal iteration step ({step}) reached.")
 
@@ -1739,5 +1736,3 @@ def select_selfE_features(adata: sc.AnnData, n: int, inplace: bool = True, verbo
         adata.var["selection"] = df["selection"].copy()
     else:
         return df[["selection"]].copy()
-
-

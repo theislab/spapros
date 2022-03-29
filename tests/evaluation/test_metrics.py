@@ -3,15 +3,15 @@ import numpy as np
 import pandas as pd
 import pytest
 import scanpy as sc
-from spapros.evaluation.metrics import correlation_matrix
-from spapros.evaluation.metrics import summary_nmi_AUCs
-from spapros.evaluation.metrics import max_marker_correlations
-from spapros.evaluation.metrics import xgboost_forest_classification
-from spapros.evaluation.metrics import mean_overlaps
 from spapros.evaluation.metrics import clustering_nmis
+from spapros.evaluation.metrics import correlation_matrix
 from spapros.evaluation.metrics import knns
 from spapros.evaluation.metrics import leiden_clusterings
 from spapros.evaluation.metrics import marker_correlation_matrix
+from spapros.evaluation.metrics import max_marker_correlations
+from spapros.evaluation.metrics import mean_overlaps
+from spapros.evaluation.metrics import summary_nmi_AUCs
+from spapros.evaluation.metrics import xgboost_forest_classification
 
 ############################
 # test shared computations #
@@ -62,7 +62,7 @@ def test_leiden_clustering_shared_comp_each_n(small_adata, ns, n_range):
 @pytest.mark.parametrize(
     "marker_list",
     [
-        "data/small_data_marker_list.csv",
+        "tests/evaluation/test_data/small_data_marker_list.csv",
         {
             "celltype_1": ["S100A8", "S100A9", "LYZ", "BLVRB"],
             "celltype_6": ["BIRC3", "TMEM116", "CD3D"],
@@ -102,7 +102,11 @@ def test_correlation_matrix_shared_comp_input_options(small_adata, var_names):
     assert all(np.round(cor_mat.iloc[i, i], 0) == 1 or np.isnan(cor_mat.iloc[i, i]) for i in range(n))
     # assert symmetry
     if var_names is not None:
-        assert all(round(cor_mat.iloc[i, j], 5) == round(cor_mat.iloc[j, i], 5) or np.isnan(cor_mat.iloc[i, j]) for i in range(n) for j in range(n))
+        assert all(
+            round(cor_mat.iloc[i, j], 5) == round(cor_mat.iloc[j, i], 5) or np.isnan(cor_mat.iloc[i, j])
+            for i in range(n)
+            for j in range(n)
+        )
 
 
 def test_correlation_matrix_shared_comp_minimal():
@@ -117,7 +121,7 @@ def test_correlation_matrix_shared_comp_minimal():
 
 
 @pytest.mark.parametrize("ks", [[10, 20], [5, 9]])
-@pytest.mark.parametrize("genes", ["all", ['PPBP', 'SPARC', 'S100A8'], ["PPBP", "S100A9", "LYZ", "BLVRB"]])
+@pytest.mark.parametrize("genes", ["all", ["PPBP", "SPARC", "S100A8"], ["PPBP", "S100A9", "LYZ", "BLVRB"]])
 def test_knns_shared_comp(small_adata, ks, genes):
     df = knns(small_adata, genes=genes, ks=ks)
     # to create the reference dataframe
@@ -129,6 +133,7 @@ def test_knns_shared_comp(small_adata, ks, genes):
 ############################
 # test metric computations #
 ############################
+
 
 def test_clustering_nmis(small_adata, small_probeset):
     ns = [2, 3]
@@ -176,19 +181,48 @@ def test_mean_overlaps(small_adata, small_probeset):
     assert pd.testing.assert_frame_equal(mean_df, mean_ref, check_exact=False) is None
 
 
-@pytest.mark.parametrize("celltypes, "
-                         "n_cells_min, "
-                         "max_depth, "
-                         "lr, "
-                         "colsample_bytree, "
-                         "cv_splits, "
-                         "min_child_weight, "
-                         "gamma, seed, n_seeds",
-                         [("all", 49, 3, 0.2, 1, 5, None, None, 0, 5)])
-def test_xgboost_forest_classification(small_adata, small_probeset, celltypes, n_cells_min, max_depth, lr,
-                                       colsample_bytree, cv_splits, min_child_weight, gamma, seed, n_seeds):
-    dfs = xgboost_forest_classification(small_adata, small_probeset, celltypes, "celltype", n_cells_min, max_depth, lr,
-                                        colsample_bytree, cv_splits, min_child_weight, gamma, seed, n_seeds)
+@pytest.mark.parametrize(
+    "celltypes, "
+    "n_cells_min, "
+    "max_depth, "
+    "lr, "
+    "colsample_bytree, "
+    "cv_splits, "
+    "min_child_weight, "
+    "gamma, "
+    "seed, "
+    "n_seeds",
+    [("all", 49, 3, 0.2, 1, 5, None, None, 0, 5)],
+)
+def test_xgboost_forest_classification(
+    small_adata,
+    small_probeset,
+    celltypes,
+    n_cells_min,
+    max_depth,
+    lr,
+    colsample_bytree,
+    cv_splits,
+    min_child_weight,
+    gamma,
+    seed,
+    n_seeds,
+):
+    dfs = xgboost_forest_classification(
+        small_adata,
+        small_probeset,
+        celltypes,
+        "celltype",
+        n_cells_min,
+        max_depth,
+        lr,
+        colsample_bytree,
+        cv_splits,
+        min_child_weight,
+        gamma,
+        seed,
+        n_seeds,
+    )
     # dfs[0].to_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv")
     # dfs[1].to_csv("tests/evaluation/test_data/xgboost_forest_classification_1.csv")
     df_0 = pd.read_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv", index_col=0)
@@ -210,6 +244,7 @@ def test_max_marker_correlations(small_adata, marker_list, small_probeset):
 # test summary metrics #
 ########################
 
+
 @pytest.mark.parametrize("ns, AUC_borders", [([10, 20], [[10, 12], [17, 20]]), ([5, 60], [[5, 20], [21, 60]])])
 def test_summary_nmi_AUCs(small_adata, small_probeset, ns, AUC_borders):
     annotations_ref = leiden_clusterings(small_adata, ns, start_res=1.0)
@@ -221,10 +256,9 @@ def test_summary_nmi_AUCs(small_adata, small_probeset, ns, AUC_borders):
 
 
 def summary_knn_AUC(small_adata, small_probeset):
-    ks = [10, 20]
-    knn_df = knns(small_adata, genes=small_probeset, ks=ks)
-    ref_knn_df = knns(small_adata, genes="all", ks=ks)
+    ks = [10, 12]
+    knn_df = knns(small_adata[:100, :], genes=small_probeset, ks=ks)
+    ref_knn_df = knns(small_adata[:100, :], genes="all", ks=ks)
     mean_df = mean_overlaps(knn_df, ref_knn_df, ks=ks)
     AUC = summary_knn_AUC(mean_df)
     assert all([x <= 1 for x in AUC.values()])
-

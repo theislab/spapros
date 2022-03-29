@@ -451,10 +451,12 @@ def plateau_penalty_kernel(
         var_r = var
 
     if not (x_min is None):
+
         def left_kernel(x):
             return np.exp(-np.power(x - x_min, 2.0) / (2 * var_l))
 
     if not (x_max is None):
+
         def right_kernel(x):
             return np.exp(-np.power(x - x_max, 2.0) / (2 * var_r))
 
@@ -724,10 +726,12 @@ class NestedProgress(Progress):
             footer_column = f"[bold black][progress.description]{task.description}"
 
             if not only_text:
-                self.columns = (text_column, BarColumn(),
-                                steps_column if task.total != 1 else percentage_column,
-                                TimeElapsedColumn(),
-                                )
+                self.columns = (
+                    text_column,
+                    BarColumn(),
+                    steps_column if task.total != 1 else percentage_column,
+                    TimeElapsedColumn(),
+                )
             else:
                 self.columns = (text_column, "")
             if header:
