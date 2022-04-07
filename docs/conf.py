@@ -11,6 +11,7 @@ import os
 import sys
 from pathlib import Path
 
+from nbconvert.preprocessors import TagRemovePreprocessor
 
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
@@ -42,7 +43,7 @@ extensions = [
     "nbsphinx",
     "sphinx_gallery.load_style",
     "nbsphinx_link",
-    "jupyter_sphinx.embed_widgets",
+    # "jupyter_sphinx.embed_widgets",
     *[p.stem for p in (HERE / "_extensions").glob("*.py")],
 ]
 
@@ -50,7 +51,7 @@ extensions = [
 # nbsphinx setup (for tutorial gallery)
 
 sphinx_gallery_conf = {
-    "thumbnail_size": (400, 300),
+    "thumbnail_size": (250, 250),
 }
 
 nbsphinx_timeout = -1
@@ -60,7 +61,8 @@ nbsphinx_timeout = -1
 # suppress_warnings = [
 #     'nbsphinx',
 # ]
-nbsphinx_execute = "never"
+# nbsphinx_execute = "never"
+TagRemovePreprocessor.remove_input_tags = {"remove_input"}
 
 autosummary_generate = True
 autodoc_member_order = "groupwise"

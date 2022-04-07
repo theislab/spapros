@@ -18,7 +18,6 @@ import pandas as pd
 import scanpy as sc
 import scipy
 import spapros.plotting as pl
-from rich.errors import LiveError
 from rich.progress import Progress
 from sklearn import tree
 from sklearn.metrics import classification_report
@@ -347,6 +346,10 @@ class ProbesetEvaluator:
 
         try:
             self.progress, self.started = init_progress(None, verbosity=self.verbosity, level=1)
+            if self.progress and self.verbosity > 0:
+                evaluation_task = self.progress.add_task(
+                    description="SPAPROS PROBESET EVALUATION:", only_text=True, header=True, total=0
+                )
 
             if not pre_only:
                 self.compute_or_load_shared_results()
@@ -428,13 +431,17 @@ class ProbesetEvaluator:
                 if update_summary:
                     self.summary_statistics(set_ids=[set_id])
 
+            if self.progress and self.verbosity > 0:
+                self.progress.advance(evaluation_task)
+                self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
+
             if self.progress and self.started:
                 self.progress.stop()
 
-        except LiveError as live_error:
+        except Exception as error:
             if self.progress:
                 self.progress.stop()
-            raise live_error
+            raise error
 
     def evaluate_probeset_pipeline(
         self, genes: List, set_id: str, shared_pre_results_path: List, step_specific_results: List
