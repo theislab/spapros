@@ -174,6 +174,8 @@ def get_expression_quantile(
         a.X /= a.obs["size_factors"].values[:, None]
     if log1p:
         sc.pp.log1p(a)
+    if issparse(a.X):
+        a.X = a.X.toarray()
     df = pd.DataFrame(a.X, index=a.obs.index, columns=a.var.index)
     if zeros_to_nan:
         df[df == 0] = np.nan
@@ -427,7 +429,7 @@ def plateau_penalty_kernel(
 
     Args:
         var:
-            Outside the defined range, the kernel decas with a gaussian kernel with variance=:attr:`var`.
+            Outside the defined range, the kernel decays with a gaussian kernel with variance=:attr:`var`.
         x_min:
             Lower border above which the kernel is 1.
         x_max:

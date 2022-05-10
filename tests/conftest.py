@@ -45,15 +45,7 @@ def small_adata():
 
 @pytest.fixture()
 def adata_pbmc3k():
-    adata = sc.datasets.pbmc3k()
-    adata_tmp = sc.datasets.pbmc3k_processed()
-    adata = adata[adata_tmp.obs_names, adata_tmp.var_names]
-    adata_raw = adata.copy()
-    sc.pp.normalize_total(adata, target_sum=1e4, key_added="size_factors")
-    sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=1000)
-    adata.X = adata_raw.X
-    sc.pp.log1p(adata)
-    adata.obs["celltype"] = adata_tmp.obs["louvain"]
+    adata = sc.read_h5ad("tests/selection/test_data/adata_pbmc3k.h5ad")
     return adata
 
 
@@ -90,11 +82,21 @@ def marker_list():
 def raw_evaluator(small_adata):
     # random.seed(0)
     # small_adata = small_adata[random.sample(range(small_adata.n_obs), 100), :]
-    raw_evaluator = ev.ProbesetEvaluator(small_adata, scheme="quick", verbosity=0, results_dir=None)
+    raw_evaluator = ev.ProbesetEvaluator(small_adata, scheme="full", verbosity=0, results_dir=None)
     return raw_evaluator
 
 
 @pytest.fixture()
-def evaluator(raw_evaluator, small_probeset):
-    raw_evaluator.evaluate_probeset(small_probeset)
-    return raw_evaluator
+def evaluator_with_dir(small_adata):
+    # random.seed(0)
+    # small_adata = small_adata[random.sample(range(small_adata.n_obs), 100), :]
+    evaluator = ev.ProbesetEvaluator(
+        small_adata, scheme="full", verbosity=0, results_dir="tests/evaluation/test_data/evaluation_results"
+    )
+    return evaluator
+
+
+@pytest.fixture()
+def evaluator(evaluator_with_dir, small_probeset):
+    evaluator_with_dir.evaluate_probeset(small_probeset)
+    return evaluator_with_dir

@@ -4,6 +4,7 @@ from typing import Dict
 from typing import List
 from typing import Literal
 from typing import Optional
+from typing import Tuple
 from typing import Union
 
 import matplotlib.colors
@@ -130,14 +131,15 @@ def ordered_confusion_matrices(conf_mats: List[pd.DataFrame]) -> List[pd.DataFra
     return ordered_mats
 
 
-def confusion_heatmap(
+def confusion_matrix(
     set_ids: List[str],
     conf_matrices: Dict[str, pd.DataFrame],
     ordered: Union[bool, list] = True,
     show: bool = True,
     save: Union[bool, str] = False,
     size_factor: float = 6,
-    n_cols: int = 2,
+    fontsize: int = 18,
+    n_cols: int = 3,
     rotate_x_labels: bool = True,
 ) -> None:
     """Plot heatmap of cell type classification confusion matrices.
@@ -157,6 +159,8 @@ def confusion_heatmap(
             If `True` or a `str`, save the figure.
         size_factor:
              Factor for scaling the figure size.
+        fontsize:
+            Matplotlib fontsize.
         n_cols:
             Number of subplot columns.
         rotate_x_labels:
@@ -178,7 +182,9 @@ def confusion_heatmap(
     fig = plt.figure(figsize=(size_factor * n_cols, 0.75 * size_factor * n_rows))
     for i, set_id in enumerate(set_ids):
         ax = plt.subplot(n_rows, n_cols, i + 1)
-        sns.heatmap(cms[i], cmap="OrRd", cbar=False, ax=ax, vmin=0, vmax=1, annot=True, fmt=".2f")
+        sns.heatmap(
+            cms[i], cmap="OrRd", cbar=False, ax=ax, vmin=0, vmax=1, annot=True, fmt=".2f", annot_kws={"size": fontsize}
+        )
         # sns.heatmap(cms[i],cmap="OrRd",cbar=(i == (len(set_ids)-1)),ax=ax,vmin=0,vmax=1,annot=True,fmt=".2f")
         if i == 0:
             plt.tick_params(axis="both", which="major", bottom=False, labelbottom=False, top=True, labeltop=True)
@@ -221,11 +227,14 @@ def confusion_heatmap(
             )
 
         plt.title(set_id)
+        ax.title.set_fontsize(fontsize)
+        ax.tick_params(axis="both", labelsize=fontsize)
+
     # plt.subplots_adjust(top=1.54, bottom=0.08, left=0.05, right=0.95, hspace=0.20, wspace=0.25)
     if show:
         plt.show()
     if save:
-        fig.savefig(save, bbox_inches="tight")
+        fig.savefig(save, bbox_inches="tight", transparent=True)
     plt.close()
 
 
@@ -235,6 +244,7 @@ def correlation_matrix(
     show: bool = True,
     save: Union[bool, str] = False,
     size_factor: float = 6,
+    fontsize: int = 28,
     n_cols: int = 5,
 ) -> None:
     """Plot heatmap of gene correlation matrix.
@@ -247,9 +257,11 @@ def correlation_matrix(
         show:
             Show the figure.
         save:
-            If `True` or a `str`, save the figure.
+            Save plot to path.
         size_factor:
              Factor for scaling the figure size.
+        fontsize:
+            Matplotlib fontsize.
         n_cols:
             Number of subplot columns.
     """
@@ -258,10 +270,11 @@ def correlation_matrix(
     n_rows = (n_plots // n_cols) + int((n_plots % n_cols) > 0)
 
     fig = plt.figure(figsize=(size_factor * n_cols, 0.75 * size_factor * n_rows))
+
     for i, set_id in enumerate(set_ids):
         plt.subplot(n_rows, n_cols, i + 1)
         plt.imshow(cor_matrices[set_id].values, cmap="seismic", vmin=-1, vmax=1)
-        plt.title(set_id)
+        plt.title(set_id, fontsize=fontsize)
         ax = plt.gca()
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
@@ -269,8 +282,250 @@ def correlation_matrix(
     if show:
         plt.show()
     if save:
-        fig.savefig(save, bbox_inches="tight")
+        fig.savefig(save, bbox_inches="tight", transparent=True)
     plt.close()
+
+
+def cluster_similarity(
+    selections_info: pd.DataFrame,
+    nmi_dfs: Optional[Dict[str, pd.DataFrame]] = None,
+    groupby: Optional[str] = None,
+    interpolate: bool = True,
+    figsize: Tuple[int, int] = (8, 6),
+    fontsize: int = 18,
+    title: Optional[str] = None,
+    show: bool = True,
+    save: Optional[str] = None,
+):
+    """
+
+    Args:
+        selections_info:
+            Information on each selection for plotting. The dataframe includes:
+
+                - selection ids or alternative names as index
+                - mandatory (only if ``nmi_dfs=None``) column: `path`: path to results csv of each selection (contains
+                number of clusters and nmi values (as index) and nmi values in column `nmi`.)
+                - optional columns:
+
+                    - `color`: matplotlib color
+                    - `linewidth`: matplotlib linewidth
+                    - `linestyle`: matplotlib linestyle
+                    - `<groupby>`: some annotation that can be used to group the legend.
+                    Note that the legend order will follow the row order in :attr:`selections_info.
+
+        nmi_dfs:
+            NMI results for each selection.
+        groupby:
+            Column in ``selections_info`` to group the legend.
+        interpolate
+            Whether to interpolate the NMI values.
+        figsize:
+            Matplotlib figsize.
+        fontsize:
+            Matplotlib fontsize.
+        title:
+            Plot title.
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+
+    Returns:
+        Figure can be shown (default `True`) and stored to path (default `None`).
+        Change this with `show` and `save`.
+    """
+
+    # TODO: nmi_dfs: Check if it's useful to add this or if we always should load from files
+    #  (or maybe even the other way around?)
+    # TODO: instead of a list we could also use one dataframe with index: ns, column_names: probeset_ids,
+    #       Check what's more practical, (think wrt Evaluator.plot_cluster_similarity())
+    #  ==> my suggestion: dict of dfs just like evaluator.results["cluster_similarity"]
+
+    df = selections_info.copy()
+
+    # load NMI values from files if necessary
+    if nmi_dfs is None:
+        if "path" not in df:
+            raise ValueError("The mandatory column 'path' is missing in 'selections_info'.")
+        else:  # load NMI values from files
+            nmi_dfs = {}
+            for selection_nr, path in enumerate(df["path"]):
+                nmi_dfs[str(selection_nr)] = pd.read_csv(path, index_col=0)
+            # del df["path"]
+
+    # check matplotlib style options
+    for col in ["color", "linewidth", "linestyle"]:
+        if col not in df.columns:
+            df[col] = None
+            # TODO: if groupby is provided assert that "color", "linewidth", "linestyle" are all the same for
+            #  selections that belong to one group
+            #   ==> done TODO test
+            if groupby:
+                group_check = df[["color", "linewidth", "linestyle", "groupby"]].groupby(by=groupby).nunique() > 1
+                if any(group_check):
+                    bad_group = group_check[group_check].dropna(how="all").dropna(how="all", axis=1)
+                    raise ValueError(
+                        "Grouping by "
+                        + groupby
+                        + " failed because the values of "
+                        + str(bad_group.columns.values)
+                        + " are not unique for group(s) "
+                        + str(bad_group.index.values)
+                        + "."
+                    )
+
+    fig = plt.figure(figsize=figsize)
+
+    labels = []
+
+    for selection_id, plot_df in nmi_dfs.items():
+
+        label = selection_id if not groupby else df.loc[selection_id][groupby]
+
+        plt.plot(
+            plot_df["nmi"].interpolate() if interpolate else plot_df["nmi"],
+            c=df.loc[selection_id]["color"],
+            lw=df.loc[selection_id]["linewidth"],
+            linestyle=df.loc[selection_id]["linestyle"],
+            label=None if label in labels else label,
+        )
+
+        labels.append(label)
+
+    if title:
+        plt.title(title, fontsize=fontsize)
+
+    plt.xlabel("number of clusters", fontsize=fontsize)
+    plt.ylabel("NMI", fontsize=fontsize)
+    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False, fontsize=fontsize)
+
+    plt.tick_params(axis="both", labelsize=fontsize)
+
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    if show:
+        plt.show()
+
+
+def knn_overlap(
+    selections_info: pd.DataFrame,
+    knn_dfs: Optional[Dict[str, pd.DataFrame]] = None,
+    groupby: Optional[str] = None,
+    interpolate: bool = True,
+    title: Optional[str] = None,
+    figsize: Tuple[int, int] = (8, 6),
+    fontsize: int = 18,
+    show: bool = True,
+    save: Optional[str] = None,
+):
+    """
+
+    Args:
+        selections_info:
+            Information on each selection for plotting. The dataframe includes:
+
+                - selection ids or alternative names as index
+                - mandatory (only if ``nmi_dfs=None``) column: `path`: path to results csv of each selection (contains
+                number of clusters and nmi values (as index) and nmi values in column `nmi`.)
+                - optional columns:
+
+                    - `color`: matplotlib color
+                    - `linewidth`: matplotlib linewidth
+                    - `linestyle`: matplotlib linestyle
+                    - `<groupby>`: some annotation that can be used to group the legend.
+                    Note that the legend order will follow the row order in :attr:`selections_info.
+
+        knn_dfs:
+            NMI results for each selection.
+        groupby:
+            Column in ``selections_info`` to group the legend.
+        interpolate
+            Whether to interpolate the NMI values.
+        title:
+            Plot title.
+        figsize:
+            Matplotlib figsize.
+        fontsize:
+            Matplotlib fontsize.
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+
+    Returns:
+        Figure can be shown (default `True`) and stored to path (default `None`).
+        Change this with `show` and `save`.
+    """
+
+    # TODO: nmi_dfs: Check if it's useful to add this or if we always should load from files
+    #  (or maybe even the other way around?)
+    # TODO: instead of a list we could also use one dataframe with index: ns, column_names: probeset_ids,
+    #       Check what's more practical, (think wrt Evaluator.plot_cluster_similarity())
+    #  ==> my suggestion: dict of dfs just like evaluator.results["cluster_similarity"]
+
+    df = selections_info.copy()
+
+    # load NMI values from files if necessary
+    if knn_dfs is None:
+        if "path" not in df:
+            raise ValueError("The mandatory column 'path' is missing in 'selections_info'.")
+        else:  # load NMI values from files
+            knn_dfs = {}
+            for selection_nr, path in enumerate(df["path"]):
+                knn_dfs[str(selection_nr)] = pd.read_csv(path, index_col=0)
+
+    # check matplotlib style options
+    for col in ["color", "linewidth", "linestyle"]:
+        if col not in df.columns:
+            df[col] = None
+            # TODO: if groupby is provided assert that "color", "linewidth", "linestyle" are all the same for
+            #  selections that belong to one group
+            #   ==> done TODO test
+            if groupby:
+                group_check = df[["color", "linewidth", "linestyle", "groupby"]].groupby(by=groupby).nunique() > 1
+                if any(group_check):
+                    bad_group = group_check[group_check].dropna(how="all").dropna(how="all", axis=1)
+                    raise ValueError(
+                        "Grouping by "
+                        + groupby
+                        + " failed because the values of "
+                        + str(bad_group.columns.values)
+                        + " are not unique for group(s) "
+                        + str(bad_group.index.values)
+                        + "."
+                    )
+
+    fig = plt.figure(figsize=figsize)
+
+    labels = []
+
+    for selection_id, plot_df in knn_dfs.items():
+
+        label = selection_id if not groupby else df.loc[selection_id][groupby]
+
+        plt.plot(
+            plot_df["mean"].interpolate() if interpolate else plot_df["mean"],
+            c=df.loc[selection_id]["color"],
+            lw=df.loc[selection_id]["linewidth"],
+            linestyle=df.loc[selection_id]["linestyle"],
+            label=None if label in labels else label,
+        )
+
+        labels.append(label)
+
+    if title:
+        plt.title()
+
+    plt.xlabel("number of clusters", fontsize=fontsize)
+    plt.ylabel("KNN", fontsize=fontsize)
+    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False, fontsize=fontsize)
+    plt.tick_params(axis="both", labelsize=fontsize)
+
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    if show:
+        plt.show()
 
 
 def format_time(time: float) -> str:
@@ -486,7 +741,7 @@ def summary_table(
     if show:
         plt.show()
     if save:
-        fig.savefig(save, bbox_inches="tight")
+        fig.savefig(save, bbox_inches="tight", transparent=True)
     plt.close()
 
 
@@ -621,4 +876,4 @@ def masked_dotplot(
     )
     dp.make_figure()
     if save:
-        plt.gcf().savefig(save, bbox_inches="tight")
+        plt.gcf().savefig(save, bbox_inches="tight", transparent=True)

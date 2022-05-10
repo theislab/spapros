@@ -1,4 +1,5 @@
 import anndata
+import scanpy as sc
 from spapros import ev
 
 
@@ -17,3 +18,15 @@ def test_get_celltypes_with_too_small_test_sets(raw_selector):
         split_kwargs={"seed": raw_selector.seed, "split": 4},
     )
     assert all(counts_below_min_test_size) < raw_selector.min_test_n
+
+
+def test_load_adata():
+    adata = sc.datasets.pbmc3k()
+    adata_tmp = sc.datasets.pbmc3k_processed()
+    adata = adata[adata_tmp.obs_names, adata_tmp.var_names]
+    adata_raw = adata.copy()
+    sc.pp.normalize_total(adata, target_sum=1e4, key_added="size_factors")
+    sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=1000)
+    adata.X = adata_raw.X
+    sc.pp.log1p(adata)
+    adata.obs["celltype"] = adata_tmp.obs["louvain"]

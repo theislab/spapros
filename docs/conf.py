@@ -73,7 +73,8 @@ napoleon_numpy_docstring = False
 napoleon_include_init_with_doc = False
 napoleon_use_rtype = True
 napoleon_use_param = True
-napoleon_custom_sections = [("Params", "Parameters")]
+napoleon_custom_sections = [("Params", "Parameters")]  # ('Returns', 'params_style')]
+
 todo_include_todos = False
 
 default_dark_mode = False
@@ -139,9 +140,9 @@ html_theme = "sphinx_rtd_theme"
 # darker_purple = '##6360b2'
 # green = '#4cc61e'
 # brighter_green = '#99c712'
-html_theme_options = {
-    "style_nav_header_background": "black",
-}
+# html_theme_options = {
+#     "style_nav_header_background": "black",
+# }
 
 home_page_in_toc = True
 html_logo = "_static/logo.png"

@@ -30,11 +30,11 @@ class ProbesetSelector:  # (object)
 
     Attributes:
         adata:
-            Data with log normalised counts in :attr:`adata.X`.
+            Data with log normalised counts in ``adata.X``.
         ct_key:
             Key in ``adata.obs`` with celltype annotations.
         g_key:
-            Key in :attr:`adata.var` for preselected genes (typically 'highly_variable_genes').
+            Key in ``adata.var`` for preselected genes (typically 'highly_variable_genes').
         n:
             Number of finally selected genes.
         genes:
@@ -42,7 +42,7 @@ class ProbesetSelector:  # (object)
         selection:
             Dictionary with the final and several other gene set selections.
         n_pca_genes:
-            The number of preselected pca genes. If `None` or <1, this step is skipped.
+            The number of preselected pca genes. If `None` or `<1`, this step is skipped.
         min_mean_difference:
             Minimal difference of mean expression between at least one celltype and the background.
         n_min_markers:
@@ -50,26 +50,26 @@ class ProbesetSelector:  # (object)
         celltypes:
             Cell types for which trees are trained.
         adata_celltypes:
-            List of all celltypes occuring in :attr:`adata.obs[ct_key]`.
+            List of all celltypes occuring in ``adata.obs[ct_key]``.
         obs:
-            Keys of :attr:`adata.obs` on which most of the selections are run.
+            Keys of ``adata.obs`` on which most of the selections are run.
         marker_list:
-            Dictionary of the form `{'celltype': list of markers of celltype}`.
+            Dictionary of the form ``{'celltype': list of markers of celltype}``.
         n_list_markers:
             Minimal number of markers per celltype that are at least selected.
         marker_corr_th:
-            Minimal correlation to consider a gene as captures.
+            Minimal correlation to consider a gene as captured.
         pca_penalties:
             List of keys for columns in :attr:`adata.var` containing penalty factors that are multiplied with the scores
             for PCA based gene selection.
         DE_penalties:
-            List of keys for columns in :attr:`adata.var` containing penalty factors that are multiplied with the scores
+            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores
             for DE based gene selection.
         m_penalties_adata_celltypes:
-            List of keys for columns in :attr:`adata.var` containing penalty factors to filter out marker genes if a
+            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a
             gene's penalty < threshold for celltypes in adata.
         m_penalties_list_celltypes:
-            List of keys for columns in :attr:`adata.var` containing penalty factors to filter out marker genes if a
+            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a
             gene's penalty < threshold for celltypes not in adata.
         pca_selection_hparams:
             Dictionary with hyperparameters for the PCA based gene selection.
@@ -91,7 +91,7 @@ class ProbesetSelector:  # (object)
         save_dir:
             Directory path where all results are saved and loaded from if results already exist.
         n_jobs:
-            Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+            Number of cpus for multi processing computations. Set to `-1` to use all available cpus.
         forest_results:
             Forest results.
         forest_clfs
@@ -130,22 +130,22 @@ class ProbesetSelector:  # (object)
         genes_key:
             Key in :attr:`adata.var` for preselected genes (typically 'highly_variable_genes').
         n:
-            Optionally set the number of finally selected genes. Note that when `n is None` we automatically infer
-            :attr:`n` as the minimal number of recommended genes. This includes all preselected genes, genes in the
-            best decision tree of each celltype, and the minimal number of identified and added markers defined by
+            Optionally set the number of finally selected genes. Note that when :attr:`n` is `None` we automatically
+            infer :attr:`n` as the minimal number of recommended genes. This includes all preselected genes, genes in
+            the best decision tree of each celltype, and the minimal number of identified and added markers defined by
             :attr:`n_min_markers` and :attr:`n_list_markers`. Als note that setting :attr:`n` might change the gene
             ranking since the final added list_markers are added based on the theoretically added genes without
-            :attr`list_markers`.
+            :attr:`list_markers`.
         preselected_genes:
             Pre selected genes (these will also have the highest ranking in the final list).
         prior_genes:
             Prioritized genes.
         n_pca_genes:
-            Optionally set the number of preselected pca genes. If not set or set <1, this step will be skipped.
+            Optionally set the number of preselected pca genes. If not set or set `<1`, this step will be skipped.
         min_mean_difference:
             Minimal difference of mean expression between at least one celltype and the background. In this test only
-            cell types from `celltypes` are taken into account (also for the background). This minimal difference is
-            applied as an additional binary penalty in pca_penalties, DE_penalties and m_penalties_adata_celltypes.
+            cell types from :attr:`celltypes` are taken into account (also for the background). This minimal difference
+            is applied as an additional binary penalty in pca_penalties, DE_penalties and m_penalties_adata_celltypes.
         n_min_markers:
             The minimal number of identified and added markers.
         celltypes:

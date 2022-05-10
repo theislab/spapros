@@ -51,7 +51,7 @@ class ProbesetEvaluator:
         adata:
             An already preprocessed annotated data matrix. Typically we use log normalised data.
         celltype_key:
-            The adata.obs key for cell type annotations or list of keys.
+            The ``adata.obs`` key for cell type annotations or list of keys.
         dir:
             Directory where probeset results are saved.
         scheme:
@@ -61,7 +61,7 @@ class ProbesetEvaluator:
         metrics_params:
             Parameters for the calculation of each metric. Either default or user specified.
         metrics:
-            The metrics to be calculated. Either custom of defined according to :attr:`scheme`.
+            The metrics to be calculated. Either custom or defined according to :attr:`scheme`.
         ref_name:
             Name of reference dataset.
         ref_dir:
@@ -69,7 +69,7 @@ class ProbesetEvaluator:
         verbosity:
             Verbosity level.
         n_jobs:
-            Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+            Number of CPUs for multi processing computations. Set to `-1` to use all available CPUs.
             Verbosity level.
         shared_results:
             Results of shared metric computations.
@@ -77,6 +77,8 @@ class ProbesetEvaluator:
             Results of metric pre computations.
         results:
             Results of probe set specific metric computations.
+        summary_results:
+            Table of summary statistics.
 
     Notes:
         The evaluator works on one given dataset and calculates metrics/analyses with respect to that dataset.
@@ -86,8 +88,8 @@ class ProbesetEvaluator:
         1. calculations that need to be run one time for the given dataset (not all metrics have this step)
         2. calculations that need to be run for each probe set
 
-           2.1 calculations independent of 1.
-           2.2 calculations dependent on 1. (if 1. existed for a given metric)
+           a. calculations independent of 1.
+           b. calculations dependent on 1. (if 1. existed for a given metric)
 
         3. Summarize results into summary statistics
 
@@ -103,8 +105,8 @@ class ProbesetEvaluator:
                 - sequential setup::
 
                     evaluator = ProbesetEvaluator(adata)
-                    for i,gene_set in enumerate(sets):
-                        evaluator.evaluate_probeset(gene_set,set_id=f"set_{i}")
+                    for i, gene_set in enumerate(sets):
+                        evaluator.evaluate_probeset(gene_set, set_id=f"set_{i}")
 
                 - parallelised setup::
 
@@ -112,9 +114,9 @@ class ProbesetEvaluator:
                     # 1. step:
                     evaluator.compute_or_load_shared_results()
                     # 2. step: parallelised processes
-                    evaluator.evaluate_probeset(gene_set,set_id,update_summary=False,pre=True) # parallelised over set_ids
+                    evaluator.evaluate_probeset(gene_set, set_id, update_summary=False, pre=True) # parallelised over set_ids
                     # 3. step: parallelised processes (needs 1. to be finished)
-                    evaluator.evaluate_probeset(gene_set,set_id,update_summary=False) # parallelised over set_ids
+                    evaluator.evaluate_probeset(gene_set, set_id, update_summary=False) # parallelised over set_ids
                     # 4. step: (needs 3. to be finished)
                     evaluator.summary_statistics()
 
@@ -130,28 +132,29 @@ class ProbesetEvaluator:
 
             evaluator = ProbesetEvaluator(adata)
             for set_id, gene_set in reference_sets.items():
-                evaluator.evaluate_probeset(gene_set,set_id=set_id)
+                evaluator.evaluate_probeset(gene_set, set_id=set_id)
             evaluator.plot_summary()
 
         **Evaluation schemes**
 
         Some metrics take very long to compute, we prepared different metric sets for a quick or a full evaluation.
-        You can also specify the list of metrics yourself by setting :attr:`scheme="custom"`.
+        You can also specify the list of metrics yourself by setting ``scheme="custom"``.
         Note that in any scheme it might still be reasonable to adjust :attr:`metrics_params`.
 
         **Saving of results**
 
-        If :attr:`results_dir` is not None we save the results in files.
+        If ``results_dir`` is not None we save the results in files.
 
         Why:
 
         - some computations are time demanding, especially when you evaluate multiple sets it's reasonable to keep results.
-        - load previous results when initializing a ProbesetEvaluator. Makes it very easy to access and compare old results.
+        - load previous results when initializing a :class:`ProbesetEvaluator`. Makes it very easy to access and compare
+          old results.
 
         Two saving directories need to be distinguished:
 
-        1. :attr:`results_dir`: each probeset's evaluation results are saved here
-        2. :attr:`reference_dir`: for shared reference dataset results (default is reference_dir = results_dir + reference_name)
+        1. ``results_dir``: each probeset's evaluation results are saved here
+        2. ``reference_dir``: for shared reference dataset results (default is ``reference_dir = results_dir + reference_name``)
 
         In which files the results are saved:
 
@@ -177,8 +180,8 @@ class ProbesetEvaluator:
 
         For each evaluation we provide a detailed plot, e.g.:
 
-        - forest_clfs: heatmap of normalised confusion matrix
-        - gene_corr: heatmap of ordered correlation matrix
+        - `forest_clfs`: heatmap of normalised confusion matrix
+        - `gene_corr`: heatmap of ordered correlation matrix
 
         Create detailed plots with::
 
@@ -197,40 +200,41 @@ class ProbesetEvaluator:
         scheme:
             Defines which metrics are calculated
 
-                - "quick" : knn, forest classification, marker correlation (if marker list given), gene correlation
-                - "full" : nmi, knn, forest classification, marker correlation (if marker list given), gene correlation
-                - "custom": define metrics of intereset in :attr:`metrics`
+                - `'quick'` : knn, forest classification, marker correlation (if marker list given), gene correlation
+                - `'full'` : nmi, knn, forest classification, marker correlation (if marker list given), gene correlation
+                - `'custom'`: define metrics of intereset in :attr:`metrics`
 
         metrics: Define which metrics are calculated. This is set automatically if :attr:`scheme != "custom"`. Supported are:
 
-            - "nmi"
-            - "knn"
-            - "forest_clfs"
-            - "marker_corr"
-            - "gene_corr"
+            - `'nmi'`
+            - `'knn'`
+            - `'forest_clfs'`
+            - `'marker_corr'`
+            - `'gene_corr'`
 
-        metrics_params: Provide parameters for the calculation of each metric. E.g.::
+        metrics_params:
+            Provide parameters for the calculation of each metric. E.g.::
 
-            metrics_params = {
-                "nmi":{
-                    "ns": [5,20],
-                    "AUC_borders": [[7, 14], [15, 20]],
+                metrics_params = {
+                    "nmi":{
+                        "ns": [5,20],
+                        "AUC_borders": [[7, 14], [15, 20]],
+                    }
                 }
-            }
 
-            This overwrites the arguments :attr:`ns` and :attr:`AUC_borders` of the nmi metric. See
-            :meth:`get_metric_default_parameters()` for the default values of each metric
+            This overwrites the arguments ``ns`` and ``AUC_borders`` of the nmi metric. See
+            :func:`.get_metric_default_parameters()` for the default values of each metric
         marker_list:
             Dictionary containing celltypes as keys and the respective markers as a list as values.
         reference_name:
             Name of reference dataset. This is chosen automatically if `None` is given.
         reference_dir:
-            Directory where reference results are saved. If `None` is given :attr:`reference_dir` is set to
-            `results_dir+"reference/"`.
+            Directory where reference results are saved. If `None` is given ``reference_dir`` is set to
+            ``results_dir+'reference/'``.
         verbosity:
             Verbosity level.
         n_jobs:
-            Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+            Number of CPUs for multi processing computations. Set to `-1` to use all available CPUs.
     """
 
     # TODO:
@@ -277,7 +281,7 @@ class ProbesetEvaluator:
         self.progress = None
         self.started = False
 
-        # TODO:
+        # TODO: (kind of solved with the progress bars: they say either calculating xy or loading xy
         # For the user it could be important to get some warning when reinitializing the Evaluator with new
         # params but still having the old directory. The problem is then that old results are loaded that are
         # calculated with old parameters. Don't know exactly how to do this to make it still pipeline friendly
@@ -335,7 +339,7 @@ class ProbesetEvaluator:
                 ID of the current probeset. This is chosen automatically if `None` is given.
             update_summary:
                 Whether to compute summary statistics, update the summary table and also update the summary csv file if
-                :attr:`self.dir` is not None. This option is interesting when using
+                :attr:`.dir` is not None. This option is interesting when using
                 :class:`~evaluation.ProbesetEvaluator` in a distributed pipeline since multiple processes would access
                 the same file in parallel.
             pre_only:
@@ -425,6 +429,20 @@ class ProbesetEvaluator:
                             Path(os.path.dirname(self._res_file(metric, set_id))).mkdir(parents=True, exist_ok=True)
                             self.results[metric][set_id].to_csv(self._res_file(metric, set_id))
 
+                    elif os.path.isfile(self._res_file(metric, set_id, pre=False)):
+
+                        if self.progress and self.verbosity > 1:
+                            task_final_load = self.progress.add_task(
+                                "Loading final computations for " + metric + "...", total=1, level=2
+                            )
+
+                        self.results[metric][set_id] = pd.read_csv(
+                            self._res_file(metric, set_id, pre=False), index_col=0
+                        )
+
+                        if self.progress and self.verbosity > 1:
+                            self.progress.advance(task_final_load)
+
                     if self.progress and self.verbosity > 0:
                         self.progress.advance(task_final)
 
@@ -491,7 +509,7 @@ class ProbesetEvaluator:
 
     def summary_statistics(self, set_ids: List[str]) -> None:
         """Compute summary statistics and update summary csv.
-        (if :attr:`self.results_dir` is not None)
+        (if :attr:`.results_dir` is not None)
 
         Args:
             set_ids:
@@ -639,6 +657,10 @@ class ProbesetEvaluator:
         else:
             return None
 
+    #############################
+    ##    EVALUATION FIGUES    ##
+    #############################
+
     def plot_summary(
         self,
         set_ids: Union[str, List[str]] = "all",
@@ -650,7 +672,7 @@ class ProbesetEvaluator:
             set_ids:
                 IDs of the current probesets or "all". Check out self.summary_results for available sets.
             **plot_kwargs:
-                Keyword arguments for :meth:`summary_table`.
+                Keyword arguments for :func:`.summary_table`.
         """
         if self.summary_results is _empty:
             if self.dir:
@@ -663,6 +685,155 @@ class ProbesetEvaluator:
             table = self.summary_results.loc[set_ids]
             pl.summary_table(table, **plot_kwargs)
 
+    def plot_cluster_similarity(
+        self, set_ids: List[str] = None, selections_info: Optional[pd.DataFrame] = None, **kwargs
+    ) -> None:
+        """Wrapper for plotting NMI of clusterings over number of clusters.
+
+        Args:
+            set_ids:
+                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+            selections_info:
+                Information on each selection for plotting. The dataframe includes:
+
+                    - selection ids or alternative names as index
+                    - mandatory (only if ``kwargs[nmi_dfs]=None``) column `path`: path to results csv of each selection
+                      (contains number of clusters (as index) and NMI values in column `nmi`.)
+                    - optional columns:
+
+                        - `color`: matplotlib color
+                        - `linewidth`: matplotlib linewidth
+                        - `linestyle`: matplotlib linestyle
+                        - `<groupby>`: some annotation that can be used to group the legend.
+                        Note that the legend order will follow the row order in :attr:`selections_info.
+
+            **kwargs:
+                Further arguments for :meth:`pl.cluster_similarity`.
+
+        Returns:
+            Figure can be showed (default `True`) and stored to path (default `None`).
+            Change this with `show` and `save` in ``kwargs``.
+
+        """
+
+        if "cluster_similarity" not in self.results:
+            raise ValueError("Can't plot cluster similarities since no results are found.")
+
+        if selections_info is None:
+            selections_info = pd.DataFrame(index=list(self.results["cluster_similarity"].keys()))
+
+        if set_ids:
+            selections_info = selections_info.loc[set_ids].copy()
+
+        pl.cluster_similarity(selections_info, nmi_dfs=self.results["cluster_similarity"], **kwargs)
+
+    def plot_knn_overlap(
+        self, set_ids: List[str] = None, selections_info: Optional[pd.DataFrame] = None, **kwargs
+    ) -> None:
+        """Wrapper for plotting KNN of clusterings over number of clusters.
+
+        Args:
+            set_ids:
+                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+            selections_info:
+                Information on each selection for plotting. The dataframe includes:
+
+                    - selection ids or alternative names as index
+                    - mandatory (only if ``kwargs[knn_dfs]=None``) column `path`: path to results csv of each selection
+                      (contains number of clusters (as index) and KNN values in column `knn`.)
+                    - optional columns:
+
+                        - `color`: matplotlib color
+                        - `linewidth`: matplotlib linewidth
+                        - `linestyle`: matplotlib linestyle
+                        - `<groupby>`: some annotation that can be used to group the legend
+                        Note that the legend order will follow the row order in :attr:`selections_info`.
+
+            **kwargs:
+                Further arguments for :meth:`pl.knn_overlap`.
+
+        Returns:
+            Figure can be shown (default `True`) and stored to path (default `None`).
+            Change this with `show` and `save` in ``kwargs``.
+
+        """
+
+        if "knn_overlap" not in self.results:
+            raise ValueError("Can't plot KNN overlap since no results are found.")
+
+        if selections_info is None:
+            selections_info = pd.DataFrame(index=list(self.results["knn_overlap"].keys()))
+
+        if set_ids:
+            selections_info = selections_info.loc[set_ids].copy()
+
+        pl.knn_overlap(selections_info, knn_dfs=self.results["knn_overlap"], **kwargs)
+
+    def plot_confusion_matrix(self, set_ids: List[str] = None, **kwargs):
+        """Wrapper for plotting a heatmap of cell type classification confusion matrices.
+
+        Args:
+            set_ids:
+                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+            **kwargs:
+                Further arguments for :meth:`pl.confusion_matrix`.
+
+        Returns:
+            Figure can be shown (default `True`) and stored to path (default `None`).
+            Change this with `show` and `save` in ``kwargs``.
+
+        """
+
+        if "forest_clfs" not in self.results:
+            raise ValueError("Can't plot cell type classification since no results are found.")
+
+        # if no set_ids specified, use all
+        if not set_ids:
+            set_ids = self.results["forest_clfs"].keys()
+
+        assert isinstance(set_ids, list)
+
+        pl.confusion_matrix(set_ids, self.results["forest_clfs"], **kwargs)
+
+    def plot_correlation_matrix(
+        self,
+        set_ids: List[str] = None,
+        **kwargs,
+    ):
+        """Wrapper for plotting a heatmap of gene correlation matrices.
+
+        Args:
+            set_ids:
+                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+            **kwargs:
+                Further arguments for :meth:`pl.correlation_matrix`.
+
+        Returns:
+            Figure can be shown (default `True`) and stored to path (default `None`).
+            Change this with `show` and `save` in ``kwargs``.
+
+        """
+
+        if "gene_corr" not in self.results:
+            raise ValueError("Can't plot gene correlation since no results are found.")
+
+        # if no set_ids specified, use all
+        if not set_ids:
+            set_ids = self.results["gene_corr"].keys()
+
+        assert isinstance(set_ids, list)
+
+        pl.correlation_matrix(set_ids, self.results["gene_corr"], **kwargs)
+
+    def plot_marker_correlation(self):
+        pass
+
+    # plot_evaluations for marker_corr:
+    #   heatmap like gene_corr
+    # TODO
+
+    # TODO remove this function (instead, we now have individual plot_'metric'() functions)
+
     def plot_evaluations(
         self,
         set_ids: Union[str, List[str]] = "all",
@@ -670,7 +841,7 @@ class ProbesetEvaluator:
         show: bool = True,
         save: Union[str, bool] = False,
         plt_kwargs={},
-    ):
+    ) -> None:
         """Plot detailed results plots for specified metrics.
 
         Note:
@@ -679,9 +850,9 @@ class ProbesetEvaluator:
 
         Args:
             set_ids:
-                ID of the current probeset or "all". Check out :attr:`self.summary_results` for available sets.
+                ID of the current probeset or "all". Check out :attr:`.summary_results` for available sets.
             metrics:
-                List of calculated metrics or "all". Check out :attr:`self.metrics` for available metrics.
+                List of calculated metrics or "all". Check out :attr:`.metrics` for available metrics.
             save:
                 If `True` or a `str`, save the figure.
             show:
@@ -696,9 +867,9 @@ class ProbesetEvaluator:
                     * - selection metric
                       - plotting function
                     * - forest_clfs
-                      - :meth:`confusion_heatmap`
+                      - :func:`.confusion_heatmap`
                     * - gene_corr
-                      - :meth:`correlation_matrix`
+                      - :func:`.correlation_matrix`
         """
 
         if set_ids == "all":
@@ -722,7 +893,7 @@ class ProbesetEvaluator:
 
         if "forest_clfs" in metrics:
             conf_plt_kwargs = plt_kwargs["forest_clfs"] if ("forest_clfs" in plt_kwargs) else {}
-            pl.confusion_heatmap(set_ids, self.results["forest_clfs"], show=show, save=save, **conf_plt_kwargs)
+            pl.confusion_matrix(set_ids, self.results["forest_clfs"], show=show, save=save, **conf_plt_kwargs)
 
         if "gene_corr" in metrics:
             corr_plt_kwargs = plt_kwargs["gene_corr"] if ("gene_corr" in plt_kwargs) else {}
@@ -1199,46 +1370,45 @@ def single_forest_classifications(
 ]:  # return_clfs = False
     """Compute or load decision tree classification results.
 
-    TODO: This doc string is partially from an older version. Update it! (Descripiton and Return is already up to date)
-    TODO: Add progress bars to trees, and maybe change verbose to verbosity levels
-
     Notes:
         As metrics we use:
         macro f1 score as summary statistic - it's a uniformly weighted statistic wrt celltype groups in 'others' since
         we sample uniformly.
-        For the reference celltype specific metric we use specificity = TN/(FP+TN) (also because FN and TP are not feasible
-        in the given setting)
+        For the reference celltype specific metric we use specificity = TN/(FP+TN) (also because FN and TP are not
+        feasible in the given setting)
 
     Args:
         adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
         selection:
-            Trees are trained on genes of the list or genes defined in the bool column selection['selection'].
+            Trees are trained on genes of the list or genes defined in the bool column ``selection['selection']``.
         celltypes:
             Trees are trained on the given celltypes
         ref_celltypes:
-
+            List of celltypes used as reference or ``'all'``.
         ct_key: str
             Column name of adata.obs with celltype infos
         ct_spec_ref:
-            Celltype specific references (e.g.: {'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}).
-            This argument was introduced to train secondary trees.
+            Celltype specific references (e.g.:
+            ``{'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}``). This argument was introduced to
+             train secondary trees.
         save:
             If not False load results if the given file exists, otherwise save results after computation.
         n_trees:
-
+            Number of trees to train.
         seed:
-
+            Random seed.
         max_depth:
             max_depth argument of DecisionTreeClassifier.
         subsample: int
             For each trained tree we use samples of maximal size=`subsample` for each celltype. If fewer cells
             are present for a given celltype all cells are used.
         test_subsample:
-
+            Number of random choices for drawing test sets.
         sort_by_tree_performance:
             Wether to sort results and trees by tree performance (best first) per celltype
         verbose:
-
+            Verbosity level > 1.
         return_clfs:
             Wether to return the sklearn tree classifier objects. (if `return_clfs` and `save_load` we still on
             save the results tables, if you want to save the classifiers this needs to be done separately).
@@ -1247,7 +1417,7 @@ def single_forest_classifications(
         backend:
             Which backend to use for multiprocessing. See class `joblib.Parallel` for valid options.
         progress:
-            :attr:`rich.Progress` object if progress bars should be shown.
+            ``rich.Progress`` object if progress bars should be shown.
         level:
             Progress bar level.
         task:
@@ -1256,20 +1426,25 @@ def single_forest_classifications(
 
     Returns:
 
-        summary_metric: pd.DataFrame
-            macro f1 scores for each celltype's trees (Ordered according best performing trees)
-        ct_specific_metric: dict of pd.DataFrame
-            For each celltype's tree: specificity (= TN / (FP+TN)) wrt each other celltype's test sample
-        importances: dict of pd.DataFrame
-            Gene's feature importances for each tree.
+        tuple: tuple containing:
 
-        if return_clfs:
-            return [summary_metric,ct_specific_metric,importances], forests
+            - summary_metric: pd.DataFrame
+                macro f1 scores for each celltype's trees (Ordered according best performing trees)
+            - ct_specific_metric: dict of pd.DataFrame
+                For each celltype's tree: specificity (= TN / (FP+TN)) wrt each other celltype's test sample
+            - importances: dict of pd.DataFrame
+                Gene's feature importances for each tree.
+            - forests: dict
+                only returned if ``return_clfs=True``. Then the other three return values will be packed in a list:
+                ``[summary_metric,ct_specific_metric,importances], forests``.
 
     Note:
         In all output files trees are ordered according macro f1 performance.
 
     """
+    # TODO: This doc string is partially from an older version. Update it! (Descripiton and Return is already up to
+    #  date)
+    # TODO: Add progress bars to trees, and maybe change verbose to verbosity levels
 
     # if verbose:
     #     try:
@@ -1289,7 +1464,8 @@ def single_forest_classifications(
         genes = list(selection.loc[selection["selection"]].index)
     a = adata[:, genes].copy()
 
-    # apply a train test set split one time just to get test set numbers for each celltype to eventually filter out celltypes
+    # apply a train test set split one time just to get test set numbers for each celltype to eventually filter out
+    # celltypes
     split_train_test_sets(a, split=4, seed=2020, verbose=False, obs_key=ct_key)
     if celltypes == "all":
         celltypes = np.unique(a.obs[ct_key].values)
@@ -1316,7 +1492,8 @@ def single_forest_classifications(
     cts_not_in_ref = [ct for ct in celltypes if not (ct in ref_celltypes)]
     if cts_not_in_ref:
         warnings.warn(
-            f"For celltypes {cts_not_in_ref} trees are computed, they are not listed in reference celltypes though. Added them..."
+            f"For celltypes {cts_not_in_ref} trees are computed, they are not listed in reference celltypes though. "
+            f"Added them..."
         )
         ref_celltypes += cts_not_in_ref
 
@@ -1407,7 +1584,8 @@ def single_forest_classifications(
                 ct_trees[ct] = [ct_trees[ct][i] for i in order_int]
 
     # We change the f1 summary metric now, since we can't summarize this value anymore when including secondary trees.
-    # When creating the results for secondary trees we take the specificities according reference celltypes of each tree.
+    # When creating the results for secondary trees we take the specificities according reference celltypes of each
+    # tree.
     # Our new metric is just the mean of these specificities. Btw we still keep the ordering to be based on f1 scores.
     # Think that makes more sense since it's the best balanced result.
     # TODO TODO TODO: Change misleading variable names in other functions (where the old "f1_table" is used)
@@ -1537,14 +1715,14 @@ def outlier_mask(
 ) -> pd.DataFrame:
     """Get mask over df.index based on values in df columns.
 
-    # TODO write docstring
-
     Args:
         df:
         n_stds:
         min_outlier_dif:
         min_score:
     """
+    # TODO write docstring
+
     crit1 = df < (df.mean(axis=0) - (n_stds * df.std(axis=0))).values[np.newaxis, :]
     crit2 = df < (df.mean(axis=0) - min_outlier_dif).values[np.newaxis, :]
     crit3 = df < min_score
@@ -1591,17 +1769,19 @@ def forest_classifications(
 ]:  # from single_forest_classifications()
     """Train best trees including secondary trees.
 
-    # TODO write docstring
-
     Args:
         adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
         selection:
+            Trees are trained on genes of the list or genes defined in the bool column ``selection[‘selection’]``.
         max_n_forests:
             Number of best trees considered as a tree group. Including the primary tree.
         verbosity:
             Verbosity level.
         save:
+            If not False load results if the given file exists, otherwise save results after computation.
         outlier_kwargs:
+            Parameters for :meth:`get_outlier_reference_celltypes`.
         progress:
             :attr:`rich.Progress` object if progress bars should be shown.
         task:
@@ -1609,8 +1789,11 @@ def forest_classifications(
         level:
             Progress bar level.
         **forest_kwargs:
+            Parameters for :meth:`single_forest_classifications`.
 
     """
+
+    # TODO write docstring
 
     # if verbosity > 0:
     #     try:

@@ -4,6 +4,7 @@ import pytest
 from matplotlib.testing.compare import compare_images
 from spapros import pl
 
+
 # Note: The figures depend somehow on the environment!
 # Tests might fail if compared figures derived from different envs eg development env and test env
 
@@ -36,10 +37,25 @@ def test_plot_summary(evaluator, tmp_path):
     assert compare_images(ref_name, fig_name, 0.001) is None
 
 
-@pytest.mark.parametrize("metric", ["gene_corr", "forest_clfs"])
-def test_plot_evaluations_gene_corr(evaluator, small_probeset, metric, tmp_path):
-    ref_name = f"tests/plotting/test_data/plot_evaluations_{metric}.png"
-    fig_name = f"{tmp_path}/plot_evaluations_{metric}.png"
-    evaluator.plot_evaluations(metrics=[metric], show=False, save=fig_name)
-    # evaluator.plot_evaluations(metrics=[metric], show=False, save=ref_name)
+# old version
+# @pytest.mark.parametrize("metric", ["gene_corr", "forest_clfs"])
+# def test_plot_evaluations_gene_corr(evaluator, small_probeset, metric, tmp_path):
+#     ref_name = f"tests/plotting/test_data/plot_evaluations_{metric}.png"
+#     fig_name = f"{tmp_path}/plot_evaluations_{metric}.png"
+#     evaluator.plot_evaluations(metrics=[metric], show=False, save=fig_name)
+#     # evaluator.plot_evaluations(metrics=[metric], show=False, save=ref_name)
+#     assert compare_images(ref_name, fig_name, 0.001) is None
+
+
+@pytest.mark.parametrize(
+    "fun", ["plot_confusion_matrix", "plot_correlation_matrix", "plot_cluster_similarity", "plot_knn_overlap"]
+)
+@pytest.mark.parametrize("set_ids", [None])  # , range(100)])
+# TODO maybe add "plot_confusion matrix_difference", "plot_marker_correlation"
+# TODO add further kwargs for each fun
+def test_evalution_plots(evaluator, small_probeset, fun, tmp_path, set_ids):
+    ref_name = f"tests/plotting/test_data/evaluation_{fun}_{set_ids}.png"
+    fig_name = f"{tmp_path}/evaluations_{fun}_{set_ids}.png"
+    getattr(evaluator, fun)(save=fig_name)
+    # getattr(evaluator, fun)(save=ref_name)
     assert compare_images(ref_name, fig_name, 0.001) is None
