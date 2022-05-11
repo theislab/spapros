@@ -789,7 +789,7 @@ class ProbesetEvaluator:
 
         # if no set_ids specified, use all
         if not set_ids:
-            set_ids = self.results["forest_clfs"].keys()
+            set_ids = list(self.results["forest_clfs"].keys())
 
         assert isinstance(set_ids, list)
 
@@ -819,7 +819,7 @@ class ProbesetEvaluator:
 
         # if no set_ids specified, use all
         if not set_ids:
-            set_ids = self.results["gene_corr"].keys()
+            set_ids = list(self.results["gene_corr"].keys())
 
         assert isinstance(set_ids, list)
 

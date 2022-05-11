@@ -17,6 +17,9 @@ import scanpy as sc
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
 from spapros.plotting._masked_dotplot import MaskedDotPlot
+from upsetplot import from_indicators
+from upsetplot import UpSet
+from venndata import venn
 
 
 # from spapros.util.util import plateau_penalty_kernel
@@ -101,6 +104,10 @@ from spapros.plotting._masked_dotplot import MaskedDotPlot
 #        for label in ax2.get_yticklabels():
 #            label.set_color("green")
 #    plt.show()
+
+#############################
+## evaluation related plots ##
+#############################
 
 
 def ordered_confusion_matrices(conf_mats: List[pd.DataFrame]) -> List[pd.DataFrame]:
@@ -297,7 +304,7 @@ def cluster_similarity(
     show: bool = True,
     save: Optional[str] = None,
 ):
-    """
+    """Plot normalized mutual information of clusterings over number of clusters.
 
     Args:
         selections_info:
@@ -380,7 +387,6 @@ def cluster_similarity(
     labels = []
 
     for selection_id, plot_df in nmi_dfs.items():
-
         label = selection_id if not groupby else df.loc[selection_id][groupby]
 
         plt.plot(
@@ -419,7 +425,7 @@ def knn_overlap(
     show: bool = True,
     save: Optional[str] = None,
 ):
-    """
+    """Plot plot mean overlap of knn clusterings over number of clusters.
 
     Args:
         selections_info:
@@ -501,7 +507,6 @@ def knn_overlap(
     labels = []
 
     for selection_id, plot_df in knn_dfs.items():
-
         label = selection_id if not groupby else df.loc[selection_id][groupby]
 
         plt.plot(
@@ -526,6 +531,91 @@ def knn_overlap(
         fig.savefig(save, bbox_inches="tight", transparent=True)
     if show:
         plt.show()
+
+
+#############################
+## selection related plots ##
+#############################
+
+
+def gene_overlap(
+    selection_df: Dict[str, pd.DataFrame],
+    style: Literal["upset", "venn"] = "upset",
+    fontsize: int = 18,
+    show: bool = True,
+    save: Optional[str] = None,
+):
+    """Plot the intersection of different selected gene sets.
+
+    Args:
+        selection_df:
+            Boolean dataframe with gene identifiers as index and one column for each gene set.
+        style:
+            Whether to plot a `venn` diagramm or `upset`.
+        fontsize:
+            Matplotlib fontsize.
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+
+    Returns:
+        Figure can be shown (default `True`) and stored to path (default `None`).
+        Change this with `show` and `save`.
+
+    """
+
+    fineTune = False
+    labels, radii, actualOverlaps, disjointOverlaps = venn.df2areas(selection_df, fineTune=fineTune)
+
+    if style == "venn":
+        fig, ax = venn.venn(
+            radii, actualOverlaps, disjointOverlaps, labels=labels, labelsize=fontsize, cmap="Blues", fineTune=fineTune
+        )
+
+    elif style == "upset":
+        # transform to compatible format
+        upset_data = from_indicators(selection_df)
+
+        # set up figure
+        upset_plot = UpSet(upset_data, subset_size="count", min_degree=1, show_counts=True)
+
+        # draw figure
+        fig = plt.figure()
+        upset_plot.plot(fig=fig)
+
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    if show:
+        plt.show()
+
+
+def gene_overlap_grouped(
+    selection_df: Dict[str, pd.DataFrame],
+    groupby: str = "method",
+    show: bool = True,
+    save: Optional[str] = None,
+):
+    """Plot the intersection of different selected gene sets grouped by the selection method.
+
+    Args:
+        selection_df:
+            Boolean dataframe with gene identifiers as index and one column for each gene set.
+        groupby:
+            Name of a column that categorizes the gene sets, eg. the method they were selected with.
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+
+    Returns:
+        Figure can be shown (default `True`) and stored to path (default `None`).
+        Change this with `show` and `save`.
+
+    """
+
+    pass
+    # TODO
 
 
 def format_time(time: float) -> str:

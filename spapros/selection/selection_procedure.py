@@ -14,6 +14,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import spapros.evaluation.evaluation as ev
+import spapros.plotting.plot as pl
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
 from rich.console import RichCast
@@ -1309,6 +1310,36 @@ class ProbesetSelector:  # (object)
         #  - think about when we can plot this: after tree
         #  - The function is only supported if self.save_dir != None... meh, actually that's not necessary. the
         #    memory usage is not too high for this...
+
+    def plot_gene_overlap(self, set_ids: List[str] = None, **kwargs) -> None:
+        """
+
+        Args:
+            set_ids:
+                List of probeset ids.
+            **kwargs:
+                Further arguments for :meth:`pl.gene_overlap`.
+
+        Returns:
+            Figure can be shown (default `True`) and stored to path (default `None`).
+            Change this with `show` and `save` in ``kwargs``.
+
+        """
+
+        if not set_ids:
+            set_ids = list(self.selection.keys())
+
+        selection_df = pd.DataFrame()
+        for key in set_ids:
+            if key not in self.selection:
+                continue
+            if self.selection[key] is None:
+                continue
+            if "selection" not in self.selection[key]:
+                continue
+            selection_df[key] = self.selection[key]["selection"]
+
+        pl.gene_overlap(selection_df=selection_df, **kwargs)
 
     def info(self) -> None:
         """Print info."""

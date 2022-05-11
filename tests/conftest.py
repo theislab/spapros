@@ -46,6 +46,8 @@ def small_adata():
 @pytest.fixture()
 def adata_pbmc3k():
     adata = sc.read_h5ad("tests/selection/test_data/adata_pbmc3k.h5ad")
+    # quick fix because somehow "base" gets lost
+    adata.uns["log1p"]["base"] = None
     return adata
 
 

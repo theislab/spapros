@@ -48,14 +48,34 @@ def test_plot_summary(evaluator, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "fun", ["plot_confusion_matrix", "plot_correlation_matrix", "plot_cluster_similarity", "plot_knn_overlap"]
+    "fun, kwargs",
+    [
+        ("plot_confusion_matrix", {}),
+        ("plot_correlation_matrix", {}),
+        ("plot_cluster_similarity", {}),
+        ("plot_knn_overlap", {}),
+    ],
 )
-@pytest.mark.parametrize("set_ids", [None])  # , range(100)])
+@pytest.mark.parametrize("set_ids", [None, range(100)])
 # TODO maybe add "plot_confusion matrix_difference", "plot_marker_correlation"
 # TODO add further kwargs for each fun
-def test_evalution_plots(evaluator, small_probeset, fun, tmp_path, set_ids):
-    ref_name = f"tests/plotting/test_data/evaluation_{fun}_{set_ids}.png"
-    fig_name = f"{tmp_path}/evaluations_{fun}_{set_ids}.png"
-    getattr(evaluator, fun)(save=fig_name)
-    # getattr(evaluator, fun)(save=ref_name)
+def test_evalution_plots(evaluator, fun, tmp_path, set_ids, kwargs):
+    ref_name = f"tests/plotting/test_data/evaluation_{fun}_{set_ids}_{kwargs}.png"
+    fig_name = f"{tmp_path}/evaluations_{fun}_{set_ids}_{kwargs}.png"
+    getattr(evaluator, fun)(save=fig_name, **kwargs)
+    # getattr(evaluator, fun)(save=ref_name, **kwargs)
+    assert compare_images(ref_name, fig_name, 0.001) is None
+
+
+@pytest.mark.parametrize(
+    "fun, kwargs", [("plot_gene_overlap", {"style": "venn"}), ("plot_gene_overlap", {"style": "upset"})]
+)
+@pytest.mark.parametrize("set_ids", [None, range(100)])
+# TODO maybe add "plot_confusion matrix_difference", "plot_marker_correlation"
+# TODO add further kwargs for each fun
+def test_selection_plots(selector, fun, tmp_path, set_ids, kwargs):
+    ref_name = f"tests/plotting/test_data/selection_{fun}_{set_ids}_{kwargs}.png"
+    fig_name = f"{tmp_path}/selection_{fun}_{set_ids}_{kwargs}.png"
+    getattr(selector, fun)(save=fig_name, **kwargs)
+    # getattr(selector, fun)(save=ref_name, **kwargs)
     assert compare_images(ref_name, fig_name, 0.001) is None
