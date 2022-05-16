@@ -2,7 +2,7 @@ import json
 import os
 import pickle
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 from typing import cast
 from typing import Dict
 from typing import List
@@ -1311,35 +1311,59 @@ class ProbesetSelector:  # (object)
         #  - The function is only supported if self.save_dir != None... meh, actually that's not necessary. the
         #    memory usage is not too high for this...
 
-    def plot_gene_overlap(self, set_ids: List[str] = None, **kwargs) -> None:
+    def plot_gene_overlap(
+        self,
+        origins: List[
+            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]] =
+        None,
+        **kwargs) -> None:
         """
 
         Args:
-            set_ids:
-                List of probeset ids.
-            **kwargs:
-                Further arguments for :meth:`pl.gene_overlap`.
+           origins:
+                Origin groups to investigate. Supported are
+
+                    - "pre_selected"   : User defined pre selected genes
+                    - "prior_selected" : User defined prior selected genes
+                    - "pca"            : Genes that are originate the prior pca based selection
+                    - "DE"             : Genes that occur in DE test when building the reference DE trees
+                    - "DE_1vsall"      : Subset of DE from tests of single cell types vs background
+                    - "DE_specific"    : Subset of DE from tests of single cell types vs subset of background
+                    - "marker_list"    : Genes that occur in the user defined marker list
+
+           **kwargs:
+               Further arguments for :meth:`pl.gene_overlap`.
 
         Returns:
             Figure can be shown (default `True`) and stored to path (default `None`).
             Change this with `show` and `save` in ``kwargs``.
 
         """
+        ORIGINS = ["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+        ORIGIN_TO_PROBESET_COLNAME = {"pre_selected": "pre_selected",
+                                      "prior_selected": "prior_selected",
+                                      "pca": "pca_selected",
+                                      "DE": "celltypes_DE",
+                                      "DE_1vsall": "celltypes_DE_1vsall",
+                                      "DE_specific": "celltypes_DE_specific"}
 
-        if not set_ids:
-            set_ids = list(self.selection.keys())
+        if not origins:
+            origins = ORIGINS
 
         selection_df = pd.DataFrame()
-        for key in set_ids:
-            if key not in self.selection:
-                continue
-            if self.selection[key] is None:
-                continue
-            if "selection" not in self.selection[key]:
-                continue
-            selection_df[key] = self.selection[key]["selection"]
+        for key in origins:
+            if key in ORIGIN_TO_PROBESET_COLNAME:
+                selection_df[key] = self.probeset[ORIGIN_TO_PROBESET_COLNAME[key]].astype("bool")
+            elif key == "marker_list":
+                marker_list = [x for y in self.marker_list.values() for x in y]
+                mask = self.probeset.index.isin(marker_list)
+                selection_df["marker_list"] = False
+                selection_df.loc[mask, "marker_list"] = True
+            else:
+                raise ValueError(f"Can't plot {key} since no results are found.")
 
         pl.gene_overlap(selection_df=selection_df, **kwargs)
+
 
     def info(self) -> None:
         """Print info."""

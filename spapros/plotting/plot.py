@@ -238,6 +238,7 @@ def confusion_matrix(
         ax.tick_params(axis="both", labelsize=fontsize)
 
     # plt.subplots_adjust(top=1.54, bottom=0.08, left=0.05, right=0.95, hspace=0.20, wspace=0.25)
+    plt.tight_layout()
     if show:
         plt.show()
     if save:
@@ -250,9 +251,10 @@ def correlation_matrix(
     cor_matrices: Dict[str, pd.DataFrame],
     show: bool = True,
     save: Union[bool, str] = False,
-    size_factor: float = 6,
+    size_factor: float = 5,
     fontsize: int = 28,
     n_cols: int = 5,
+    colorbar: bool = True,
 ) -> None:
     """Plot heatmap of gene correlation matrix.
 
@@ -269,6 +271,8 @@ def correlation_matrix(
              Factor for scaling the figure size.
         fontsize:
             Matplotlib fontsize.
+        colorbar:
+            Whether to draw a colorbar.
         n_cols:
             Number of subplot columns.
     """
@@ -276,7 +280,20 @@ def correlation_matrix(
     n_plots = len(set_ids)
     n_rows = (n_plots // n_cols) + int((n_plots % n_cols) > 0)
 
-    fig = plt.figure(figsize=(size_factor * n_cols, 0.75 * size_factor * n_rows))
+    HSPACE_INCHES = 1 * n_rows
+    WSPACE_INCHES = 0.5 * n_cols
+    TOP_INCHES = 1
+    BOTTOM_INCHES = 0.5
+    RIGHT_INCHES = 2
+    LEFT_INCHES = 0.5
+    CBAR_WIDTH_INCHES = 0.4
+    CBAR_RIGHT_INCHES = 1
+    CBAR_LEFT_INCHES = RIGHT_INCHES - CBAR_WIDTH_INCHES - CBAR_RIGHT_INCHES
+
+    FIGURE_WIDTH = (size_factor * n_cols) + (((n_cols - 1) / n_cols) * WSPACE_INCHES) + RIGHT_INCHES + LEFT_INCHES
+    FIGURE_HEIGHT = (size_factor * n_rows) + (((n_rows - 1) / n_rows) * HSPACE_INCHES) + TOP_INCHES + BOTTOM_INCHES
+
+    fig = plt.figure(figsize=(FIGURE_WIDTH, FIGURE_HEIGHT))
 
     for i, set_id in enumerate(set_ids):
         plt.subplot(n_rows, n_cols, i + 1)
@@ -285,7 +302,29 @@ def correlation_matrix(
         ax = plt.gca()
         ax.axes.get_xaxis().set_visible(False)
         ax.axes.get_yaxis().set_visible(False)
-    plt.subplots_adjust(top=1.54, bottom=0.08, left=0.05, right=0.95, hspace=0.20, wspace=0.25)
+
+    HSPACE = HSPACE_INCHES / FIGURE_HEIGHT
+    WSPACE = WSPACE_INCHES / FIGURE_WIDTH
+    TOP = 1 - (TOP_INCHES / FIGURE_HEIGHT)
+    BOTTOM = BOTTOM_INCHES / FIGURE_HEIGHT
+    RIGHT = 1 - (RIGHT_INCHES / FIGURE_WIDTH)
+    LEFT = LEFT_INCHES / FIGURE_WIDTH
+    SUBPLOT_HEIGHT = size_factor / FIGURE_HEIGHT
+    CBAR_WIDTH = CBAR_WIDTH_INCHES / FIGURE_WIDTH
+    CBAR_RIGHT = 1 - (CBAR_RIGHT_INCHES / FIGURE_WIDTH)
+    CBAR_LEFT = CBAR_RIGHT - (CBAR_LEFT_INCHES / FIGURE_WIDTH)
+
+    plt.subplots_adjust(bottom=BOTTOM, top=TOP, left=LEFT, right=RIGHT, hspace=HSPACE, wspace=WSPACE)  # top=1.54,
+
+    if colorbar:
+        cbar_ax = fig.add_axes([
+            CBAR_LEFT,
+            TOP - SUBPLOT_HEIGHT,
+            CBAR_WIDTH,
+            SUBPLOT_HEIGHT])
+        cbar = plt.colorbar(cax=cbar_ax)
+        cbar.ax.tick_params(labelsize=fontsize)
+
     if show:
         plt.show()
     if save:
@@ -408,10 +447,12 @@ def cluster_similarity(
 
     plt.tick_params(axis="both", labelsize=fontsize)
 
-    if save:
-        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.tight_layout()
     if show:
         plt.show()
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.close()
 
 
 def knn_overlap(
@@ -522,15 +563,17 @@ def knn_overlap(
     if title:
         plt.title()
 
-    plt.xlabel("number of clusters", fontsize=fontsize)
-    plt.ylabel("KNN", fontsize=fontsize)
+    plt.xlabel("number of neighbors", fontsize=fontsize)
+    plt.ylabel("mean knn overlap", fontsize=fontsize)
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False, fontsize=fontsize)
     plt.tick_params(axis="both", labelsize=fontsize)
 
-    if save:
-        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.tight_layout()
     if show:
         plt.show()
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.close()
 
 
 #############################
@@ -539,8 +582,9 @@ def knn_overlap(
 
 
 def gene_overlap(
-    selection_df: Dict[str, pd.DataFrame],
+    selection_df: pd.DataFrame,
     style: Literal["upset", "venn"] = "upset",
+    min_degree: int = 1,
     fontsize: int = 18,
     show: bool = True,
     save: Optional[str] = None,
@@ -549,11 +593,17 @@ def gene_overlap(
 
     Args:
         selection_df:
-            Boolean dataframe with gene identifiers as index and one column for each gene set.
+            Table with gene sets. Gene names are given in the index, gene sets are given as boolean columns.
         style:
-            Whether to plot a `venn` diagramm or `upset`.
+            Plot type. Options are
+
+                - "upset": upset plot
+                - "venn": venn diagram
+
+        min_degree:
+            Only for `style="upset"`: minimum degree of a subset to be shown in the plot.
         fontsize:
-            Matplotlib fontsize.
+                Matplotlib fontsize.
         show:
             Whether to display the plot.
         save:
@@ -578,16 +628,18 @@ def gene_overlap(
         upset_data = from_indicators(selection_df)
 
         # set up figure
-        upset_plot = UpSet(upset_data, subset_size="count", min_degree=1, show_counts=True)
+        upset_plot = UpSet(upset_data, subset_size="count", min_degree=min_degree, show_counts=True)
 
         # draw figure
         fig = plt.figure()
         upset_plot.plot(fig=fig)
 
-    if save:
-        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.tight_layout()
     if show:
         plt.show()
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.close()
 
 
 def gene_overlap_grouped(
