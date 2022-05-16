@@ -438,7 +438,7 @@ def plateau_penalty_kernel(
     Notes:
         The kernel can be one or two sided (one-sided if either :attr:`x_min` or :attr:`x_max` is `None`).
         The kernel is 1 between :attr:`x_min` and :attr:`x_max`. If one-sided it's 1 from :attr:`x_min` or till
-        :attr`x_max`. Outisde the defined range the kernel decays with a gaussian kernel with variance=:attr:`var`.
+        :attr`x_max`. Outside the defined range the kernel decays with a gaussian kernel with variance=:attr:`var`.
 
     Returns:
         Penalty function.

@@ -1,6 +1,7 @@
 """Plotting Module."""
 import itertools
 from typing import Dict
+from typing import Callable
 from typing import List
 from typing import Literal
 from typing import Optional
@@ -16,94 +17,11 @@ import pandas as pd
 import scanpy as sc
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
-from spapros.plotting._masked_dotplot import MaskedDotPlot
 from upsetplot import from_indicators
 from upsetplot import UpSet
 from venndata import venn
+from spapros.plotting._masked_dotplot import MaskedDotPlot
 
-
-# from spapros.util.util import plateau_penalty_kernel
-# TODO: Fix explore_constraint plot. The following circular import is causing problems atm:
-#
-# from spapros.selection.selection_methods import select_pca_genes
-#
-# def explore_constraint(adata, factors=None, q=0.99, lower=0, upper=1):
-#    """Plot histogram of quantiles for selected genes for different penalty kernels
-#
-#    How to generalize the plotting function, support:
-#    - any selection method with defined hyperparameters
-#    - any penalty kernel
-#    - any key to be plotted (not only quantiles)
-#    """
-#    if factors is None:
-#        factors = [10, 1, 0.1]
-#    legend_size = 9
-#    factors = [10, 1, 0.1]
-#    rows = 1
-#    cols = len(factors)
-#    sizefactor = 6
-#
-#    gaussians = []
-#    a = []
-#    selections_tmp = []
-#    for i, factor in enumerate(factors):
-#        x_min = lower
-#        x_max = upper
-#        var = [factor * 0.1, factor * 0.5]
-#        gaussians.append(plateau_penalty_kernel(var=var, x_min=x_min, x_max=x_max))
-#
-#        a.append(adata.copy())
-#
-#        a[i].var["penalty_expression"] = gaussians[i](a[i].var[f"quantile_{q}"])
-#        selections_tmp.append(
-#            select_pca_genes(
-#                a[i],
-#                100,
-#                variance_scaled=False,
-#                absolute=True,
-#                n_pcs=20,
-#                process_adata=["norm", "log1p", "scale"],
-#                penalty_keys=["penalty_expression"],
-#                corr_penalty=None,
-#                inplace=False,
-#                verbose=True,
-#            )
-#        )
-#        print(f"N genes selected: {np.sum(selections_tmp[i]['selection'])}")
-#
-#    plt.figure(figsize=(sizefactor * cols, 0.7 * sizefactor * rows))
-#    for i, factor in enumerate(factors):
-#        ax1 = plt.subplot(rows, cols, i + 1)
-#        hist_kws = {"range": (0, np.max(a[i].var[f"quantile_{q}"]))}
-#        bins = 100
-#        sns.distplot(
-#            a[i].var[f"quantile_{q}"],
-#            kde=False,
-#            label="highly_var",
-#            bins=bins,
-#            hist_kws=hist_kws,
-#        )
-#        sns.distplot(
-#            a[i][:, selections_tmp[i]["selection"]].var[f"quantile_{q}"],
-#            kde=False,
-#            label="selection",
-#            bins=bins,
-#            hist_kws=hist_kws,
-#        )
-#        plt.axvline(x=x_min, lw=0.5, ls="--", color="black")
-#        plt.axvline(x=x_max, lw=0.5, ls="--", color="black")
-#        ax1.set_yscale("log")
-#        plt.legend(prop={"size": legend_size}, loc=[0.73, 0.74], frameon=False)
-#        plt.title(f"factor = {factor}")
-#
-#        ax2 = ax1.twinx()
-#        x_values = np.linspace(0, np.max(a[i].var[f"quantile_{q}"]), 240)
-#        plt.plot(x_values, 1 * gaussians[i](x_values), label="penal.", color="green")
-#        plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
-#        plt.ylim([0, 2])
-#        for label in ax2.get_yticklabels():
-#            label.set_color("green")
-#    plt.show()
 
 #############################
 ## evaluation related plots ##
@@ -253,7 +171,7 @@ def correlation_matrix(
     save: Union[bool, str] = False,
     size_factor: float = 5,
     fontsize: int = 28,
-    n_cols: int = 5,
+    n_cols: int = 3,
     colorbar: bool = True,
 ) -> None:
     """Plot heatmap of gene correlation matrix.
@@ -337,7 +255,7 @@ def cluster_similarity(
     nmi_dfs: Optional[Dict[str, pd.DataFrame]] = None,
     groupby: Optional[str] = None,
     interpolate: bool = True,
-    figsize: Tuple[int, int] = (8, 6),
+    figsize: Tuple[int, int] = (10, 6),
     fontsize: int = 18,
     title: Optional[str] = None,
     show: bool = True,
@@ -461,7 +379,7 @@ def knn_overlap(
     groupby: Optional[str] = None,
     interpolate: bool = True,
     title: Optional[str] = None,
-    figsize: Tuple[int, int] = (8, 6),
+    figsize: Tuple[int, int] = (10, 6),
     fontsize: int = 18,
     show: bool = True,
     save: Optional[str] = None,
@@ -574,143 +492,6 @@ def knn_overlap(
     if save:
         fig.savefig(save, bbox_inches="tight", transparent=True)
     plt.close()
-
-
-#############################
-## selection related plots ##
-#############################
-
-
-def gene_overlap(
-    selection_df: pd.DataFrame,
-    style: Literal["upset", "venn"] = "upset",
-    min_degree: int = 1,
-    fontsize: int = 18,
-    show: bool = True,
-    save: Optional[str] = None,
-):
-    """Plot the intersection of different selected gene sets.
-
-    Args:
-        selection_df:
-            Table with gene sets. Gene names are given in the index, gene sets are given as boolean columns.
-        style:
-            Plot type. Options are
-
-                - "upset": upset plot
-                - "venn": venn diagram
-
-        min_degree:
-            Only for `style="upset"`: minimum degree of a subset to be shown in the plot.
-        fontsize:
-                Matplotlib fontsize.
-        show:
-            Whether to display the plot.
-        save:
-            Save the plot to path.
-
-    Returns:
-        Figure can be shown (default `True`) and stored to path (default `None`).
-        Change this with `show` and `save`.
-
-    """
-
-    fineTune = False
-    labels, radii, actualOverlaps, disjointOverlaps = venn.df2areas(selection_df, fineTune=fineTune)
-
-    if style == "venn":
-        fig, ax = venn.venn(
-            radii, actualOverlaps, disjointOverlaps, labels=labels, labelsize=fontsize, cmap="Blues", fineTune=fineTune
-        )
-
-    elif style == "upset":
-        # transform to compatible format
-        upset_data = from_indicators(selection_df)
-
-        # set up figure
-        upset_plot = UpSet(upset_data, subset_size="count", min_degree=min_degree, show_counts=True)
-
-        # draw figure
-        fig = plt.figure()
-        upset_plot.plot(fig=fig)
-
-    plt.tight_layout()
-    if show:
-        plt.show()
-    if save:
-        fig.savefig(save, bbox_inches="tight", transparent=True)
-    plt.close()
-
-
-def gene_overlap_grouped(
-    selection_df: Dict[str, pd.DataFrame],
-    groupby: str = "method",
-    show: bool = True,
-    save: Optional[str] = None,
-):
-    """Plot the intersection of different selected gene sets grouped by the selection method.
-
-    Args:
-        selection_df:
-            Boolean dataframe with gene identifiers as index and one column for each gene set.
-        groupby:
-            Name of a column that categorizes the gene sets, eg. the method they were selected with.
-        show:
-            Whether to display the plot.
-        save:
-            Save the plot to path.
-
-    Returns:
-        Figure can be shown (default `True`) and stored to path (default `None`).
-        Change this with `show` and `save`.
-
-    """
-
-    pass
-    # TODO
-
-
-def format_time(time: float) -> str:
-    """Reformat a time stamp.
-
-    Args:
-        time:
-            Time in seconds.
-
-    Returns:
-        str:
-            The formatted time.
-    """
-    days = int(time // (3600 * 24))
-    hours = int(time // 3600)
-    mins = int(time // 60)
-    secs = int(time // 1)
-    unit = ["d", "h", "min", "sec"]
-    for t, u in zip([days, hours, mins, secs], unit):
-        if t > 0:
-            return f"{t} {u}"
-    return "0 sec"
-
-
-def truncate_colormap(
-    cmap: matplotlib.colors.Colormap, minval: float = 0.0, maxval: float = 1.0, n: int = 100
-) -> matplotlib.colors.Colormap:
-    """Truncate a colormap to a given number of colors and an interval.
-
-    Args:
-        cmap:
-            Colormap name.
-        minval:
-            Smallest color value.
-        maxval:
-            Highest color value.
-        n:
-            Number of colors.
-    """
-    new_cmap = colors.LinearSegmentedColormap.from_list(
-        "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval), cmap(np.linspace(minval, maxval, n))
-    )
-    return new_cmap
 
 
 def summary_table(
@@ -887,6 +668,188 @@ def summary_table(
     plt.close()
 
 
+#############################
+## selection related plots ##
+#############################
+
+def explore_constraint(
+    a: List[sc.AnnData],
+    selections_tmp: List[pd.DataFrame],
+    penalty_kernels: List[Callable],
+    key: str = "quantile_99",
+    factors: List[int] = None,
+    upper: float = 1,
+    lower: float = 0,
+    size_factor: int = 6,
+    n_rows: int = 1,
+    legend_size: int = 9,
+    show: bool = True,
+    save: Optional[str] = None,
+):
+    """Plot histogram of quantiles for selected genes for different penalty kernels.
+    Args:
+        a:
+        selections_tmp:
+        factors:
+        q:
+        upper:
+        lower:
+        penalty_kernels:
+        key:
+        size_factor:
+        n_rows:
+        legend_size:
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+    Returns:
+
+    """
+    # TODO:
+    #  1) Fix explore_constraint plot. The following circular import is causing problems atm:
+    #     DONE: moved parts of this method to selector.plot_expore_constraint --> this solves the problem
+    #  2) How to generalize the plotting function, support:
+    #     - any selection method with defined hyperparameters
+    #     - any penalty kernel
+    #     - any key to be plotted (not only quantiles)
+
+    cols = len(factors)
+
+    fig = plt.figure(figsize=(size_factor * cols, 0.7 * size_factor * n_rows))
+    for i, factor in enumerate(factors):
+        ax1 = plt.subplot(n_rows, cols, i + 1)
+        hist_kws = {"range": (0, np.max(a[i].var[key]))}
+        bins = 100
+        sns.distplot(
+            a[i].var[key],
+            kde=False,
+            label="highly_var",
+            bins=bins,
+            hist_kws=hist_kws,
+        )
+        sns.distplot(
+            a[i][:, selections_tmp[i]["selection"]].var[key],
+            kde=False,
+            label="selection",
+            bins=bins,
+            hist_kws=hist_kws,
+        )
+        plt.axvline(x=lower, lw=0.5, ls="--", color="black")
+        plt.axvline(x=upper, lw=0.5, ls="--", color="black")
+        ax1.set_yscale("log")
+        plt.legend(prop={"size": legend_size}, loc=[0.73, 0.74], frameon=False)
+        plt.title(f"factor = {factor}")
+
+        ax2 = ax1.twinx()
+        x_values = np.linspace(0, np.max(a[i].var[key]), 240)
+        plt.plot(x_values, 1 * penalty_kernels[i](x_values), label="penal.", color="green")
+        plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
+        plt.ylim([0, 2])
+        for label in ax2.get_yticklabels():
+            label.set_color("green")
+
+    plt.tight_layout()
+    if show:
+        plt.show()
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.close()
+
+
+def gene_overlap(
+    selection_df: pd.DataFrame,
+    style: Literal["upset", "venn"] = "upset",
+    min_degree: int = 1,
+    fontsize: int = 18,
+    show: bool = True,
+    save: Optional[str] = None,
+):
+    """Plot the intersection of different selected gene sets.
+
+    Args:
+        selection_df:
+            Table with gene sets. Gene names are given in the index, gene sets are given as boolean columns.
+        style:
+            Plot type. Options are
+
+                - "upset": upset plot
+                - "venn": venn diagram
+
+        min_degree:
+            Only for `style="upset"`: minimum degree of a subset to be shown in the plot.
+        fontsize:
+                Matplotlib fontsize.
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+
+    Returns:
+        Figure can be shown (default `True`) and stored to path (default `None`).
+        Change this with `show` and `save`.
+
+    """
+
+    if style == "venn":
+        # remove emtpy sets:
+        selection_df = selection_df.loc[:, selection_df.sum() > 0]
+
+        # calculate plotting parameter
+        labels, radii, actualOverlaps, disjointOverlaps = venn.df2areas(selection_df, fineTune=False)
+
+        # draw venn diagram
+        fig, ax = venn.venn(
+            radii, actualOverlaps, disjointOverlaps, labels=labels, labelsize=fontsize, cmap="Blues", fineTune=False
+        )
+
+    elif style == "upset":
+        # transform to compatible format
+        upset_data = from_indicators(selection_df)
+
+        # set up figure
+        upset_plot = UpSet(upset_data, subset_size="count", min_degree=min_degree, show_counts=True)
+
+        # draw figure
+        fig = plt.figure()
+        upset_plot.plot(fig=fig)
+
+    plt.tight_layout()
+    if show:
+        plt.show()
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.close()
+
+
+def gene_overlap_grouped(
+    selection_df: Dict[str, pd.DataFrame],
+    groupby: str = "method",
+    show: bool = True,
+    save: Optional[str] = None,
+):
+    """Plot the intersection of different selected gene sets grouped by the selection method.
+
+    Args:
+        selection_df:
+            Boolean dataframe with gene identifiers as index and one column for each gene set.
+        groupby:
+            Name of a column that categorizes the gene sets, eg. the method they were selected with.
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+
+    Returns:
+        Figure can be shown (default `True`) and stored to path (default `None`).
+        Change this with `show` and `save`.
+
+    """
+
+    pass
+    # TODO
+
+
 def masked_dotplot(
     adata: sc.AnnData,
     selector,
@@ -1019,3 +982,51 @@ def masked_dotplot(
     dp.make_figure()
     if save:
         plt.gcf().savefig(save, bbox_inches="tight", transparent=True)
+
+
+######################
+## helper functions ##
+######################
+
+
+def format_time(time: float) -> str:
+    """Reformat a time stamp.
+
+    Args:
+        time:
+            Time in seconds.
+
+    Returns:
+        str:
+            The formatted time.
+    """
+    days = int(time // (3600 * 24))
+    hours = int(time // 3600)
+    mins = int(time // 60)
+    secs = int(time // 1)
+    unit = ["d", "h", "min", "sec"]
+    for t, u in zip([days, hours, mins, secs], unit):
+        if t > 0:
+            return f"{t} {u}"
+    return "0 sec"
+
+
+def truncate_colormap(
+    cmap: matplotlib.colors.Colormap, minval: float = 0.0, maxval: float = 1.0, n: int = 100
+) -> matplotlib.colors.Colormap:
+    """Truncate a colormap to a given number of colors and an interval.
+
+    Args:
+        cmap:
+            Colormap name.
+        minval:
+            Smallest color value.
+        maxval:
+            Highest color value.
+        n:
+            Number of colors.
+    """
+    new_cmap = colors.LinearSegmentedColormap.from_list(
+        "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval), cmap(np.linspace(minval, maxval, n))
+    )
+    return new_cmap

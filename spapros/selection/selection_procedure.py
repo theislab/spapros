@@ -2,7 +2,9 @@ import json
 import os
 import pickle
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
+from typing import Callable
+from typing import Literal
 from typing import cast
 from typing import Dict
 from typing import List
@@ -1316,7 +1318,8 @@ class ProbesetSelector:  # (object)
         origins: List[
             Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]] =
         None,
-        **kwargs) -> None:
+        **kwargs
+    ) -> None:
         """
 
         Args:
@@ -1353,8 +1356,12 @@ class ProbesetSelector:  # (object)
         selection_df = pd.DataFrame()
         for key in origins:
             if key in ORIGIN_TO_PROBESET_COLNAME:
+                if self.probeset[ORIGIN_TO_PROBESET_COLNAME[key]] is None:
+                    continue
                 selection_df[key] = self.probeset[ORIGIN_TO_PROBESET_COLNAME[key]].astype("bool")
             elif key == "marker_list":
+                if self.marker_list is None:
+                    continue
                 marker_list = [x for y in self.marker_list.values() for x in y]
                 mask = self.probeset.index.isin(marker_list)
                 selection_df["marker_list"] = False
@@ -1363,6 +1370,107 @@ class ProbesetSelector:  # (object)
                 raise ValueError(f"Can't plot {key} since no results are found.")
 
         pl.gene_overlap(selection_df=selection_df, **kwargs)
+
+    def plot_explore_constraint(
+        self,
+        selection_method: str = "pca_selection",
+        selection_params: dict = None,
+        key: str = "quantile_0.99",
+        penalty_kernels: Callable = None,
+        factors: List[float] = None,
+        upper: float = 1,
+        lower: float = 0,
+        **kwargs
+    ):
+        """Plot histogram of quantiles for selected genes for different penalty kernels.
+
+        Args:
+            selection_method:
+                Selection method to explore. Available are:
+
+                    - "pca_selection"
+                    - "DE_selection"
+
+            selection_params:
+                Hyperparameter for the respective gene selection.
+            key:
+                Key of column in ``adata.var`` containing the values to be plottet.
+            penalty_kernels:
+                Any penalty kernel. If None, :meth:`utils.plateau_penalty_kernel` is used to create three gaussian
+                plateau penalty kernels with different variances. Only then, ``factors,``, ``lower`` and ``upper`` are
+                used.
+            factors:
+                Factors for the variance for creating a gaussian penalty kernel.
+            lower:
+                Lower border above which the kernel is 1.
+            upper:
+                Upper boder below which the kernel is 1.
+            **kwargs:
+                Further arguments for :meth:`pl.gene_overlap`.
+
+        Returns:
+
+        """
+
+        # TODO:
+        #  1) Fix explore_constraint plot. The following circular import is causing problems atm:
+        #     DONE: moved parts of this method to selector.plot_expore_constraint --> this solves the problem
+        #  2) How to generalize the plotting function, support:
+        #     - any selection method with defined hyperparameters --> DONE --> add more
+        #     - any penalty kernel --> DONE --> test
+        #     - any key to be plotted (not only quantiles) --> DONE --> test
+
+        SELECTION_METHODS: Dict[str, Callable] = {
+            "pca_selection": select.select_pca_genes,
+            "DE_selection": select.select_DE_genes,
+        }
+
+        if selection_method not in SELECTION_METHODS:
+            raise ValueError(f"Selection with method {selection_method} is not available.")
+
+        if selection_params is None:
+            selection_params = {}
+
+        selection_params = self._get_hparams(new_params=selection_params, subject=selection_method)
+
+        if factors is None:
+            factors = [10, 1, 0.1]
+
+        if penalty_kernels is None:
+            penalty_kernels = [util.plateau_penalty_kernel(var=[factor * 0.1, factor * 0.5], x_min=lower, x_max=upper)
+                               for factor in factors]
+
+        a = []
+        selections_tmp = []
+        for i, factor in enumerate(penalty_kernels):
+
+            a.append(self.adata.copy())
+
+            if key not in a[i].var:
+                raise ValueError(f"No column {key} in adata.var found.")
+
+            a[i].var["penalty_expression"] = penalty_kernels[i](a[i].var[key])
+            selections_tmp.append(
+                SELECTION_METHODS[selection_method](
+                    a[i],
+                    n=100,
+                    **selection_params,
+                    penalty_keys=["penalty_expression"],
+                    inplace=False,
+                    verbosity=self.verbosity,
+                )
+            )
+            print(f"N genes selected: {np.sum(selections_tmp[i]['selection'])}")
+
+        pl.explore_constraint(a,
+                              selections_tmp,
+                              penalty_kernels,
+                              factors=factors,
+                              key=key,
+                              upper=upper,
+                              lower=lower,
+                              **kwargs
+                              )
 
 
     def info(self) -> None:
@@ -1417,7 +1525,7 @@ def select_reference_probesets(
         },
         "DE": {"per_group": False},
     }
-    reference_methods: Dict[str, Any] = {
+    reference_methods: Dict[str, Callable] = {
         "PCA": select.select_pca_genes,
         "DE": select.select_DE_genes,
         "random": select.random_selection,
