@@ -34,6 +34,24 @@ def selector(raw_selector):
     raw_selector.select_probeset()
     return raw_selector
 
+@pytest.fixture()
+def selector_with_marker(small_adata):
+    random.seed(0)
+    sc.pp.log1p(small_adata)
+    small_adata = small_adata[random.sample(range(small_adata.n_obs), 100), :]
+    raw_selector = se.ProbesetSelector(
+        small_adata,
+        n=50,
+        celltype_key="celltype",
+        forest_hparams={"n_trees": 10, "subsample": 200, "test_subsample": 400},
+        verbosity=0,
+        save_dir=None,
+        marker_list="/big/st/strasserl/spapros/tests/selection/test_data/small_data_raw_counts.h5ad"
+    )
+    raw_selector.select_probeset()
+    return raw_selector
+
+
 
 @pytest.fixture()
 def small_adata():

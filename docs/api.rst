@@ -62,9 +62,11 @@ Plotting
 .. autosummary::
     :toctree: pl
 
+    pl.confusion_matrix
     pl.correlation_matrix
-    pl.confusion_heatmap
+    pl.cluster_similarity
+    pl.knn_overlap
     pl.summary_table
+    pl.explore_constraint
+    pl.gene_overlap
     pl.masked_dotplot
-    pl.MaskedDotPlot
-

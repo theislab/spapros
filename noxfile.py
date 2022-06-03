@@ -102,7 +102,7 @@ def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or ["spapros", "tests", "docs/conf.py"]
     session.install(".")
-    session.install("mypy", "pytest", "types-pkg-resources", "types-requests", "types-attrs")
+    session.install("mypy", "pytest", "types-pkg-resources", "types-requests", "types-attrs", "types-pyyaml")
     session.run("mypy", *args)
 
 
