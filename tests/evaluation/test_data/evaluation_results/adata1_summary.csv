@@ -1,2 +1,0 @@
-,knn_overlap mean_overlap_AUC,forest_clfs accuracy,forest_clfs perct acc > 0.8,gene_corr 1 - mean,gene_corr perct max < 0.8,marker_corr per marker,marker_corr per celltype,marker_corr per marker mean > 0.025,cluster_similarity nmi_5_20,cluster_similarity nmi_21_60
-probeset1,0.5389194419268526,0.9229008935605123,0.9895748367319737,0.7777080096564589,0.7608637851426177,0.653046038320379,0.7589901328460341,0.653046038320379,0.8105865177394072,0.7569520384925248

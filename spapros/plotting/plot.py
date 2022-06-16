@@ -8,7 +8,7 @@ from typing import Optional
 from typing import Tuple
 from typing import Union
 
-import matplotlib.colors
+import matplotlib
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
 from matplotlib.gridspec import GridSpec
@@ -272,7 +272,7 @@ def cluster_similarity(
 
                 - selection ids or alternative names as index
                 - mandatory (only if ``nmi_dfs=None``) column: `path`: path to results csv of each selection (contains
-                  number of clusters and nmi values (as index) and nmi values in column `nmi`.)
+                  number of clusters (as index) and nmi values in column `nmi`.)
                 - optional columns (Note that the legend order will follow the row order in :attr:`selections_info`.):
 
                     - `color`: matplotlib color
@@ -316,36 +316,48 @@ def cluster_similarity(
             raise ValueError("The mandatory column 'path' is missing in 'selections_info'.")
         else:  # load NMI values from files
             nmi_dfs = {}
-            for selection_nr, path in enumerate(df["path"]):
-                nmi_dfs[str(selection_nr)] = pd.read_csv(path, index_col=0)
-            # del df["path"]
+            for selection_id, path in zip(df.index, df["path"]):
+                nmi_dfs[selection_id] = pd.read_csv(path, index_col=0)
 
-    # check matplotlib style options
+    if groupby and groupby not in df:
+        raise ValueError(f"To group by {groupby}, a correspondant column is necessary in selections_info.")
+
+    # check style options
     for col in ["color", "linewidth", "linestyle"]:
+        # if not given, use default matplotlib values except color if grouping
         if col not in df.columns:
             df[col] = None
-            # TODO: if groupby is provided assert that "color", "linewidth", "linestyle" are all the same for
-            #  selections that belong to one group
-            #   ==> done TODO test
-            if groupby:
-                group_check = df[["color", "linewidth", "linestyle", "groupby"]].groupby(by=groupby).nunique() > 1
-                if any(group_check):
-                    bad_group = group_check[group_check].dropna(how="all").dropna(how="all", axis=1)
-                    raise ValueError(
-                        "Grouping by "
-                        + groupby
-                        + " failed because the values of "
-                        + str(bad_group.columns.values)
-                        + " are not unique for group(s) "
-                        + str(bad_group.index.values)
-                        + "."
-                    )
+        if col == "color" and groupby:
+            # if necessary, set grouped line colors (note that just like matplotlib, we cycle over a limited number of
+            # (default 10) colors)
+            cycler = matplotlib.rcParams['axes.prop_cycle']
+            prop_cycler = itertools.cycle(cycler)
+            for group in df[groupby].drop_duplicates():
+                df["color"][df[groupby] == group] = next(prop_cycler)["color"]
+
+    # assert that styles are equal for selections that belong to one group
+    if groupby:
+        group_check = df[["color", "linewidth", "linestyle", groupby]].groupby(by=groupby).nunique() > 1
+        if group_check.any().any():
+            bad_group = group_check[group_check].dropna(how="all").dropna(how="all", axis=1)
+            raise ValueError(
+                "Grouping by "
+                + groupby
+                + " failed because the values of "
+                + str(bad_group.columns.values)
+                + " are not unique for group(s) "
+                + str(bad_group.index.values)
+                + "."
+            )
 
     fig = plt.figure(figsize=figsize)
 
-    labels = []
+    for selection_id in df.index:
 
-    for selection_id, plot_df in nmi_dfs.items():
+        if selection_id not in nmi_dfs:
+            raise ValueError(f"Can't find {selections_info} in nmi_dfs.")
+
+        plot_df = nmi_dfs[selection_id]
         label = selection_id if not groupby else df.loc[selection_id][groupby]
 
         plt.plot(
@@ -353,10 +365,8 @@ def cluster_similarity(
             c=df.loc[selection_id]["color"],
             lw=df.loc[selection_id]["linewidth"],
             linestyle=df.loc[selection_id]["linestyle"],
-            label=None if label in labels else label,
+            label=label,
         )
-
-        labels.append(label)
 
     if title:
         plt.title(title, fontsize=fontsize)
@@ -375,26 +385,28 @@ def cluster_similarity(
     plt.close()
 
 
-def knn_overlap(
+def clustering_lineplot(
     selections_info: pd.DataFrame,
-    knn_dfs: Optional[Dict[str, pd.DataFrame]] = None,
+    data: Optional[Dict[str, pd.DataFrame]] = None,
     groupby: Optional[str] = None,
     interpolate: bool = True,
     title: Optional[str] = None,
+    xlabel: str = None,
+    ylabel: str = None,
     figsize: Tuple[int, int] = (10, 6),
     fontsize: int = 18,
     show: bool = True,
     save: Optional[str] = None,
 ):
-    """Plot plot mean overlap of knn clusterings over number of clusters.
+    """Plot lineplot for some clustering statistic.
 
     Args:
         selections_info:
             Information on each selection for plotting. The dataframe includes:
 
                 - selection ids or alternative names as index
-                - mandatory (only if ``nmi_dfs=None``) column: `path`: path to results csv of each selection (contains
-                  number of clusters and nmi values (as index) and nmi values in column `nmi`.)
+                - mandatory (only if ``data=None``) column: `path`: path to results csv of each selection (contains
+                  number of clusters (as index) and the mean overlap in column `mean`.)
                 - optional columns (Note that the legend order will follow the row order in :attr:`selections_info`.):
 
                     - `color`: matplotlib color
@@ -402,14 +414,18 @@ def knn_overlap(
                     - `linestyle`: matplotlib linestyle
                     - `<groupby>`: some annotation that can be used to group the legend.
 
-        knn_dfs:
-            NMI results for each selection.
+        data:
+            Mean overlap of knn clusters for each selection.
         groupby:
             Column in ``selections_info`` to group the legend.
         interpolate
             Whether to interpolate the NMI values.
         title:
             Plot title.
+        xlabel
+            X-axis label.
+        ylabel:
+            Y-axis label.
         figsize:
             Matplotlib figsize.
         fontsize:
@@ -432,58 +448,76 @@ def knn_overlap(
 
     df = selections_info.copy()
 
-    # load NMI values from files if necessary
-    if knn_dfs is None:
-        if "path" not in df:
-            raise ValueError("The mandatory column 'path' is missing in 'selections_info'.")
-        else:  # load NMI values from files
-            knn_dfs = {}
-            for selection_nr, path in enumerate(df["path"]):
-                knn_dfs[str(selection_nr)] = pd.read_csv(path, index_col=0)
+    # check if data is there
+    if data is None and "path" not in df:
+        raise ValueError("No data provided.")
 
-    # check matplotlib style options
+    if data is None:
+        data = {}
+
+    # load data from files if necessary
+    if "path" in df:
+        for selection_id, path in zip(df.index, df["path"]):
+            data[selection_id] = pd.read_csv(path, index_col=0)
+
+    if groupby and groupby not in df:
+        raise ValueError(f"To group by {groupby}, a correspondant column is necessary in selections_info.")
+
+    # check style options
     for col in ["color", "linewidth", "linestyle"]:
+        # if not given, use default matplotlib values except color if grouping
         if col not in df.columns:
             df[col] = None
-            # TODO: if groupby is provided assert that "color", "linewidth", "linestyle" are all the same for
-            #  selections that belong to one group
-            #   ==> done TODO test
-            if groupby:
-                group_check = df[["color", "linewidth", "linestyle", "groupby"]].groupby(by=groupby).nunique() > 1
-                if any(group_check):
-                    bad_group = group_check[group_check].dropna(how="all").dropna(how="all", axis=1)
-                    raise ValueError(
-                        "Grouping by "
-                        + groupby
-                        + " failed because the values of "
-                        + str(bad_group.columns.values)
-                        + " are not unique for group(s) "
-                        + str(bad_group.index.values)
-                        + "."
-                    )
+        if col == "color" and groupby:
+            # if necessary, set grouped line colors (note that just like matplotlib, we cycle over a limited number of
+            # (default 10) colors)
+            cycler = matplotlib.rcParams['axes.prop_cycle']
+            prop_cycler = itertools.cycle(cycler)
+            for group in df[groupby].drop_duplicates():
+                df["color"][df[groupby] == group] = next(prop_cycler)["color"]
+
+    # assert that styles are equal for selections that belong to one group
+    if groupby:
+        group_check = df[["color", "linewidth", "linestyle", groupby]].groupby(by=groupby).nunique() > 1
+        if group_check.any().any():
+            bad_group = group_check[group_check].dropna(how="all").dropna(how="all", axis=1)
+            raise ValueError(
+                "Grouping by "
+                + groupby
+                + " failed because the values of "
+                + str(bad_group.columns.values)
+                + " are not unique for group(s) "
+                + str(bad_group.index.values)
+                + "."
+            )
 
     fig = plt.figure(figsize=figsize)
 
-    labels = []
+    for selection_id in df.index:
 
-    for selection_id, plot_df in knn_dfs.items():
+        if selection_id not in data:
+            raise ValueError(f"Can't find {selection_id} in selections_info.")
+
+        xlabel = data[selection_id].index.name if not xlabel else xlabel
+        yname = data[selection_id].columns[0]
+        ylabel = yname if not ylabel else ylabel
+
+        plot_df = data[selection_id]
         label = selection_id if not groupby else df.loc[selection_id][groupby]
 
         plt.plot(
-            plot_df["mean"].interpolate() if interpolate else plot_df["mean"],
+            plot_df[yname].interpolate() if interpolate else plot_df[yname],
             c=df.loc[selection_id]["color"],
             lw=df.loc[selection_id]["linewidth"],
             linestyle=df.loc[selection_id]["linestyle"],
-            label=None if label in labels else label,
+            label=label,
         )
-
-        labels.append(label)
 
     if title:
         plt.title()
 
-    plt.xlabel("number of neighbors", fontsize=fontsize)
-    plt.ylabel("mean knn overlap", fontsize=fontsize)
+    plt.xlabel(xlabel, fontsize=fontsize)
+    plt.ylabel(ylabel, fontsize=fontsize)
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False, fontsize=fontsize)
     plt.tick_params(axis="both", labelsize=fontsize)
 
