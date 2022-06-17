@@ -724,11 +724,13 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.clustering_lineplot(selections_info,
-                               data=self.results["cluster_similarity"],
-                               xlabel="number of clusters",
-                               ylabel="NMI",
-                               **kwargs)
+        pl.clustering_lineplot(
+            selections_info,
+            data=self.results["cluster_similarity"],
+            xlabel="number of clusters",
+            ylabel="NMI",
+            **kwargs,
+        )
 
     def plot_knn_overlap(
         self, set_ids: List[str] = None, selections_info: Optional[pd.DataFrame] = None, **kwargs
@@ -769,11 +771,13 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.clustering_lineplot(selections_info,
-                               data=self.results["knn_overlap"],
-                               xlabel="number of neighbors",
-                               ylabel="mean knn overlap",
-                               **kwargs)
+        pl.clustering_lineplot(
+            selections_info,
+            data=self.results["knn_overlap"],
+            xlabel="number of neighbors",
+            ylabel="mean knn overlap",
+            **kwargs,
+        )
 
     def plot_confusion_matrix(self, set_ids: List[str] = None, **kwargs) -> None:
         """Wrapper for plotting a heatmap of cell type classification confusion matrices.
@@ -830,7 +834,6 @@ class ProbesetEvaluator:
         assert isinstance(set_ids, list)
 
         pl.correlation_matrix(set_ids, self.results["gene_corr"], **kwargs)
-
 
     def plot_marker_correlation(self):
         pass

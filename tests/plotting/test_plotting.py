@@ -1,4 +1,5 @@
 import random
+
 import pytest
 from matplotlib.testing.compare import compare_images
 from spapros import pl
@@ -24,66 +25,83 @@ def test_masked_dotplot(small_adata, selector, tmp_path):
 
 
 @pytest.mark.parametrize(
-    "fun, kwargs", [
+    "fun, kwargs",
+    [
         # plot_histogram -> selection_histogram:
-        ("plot_histogram", {
-            "x_axis_keys": None,
-            "selections": None,
-            "penalty_keys": None,
-            "unapplied_penalty_keys": None,
-            "background_key": None,
-        }),
-        ("plot_histogram", {
-            "x_axis_keys": {"expression_penalty_upper": "quantile_0.99",
-                            "expression_penalty_lower": "quantile_0.9 expr > 0",
-                            "marker": "quantile_0.99"},
-            "selections": ["marker"],
-            "penalty_keys": {"marker": []},
-            "unapplied_penalty_keys": {"marker": []},
-            "background_key": True
-        }),
-        ("plot_histogram", {
-            "x_axis_keys": {"expression_penalty_upper": "quantile_0.99",
-                            "expression_penalty_lower": "quantile_0.9 expr > 0",
-                            "marker": "quantile_0.99"},
-            "selections": ["marker"],
-            "penalty_keys": {"marker": []},
-            "unapplied_penalty_keys": {"marker": []},
-            "background_key": None
-        }),
-        ("plot_histogram", {
-            "x_axis_keys": {"expression_penalty_upper": "quantile_0.99",
-                            "expression_penalty_lower": "quantile_0.9 expr > 0",
-                            "marker": "quantile_0.99"},
-            "selections": ["marker"],
-            "penalty_keys": {"marker": []},
-            "unapplied_penalty_keys": {"marker": []},
-            "background_key": "all"
-        }),
+        (
+            "plot_histogram",
+            {
+                "x_axis_keys": None,
+                "selections": None,
+                "penalty_keys": None,
+                "unapplied_penalty_keys": None,
+                "background_key": None,
+            },
+        ),
+        (
+            "plot_histogram",
+            {
+                "x_axis_keys": {
+                    "expression_penalty_upper": "quantile_0.99",
+                    "expression_penalty_lower": "quantile_0.9 expr > 0",
+                    "marker": "quantile_0.99",
+                },
+                "selections": ["marker"],
+                "penalty_keys": {"marker": []},
+                "unapplied_penalty_keys": {"marker": []},
+                "background_key": True,
+            },
+        ),
+        (
+            "plot_histogram",
+            {
+                "x_axis_keys": {
+                    "expression_penalty_upper": "quantile_0.99",
+                    "expression_penalty_lower": "quantile_0.9 expr > 0",
+                    "marker": "quantile_0.99",
+                },
+                "selections": ["marker"],
+                "penalty_keys": {"marker": []},
+                "unapplied_penalty_keys": {"marker": []},
+                "background_key": None,
+            },
+        ),
+        (
+            "plot_histogram",
+            {
+                "x_axis_keys": {
+                    "expression_penalty_upper": "quantile_0.99",
+                    "expression_penalty_lower": "quantile_0.9 expr > 0",
+                    "marker": "quantile_0.99",
+                },
+                "selections": ["marker"],
+                "penalty_keys": {"marker": []},
+                "unapplied_penalty_keys": {"marker": []},
+                "background_key": "all",
+            },
+        ),
         # plot_coexpression -> correlation_matrix
-        ("plot_coexpression", {
-            "selections": None,
-            "n_cols": 3,
-        }),
-        ("plot_coexpression", {
-            "selections": None,
-            "n_cols": 1,
-        }),
-        ("plot_coexpression", {
-            "selections": "marker",
-            "colorbar": False
-        }),
-
+        (
+            "plot_coexpression",
+            {
+                "selections": None,
+                "n_cols": 3,
+            },
+        ),
+        (
+            "plot_coexpression",
+            {
+                "selections": None,
+                "n_cols": 1,
+            },
+        ),
+        ("plot_coexpression", {"selections": "marker", "colorbar": False}),
         # plot_classification_rule_umaps -> classification_rule_umaps
-        ("plot_classification_rule_umaps", {
-            "till_rank": 2,
-            "importance_th": 0.8
-        }),
-
+        ("plot_classification_rule_umaps", {"till_rank": 2, "importance_th": 0.8}),
         # overlap:
         ("plot_gene_overlap", {"style": "venn"}),
-        ("plot_gene_overlap", {"style": "upset"})
-    ]
+        ("plot_gene_overlap", {"style": "upset"}),
+    ],
 )
 # TODO maybe add "plot_confusion_matrix_difference", "plot_marker_correlation"
 # TODO add further kwargs for each fun
@@ -124,20 +142,10 @@ def test_plot_summary(evaluator, tmp_path):
         ("plot_confusion_matrix", {}),
         ("plot_correlation_matrix", {}),
         ("plot_cluster_similarity", {}),
-
         # ev.plot_knn_overlap --> pl.knn_overlap
-        ("plot_knn_overlap", {
-            "set_ids": ["ref_DE", "ref_PCA", "spapros_selection"],
-            "selections_info": None
-        }),
-        ("plot_knn_overlap", {
-            "set_ids": None,
-            "selections_info": "selections_info_1"
-        }),
-        ("plot_knn_overlap", {
-            "set_ids": None,
-            "selections_info": "selections_info_2"
-        }),
+        ("plot_knn_overlap", {"set_ids": ["ref_DE", "ref_PCA", "spapros_selection"], "selections_info": None}),
+        ("plot_knn_overlap", {"set_ids": None, "selections_info": "selections_info_1"}),
+        ("plot_knn_overlap", {"set_ids": None, "selections_info": "selections_info_2"}),
     ],
 )
 # TODO maybe add "plot_confusion matrix_difference", "plot_marker_correlation"
@@ -151,5 +159,3 @@ def test_evaluation_plots(evaluator_4_sets, fun, tmp_path, kwargs, request):
     getattr(evaluator_4_sets, fun)(save=fig_name, show=False, **kwargs)
     # getattr(evaluator_4_sets, fun)(save=ref_name, show=False, **kwargs)
     assert compare_images(ref_name, fig_name, 0.001) is None
-
-

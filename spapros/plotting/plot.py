@@ -253,138 +253,6 @@ def correlation_matrix(
     plt.close()
 
 
-def cluster_similarity(
-    selections_info: pd.DataFrame,
-    nmi_dfs: Optional[Dict[str, pd.DataFrame]] = None,
-    groupby: Optional[str] = None,
-    interpolate: bool = True,
-    figsize: Tuple[int, int] = (10, 6),
-    fontsize: int = 18,
-    title: Optional[str] = None,
-    show: bool = True,
-    save: Optional[str] = None,
-):
-    """Plot normalized mutual information of clusterings over number of clusters.
-
-    Args:
-        selections_info:
-            Information on each selection for plotting. The dataframe includes:
-
-                - selection ids or alternative names as index
-                - mandatory (only if ``nmi_dfs=None``) column: `path`: path to results csv of each selection (contains
-                  number of clusters (as index) and nmi values in column `nmi`.)
-                - optional columns (Note that the legend order will follow the row order in :attr:`selections_info`.):
-
-                    - `color`: matplotlib color
-                    - `linewidth`: matplotlib linewidth
-                    - `linestyle`: matplotlib linestyle
-                    - `<groupby>`: some annotation that can be used to group the legend.
-
-        nmi_dfs:
-            NMI results for each selection.
-        groupby:
-            Column in ``selections_info`` to group the legend.
-        interpolate
-            Whether to interpolate the NMI values.
-        figsize:
-            Matplotlib figsize.
-        fontsize:
-            Matplotlib fontsize.
-        title:
-            Plot title.
-        show:
-            Whether to display the plot.
-        save:
-            Save the plot to path.
-
-    Returns:
-        Figure can be shown (default `True`) and stored to path (default `None`).
-        Change this with ``show`` and ``save``.
-    """
-
-    # TODO: nmi_dfs: Check if it's useful to add this or if we always should load from files
-    #  (or maybe even the other way around?)
-    # TODO: instead of a list we could also use one dataframe with index: ns, column_names: probeset_ids,
-    #       Check what's more practical, (think wrt Evaluator.plot_cluster_similarity())
-    #  ==> my suggestion: dict of dfs just like evaluator.results["cluster_similarity"]
-
-    df = selections_info.copy()
-
-    # load NMI values from files if necessary
-    if nmi_dfs is None:
-        if "path" not in df:
-            raise ValueError("The mandatory column 'path' is missing in 'selections_info'.")
-        else:  # load NMI values from files
-            nmi_dfs = {}
-            for selection_id, path in zip(df.index, df["path"]):
-                nmi_dfs[selection_id] = pd.read_csv(path, index_col=0)
-
-    if groupby and groupby not in df:
-        raise ValueError(f"To group by {groupby}, a correspondant column is necessary in selections_info.")
-
-    # check style options
-    for col in ["color", "linewidth", "linestyle"]:
-        # if not given, use default matplotlib values except color if grouping
-        if col not in df.columns:
-            df[col] = None
-        if col == "color" and groupby:
-            # if necessary, set grouped line colors (note that just like matplotlib, we cycle over a limited number of
-            # (default 10) colors)
-            cycler = matplotlib.rcParams['axes.prop_cycle']
-            prop_cycler = itertools.cycle(cycler)
-            for group in df[groupby].drop_duplicates():
-                df["color"][df[groupby] == group] = next(prop_cycler)["color"]
-
-    # assert that styles are equal for selections that belong to one group
-    if groupby:
-        group_check = df[["color", "linewidth", "linestyle", groupby]].groupby(by=groupby).nunique() > 1
-        if group_check.any().any():
-            bad_group = group_check[group_check].dropna(how="all").dropna(how="all", axis=1)
-            raise ValueError(
-                "Grouping by "
-                + groupby
-                + " failed because the values of "
-                + str(bad_group.columns.values)
-                + " are not unique for group(s) "
-                + str(bad_group.index.values)
-                + "."
-            )
-
-    fig = plt.figure(figsize=figsize)
-
-    for selection_id in df.index:
-
-        if selection_id not in nmi_dfs:
-            raise ValueError(f"Can't find {selections_info} in nmi_dfs.")
-
-        plot_df = nmi_dfs[selection_id]
-        label = selection_id if not groupby else df.loc[selection_id][groupby]
-
-        plt.plot(
-            plot_df["nmi"].interpolate() if interpolate else plot_df["nmi"],
-            c=df.loc[selection_id]["color"],
-            lw=df.loc[selection_id]["linewidth"],
-            linestyle=df.loc[selection_id]["linestyle"],
-            label=label,
-        )
-
-    if title:
-        plt.title(title, fontsize=fontsize)
-
-    plt.xlabel("number of clusters", fontsize=fontsize)
-    plt.ylabel("NMI", fontsize=fontsize)
-    plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False, fontsize=fontsize)
-
-    plt.tick_params(axis="both", labelsize=fontsize)
-
-    plt.tight_layout()
-    if show:
-        plt.show()
-    if save:
-        fig.savefig(save, bbox_inches="tight", transparent=True)
-    plt.close()
-
-
 def clustering_lineplot(
     selections_info: pd.DataFrame,
     data: Optional[Dict[str, pd.DataFrame]] = None,
@@ -406,7 +274,7 @@ def clustering_lineplot(
 
                 - selection ids or alternative names as index
                 - mandatory (only if ``data=None``) column: `path`: path to results csv of each selection (contains
-                  number of clusters (as index) and the mean overlap in column `mean`.)
+                  number of clusters (as index) and one column containing the data to plot.)
                 - optional columns (Note that the legend order will follow the row order in :attr:`selections_info`.):
 
                     - `color`: matplotlib color
@@ -415,11 +283,12 @@ def clustering_lineplot(
                     - `<groupby>`: some annotation that can be used to group the legend.
 
         data:
-            Mean overlap of knn clusters for each selection.
+            Dictionary with a dataframe with the data to plot for each selection. The keys need to be the same as the
+            index of ``selections_info``.
         groupby:
             Column in ``selections_info`` to group the legend.
         interpolate
-            Whether to interpolate the NMI values.
+            Whether to interpolate the values.
         title:
             Plot title.
         xlabel
@@ -440,12 +309,6 @@ def clustering_lineplot(
         Change this with ``show`` and ``save``.
     """
 
-    # TODO: nmi_dfs: Check if it's useful to add this or if we always should load from files
-    #  (or maybe even the other way around?)
-    # TODO: instead of a list we could also use one dataframe with index: ns, column_names: probeset_ids,
-    #       Check what's more practical, (think wrt Evaluator.plot_cluster_similarity())
-    #  ==> my suggestion: dict of dfs just like evaluator.results["cluster_similarity"]
-
     df = selections_info.copy()
 
     # check if data is there
@@ -454,6 +317,8 @@ def clustering_lineplot(
 
     if data is None:
         data = {}
+    else:
+        data = {data[selection_id] for selection_id in df.index}
 
     # load data from files if necessary
     if "path" in df:
@@ -1242,20 +1107,20 @@ def classification_rule_umaps(
 
     CT_FONTSIZE = fontsize + 4
     PPI = 72
-    CT_PADDING = CT_FONTSIZE/PPI  # space above celltype (additional to HSPACE)
+    CT_PADDING = CT_FONTSIZE / PPI  # space above celltype (additional to HSPACE)
 
-    HSPACE_INCHES = fontsize/PPI * n_rows * 3.5
-    WSPACE_INCHES = fontsize/PPI * n_cols * 4
+    HSPACE_INCHES = fontsize / PPI * n_rows * 3.5
+    WSPACE_INCHES = fontsize / PPI * n_cols * 4
     TOP_INCHES = -CT_PADDING
     BOTTOM_INCHES = 3
     LEFT_INCHES = 3
     RIGHT_INCHES = 3
-    CT_HEIGHT_INCHES = CT_PADDING + (CT_FONTSIZE/PPI)
+    CT_HEIGHT_INCHES = CT_PADDING + (CT_FONTSIZE / PPI)
     SUBPLOT_HEIGHT_INCHES = 3
     SUBPLOT_WIDTH_INCHES = 3
 
     FIGURE_WIDTH = ((SUBPLOT_WIDTH_INCHES * n_cols) + (
-            ((n_cols - 1) / n_cols) * WSPACE_INCHES) + RIGHT_INCHES + LEFT_INCHES) * size_factor
+        ((n_cols - 1) / n_cols) * WSPACE_INCHES) + RIGHT_INCHES + LEFT_INCHES) * size_factor
     FIGURE_HEIGHT = (((SUBPLOT_HEIGHT_INCHES + CT_HEIGHT_INCHES) * n_rows) + (
         ((n_rows - 1) / n_rows) * HSPACE_INCHES) + TOP_INCHES + BOTTOM_INCHES) * size_factor
 
@@ -1329,7 +1194,7 @@ def classification_rule_umaps(
                 j = 0
 
             ax = fig.add_subplot(gs[2 * i + 1, j])
-            ax = sc.pl.embedding(adata=a, basis=basis, color=gene, show=False, ax=ax, title=df["marker_title"],
+            ax = sc.pl.embedding(adata=a, basis=basis, color=gene, show=False, ax=ax, title=df.loc[gene]["marker_title"],
                                  cmap=df["marker_cmap"][gene])
             ax.xaxis.label.set_fontsize(fontsize)
             ax.yaxis.label.set_fontsize(fontsize)

@@ -47,7 +47,7 @@ def selector_with_marker(small_adata):
         forest_hparams={"n_trees": 10, "subsample": 200, "test_subsample": 400},
         verbosity=0,
         save_dir=None,
-        marker_list="/big/st/strasserl/spapros/tests/selection/test_data/small_data_marker_list.csv"
+        marker_list="/big/st/strasserl/spapros/tests/selection/test_data/small_data_marker_list.csv",
     )
     raw_selector.select_probeset()
     return raw_selector
@@ -69,9 +69,7 @@ def adata_pbmc3k():
     return adata
 
 
-def ref_probeset(
-    adata_pbmc3k, n, geney_key, seeds, verbosity, save_dir, request, reference_selections
-):
+def ref_probeset(adata_pbmc3k, n, geney_key, seeds, verbosity, save_dir, request, reference_selections):
     se.select_reference_probesets(
         adata_pbmc3k,
         n=n,
@@ -143,10 +141,11 @@ def evaluator_4_sets(small_adata, marker_list):
         scheme="full",
         verbosity=0,
         results_dir="tests/evaluation/test_data/evaluation_results_4_sets",
-        marker_list=marker_list
+        marker_list=marker_list,
     )
-    four_probesets = pd.read_csv("/big/st/strasserl/spapros/tests/evaluation/test_data/4_probesets_of_20.csv",
-                                 index_col=0)
+    four_probesets = pd.read_csv(
+        "/big/st/strasserl/spapros/tests/evaluation/test_data/4_probesets_of_20.csv", index_col=0
+    )
     for set_id in four_probesets:
         evaluator.evaluate_probeset(set_id=set_id, genes=list(four_probesets[set_id]))
     return evaluator

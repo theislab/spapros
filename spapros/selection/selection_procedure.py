@@ -4,10 +4,10 @@ import pickle
 from pathlib import Path
 from typing import Any
 from typing import Callable
-from typing import Literal
 from typing import cast
 from typing import Dict
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -15,13 +15,12 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import scanpy as sc
-from scipy.sparse import issparse
-
 import spapros.evaluation.evaluation as ev
-from spapros.plotting import plot as pl
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
 from rich.console import RichCast
+from scipy.sparse import issparse
+from spapros.plotting import plot as pl
 from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
@@ -1317,14 +1316,18 @@ class ProbesetSelector:  # (object)
         #    histograms - a little boring but better than nothing)
 
         SELECTIONS = ["pca", "DE", "marker"]
-        PENALTY_KEYS = {"pca": self.pca_penalties,
-                        "DE": self.DE_penalties,
-                        "marker": self.m_penalties_adata_celltypes + self.m_penalties_list_celltypes}
+        PENALTY_KEYS = {
+            "pca": self.pca_penalties,
+            "DE": self.DE_penalties,
+            "marker": self.m_penalties_adata_celltypes + self.m_penalties_list_celltypes,
+        }
         UNAPPLIED_PENALTY_KEYS = {p_key: ["expression_penalty"] for p_key in PENALTY_KEYS}
-        X_AXIS_KEYS = {"expression_penalty": "quantile_0.99",
-                       "expression_penalty_upper": "quantile_0.99",
-                       "expression_penalty_lower": "quantile_0.9 expr > 0",
-                       "marker": "quantile_0.99"}
+        X_AXIS_KEYS = {
+            "expression_penalty": "quantile_0.99",
+            "expression_penalty_upper": "quantile_0.99",
+            "expression_penalty_lower": "quantile_0.9 expr > 0",
+            "marker": "quantile_0.99",
+        }
 
         if selections is None:
             selections = SELECTIONS
@@ -1362,10 +1365,13 @@ class ProbesetSelector:  # (object)
             elif unapplied_penalty_keys[selection] is None and selection in UNAPPLIED_PENALTY_KEYS:
                 unapplied_penalty_keys[selection] = UNAPPLIED_PENALTY_KEYS[selection]
 
-
-            penalty_labels[selection] = {**{p_name: "partially applied" if selection == "marker" else "penalty" for
-                                            p_name in penalty_keys[selection]},
-                                         **{p_name: "unapplied penal." for p_name in unapplied_penalty_keys[selection]}}
+            penalty_labels[selection] = {
+                **{
+                    p_name: "partially applied" if selection == "marker" else "penalty"
+                    for p_name in penalty_keys[selection]
+                },
+                **{p_name: "unapplied penal." for p_name in unapplied_penalty_keys[selection]},
+            }
 
             # plot with penalties:
             penalty_keys[selection] = penalty_keys[selection] + unapplied_penalty_keys[selection]
@@ -1378,14 +1384,15 @@ class ProbesetSelector:  # (object)
                 if x_axis_key not in self.adata.var:
                     raise ValueError(f"Can't plot histogram because {x_axis_key} was not found.")
 
-        pl.selection_histogram(adata=self.adata,
-                               selections_dict=selections_dict,
-                               background_key=self.g_key if background_key is True else background_key,
-                               penalty_keys=penalty_keys,
-                               penalty_labels=penalty_labels,
-                               x_axis_keys=x_axis_keys,
-                               **kwargs
-                               )
+        pl.selection_histogram(
+            adata=self.adata,
+            selections_dict=selections_dict,
+            background_key=self.g_key if background_key is True else background_key,
+            penalty_keys=penalty_keys,
+            penalty_labels=penalty_labels,
+            x_axis_keys=x_axis_keys,
+            **kwargs,
+        )
 
     def plot_coexpression(
         self,
@@ -1444,19 +1451,16 @@ class ProbesetSelector:  # (object)
 
             # create correlation matrix
             if issparse(a.X):
-                cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index,
-                                       data=np.corrcoef(a.X.toarray(), rowvar=False))
+                cor_mat = pd.DataFrame(
+                    index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X.toarray(), rowvar=False)
+                )
             else:
                 cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X, rowvar=False))
 
             cor_mat = util.cluster_corr(cor_mat)
             cor_matrices[selection] = cor_mat
 
-        pl.correlation_matrix(
-            set_ids=selections,
-            cor_matrices=cor_matrices,
-            **kwargs
-        )
+        pl.correlation_matrix(set_ids=selections, cor_matrices=cor_matrices, **kwargs)
 
     def plot_classification_rule_umaps(
         self,
@@ -1500,7 +1504,9 @@ class ProbesetSelector:  # (object)
             till_rank = max(self.selection["forest"]["rank"])
         if importance_th is None:
             importance_th = min(self.selection["forest"]["importance_score"])
-        df = self.selection["forest"][self.selection["forest"]["rank"] <= till_rank][self.selection["forest"]["importance_score"] > importance_th].copy()
+        df = self.selection["forest"][self.selection["forest"]["rank"] <= till_rank][
+            self.selection["forest"]["importance_score"] > importance_th
+        ].copy()
         if len(df) < 1:
             raise ValueError("Filtering for rank and importance score left no genes. Set lower thresholds.")
 
@@ -1572,9 +1578,9 @@ class ProbesetSelector:  # (object)
     def plot_gene_overlap(
         self,
         origins: List[
-            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]] =
-        None,
-        **kwargs
+            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+        ] = None,
+        **kwargs,
     ) -> None:
         """Plot the intersection of different selected gene sets.
 
@@ -1599,15 +1605,17 @@ class ProbesetSelector:  # (object)
 
         """
         ORIGINS: List[
-            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]] = \
-            ["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+        ] = ["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
 
-        ORIGIN_TO_PROBESET_COLNAME = {"pre_selected": "pre_selected",
-                                      "prior_selected": "prior_selected",
-                                      "pca": "pca_selected",
-                                      "DE": "celltypes_DE",
-                                      "DE_1vsall": "celltypes_DE_1vsall",
-                                      "DE_specific": "celltypes_DE_specific"}
+        ORIGIN_TO_PROBESET_COLNAME = {
+            "pre_selected": "pre_selected",
+            "prior_selected": "prior_selected",
+            "pca": "pca_selected",
+            "DE": "celltypes_DE",
+            "DE_1vsall": "celltypes_DE_1vsall",
+            "DE_specific": "celltypes_DE_specific",
+        }
 
         if not origins:
             origins = ORIGINS
@@ -1643,7 +1651,7 @@ class ProbesetSelector:  # (object)
         factors: List[float] = None,
         upper: float = 1,
         lower: float = 0,
-        **kwargs
+        **kwargs,
     ):
         """Plot histogram of quantiles for selected genes for different penalty kernels.
 
@@ -1704,9 +1712,12 @@ class ProbesetSelector:  # (object)
             factors = [10, 1, 0.1]
 
         if penalty_kernels is None:
-            penalty_kernels = [util.plateau_penalty_kernel(var=[factor * 0.1, factor * 0.5], x_min=np.array(lower),
-                                                           x_max=np.array(upper))
-                               for factor in factors]
+            penalty_kernels = [
+                util.plateau_penalty_kernel(
+                    var=[factor * 0.1, factor * 0.5], x_min=np.array(lower), x_max=np.array(upper)
+                )
+                for factor in factors
+            ]
 
         a = []
         selections_tmp = []
@@ -1732,15 +1743,16 @@ class ProbesetSelector:  # (object)
             )
             print(f"N genes selected: {np.sum(selections_tmp[i]['selection'])}")
 
-        pl.explore_constraint(a,
-                              selections_tmp,
-                              penalty_kernels,
-                              factors=factors,
-                              x_axis_key=x_axis_key,
-                              upper=upper,
-                              lower=lower,
-                              **kwargs
-                              )
+        pl.explore_constraint(
+            a,
+            selections_tmp,
+            penalty_kernels,
+            factors=factors,
+            x_axis_key=x_axis_key,
+            upper=upper,
+            lower=lower,
+            **kwargs,
+        )
 
     def info(self) -> None:
         """Print info."""
