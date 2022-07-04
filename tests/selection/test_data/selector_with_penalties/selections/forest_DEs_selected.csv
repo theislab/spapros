@@ -1,0 +1,13 @@
+,step,celltype_1,celltype_2,celltype_3,celltype_6,celltype_7,celltype_1 (ref),celltype_2 (ref),celltype_3 (ref),celltype_6 (ref),celltype_7 (ref)
+CD7,1,1.8886044492409066,,,,,True,True,False,False,False
+FAM107B,1,,,,1.7017159461975098,,True,False,True,True,True
+LYN,1,,4.039745807647705,,,,True,True,False,False,False
+VPREB3,1,,,,,2.6136727333068848,False,False,True,False,True
+CCR7,2,1.9348429441452026,,,,,True,True,True,False,False
+CYB561A3,2,,,,,2.9201881885528564,True,False,False,False,True
+FLT3LG,2,,,,1.5648945569992065,,True,False,True,True,True
+HCK,2,,3.758653544851301,,,,True,True,False,False,False
+BLVRB,3,2.2109038829803467,,,,,True,True,True,True,False
+CISH,3,,,,1.5306892395019531,,True,False,True,True,True
+HLA-DMB,3,,,,,2.5278789445003405,False,False,True,False,True
+IFI30,3,,3.4540787249802203,,,,True,True,False,False,False

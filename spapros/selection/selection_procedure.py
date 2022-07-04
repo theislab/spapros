@@ -4,10 +4,10 @@ import pickle
 from pathlib import Path
 from typing import Any
 from typing import Callable
+from typing import Literal
 from typing import cast
 from typing import Dict
 from typing import List
-from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -15,12 +15,13 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import scanpy as sc
+from scipy.sparse import issparse
+
 import spapros.evaluation.evaluation as ev
+from spapros.plotting import plot as pl
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
 from rich.console import RichCast
-from scipy.sparse import issparse
-from spapros.plotting import plot as pl
 from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
@@ -424,6 +425,7 @@ class ProbesetSelector:  # (object)
             if self.marker_list:
                 self._marker_selection()
             self.probeset = self._compile_probeset_list()
+            self.selection["final"] = self.probeset
             if self.verbosity > 0:
                 self.progress.advance(selection_task)
                 self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
@@ -588,16 +590,12 @@ class ProbesetSelector:  # (object)
         # TODO
         #  - eventually put this "test set size"-test somewhere (ideally at __init__)
 
-        # if self.verbosity > 0:
-        #     print(
-        #         "Train final forests by adding genes from the DE_baseline forest for celltypes with low performance..."
-        #     )
+        # Train final forests by adding genes from the DE_baseline forest for celltypes with low performance
         if self.progress and self.verbosity > 0:
             final_forest_task = self.progress.add_task("Train final forests...", total=3, level=1)
 
+        # Train forest on pre/prior/pca selected genes
         if self.n_pca_genes and (self.n_pca_genes > 0):
-            # if self.verbosity > 1:
-            #     print("\t Train forest on pre/prior/pca selected genes...")
             if not self.forest_results["pca_prior_forest"]:
                 pca_prior_forest_genes = (
                     self.selection["pre"]
@@ -622,18 +620,16 @@ class ProbesetSelector:  # (object)
                     task="Train forest on pre/prior/pca selected genes...",
                     **self.forest_hparams,
                 )
-                # if self.verbosity > 2:
-                #     print("\t\t ...finished.")
+
             else:
                 if self.progress and 2 * self.verbosity >= 2:
                     self.progress.add_task(
                         "Tree on pre/prior/pca selected genes already trained...", only_text=True, level=2
                     )
 
+            # Iteratively add genes from DE_baseline_forest...
             if self.progress and self.verbosity > 0:
                 self.progress.advance(final_forest_task)
-            # if self.verbosity > 1:
-            #     print("\t Iteratively add genes from DE_baseline_forest...")
             if (not self.forest_results["forest"]) or (not self.forest_clfs["forest"]):
                 save_forest: Union[str, bool] = self.forest_results_paths["forest"] if self.save_dir else False
                 assert isinstance(self.forest_results["pca_prior_forest"], list)
@@ -655,15 +651,13 @@ class ProbesetSelector:  # (object)
                     task="Iteratively add genes from DE_baseline_forest...",
                 )
                 assert isinstance(forest_results[0], list)
-                # assert isinstance(forest_results[1], dict)
                 assert len(forest_results) == 2
                 self.forest_results["forest"] = forest_results[0]
                 self.forest_clfs["forest"] = forest_results[1]
                 if self.save_dir:
                     with open(self.forest_clfs_paths["forest"], "wb") as f:
                         pickle.dump(self.forest_clfs["forest"], f)
-                # if self.verbosity > 2:
-                #     print("\t\t ...finished.")
+
             else:
                 if self.progress and 2 * self.verbosity >= 2:
                     self.progress.add_task(
@@ -1230,6 +1224,7 @@ class ProbesetSelector:  # (object)
                 if self.verbosity > 1:
                     print(f"\t Found and load {os.path.basename(self.selections_paths[s])} (selection results).")
                 self.loaded_attributes.append(f"selection_{s}")
+        self.probeset = self.selection["final"]
 
         # forest
         for f in ["DE_prior_forest", "DE_baseline_forest", "pca_prior_forest", "forest"]:
@@ -1316,18 +1311,14 @@ class ProbesetSelector:  # (object)
         #    histograms - a little boring but better than nothing)
 
         SELECTIONS = ["pca", "DE", "marker"]
-        PENALTY_KEYS = {
-            "pca": self.pca_penalties,
-            "DE": self.DE_penalties,
-            "marker": self.m_penalties_adata_celltypes + self.m_penalties_list_celltypes,
-        }
+        PENALTY_KEYS = {"pca": self.pca_penalties,
+                        "DE": self.DE_penalties,
+                        "marker": self.m_penalties_adata_celltypes + self.m_penalties_list_celltypes}
         UNAPPLIED_PENALTY_KEYS = {p_key: ["expression_penalty"] for p_key in PENALTY_KEYS}
-        X_AXIS_KEYS = {
-            "expression_penalty": "quantile_0.99",
-            "expression_penalty_upper": "quantile_0.99",
-            "expression_penalty_lower": "quantile_0.9 expr > 0",
-            "marker": "quantile_0.99",
-        }
+        X_AXIS_KEYS = {"expression_penalty": "quantile_0.99",
+                       "expression_penalty_upper": "quantile_0.99",
+                       "expression_penalty_lower": "quantile_0.9 expr > 0",
+                       "marker": "quantile_0.99"}
 
         if selections is None:
             selections = SELECTIONS
@@ -1356,6 +1347,8 @@ class ProbesetSelector:  # (object)
             # default penalty keys:
             elif penalty_keys[selection] is None and selection in PENALTY_KEYS:
                 penalty_keys[selection] = PENALTY_KEYS[selection]
+                for penalty_key in penalty_keys[selection]:
+                    x_axis_keys[penalty_key] = X_AXIS_KEYS[penalty_key]
 
             # no unapplied penalties
             if selection not in unapplied_penalty_keys:
@@ -1364,14 +1357,13 @@ class ProbesetSelector:  # (object)
             # default unapplied penalties:
             elif unapplied_penalty_keys[selection] is None and selection in UNAPPLIED_PENALTY_KEYS:
                 unapplied_penalty_keys[selection] = UNAPPLIED_PENALTY_KEYS[selection]
+                for penalty_key in unapplied_penalty_keys[selection]:
+                    x_axis_keys[penalty_key] = X_AXIS_KEYS[penalty_key]
 
-            penalty_labels[selection] = {
-                **{
-                    p_name: "partially applied" if selection == "marker" else "penalty"
-                    for p_name in penalty_keys[selection]
-                },
-                **{p_name: "unapplied penal." for p_name in unapplied_penalty_keys[selection]},
-            }
+
+            penalty_labels[selection] = {**{p_name: "partially applied" if selection == "marker" else "penalty" for
+                                            p_name in penalty_keys[selection]},
+                                         **{p_name: "unapplied\npenal." for p_name in unapplied_penalty_keys[selection]}}
 
             # plot with penalties:
             penalty_keys[selection] = penalty_keys[selection] + unapplied_penalty_keys[selection]
@@ -1384,15 +1376,14 @@ class ProbesetSelector:  # (object)
                 if x_axis_key not in self.adata.var:
                     raise ValueError(f"Can't plot histogram because {x_axis_key} was not found.")
 
-        pl.selection_histogram(
-            adata=self.adata,
-            selections_dict=selections_dict,
-            background_key=self.g_key if background_key is True else background_key,
-            penalty_keys=penalty_keys,
-            penalty_labels=penalty_labels,
-            x_axis_keys=x_axis_keys,
-            **kwargs,
-        )
+        pl.selection_histogram(adata=self.adata,
+                               selections_dict=selections_dict,
+                               background_key=self.g_key if background_key is True else background_key,
+                               penalty_keys=penalty_keys,
+                               penalty_labels=penalty_labels,
+                               x_axis_keys=x_axis_keys,
+                               **kwargs
+                               )
 
     def plot_coexpression(
         self,
@@ -1400,12 +1391,6 @@ class ProbesetSelector:  # (object)
         **kwargs,
     ) -> None:
         """Plot gene correlations of basic selections.
-
-        When plotting for some selection: Print where these genes are used:
-
-            - pca -> first genes on which the forests are trained
-            - DE -> first genes on which the baseline forests are trained
-            - marker -> possible genes that are selected from the marker list
 
         Args:
             selections: Plot the coexpression of selections based on
@@ -1422,6 +1407,10 @@ class ProbesetSelector:  # (object)
         """
         # TODO
         #   for marker you could use max nr of markers (2?) from each celltype
+        #   When plotting for some selection: Print where these genes are used:
+        #     - pca -> first genes on which the forests are trained
+        #     - DE -> first genes on which the baseline forests are trained
+        #     - marker -> possible genes that are selected from the marker list
 
         SELECTIONS = ["final", "pca", "DE", "marker"]
 
@@ -1433,7 +1422,7 @@ class ProbesetSelector:  # (object)
         for selection in selections:
 
             # check selection:
-            if selection not in self.selection or selection not in SELECTIONS:
+            if selection not in self.selection:  # or selection not in SELECTIONS:
                 raise ValueError(f"{selection} selection can't be plottet because no results were found.")
 
             # get data of selected genes (overlap between adata and self.selection[selection] and
@@ -1451,16 +1440,19 @@ class ProbesetSelector:  # (object)
 
             # create correlation matrix
             if issparse(a.X):
-                cor_mat = pd.DataFrame(
-                    index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X.toarray(), rowvar=False)
-                )
+                cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index,
+                                       data=np.corrcoef(a.X.toarray(), rowvar=False))
             else:
                 cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X, rowvar=False))
 
             cor_mat = util.cluster_corr(cor_mat)
             cor_matrices[selection] = cor_mat
 
-        pl.correlation_matrix(set_ids=selections, cor_matrices=cor_matrices, **kwargs)
+        pl.correlation_matrix(
+            set_ids=selections,
+            cor_matrices=cor_matrices,
+            **kwargs
+        )
 
     def plot_classification_rule_umaps(
         self,
@@ -1504,15 +1496,13 @@ class ProbesetSelector:  # (object)
             till_rank = max(self.selection["forest"]["rank"])
         if importance_th is None:
             importance_th = min(self.selection["forest"]["importance_score"])
-        df = self.selection["forest"][self.selection["forest"]["rank"] <= till_rank][
-            self.selection["forest"]["importance_score"] > importance_th
-        ].copy()
+        df = self.selection["forest"][self.selection["forest"]["rank"] <= till_rank][self.selection["forest"]["importance_score"] > importance_th].copy()
         if len(df) < 1:
             raise ValueError("Filtering for rank and importance score left no genes. Set lower thresholds.")
 
         # prepare df
         if celltypes is None:
-            celltypes = self.celltypes
+            celltypes = [ct for ct in self.celltypes if ct in df.columns]
         df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)
         if add_marker_genes:
             df["marker_celltypes"] = [self.selection["marker"]["celltype"][gene] for gene in df.index]
@@ -1578,9 +1568,9 @@ class ProbesetSelector:  # (object)
     def plot_gene_overlap(
         self,
         origins: List[
-            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
-        ] = None,
-        **kwargs,
+            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]] =
+        None,
+        **kwargs
     ) -> None:
         """Plot the intersection of different selected gene sets.
 
@@ -1605,17 +1595,15 @@ class ProbesetSelector:  # (object)
 
         """
         ORIGINS: List[
-            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
-        ] = ["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]] = \
+            ["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
 
-        ORIGIN_TO_PROBESET_COLNAME = {
-            "pre_selected": "pre_selected",
-            "prior_selected": "prior_selected",
-            "pca": "pca_selected",
-            "DE": "celltypes_DE",
-            "DE_1vsall": "celltypes_DE_1vsall",
-            "DE_specific": "celltypes_DE_specific",
-        }
+        ORIGIN_TO_PROBESET_COLNAME = {"pre_selected": "pre_selected",
+                                      "prior_selected": "prior_selected",
+                                      "pca": "pca_selected",
+                                      "DE": "celltypes_DE",
+                                      "DE_1vsall": "celltypes_DE_1vsall",
+                                      "DE_specific": "celltypes_DE_specific"}
 
         if not origins:
             origins = ORIGINS
@@ -1651,7 +1639,7 @@ class ProbesetSelector:  # (object)
         factors: List[float] = None,
         upper: float = 1,
         lower: float = 0,
-        **kwargs,
+        **kwargs
     ):
         """Plot histogram of quantiles for selected genes for different penalty kernels.
 
@@ -1712,12 +1700,9 @@ class ProbesetSelector:  # (object)
             factors = [10, 1, 0.1]
 
         if penalty_kernels is None:
-            penalty_kernels = [
-                util.plateau_penalty_kernel(
-                    var=[factor * 0.1, factor * 0.5], x_min=np.array(lower), x_max=np.array(upper)
-                )
-                for factor in factors
-            ]
+            penalty_kernels = [util.plateau_penalty_kernel(var=[factor * 0.1, factor * 0.5], x_min=np.array(lower),
+                                                           x_max=np.array(upper))
+                               for factor in factors]
 
         a = []
         selections_tmp = []
@@ -1743,16 +1728,15 @@ class ProbesetSelector:  # (object)
             )
             print(f"N genes selected: {np.sum(selections_tmp[i]['selection'])}")
 
-        pl.explore_constraint(
-            a,
-            selections_tmp,
-            penalty_kernels,
-            factors=factors,
-            x_axis_key=x_axis_key,
-            upper=upper,
-            lower=lower,
-            **kwargs,
-        )
+        pl.explore_constraint(a,
+                              selections_tmp,
+                              penalty_kernels,
+                              factors=factors,
+                              x_axis_key=x_axis_key,
+                              upper=upper,
+                              lower=lower,
+                              **kwargs
+                              )
 
     def info(self) -> None:
         """Print info."""

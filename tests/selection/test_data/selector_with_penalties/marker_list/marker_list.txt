@@ -1,0 +1,1 @@
+[{"celltype_6": ["BIRC3", "TMEM116", "CD3D"], "celltype_7": ["CD74", "CD79B", "MS4A1"], "celltype_2": ["C5AR1"], "celltype_5": ["RNASE6"], "celltype_4": ["PPBP", "SPARC", "CDKN2D"], "celltype_8": ["NCR3"], "celltype_9": ["NAPA-AS1"]}, {}]

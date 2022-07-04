@@ -176,6 +176,7 @@ def correlation_matrix(
     fontsize: int = 28,
     n_cols: int = 3,
     colorbar: bool = True,
+    scale: bool = True,
 ) -> None:
     """Plot heatmap of gene correlation matrix.
 
@@ -192,17 +193,21 @@ def correlation_matrix(
              Factor for scaling the figure size.
         fontsize:
             Matplotlib fontsize.
-        colorbar:
-            Whether to draw a colorbar.
         n_cols:
             Number of subplot columns.
+        colorbar:
+            Whether to draw a colorbar.
+        scale:
+            Whether to scale the subfigure sizes by gene set size.
     """
 
+    # figure dimensions
     n_plots = len(set_ids)
     n_rows = (n_plots // n_cols) + int((n_plots % n_cols) > 0)
 
-    HSPACE_INCHES = 1 * n_rows
-    WSPACE_INCHES = 0.5 * n_cols
+    # figure size and spaces
+    HSPACE_INCHES = 1
+    WSPACE_INCHES = 0.5
     TOP_INCHES = 1
     BOTTOM_INCHES = 0.5
     RIGHT_INCHES = 2
@@ -210,39 +215,53 @@ def correlation_matrix(
     CBAR_WIDTH_INCHES = 0.4
     CBAR_RIGHT_INCHES = 1
     CBAR_LEFT_INCHES = RIGHT_INCHES - CBAR_WIDTH_INCHES - CBAR_RIGHT_INCHES
-
-    FIGURE_WIDTH = (size_factor * n_cols) + (((n_cols - 1) / n_cols) * WSPACE_INCHES) + RIGHT_INCHES + LEFT_INCHES
-    FIGURE_HEIGHT = (size_factor * n_rows) + (((n_rows - 1) / n_rows) * HSPACE_INCHES) + TOP_INCHES + BOTTOM_INCHES
-
+    FIGURE_WIDTH = (size_factor * n_cols) + (WSPACE_INCHES * (n_cols - 1)) + RIGHT_INCHES + LEFT_INCHES
+    FIGURE_HEIGHT = (size_factor * n_rows) + (HSPACE_INCHES * (n_rows - 1)) + TOP_INCHES + BOTTOM_INCHES
+    SUBPLOT_HEIGHT = size_factor / FIGURE_HEIGHT
+    SUBPLOT_WIDTH = size_factor / FIGURE_WIDTH
     fig = plt.figure(figsize=(FIGURE_WIDTH, FIGURE_HEIGHT))
 
-    for i, set_id in enumerate(set_ids):
-        plt.subplot(n_rows, n_cols, i + 1)
-        plt.imshow(cor_matrices[set_id].values, cmap="seismic", vmin=-1, vmax=1)
-        plt.title(set_id, fontsize=fontsize)
-        ax = plt.gca()
-        ax.axes.get_xaxis().set_visible(False)
-        ax.axes.get_yaxis().set_visible(False)
-
-    HSPACE = HSPACE_INCHES / FIGURE_HEIGHT
-    WSPACE = WSPACE_INCHES / FIGURE_WIDTH
+    # adjust subplot positions
+    WSPACE = WSPACE_INCHES / size_factor  # fraction of average axes width!
+    HSPACE = HSPACE_INCHES / size_factor  # fraction of average axes height!
     TOP = 1 - (TOP_INCHES / FIGURE_HEIGHT)
     BOTTOM = BOTTOM_INCHES / FIGURE_HEIGHT
     RIGHT = 1 - (RIGHT_INCHES / FIGURE_WIDTH)
     LEFT = LEFT_INCHES / FIGURE_WIDTH
-    SUBPLOT_HEIGHT = size_factor / FIGURE_HEIGHT
-    CBAR_WIDTH = CBAR_WIDTH_INCHES / FIGURE_WIDTH
-    CBAR_RIGHT = 1 - (CBAR_RIGHT_INCHES / FIGURE_WIDTH)
-    CBAR_LEFT = CBAR_RIGHT - (CBAR_LEFT_INCHES / FIGURE_WIDTH)
-
     plt.subplots_adjust(bottom=BOTTOM, top=TOP, left=LEFT, right=RIGHT, hspace=HSPACE, wspace=WSPACE)
 
+    # draw subplots
+    axes = []
+    n_genes = [cor_matrices[set_id].shape[1] for set_id in set_ids]
+    max_genes = max(n_genes)
+    for i, set_id in enumerate(set_ids):
+        ax = plt.subplot(n_rows, n_cols, i + 1, anchor="N")
+        ax.margins(0)
+        plt.imshow(cor_matrices[set_id].values, cmap="seismic", vmin=-1, vmax=1)
+        plt.title(set_id, fontsize=fontsize)
+        ax.axes.get_xaxis().set_visible(False)
+        ax.axes.get_yaxis().set_visible(False)
+        axes.append(ax)
+
+        # scale subplot
+        if scale:
+            bb = ax.get_position()
+            SCALED_SUBPLOT_WIDTH = SUBPLOT_WIDTH * (n_genes[i] / max_genes)
+            bb.x1 = bb.x1 + SCALED_SUBPLOT_WIDTH - SUBPLOT_WIDTH
+            ax.set_position(bb)
+
+    # colorbar
     if colorbar:
+        CBAR_WIDTH = CBAR_WIDTH_INCHES / FIGURE_WIDTH
+        CBAR_RIGHT = 1 - (CBAR_RIGHT_INCHES / FIGURE_WIDTH)
+        CBAR_LEFT = CBAR_RIGHT - (CBAR_LEFT_INCHES / FIGURE_WIDTH)
+        CBAR_HEIGHT = SUBPLOT_HEIGHT
+        CBAR_BOTTOM = TOP - SUBPLOT_HEIGHT
         cbar_ax = fig.add_axes([
             CBAR_LEFT,
-            TOP - SUBPLOT_HEIGHT,
+            CBAR_BOTTOM,
             CBAR_WIDTH,
-            SUBPLOT_HEIGHT])
+            CBAR_HEIGHT])
         cbar = plt.colorbar(cax=cbar_ax)
         cbar.ax.tick_params(labelsize=fontsize)
 
@@ -794,7 +813,7 @@ def selection_histogram(
 
     n_rows = len(selections_dict)
     cols = [len(x_values_dict[x]) for x in x_values_dict]
-    n_cols = max(cols)
+    n_cols = max(cols + [1])
 
     fig = plt.figure(figsize=(size_factor * n_cols, 0.7 * size_factor * n_rows))
     gs = GridSpec(n_rows, n_cols, figure=fig)
@@ -807,7 +826,7 @@ def selection_histogram(
             if len(x_values_dict[selection_label]) == 0 and j > 0:
                 continue
             # if less penalties given than n_cols, let space empty
-            elif len(x_values_dict[selection_label]) <= j:
+            elif len(x_values_dict[selection_label]) <= j and j > 0:
                 continue
             ax1 = fig.add_subplot(gs[i])
 
