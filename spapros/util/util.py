@@ -163,7 +163,7 @@ def get_expression_quantile(
             Don't include zeros into quantile calculation (we might drop this option, it doesn't make sense).
 
     Returns.
-        Adds column `adata.var[f'quantile_{q}']`:
+        Adds column ``adata.var[f'quantile_{q}']`` or ``adata.var[f'quantile_{} expr > 0']``:
     """
     # TODO: Add celltype weighting. (sc data does not represent correct celltype proportions)
     #       We should add
@@ -177,9 +177,11 @@ def get_expression_quantile(
     if issparse(a.X):
         a.X = a.X.toarray()
     df = pd.DataFrame(a.X, index=a.obs.index, columns=a.var.index)
+    new_key = f"quantile_{q}"
     if zeros_to_nan:
         df[df == 0] = np.nan
-    adata.var[f"quantile_{q}"] = df.quantile(q)
+        new_key = f"quantile_{q} expr > 0"
+    adata.var[new_key] = df.quantile(q)
 
 
 def gene_means(

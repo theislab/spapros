@@ -114,7 +114,7 @@ def test_selection_stable(adata_pbmc3k):
 
 
 @pytest.mark.parametrize(
-    "n, " "geney_key, " "seeds, " "verbosity, " "save_dir, " "reference_selections",
+    "n, " "genes_key, " "seeds, " "verbosity, " "save_dir, " "reference_selections",
     [
         (
             10,
@@ -155,12 +155,12 @@ def test_selection_stable(adata_pbmc3k):
     ],
 )
 def test_select_reference_probesets(
-    adata_pbmc3k, n, geney_key, seeds, verbosity, save_dir, request, reference_selections
+    adata_pbmc3k, n, genes_key, seeds, verbosity, save_dir, request, reference_selections
 ):
     se.select_reference_probesets(
         adata_pbmc3k,
         n=n,
-        genes_key="highly_variable",
+        genes_key=genes_key,
         seeds=seeds,
         verbosity=verbosity,
         save_dir=None if not save_dir else request.getfixturevalue(save_dir),

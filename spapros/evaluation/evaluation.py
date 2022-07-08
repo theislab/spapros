@@ -470,7 +470,7 @@ class ProbesetEvaluator:
 
         Args:
             genes:
-                Genes by the :meth:`get_genes` function.
+                Genes by the :func:`.get_genes` function.
             set_id:
                 ID of the current probeset.
             shared_pre_results_path:
@@ -699,16 +699,15 @@ class ProbesetEvaluator:
                     - selection ids or alternative names as index
                     - mandatory (only if ``kwargs[nmi_dfs]=None``) column `path`: path to results csv of each selection
                       (contains number of clusters (as index) and NMI values in column `nmi`.)
-                    - optional columns:
+                    - optional columns (Note that the legend order will follow the row order in :attr:`selections_info.):
 
                         - `color`: matplotlib color
                         - `linewidth`: matplotlib linewidth
                         - `linestyle`: matplotlib linestyle
                         - `<groupby>`: some annotation that can be used to group the legend.
-                        Note that the legend order will follow the row order in :attr:`selections_info.
 
             **kwargs:
-                Further arguments for :meth:`pl.cluster_similarity`.
+                Further arguments for :func:`.cluster_similarity`.
 
         Returns:
             Figure can be showed (default `True`) and stored to path (default `None`).
@@ -725,12 +724,18 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.cluster_similarity(selections_info, nmi_dfs=self.results["cluster_similarity"], **kwargs)
+        pl.clustering_lineplot(
+            selections_info,
+            data=self.results["cluster_similarity"],
+            xlabel="number of clusters",
+            ylabel="NMI",
+            **kwargs,
+        )
 
     def plot_knn_overlap(
         self, set_ids: List[str] = None, selections_info: Optional[pd.DataFrame] = None, **kwargs
     ) -> None:
-        """Wrapper for plotting KNN of clusterings over number of clusters.
+        """Wrapper for plotting the mean overlap of knn clusterings over number of clusters.
 
         Args:
             set_ids:
@@ -741,16 +746,15 @@ class ProbesetEvaluator:
                     - selection ids or alternative names as index
                     - mandatory (only if ``kwargs[knn_dfs]=None``) column `path`: path to results csv of each selection
                       (contains number of clusters (as index) and KNN values in column `knn`.)
-                    - optional columns:
+                    - optional columns (Note that the legend order will follow the row order in :attr:`selections_info.):
 
                         - `color`: matplotlib color
                         - `linewidth`: matplotlib linewidth
                         - `linestyle`: matplotlib linestyle
                         - `<groupby>`: some annotation that can be used to group the legend
-                        Note that the legend order will follow the row order in :attr:`selections_info`.
 
             **kwargs:
-                Further arguments for :meth:`pl.knn_overlap`.
+                Further arguments for :func:`.knn_overlap`.
 
         Returns:
             Figure can be shown (default `True`) and stored to path (default `None`).
@@ -767,16 +771,22 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.knn_overlap(selections_info, knn_dfs=self.results["knn_overlap"], **kwargs)
+        pl.clustering_lineplot(
+            selections_info,
+            data=self.results["knn_overlap"],
+            xlabel="number of neighbors",
+            ylabel="mean knn overlap",
+            **kwargs,
+        )
 
-    def plot_confusion_matrix(self, set_ids: List[str] = None, **kwargs):
+    def plot_confusion_matrix(self, set_ids: List[str] = None, **kwargs) -> None:
         """Wrapper for plotting a heatmap of cell type classification confusion matrices.
 
         Args:
             set_ids:
                 List of probeset IDs. Check out :attr:`.summary_results` for available sets.
             **kwargs:
-                Further arguments for :meth:`pl.confusion_matrix`.
+                Further arguments for :func:`.confusion_matrix`.
 
         Returns:
             Figure can be shown (default `True`) and stored to path (default `None`).
@@ -799,14 +809,14 @@ class ProbesetEvaluator:
         self,
         set_ids: List[str] = None,
         **kwargs,
-    ):
+    ) -> None:
         """Wrapper for plotting a heatmap of gene correlation matrices.
 
         Args:
             set_ids:
                 List of probeset IDs. Check out :attr:`.summary_results` for available sets.
             **kwargs:
-                Further arguments for :meth:`pl.correlation_matrix`.
+                Further arguments for :func:`.correlation_matrix`.
 
         Returns:
             Figure can be shown (default `True`) and stored to path (default `None`).
@@ -867,7 +877,7 @@ class ProbesetEvaluator:
                     * - selection metric
                       - plotting function
                     * - forest_clfs
-                      - :func:`.confusion_heatmap`
+                      - :func:`.confusion_matrix`
                     * - gene_corr
                       - :func:`.correlation_matrix`
         """
@@ -1781,7 +1791,7 @@ def forest_classifications(
         save:
             If not False load results if the given file exists, otherwise save results after computation.
         outlier_kwargs:
-            Parameters for :meth:`get_outlier_reference_celltypes`.
+            Parameters for :func:`.get_outlier_reference_celltypes`.
         progress:
             :attr:`rich.Progress` object if progress bars should be shown.
         task:
@@ -1789,7 +1799,7 @@ def forest_classifications(
         level:
             Progress bar level.
         **forest_kwargs:
-            Parameters for :meth:`single_forest_classifications`.
+            Parameters for :func:`.single_forest_classifications`.
 
     """
 

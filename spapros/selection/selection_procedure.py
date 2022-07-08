@@ -4,10 +4,10 @@ import pickle
 from pathlib import Path
 from typing import Any
 from typing import Callable
-from typing import Literal
 from typing import cast
 from typing import Dict
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -16,10 +16,11 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import spapros.evaluation.evaluation as ev
-import spapros.plotting.plot as pl
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
 from rich.console import RichCast
+from scipy.sparse import issparse
+from spapros.plotting import plot as pl
 from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
@@ -37,7 +38,7 @@ class ProbesetSelector:  # (object)
         ct_key:
             Key in ``adata.obs`` with celltype annotations.
         g_key:
-            Key in ``adata.var`` for preselected genes (typically 'highly_variable_genes').
+            Key in ``adata.var`` for preselected genes (typically `'highly_variable_genes'`).
         n:
             Number of finally selected genes.
         genes:
@@ -63,7 +64,7 @@ class ProbesetSelector:  # (object)
         marker_corr_th:
             Minimal correlation to consider a gene as captured.
         pca_penalties:
-            List of keys for columns in :attr:`adata.var` containing penalty factors that are multiplied with the scores
+            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores
             for PCA based gene selection.
         DE_penalties:
             List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores
@@ -125,13 +126,13 @@ class ProbesetSelector:  # (object)
 
     Args:
         adata:
-            Data with log normalised counts in :attr:`adata.X`. The selection runs with an adata subsetted on fewer
+            Data with log normalised counts in ``adata.X``. The selection runs with an adata subsetted on fewer
             genes. It might be helpful though to keep all genes (when a marker_list and penalties are provided). The
             genes can be subsetted for selection via :attr:`genes_key`.
         celltype_key:
-            Key in :attr:`adata.obs` with celltype annotations.
+            Key in ``adata.obs`` with celltype annotations.
         genes_key:
-            Key in :attr:`adata.var` for preselected genes (typically 'highly_variable_genes').
+            Key in ``adata.var`` for preselected genes (typically 'highly_variable_genes').
         n:
             Optionally set the number of finally selected genes. Note that when :attr:`n` is `None` we automatically
             infer :attr:`n` as the minimal number of recommended genes. This includes all preselected genes, genes in
@@ -184,16 +185,16 @@ class ProbesetSelector:  # (object)
         marker_corr_th:
             Minimal correlation to consider a gene as captures.
         pca_penalties:
-            List of keys for columns in :attr:`adata.var` containing penalty factors that are multiplied with the scores for
+            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores for
             PCA based gene selection.
         DE_penalties:
-            List of keys for columns in :attr:`adata.var` containing penalty factors that are multiplied with the scores for DE
+            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores for DE
             based gene selection.
         m_penalties_adata_celltypes:
-            List of keys for columns in :attr:`adata.var` containing penalty factors to filter out marker genes if a gene's
+            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a gene's
             penalty < threshold for celltypes in adata.
         m_penalties_list_celltypes:
-            List of keys for columns in :attr:`adata.var` containing penalty factors to filter out marker genes if a gene's
+            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a gene's
             penalty < threshold for celltypes not in adata.
         pca_selection_hparams:
             Dictionary with hyperparameters for the PCA based gene selection.
@@ -1252,28 +1253,152 @@ class ProbesetSelector:  # (object)
     #     """Wrapper for tqdm with verbose condition."""
     #     return tqdm(iterator) if self.verbosity >= 1 else iterator
 
+    ############
+    # plotting #
+    ############
+
     def plot_histogram(
-        self, x_axis_key: str = "quantile_0.99", selections: List[str] = ["pca", "DE", "marker"]
+        self,
+        x_axis_keys: Dict[str, str] = None,
+        selections: List[Literal["pca", "DE", "marker"]] = None,
+        penalty_keys: Dict = None,
+        unapplied_penalty_keys: Dict = None,
+        background_key: Union[bool, str] = True,
+        **kwargs,
     ) -> None:
         """Plot histograms of (basic) selections under given penalties.
 
         The full selection procedure consists of steps partially based on basic score based selection procedures.
         This is an interactive plotting function to investigate if the constructed penalty kernels are well chosen.
 
+        Note:
+            The green line shows a linear interpolation of the penalty scores which is only an opproximation of the
+            penalty function.
+
         Args:
-            x_axis_key:
-                Key of adata.obs that is used for the x axis of the plotted histograms.
-            selections: Plot the histograms of selections based on
-                - 'pca' : pca loadings based selection of prior genes
-                - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
-                - 'marker' : genes from the marker list
+            x_axis_keys:
+                Dictionary with the values from ``penaly_keys`` as keys and the column name of ``adata.var`` that was
+                used to calcuate the respective penalty factors.
+            selections:
+                Plot the histograms of selections based on
+
+                    - `'pca'` : pca loadings based selection of prior genes
+                    - `'DE'` : genes selected based on differential expressed which are used as the
+                      `'forest_DE_baseline'`
+                    - `'marker'` : genes from the marker list
+
+            penalty_keys:
+                Dictionary with the selection method name as key and the name of the column for ``adata.var`` containing
+                the penalty factors to plot. Selections that are not in ``penalty_keys`` are plottet without penalty.
+                If `None` (default), we use the columns defined in the selector for each selection. The respective
+                attributes of the selector are:
+
+                    - `'pca'`: :attr:`pca_penalties`
+                    - `'DE'`: :attr:`DE_penalties`
+                    - `'marker'`: :attr:`m_penalties_adata_celltypes`
+
+            unapplied_penalty_keys:
+                Same as ``penalty_keys`` but for penalties that were not applied to the selection.
+            background_key:
+                Key in ``adata.var`` for preselected genes (typically `'highly_variable_genes'`) to plot as background
+                histogram . If `True` (default), :attr:`g_key` is used. If `None` no background is plottet. If `'all'`, all genes
+                are used as background.
+            kwargs:
+                Further arguments for :func:`.selection_histogram`.
+
+        Returns:
+            Figure can be showed (default `True`) and stored to path (default `None`).
+            Change this with `show` and `save` in ``kwargs``.
         """
         # TODO:
         #  - Describe in docstring where the penalties are defined
         #  - Atm I think I won't include the penalt kernels into the class therefore this plotting function simply plots
         #    histograms - a little boring but better than nothing)
 
-    def plot_coexpression(self, selections: List[str] = ["pca", "DE", "marker"]) -> None:
+        SELECTIONS = ["pca", "DE", "marker"]
+        PENALTY_KEYS = {
+            "pca": self.pca_penalties,
+            "DE": self.DE_penalties,
+            "marker": self.m_penalties_adata_celltypes + self.m_penalties_list_celltypes,
+        }
+        UNAPPLIED_PENALTY_KEYS = {p_key: ["expression_penalty"] for p_key in PENALTY_KEYS}
+        X_AXIS_KEYS = {
+            "expression_penalty": "quantile_0.99",
+            "expression_penalty_upper": "quantile_0.99",
+            "expression_penalty_lower": "quantile_0.9 expr > 0",
+            "marker": "quantile_0.99",
+        }
+
+        if selections is None:
+            selections = SELECTIONS
+        if penalty_keys is None:
+            penalty_keys = PENALTY_KEYS
+        if unapplied_penalty_keys is None:
+            unapplied_penalty_keys = UNAPPLIED_PENALTY_KEYS
+        if x_axis_keys is None:
+            x_axis_keys = X_AXIS_KEYS
+
+        selections_dict = {}
+        penalty_labels = {}
+        assert isinstance(selections, list)
+        for selection in selections:
+
+            # check selection:
+            if selection not in self.selection:  # or selection not in SELECTIONS:
+                raise ValueError(f"{selection} selection can't be plottet because no results were found.")
+
+            selections_dict[selection] = self.selection[selection]["selection"]
+
+            # plot without penalties:
+            if selection not in penalty_keys:
+                penalty_keys[selection] = []
+
+            # default penalty keys:
+            elif penalty_keys[selection] is None and selection in PENALTY_KEYS:
+                penalty_keys[selection] = PENALTY_KEYS[selection]
+
+            # no unapplied penalties
+            if selection not in unapplied_penalty_keys:
+                unapplied_penalty_keys[selection] = []
+
+            # default unapplied penalties:
+            elif unapplied_penalty_keys[selection] is None and selection in UNAPPLIED_PENALTY_KEYS:
+                unapplied_penalty_keys[selection] = UNAPPLIED_PENALTY_KEYS[selection]
+
+            penalty_labels[selection] = {
+                **{
+                    p_name: "partially applied" if selection == "marker" else "penalty"
+                    for p_name in penalty_keys[selection]
+                },
+                **{p_name: "unapplied penal." for p_name in unapplied_penalty_keys[selection]},
+            }
+
+            # plot with penalties:
+            penalty_keys[selection] = penalty_keys[selection] + unapplied_penalty_keys[selection]
+            for penalty_key in penalty_keys[selection]:
+                # check penalty key:
+                if penalty_key not in x_axis_keys:
+                    raise ValueError(f"Can't plot penalties because {penalty_key} was not found in x_axis_keys.")
+                # check x-axis values:
+                x_axis_key = x_axis_keys[penalty_key]
+                if x_axis_key not in self.adata.var:
+                    raise ValueError(f"Can't plot histogram because {x_axis_key} was not found.")
+
+        pl.selection_histogram(
+            adata=self.adata,
+            selections_dict=selections_dict,
+            background_key=self.g_key if background_key is True else background_key,
+            penalty_keys=penalty_keys,
+            penalty_labels=penalty_labels,
+            x_axis_keys=x_axis_keys,
+            **kwargs,
+        )
+
+    def plot_coexpression(
+        self,
+        selections: List[Literal["pca", "DE", "marker"]] = None,
+        **kwargs,
+    ) -> None:
         """Plot gene correlations of basic selections.
 
         When plotting for some selection: Print where these genes are used:
@@ -1281,7 +1406,6 @@ class ProbesetSelector:  # (object)
             - pca -> first genes on which the forests are trained
             - DE -> first genes on which the baseline forests are trained
             - marker -> possible genes that are selected from the marker list
-              for marker you could use max nr of markers (2?) from each celltype
 
         Args:
             selections: Plot the coexpression of selections based on
@@ -1289,7 +1413,139 @@ class ProbesetSelector:  # (object)
                 - 'pca' : pca loadings based selection of prior genes
                 - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
                 - 'marker' : genes from the marker list
+            kwargs:
+                Further arguments for :func:`.selection_histogram`.
+
+        Returns:
+            Figure can be showed (default `True`) and stored to path (default `None`).
+            Change this with `show` and `save` in ``kwargs``.
         """
+        # TODO
+        #   for marker you could use max nr of markers (2?) from each celltype
+
+        SELECTIONS = ["final", "pca", "DE", "marker"]
+
+        if selections is None:
+            selections = SELECTIONS
+
+        cor_matrices = {}
+        assert isinstance(selections, list)
+        for selection in selections:
+
+            # check selection:
+            if selection not in self.selection or selection not in SELECTIONS:
+                raise ValueError(f"{selection} selection can't be plottet because no results were found.")
+
+            # get data of selected genes (overlap between adata and self.selection[selection] and
+            # self.probeset["selection"]):
+            a = self.adata.copy()
+            selected_genes = self.selection[selection].index[self.selection[selection]["selection"]]
+            selection_mask = a.var_names.isin(selected_genes)
+            probeset = self.probeset.index[self.probeset["selection"]]
+            probeset_mask = a.var_names.isin(probeset)
+            a = a[:, probeset_mask & selection_mask]
+
+            if a.shape[1] < 2:
+                print(f"No plot is drawn for {selection} because it contains less than 2 genes. ")
+                continue
+
+            # create correlation matrix
+            if issparse(a.X):
+                cor_mat = pd.DataFrame(
+                    index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X.toarray(), rowvar=False)
+                )
+            else:
+                cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X, rowvar=False))
+
+            cor_mat = util.cluster_corr(cor_mat)
+            cor_matrices[selection] = cor_mat
+
+        pl.correlation_matrix(set_ids=selections, cor_matrices=cor_matrices, **kwargs)
+
+    def plot_classification_rule_umaps(
+        self,
+        basis: int = "X_umap",
+        celltypes: Optional[List[str]] = None,
+        till_rank: Optional[int] = 3,
+        importance_th: Optional[float] = None,
+        add_marker_genes: bool = True,
+        neighbors_params: dict = {},
+        umap_params: dict = {},
+        **kwargs,
+    ):
+        """Plot umaps of genes needed for cell type classification of each cell type.
+
+        Args:
+            basis:
+                Name of the ``obsm`` basis to use.
+            celltypes:
+                Subset of cell types for which to plot decision genes. If `None`, :attr:`celltypes` is used.
+            till_rank:
+                 Plot decision genes only up to the given rank of the ranked probeset list.
+            importance_th:
+                Only plot genes with a tree feature importance above the given threshold.
+            add_marker_genes:
+                Whether to add subplots for marker genes from :attr:`marker_list` for each celltype.
+            neighbors_params:
+                Parameters for :meth:`sc.pp.neighbors`.
+            umap_params:
+                Parameters for :meth:`sc.tl.umap`.
+            kwargs:
+                Further arguments for :func:`.selection_histogram`.
+
+        Returns:
+            Figure can be showed (default `True`) and stored to path (default `None`).
+            Change this with `show` and `save` in ``kwargs``.
+        """
+        adata = self.adata.copy()
+
+        # filter rank and importance:
+        if till_rank is None:
+            till_rank = max(self.selection["forest"]["rank"])
+        if importance_th is None:
+            importance_th = min(self.selection["forest"]["importance_score"])
+        df = self.selection["forest"][self.selection["forest"]["rank"] <= till_rank][
+            self.selection["forest"]["importance_score"] > importance_th
+        ].copy()
+        if len(df) < 1:
+            raise ValueError("Filtering for rank and importance score left no genes. Set lower thresholds.")
+
+        # prepare df
+        if celltypes is None:
+            celltypes = self.celltypes
+        df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)
+        if add_marker_genes:
+            df["marker_celltypes"] = [self.selection["marker"]["celltype"][gene] for gene in df.index]
+
+        # check if embedding, neighbors, pca already in adata
+        # TODO think about shortening this: always redo umap and neighbors
+        redo_umap = False
+        try:
+            # check params
+            for param, value in adata.uns[basis]["params"].items():
+                if value != umap_params[param]:
+                    redo_umap = True
+        except KeyError:
+            redo_umap = True
+
+        if redo_umap:
+            redo_neighbors = False
+            try:
+                # check params
+                for param, value in adata.uns["neighbors"]["params"].items():
+                    if value != neighbors_params[param]:
+                        redo_neighbors = True
+            except KeyError:
+                redo_neighbors = True
+
+            if redo_neighbors:
+                sc.pp.neighbors(adata, **neighbors_params)
+
+            sc.tl.umap(adata, **umap_params)
+
+        df = df.sort_values(by=["rank", "importance_score"])
+
+        pl.classification_rule_umaps(adata, df, **kwargs)
 
     def plot_decision_genes(self, add_markers: bool = True, tree_levels: List[int] = [1]) -> None:
         """Plot umaps of genes that are used for celltype classification.
@@ -1301,26 +1557,32 @@ class ProbesetSelector:  # (object)
                 In case that genes were added not only based on the best performing tree we can plot more genes.
         """
         # TODO: maybe find a better way than this variable (tree_levels) to control this
+        # TODO remove --> now plot classification_rule_umaps
 
-    def plot_tree_performances(self) -> None:
-        """Plot histograms of tree performances of DE baseline and final forests.
+        # check if embedding already in adata
+        # sc.pl.embedding() (wie umap aber alternatives embedding darf schon in adata.uns sein, same basis)
+        # get kwargs
+        # check neighbors und pca
 
-        This function is important as a sanity check to see if the tree performances show proper statistical
-        behavior.
-        """
-        # TODO:
-        #  - think about when we can plot this: after tree
-        #  - The function is only supported if self.save_dir != None... meh, actually that's not necessary. the
-        #    memory usage is not too high for this...
+    # def plot_tree_performances(self) -> None:
+    #     """Plot histograms of tree performances of DE baseline and final forests.
+    #
+    #     This function is important as a sanity check to see if the tree performances show proper statistical
+    #     behavior.
+    #     """
+    #     # TODO:
+    #     #  - think about when we can plot this: after tree
+    #     #  - The function is only supported if self.save_dir != None... meh, actually that's not necessary. the
+    #     #    memory usage is not too high for this...
 
     def plot_gene_overlap(
         self,
         origins: List[
-            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]] =
-        None,
-        **kwargs
+            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+        ] = None,
+        **kwargs,
     ) -> None:
-        """
+        """Plot the intersection of different selected gene sets.
 
         Args:
            origins:
@@ -1328,42 +1590,50 @@ class ProbesetSelector:  # (object)
 
                     - "pre_selected"   : User defined pre selected genes
                     - "prior_selected" : User defined prior selected genes
-                    - "pca"            : Genes that are originate the prior pca based selection
+                    - "pca"            : Genes that originate the prior pca based selection
                     - "DE"             : Genes that occur in DE test when building the reference DE trees
                     - "DE_1vsall"      : Subset of DE from tests of single cell types vs background
                     - "DE_specific"    : Subset of DE from tests of single cell types vs subset of background
                     - "marker_list"    : Genes that occur in the user defined marker list
 
            **kwargs:
-               Further arguments for :meth:`pl.gene_overlap`.
+               Further arguments for :func:`.gene_overlap`.
 
         Returns:
             Figure can be shown (default `True`) and stored to path (default `None`).
             Change this with `show` and `save` in ``kwargs``.
 
         """
-        ORIGINS = ["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
-        ORIGIN_TO_PROBESET_COLNAME = {"pre_selected": "pre_selected",
-                                      "prior_selected": "prior_selected",
-                                      "pca": "pca_selected",
-                                      "DE": "celltypes_DE",
-                                      "DE_1vsall": "celltypes_DE_1vsall",
-                                      "DE_specific": "celltypes_DE_specific"}
+        ORIGINS: List[
+            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+        ] = ["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+
+        ORIGIN_TO_PROBESET_COLNAME = {
+            "pre_selected": "pre_selected",
+            "prior_selected": "prior_selected",
+            "pca": "pca_selected",
+            "DE": "celltypes_DE",
+            "DE_1vsall": "celltypes_DE_1vsall",
+            "DE_specific": "celltypes_DE_specific",
+        }
 
         if not origins:
             origins = ORIGINS
+        assert isinstance(origins, list)
 
+        probeset_selection = self.probeset[self.probeset["selection"]]
         selection_df = pd.DataFrame()
         for key in origins:
             if key in ORIGIN_TO_PROBESET_COLNAME:
-                if self.probeset[ORIGIN_TO_PROBESET_COLNAME[key]] is None:
+                if probeset_selection[ORIGIN_TO_PROBESET_COLNAME[key]] is None:
                     continue
-                selection_df[key] = self.probeset[ORIGIN_TO_PROBESET_COLNAME[key]].astype("bool")
+                selection_df[key] = probeset_selection[ORIGIN_TO_PROBESET_COLNAME[key]].astype("bool")
             elif key == "marker_list":
                 if self.marker_list is None:
                     continue
+                assert isinstance(self.marker_list, dict)
                 marker_list = [x for y in self.marker_list.values() for x in y]
-                mask = self.probeset.index.isin(marker_list)
+                mask = probeset_selection.index.isin(marker_list)
                 selection_df["marker_list"] = False
                 selection_df.loc[mask, "marker_list"] = True
             else:
@@ -1375,12 +1645,13 @@ class ProbesetSelector:  # (object)
         self,
         selection_method: str = "pca_selection",
         selection_params: dict = None,
-        key: str = "quantile_0.99",
-        penalty_kernels: Callable = None,
+        background_key: str = "highly_variable",
+        x_axis_key: str = "quantile_0.99",
+        penalty_kernels: List[Callable] = None,
         factors: List[float] = None,
         upper: float = 1,
         lower: float = 0,
-        **kwargs
+        **kwargs,
     ):
         """Plot histogram of quantiles for selected genes for different penalty kernels.
 
@@ -1390,13 +1661,16 @@ class ProbesetSelector:  # (object)
 
                     - "pca_selection"
                     - "DE_selection"
+                    - "marker"
 
             selection_params:
                 Hyperparameter for the respective gene selection.
-            key:
+            background_key:
+                Key of column in ``adata.var`` containing the values to be plottet as background.
+            x_axis_key:
                 Key of column in ``adata.var`` containing the values to be plottet.
             penalty_kernels:
-                Any penalty kernel. If None, :meth:`utils.plateau_penalty_kernel` is used to create three gaussian
+                Any penalty kernel. If None, :func:`.plateau_penalty_kernel` is used to create three gaussian
                 plateau penalty kernels with different variances. Only then, ``factors,``, ``lower`` and ``upper`` are
                 used.
             factors:
@@ -1406,10 +1680,11 @@ class ProbesetSelector:  # (object)
             upper:
                 Upper boder below which the kernel is 1.
             **kwargs:
-                Further arguments for :meth:`pl.gene_overlap`.
+                Further arguments for :func:`.explore_constraint`.
 
         Returns:
-
+            Figure can be shown (default `True`) and stored to path (default `None`).
+            Change this with `show` and `save` in ``kwargs``.
         """
 
         # TODO:
@@ -1437,19 +1712,25 @@ class ProbesetSelector:  # (object)
             factors = [10, 1, 0.1]
 
         if penalty_kernels is None:
-            penalty_kernels = [util.plateau_penalty_kernel(var=[factor * 0.1, factor * 0.5], x_min=lower, x_max=upper)
-                               for factor in factors]
+            penalty_kernels = [
+                util.plateau_penalty_kernel(
+                    var=[factor * 0.1, factor * 0.5], x_min=np.array(lower), x_max=np.array(upper)
+                )
+                for factor in factors
+            ]
 
         a = []
         selections_tmp = []
-        for i, factor in enumerate(penalty_kernels):
+        for i, factor in enumerate(factors):
 
-            a.append(self.adata.copy())
+            if background_key not in self.adata.var:
+                raise ValueError(f"Can't plot background histogram because {background_key} was not found.")
+            a.append(self.adata[:, self.adata.var[background_key]].copy())
 
-            if key not in a[i].var:
-                raise ValueError(f"No column {key} in adata.var found.")
+            if x_axis_key not in a[i].var:
+                raise ValueError(f"No column {x_axis_key} in adata.var found.")
 
-            a[i].var["penalty_expression"] = penalty_kernels[i](a[i].var[key])
+            a[i].var["penalty_expression"] = penalty_kernels[i](a[i].var[x_axis_key])
             selections_tmp.append(
                 SELECTION_METHODS[selection_method](
                     a[i],
@@ -1462,16 +1743,16 @@ class ProbesetSelector:  # (object)
             )
             print(f"N genes selected: {np.sum(selections_tmp[i]['selection'])}")
 
-        pl.explore_constraint(a,
-                              selections_tmp,
-                              penalty_kernels,
-                              factors=factors,
-                              key=key,
-                              upper=upper,
-                              lower=lower,
-                              **kwargs
-                              )
-
+        pl.explore_constraint(
+            a,
+            selections_tmp,
+            penalty_kernels,
+            factors=factors,
+            x_axis_key=x_axis_key,
+            upper=upper,
+            lower=lower,
+            **kwargs,
+        )
 
     def info(self) -> None:
         """Print info."""
