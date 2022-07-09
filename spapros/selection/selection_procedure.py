@@ -32,97 +32,46 @@ from spapros.util.util import filter_marker_dict_by_shared_genes
 class ProbesetSelector:  # (object)
     """General class for probeset selection.
 
-    Attributes:
-        adata:
-            Data with log normalised counts in ``adata.X``.
-        ct_key:
-            Key in ``adata.obs`` with celltype annotations.
-        g_key:
-            Key in ``adata.var`` for preselected genes (typically `'highly_variable_genes'`).
-        n:
-            Number of finally selected genes.
-        genes:
-            Pre selected genes (these will also have the highest ranking in the final list).
-        selection:
-            Dictionary with the final and several other gene set selections.
-        n_pca_genes:
-            The number of preselected pca genes. If `None` or `<1`, this step is skipped.
-        min_mean_difference:
-            Minimal difference of mean expression between at least one celltype and the background.
-        n_min_markers:
-            The minimal number of identified and added markers.
-        celltypes:
-            Cell types for which trees are trained.
-        adata_celltypes:
-            List of all celltypes occuring in ``adata.obs[ct_key]``.
-        obs:
-            Keys of ``adata.obs`` on which most of the selections are run.
-        marker_list:
-            Dictionary of the form ``{'celltype': list of markers of celltype}``.
-        n_list_markers:
-            Minimal number of markers per celltype that are at least selected.
-        marker_corr_th:
-            Minimal correlation to consider a gene as captured.
-        pca_penalties:
-            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores
-            for PCA based gene selection.
-        DE_penalties:
-            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores
-            for DE based gene selection.
-        m_penalties_adata_celltypes:
-            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a
-            gene's penalty < threshold for celltypes in adata.
-        m_penalties_list_celltypes:
-            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a
-            gene's penalty < threshold for celltypes not in adata.
-        pca_selection_hparams:
-            Dictionary with hyperparameters for the PCA based gene selection.
-        DE_selection_hparams:
-            Dictionary with hyperparameters for the DE based gene selection.
-        forest_hparams:
-            Dictionary with hyperparameters for the forest based gene selection.
-        forest_DE_baseline_hparams:
-            Dictionary with hyperparameters for adding DE genes to decision trees.
-        add_forest_genes_hparams:
-            Dictionary with hyperparameters for adding marker genes to decision trees.
-        m_selection_hparams:
-            Dictionary with hyperparameters (so far only the threshold) for the penalty filtering of marker genes if a
-            gene's penalty < threshold.
-        verbosity:
-            Verbosity level.
-        seed:
-            Random number seed.
-        save_dir:
-            Directory path where all results are saved and loaded from if results already exist.
-        n_jobs:
-            Number of cpus for multi processing computations. Set to `-1` to use all available cpus.
-        forest_results:
-            Forest results.
-        forest_clfs
-            Forest classifier.
-        min_test_n:
-            Minimal number of samples in each celltype's test set
-        loaded_attributes:
-            List of which results were loaded from disc.
-        disable_pbars.
-            Disable progress bars.
-        probeset:
-            The final probeset list.
-
     Notes:
-        The selector creates a probeset which captures the data variability and distinguishes the celltypes.
+        The selector creates a probeset which identifies the celltypes of interest and captures transcriptomic variation
+        beyond cell type labels.
 
-        The Spapros selection pipeline combines basic feature selection builing blocks while taking into account
-        prior knowledge.
+        The Spapros selection pipeline combines basic feature selection builing blocks while optionally taking into 
+        account prior knowledge.
 
-        The main steps of the selection pipeline are:
+        **The main steps of the selection pipeline are:**
 
-        1) PCA based selection of variability recovering genes.
+        1) PCA based selection of variation recovering genes.
         2) Selection of DE genes.
-        3) Forest tree training on the PCA based selection.
-        4) Forest tree training on the DE genes.
-        5) Enhancement of the PCA based selection by adding beneficial DE genes.
+        3) Train decision trees on the PCA genes.
+        4) Train decision trees on the DE genes (including an iterative optimization with additional DE tests).
+        5) Enhancement of the PCA trees by adding beneficial DE genes.
         6) Add marker genes and preselected genes (if provided).
+        
+        The result of the selection is given in :attr:`.ProbesetSelector.probeset`.
+        
+        **Genes are ranked as follows (sorry it's a bit complicated):**
+        
+        * First the following groups are built
+            1. preselected genes (optional, see parameter `preselected_genes`)
+            2. genes that occur in the best decision trees of each cell type
+            3. genes that are needed to achieve the minimal number of markers per cell type that occurs in 
+               :attr:`.ProbesetSelector.marker_list` but not in :attr:`.ProbesetSelector.adata_celltypes` (optional, see
+               parameter `n_list_markers`). This group is separated from 3. because genes of 2. take care of 
+               classifying cell types in :attr:`.ProbesetSelector.adata_celltypes`.
+            4. genes that are needed to achieve the minimal number of markers per cell type in 
+               :attr:`.ProbesetSelector.adata_celltypes`.  (optional, see parameter `n_min_markers`)
+            5. all other genes
+        * Afterwards within each "rank" group genes are further ranked by
+            1. the **marker_rank**: first the best markers of celltypes, then 2nd best markers of celltypes, ..., then 
+               `n_min_markers`th best marker of celltypes, then genes that are not identified as required markers.
+            2. the **tree_rank**: for each cell type the genes that occur in cell type classification trees with 2nd 
+               best performance, then 3rd best performance, and so on. Genes that don't occur in trees have the worst
+               tree_rank.
+            3. the **importance_score** from the best cell type classification tree of each gene. Genes that don't occur
+               in any tree score worst.
+            4. the **pca_score** which scores how much variation of the dataset each gene captures.
+          
 
     Args:
         adata:
@@ -222,6 +171,133 @@ class ProbesetSelector:  # (object)
                  before!
         n_jobs:
             Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+            
+    Attributes:
+        adata:
+            Data with log normalised counts in ``adata.X``.
+        ct_key:
+            Key in ``adata.obs`` with celltype annotations.
+        g_key:
+            Key in ``adata.var`` for preselected genes (typically `'highly_variable_genes'`).
+        n:
+            Number of finally selected genes.
+        genes:
+            Pre selected genes (these will also have the highest ranking in the final list).
+        selection:
+            Dictionary with the final and several other gene set selections.
+        n_pca_genes:
+            The number of preselected pca genes. If `None` or `<1`, this step is skipped.
+        min_mean_difference:
+            Minimal difference of mean expression between at least one celltype and the background.
+        n_min_markers:
+            The minimal number of identified and added markers.
+        celltypes:
+            Cell types for which trees are trained.
+        adata_celltypes:
+            List of all celltypes occuring in ``adata.obs[ct_key]``.
+        obs:
+            Keys of ``adata.obs`` on which most of the selections are run.
+        marker_list:
+            Dictionary of the form ``{'celltype': list of markers of celltype}``.
+        n_list_markers:
+            Minimal number of markers per celltype that are at least selected.
+        marker_corr_th:
+            Minimal correlation to consider a gene as captured.
+        pca_penalties:
+            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores
+            for PCA based gene selection.
+        DE_penalties:
+            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores
+            for DE based gene selection.
+        m_penalties_adata_celltypes:
+            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a
+            gene's penalty < threshold for celltypes in adata.
+        m_penalties_list_celltypes:
+            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a
+            gene's penalty < threshold for celltypes not in adata.
+        pca_selection_hparams:
+            Dictionary with hyperparameters for the PCA based gene selection.
+        DE_selection_hparams:
+            Dictionary with hyperparameters for the DE based gene selection.
+        forest_hparams:
+            Dictionary with hyperparameters for the forest based gene selection.
+        forest_DE_baseline_hparams:
+            Dictionary with hyperparameters for adding DE genes to decision trees.
+        add_forest_genes_hparams:
+            Dictionary with hyperparameters for adding marker genes to decision trees.
+        m_selection_hparams:
+            Dictionary with hyperparameters (so far only the threshold) for the penalty filtering of marker genes if a
+            gene's penalty < threshold.
+        verbosity:
+            Verbosity level.
+        seed:
+            Random number seed.
+        save_dir:
+            Directory path where all results are saved and loaded from if results already exist.
+        n_jobs:
+            Number of cpus for multi processing computations. Set to `-1` to use all available cpus.
+        forest_results:
+            Forest results.
+        forest_clfs
+            Forest classifier.
+        min_test_n:
+            Minimal number of samples in each celltype's test set
+        loaded_attributes:
+            List of which results were loaded from disc.
+        disable_pbars.
+            Disable progress bars.
+        probeset:
+            The final probeset list. Available only after calling :func:`~ProbesetSelector.select_probeset`. The table
+            contains the following columns:
+                * **index**
+                    Gene symbol.
+                * **gene_nr**
+                    Integer assigned to each gene.
+                * **selection**
+                    Wether a gene was selected.
+                * **rank**
+                    Gene ranking as describes in Notes above.
+                * **marker_rank**
+                    Rank of the required markers per cell type. The best marker per cell type has marker_rank 1, the 
+                    second best 2, and so on. Required markers are ranked till :attr:`~ProbesetSelector.n_min_markers`
+                    or :attr:`~ProbesetSelector.n_list_markers` depending on the cell type.
+                * **tree_rank**
+                    Ranking of the best tree the gene occured in. Per cell type multiple decision trees are trained and
+                    the best one is selected. To extend the ranking of genes in the probeset list, the 2nd, 3rd, ... 
+                    best performing trees are considered.
+                * **importance_score**
+                    Highest importance score of a gene in the highest ranked trees that the gene occured in. (see TODO: 
+                    reference tree training fct and there the description of the output)
+                * **pca_score**
+                    Score from PCA-based selection (see TODO: document pca based selection and reference procedure 
+                    here). Genes with high scores capture high amounts of general transcriptomic variation.
+                * **pre_selected**
+                    Whether a gene was in the list of pre-selected genes.
+                * **prior_selected**
+                    Whether a gene was in the list of prioritized genes.
+                * **pca_selected**
+                    Whether a gene was in the list of `n_pca_genes` of PCA selected genes.
+                * **celltypes_DE_1vsall**
+                    Cell type in which a given gene is up-regulated (compared to all other cell types as background, 
+                    identified via differential expression tests during the selection).
+                * **celltypes_DE_specific**
+                    Like **celltypes_DE_1vsall** but for DE tests that use a subset of the background (typically genes 
+                    that distinguish similar cell types).
+                * **celltypes_DE**
+                    **celltypes_DE_1vsall** and **celltypes_DE_specific** combined.
+                * **celltypes_marker**
+                    **celltypes_DE_1vsall** combined with **celltypes_DE_specific** and the cell type of 
+                    :attr:`~ProbesetSelector.marker_list` if the gene was listed as a marker there.
+                * **list_only_ct_marker**
+                    Whether a gene is listed as a marker in :attr:`~ProbesetSelector.marker_list`.
+                * **required_marker**
+                    Whether a gene was required to reach the minimal number of markers per cell type 
+                    (:attr:`~ProbesetSelector.n_min_markers`, :attr:`~ProbesetSelector.n_list_markers` | TODO: check 
+                    these two attrs).
+                * **required_list_marker**
+                    Whether a gene was required to reach the minimal number of markers for cell types that only occur in
+                    :attr:`~ProbesetSelector.marker_list` but not in :attr:`~ProbesetSelector.adata_celltypes`.
+            
     """
 
     # TODO:
