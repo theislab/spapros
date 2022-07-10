@@ -604,7 +604,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
         ax = marker_legend_ax
         if i == 0:
             ax.scatter([0], [0], s=size, marker="s", color="none", linewidth=2, edgecolor=tree_genes_color)
-            ax.set_title("combinatorial marker", size="small")
+            ax.set_title("Spapros marker", size="small")
         elif i == 1:
             ax.scatter([0], [0], s=size, marker="s", color=marker_genes_color, edgecolor="none", alpha=0.3)
             ax.set_title("DE or lit. gene", size="small")

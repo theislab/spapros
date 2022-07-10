@@ -1221,7 +1221,7 @@ def masked_dotplot(
     markers_only: bool = False,
     cmap: str = "Reds",
     comb_marker_color: str = "darkblue",
-    marker_color: str = "green",
+    marker_color: str = "blue",
     non_adata_celltypes_color: str = "grey",
     save: Union[bool, str] = False,
 ):
