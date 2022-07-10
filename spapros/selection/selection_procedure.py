@@ -43,10 +43,10 @@ class ProbesetSelector:  # (object)
 
         1) PCA based selection of variation recovering genes.
         2) Selection of DE genes.
-        3) Train decision trees on the PCA genes.
-        4) Train decision trees on the DE genes (including an iterative optimization with additional DE tests).
+        3) Train decision trees on the DE genes (including an iterative optimization with additional DE tests).
+        4) Train decision trees on the PCA genes (and optionally on pre-selected and prioritized genes).
         5) Enhancement of the PCA trees by adding beneficial DE genes.
-        6) Add marker genes and preselected genes (if provided).
+        6) Rank genes, eventually add missing marker genes and compile probe set.
         
         The result of the selection is given in :attr:`.ProbesetSelector.probeset`.
         
