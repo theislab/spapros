@@ -623,7 +623,7 @@ def add_DE_genes_to_trees(
             return_clfs=False,
             progress=progress,
             level=level + 1,
-            task="Train trees with added DE genes...",
+            task="Train forest with added DE genes...",
         )
         # if verbosity > 1:
         #     print("\t\t Training finished.")
@@ -675,7 +675,7 @@ def add_DE_genes_to_trees(
         return_clfs=return_clfs,
         progress=progress,
         level=level,
-        task="Train final baseline trees on all celltypes...",
+        task="Train final baseline forest on all celltypes...",
     )
     if return_clfs:
         assert isinstance(forest_results, tuple)
@@ -919,7 +919,7 @@ def add_tree_genes_from_reference_trees(
             return_clfs=False,
             progress=progress,
             level=level + 1,
-            task="Train trees with added genes...",
+            task="Train forest with added genes...",
             **tree_clf_kwargs,
         )
         assert isinstance(summary, pd.DataFrame)
@@ -982,7 +982,7 @@ def add_tree_genes_from_reference_trees(
         return_clfs=return_clfs,
         progress=progress,
         level=level,
-        task="Train final trees on all celltypes...",
+        task="Train final forest on all celltypes...",
         **tree_clf_kwargs,
     )
 

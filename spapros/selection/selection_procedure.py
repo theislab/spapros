@@ -297,6 +297,18 @@ class ProbesetSelector:  # (object)
                 * **required_list_marker**
                     Whether a gene was required to reach the minimal number of markers for cell types that only occur in
                     :attr:`~ProbesetSelector.marker_list` but not in :attr:`~ProbesetSelector.adata_celltypes`.
+        genes_of_primary_trees:
+            The genes of the best tree of each cell type. Available only after calling 
+            :func:`~ProbesetSelector.select_probeset`. The table contains the following columns:    
+                * **gene**
+                    Gene symbol.
+                * **celltype**
+                    Cell type in which the tree occurs.
+                * **importance**
+                    Importance score of the gene for the given cell type.
+                * **nr_of_celltypes**
+                    Number of primary trees i.e. cell types in which the gene occurs.
+            
             
     """
 
@@ -426,6 +438,14 @@ class ProbesetSelector:  # (object)
         }
 
         self.forest_clfs: Dict[str, Union[dict, list, None]] = {"DE_baseline_forest": None, "forest": None}
+        
+        if not (self.n_pca_genes and (self.n_pca_genes > 0)) and isinstance(self.n,int):
+            print(
+                f"Note: No PCA selection will be performed since n_pca_genes = {self.n_pca_genes}. The selected genes "
+                + f"will only be based on the DE forests. In that case it can happen that fewer than n = {self.n} "
+                + f"genes are selected. To get n = {self.n} exclude the selected genes of the first run from adata, "
+                + "rerun the method, and combine the results of the two runs.\n"
+            )
 
         self.min_test_n = 20
 
@@ -434,12 +454,16 @@ class ProbesetSelector:  # (object)
         )
         if cts_below_min_test_size:
             print(
-                "The following celltypes' test set sizes for forest training are below min_test_n "
+                "Note: The following celltypes' test set sizes for forest training are below min_test_n "
                 + f"(={self.min_test_n}):"
             )
             max_length = max([len(ct) for ct in cts_below_min_test_size])  # TODO: bug fix: type(ct) != str doesnt work.
             for i, ct in enumerate(cts_below_min_test_size):
                 print(f"\t {ct:<{max_length}} : {counts_below_min_test_size[i]}")
+            print(
+                "The genes selected for those cell types potentially don't generalize well. Find the genes for each of "
+                + "those cell types in self.genes_of_primary_trees after running self.select_probeset()."
+            )
 
         self.loaded_attributes: list = []
         if self.save_dir:
@@ -489,20 +513,39 @@ class ProbesetSelector:  # (object)
         """
         assert isinstance(self.progress, RichCast)
         with self.progress:
+            
             if self.verbosity > 0:
                 selection_task = self.progress.add_task(
                     description="SPAPROS PROBESET SELECTION:", only_text=True, header=True, total=0
                 )
+            
+            # PCA based pre selection    
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._pca_selection()
+                
+            # DE forests
             self._forest_DE_baseline_selection()
-            self._forest_selection()
+            
+            # PCA forests (including optimization based on DE forests), or just DE forests if no PCA genes were selected
+            if self.n_pca_genes and (self.n_pca_genes > 0):
+                self._forest_selection()
+            else:
+                self._set_DE_baseline_forest_to_final_forest()
+                
+            # Add markers from curated list
             if self.marker_list:
                 self._marker_selection()
+                
+            # Compile probe set
             self.probeset = self._compile_probeset_list()
+            
+            # Save attribute genes_of_primary_trees
+            self.genes_of_primary_trees = self._get_genes_of_primary_trees()
+                
             if self.verbosity > 0:
                 self.progress.advance(selection_task)
                 self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
+                
             if self.save_dir:
                 self.probeset.to_csv(self.probeset_path)
             # TODO: we haven't included the checks to load the probeset if it already exists
@@ -510,8 +553,6 @@ class ProbesetSelector:  # (object)
     def _pca_selection(self) -> None:
         """Select genes based on pca loadings."""
         if self.selection["pca"] is None:
-            # if self.verbosity > 0:
-            #     print("Select pca genes...")
             self.selection["pca"] = select.select_pca_genes(
                 self.adata[:, self.genes],
                 self.n_pca_genes,
@@ -524,8 +565,7 @@ class ProbesetSelector:  # (object)
             )
             assert self.selection["pca"] is not None
             self.selection["pca"] = self.selection["pca"].sort_values("selection_ranking")
-            # if self.verbosity > 1:
-            #     print("\t ...finished.")
+
             if self.save_dir:
                 self.selection["pca"].to_csv(self.selections_paths["pca"])
         else:
@@ -534,8 +574,7 @@ class ProbesetSelector:  # (object)
 
     def _forest_DE_baseline_selection(self) -> None:
         """Select genes based on forests and differentially expressed genes."""
-        # if self.verbosity > 0:
-        #     print("Select genes based on differential expression and forests as baseline for the final forests...")
+
         if self.progress and self.verbosity > 0:
             baseline_task = self.progress.add_task("Train baseline forest based on DE genes...", total=4, level=1)
 
@@ -607,11 +646,6 @@ class ProbesetSelector:  # (object)
             and self.forest_clfs["DE_baseline_forest"]
             and isinstance(self.selection["forest_DEs"], pd.DataFrame)
         ):
-            # if self.verbosity > 1:
-            #     print(
-            #         "\t Train DE_baseline forest by iteratively selecting specific differentially expressed genes for "
-            #         "celltypes that are hard to distinguish..."
-            #     )
             save_DE_baseline_forest: Union[str, bool] = (
                 self.forest_results_paths["DE_baseline_forest"] if self.save_dir else False
             )
@@ -664,101 +698,105 @@ class ProbesetSelector:  # (object)
         # TODO
         #  - eventually put this "test set size"-test somewhere (ideally at __init__)
 
-        # if self.verbosity > 0:
-        #     print(
-        #         "Train final forests by adding genes from the DE_baseline forest for celltypes with low performance..."
-        #     )
         if self.progress and self.verbosity > 0:
             final_forest_task = self.progress.add_task("Train final forests...", total=3, level=1)
 
-        if self.n_pca_genes and (self.n_pca_genes > 0):
-            # if self.verbosity > 1:
-            #     print("\t Train forest on pre/prior/pca selected genes...")
-            if not self.forest_results["pca_prior_forest"]:
-                pca_prior_forest_genes = (
-                    self.selection["pre"]
-                    + self.selection["prior"]
-                    + self.selection["pca"].loc[self.selection["pca"]["selection"]].index.tolist()
+        if not self.forest_results["pca_prior_forest"]:
+            pca_prior_forest_genes = (
+                self.selection["pre"]
+                + self.selection["prior"]
+                + self.selection["pca"].loc[self.selection["pca"]["selection"]].index.tolist()
+            )
+            pca_prior_forest_genes = [g for g in np.unique(pca_prior_forest_genes).tolist() if g in self.genes]
+            save_pca_prior_forest: Union[str, bool] = (
+                self.forest_results_paths["pca_prior_forest"] if self.save_dir else False
+            )
+            self.forest_results["pca_prior_forest"] = ev.forest_classifications(
+                self.adata[:, self.genes],
+                pca_prior_forest_genes,
+                celltypes=self.celltypes,
+                ref_celltypes="all",
+                ct_key=self.ct_key,
+                save=save_pca_prior_forest,
+                seed=self.seed,  # TODO!!! same seeds for all forests!
+                verbosity=self.verbosity,
+                progress=self.progress,
+                level=2,
+                task="Train forest on pre/prior/pca selected genes...",
+                **self.forest_hparams,
+            )
+            # if self.verbosity > 2:
+            #     print("\t\t ...finished.")
+        else:
+            if self.progress and 2 * self.verbosity >= 2:
+                self.progress.add_task(
+                    "Forest on pre/prior/pca selected genes already trained...", only_text=True, level=2
                 )
-                pca_prior_forest_genes = [g for g in np.unique(pca_prior_forest_genes).tolist() if g in self.genes]
-                save_pca_prior_forest: Union[str, bool] = (
-                    self.forest_results_paths["pca_prior_forest"] if self.save_dir else False
-                )
-                self.forest_results["pca_prior_forest"] = ev.forest_classifications(
-                    self.adata[:, self.genes],
-                    pca_prior_forest_genes,
-                    celltypes=self.celltypes,
-                    ref_celltypes="all",
-                    ct_key=self.ct_key,
-                    save=save_pca_prior_forest,
-                    seed=self.seed,  # TODO!!! same seeds for all forests!
-                    verbosity=self.verbosity,
-                    progress=self.progress,
-                    level=2,
-                    task="Train forest on pre/prior/pca selected genes...",
-                    **self.forest_hparams,
-                )
-                # if self.verbosity > 2:
-                #     print("\t\t ...finished.")
-            else:
-                if self.progress and 2 * self.verbosity >= 2:
-                    self.progress.add_task(
-                        "Tree on pre/prior/pca selected genes already trained...", only_text=True, level=2
-                    )
 
-            if self.progress and self.verbosity > 0:
-                self.progress.advance(final_forest_task)
-            # if self.verbosity > 1:
-            #     print("\t Iteratively add genes from DE_baseline_forest...")
-            if (not self.forest_results["forest"]) or (not self.forest_clfs["forest"]):
-                save_forest: Union[str, bool] = self.forest_results_paths["forest"] if self.save_dir else False
-                assert isinstance(self.forest_results["pca_prior_forest"], list)
-                assert isinstance(self.forest_results["DE_baseline_forest"], list)
-                forest_results = select.add_tree_genes_from_reference_trees(
-                    self.adata[:, self.genes],
-                    self.forest_results["pca_prior_forest"],
-                    self.forest_results["DE_baseline_forest"],
-                    ct_key=self.ct_key,
-                    ref_celltypes="all",
-                    **self.add_forest_genes_hparams,
-                    tree_clf_kwargs=self.forest_hparams,
-                    verbosity=self.verbosity,
-                    save=save_forest,
-                    return_clfs=True,
-                    final_forest_task=final_forest_task if (self.progress and self.verbosity > 0) else None,
-                    progress=self.progress,
-                    level=2,
-                    task="Iteratively add genes from DE_baseline_forest...",
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(final_forest_task)
+        # if self.verbosity > 1:
+        #     print("\t Iteratively add genes from DE_baseline_forest...")
+        if (not self.forest_results["forest"]) or (not self.forest_clfs["forest"]):
+            save_forest: Union[str, bool] = self.forest_results_paths["forest"] if self.save_dir else False
+            assert isinstance(self.forest_results["pca_prior_forest"], list)
+            assert isinstance(self.forest_results["DE_baseline_forest"], list)
+            forest_results = select.add_tree_genes_from_reference_trees(
+                self.adata[:, self.genes],
+                self.forest_results["pca_prior_forest"],
+                self.forest_results["DE_baseline_forest"],
+                ct_key=self.ct_key,
+                ref_celltypes="all",
+                **self.add_forest_genes_hparams,
+                tree_clf_kwargs=self.forest_hparams,
+                verbosity=self.verbosity,
+                save=save_forest,
+                return_clfs=True,
+                final_forest_task=final_forest_task if (self.progress and self.verbosity > 0) else None,
+                progress=self.progress,
+                level=2,
+                task="Iteratively add genes from DE_baseline_forest...",
+            )
+            assert isinstance(forest_results[0], list)
+            # assert isinstance(forest_results[1], dict)
+            assert len(forest_results) == 2
+            self.forest_results["forest"] = forest_results[0]
+            self.forest_clfs["forest"] = forest_results[1]
+            if self.save_dir:
+                with open(self.forest_clfs_paths["forest"], "wb") as f:
+                    pickle.dump(self.forest_clfs["forest"], f)
+            # if self.verbosity > 2:
+            #     print("\t\t ...finished.")
+        else:
+            if self.progress and 2 * self.verbosity >= 2:
+                self.progress.add_task(
+                    "Genes from DE_baseline_forest were already added...", only_text=True, level=2
                 )
-                assert isinstance(forest_results[0], list)
-                # assert isinstance(forest_results[1], dict)
-                assert len(forest_results) == 2
-                self.forest_results["forest"] = forest_results[0]
-                self.forest_clfs["forest"] = forest_results[1]
-                if self.save_dir:
-                    with open(self.forest_clfs_paths["forest"], "wb") as f:
-                        pickle.dump(self.forest_clfs["forest"], f)
-                # if self.verbosity > 2:
-                #     print("\t\t ...finished.")
-            else:
-                if self.progress and 2 * self.verbosity >= 2:
-                    self.progress.add_task(
-                        "Genes from DE_baseline_forest were already added...", only_text=True, level=2
-                    )
-                    self.progress.add_task("Final forest was alread trained...", only_text=True, level=2)
-                    self.progress.advance(final_forest_task)
-
-            if self.progress and self.verbosity > 0:
+                self.progress.add_task("Final forest was alread trained...", only_text=True, level=2)
                 self.progress.advance(final_forest_task)
 
-            if not isinstance(self.selection["forest"], pd.DataFrame):
-                assert isinstance(self.forest_results["forest"], list)
-                assert len(self.forest_results["forest"]) == 3
-                assert isinstance(self.forest_results["forest"][2], dict)
-                self.selection["forest"] = ev.forest_rank_table(self.forest_results["forest"][2])
-                if self.save_dir:
-                    self.selection["forest"].to_csv(self.selections_paths["forest"])
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(final_forest_task)
 
+        if not isinstance(self.selection["forest"], pd.DataFrame):
+            assert isinstance(self.forest_results["forest"], list)
+            assert len(self.forest_results["forest"]) == 3
+            assert isinstance(self.forest_results["forest"][2], dict)
+            self.selection["forest"] = ev.forest_rank_table(self.forest_results["forest"][2])
+            if self.save_dir:
+                self.selection["forest"].to_csv(self.selections_paths["forest"])
+
+    def _set_DE_baseline_forest_to_final_forest(self):
+        """Set the results of the DE forests as the final forest results.
+        
+        This method is applied when no PCA genes were selected and therefore no forests were trained on PCA genes.
+        """
+    
+        self.forest_results["forest"] = self.forest_results["DE_baseline_forest"]
+        self.forest_clfs["forest"] = self.forest_clfs["DE_baseline_forest"]
+        self.selection["forest"] = self.selection["DE_baseline_forest"]
+    
+    
     def _save_preselected_and_prior_genes(self):
         """Save pre selected and prior genes to files."""
         for s in ["pre", "prior"]:
@@ -963,8 +1001,9 @@ class ProbesetSelector:  # (object)
         # Indicator if gene was in the prior selected pca set and all genes' pca scores
         probeset["pca_selected"] = False
         probeset["pca_score"] = 0
-        probeset.loc[self.selection["pca"][self.selection["pca"]["selection"]].index, "pca_selected"] = True
-        probeset.loc[self.selection["pca"].index, "pca_score"] = self.selection["pca"]["selection_score"]
+        if self.n_pca_genes and (self.n_pca_genes > 0):
+            probeset.loc[self.selection["pca"][self.selection["pca"]["selection"]].index, "pca_selected"] = True
+            probeset.loc[self.selection["pca"].index, "pca_score"] = self.selection["pca"]["selection_score"]
 
         # get celltypes of the 1-vs-all DE tests
         tmp_cts = [ct for ct in self.celltypes if ct in self.selection["DE"].columns]
@@ -1128,11 +1167,40 @@ class ProbesetSelector:  # (object)
         other_cols = [col for col in probeset.columns if col not in first_cols]
         cols = first_cols + other_cols
 
+        # Throw out genes that dont have any scoring or ranking but were still selected (this can only happen if no PCA
+        # selection was performed.)
+        no_rank_genes = probeset["rank"].isnull() & (probeset["pca_score"] == 0)
+        probeset.loc[no_rank_genes, "selection"] = False
+
         if self.progress and self.verbosity > 0 and with_markers_from_list:
             self.progress.advance(list_task)
             self.progress.advance(list_task)
 
         return probeset[cols].copy()
+
+    def _get_genes_of_primary_trees(self) -> pd.DataFrame:
+        """Get genes of the best trees of each cell type
+        
+        Returns
+            pd.DataFrame
+        
+        """
+
+        genes = []
+        cts = []
+        importances = []
+        for ct in self.forest_results["forest"][2].keys():
+            tmp = self.forest_results["forest"][2][ct]["0"]
+            tmp = tmp.loc[tmp > 0].sort_values(ascending=False)
+            genes += tmp.index.to_list()
+            cts += [ct for _ in range(len(tmp))]
+            importances += tmp.to_list()
+        
+        df = pd.DataFrame(data={"gene": genes, "celltype": cts, "importance": importances})
+        nr_of_cts = df["gene"].value_counts().to_dict()
+        df["nr_of_celltypes"] = df["gene"].apply(lambda g: nr_of_cts[g])
+        
+        return df
 
     def _prepare_mean_diff_constraint(self) -> None:
         """Compute if mean difference constraint is fullfilled."""
