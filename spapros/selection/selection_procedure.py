@@ -110,17 +110,13 @@ class ProbesetSelector:  # (object)
             - The optionally provided marker list can include additional cell types not listed in :attr:`celltypes`
               (and ``adata.obs[celltype_key])``.
 
-        marker_list: List of marker genes. Can either be the a dictionary like this::
+        marker_list: List of marker genes. Can either be a dictionary like this::
 
                 {
                 "celltype_1": ["S100A8", "S100A9", "LYZ", "BLVRB"],
-                "celltype_6": ["BIRC3", "TMEM116", "CD3D"],
-                "celltype_7": ["CD74", "CD79B", "MS4A1"],
-                "celltype_2": ["C5AR1"],
-                "celltype_5": ["RNASE6"],
-                "celltype_4": ["PPBP", "SPARC", "CDKN2D"],
-                "celltype_8": ["NCR3"],
-                "celltype_9": ["NAPA-AS1"],
+                "celltype_2": ["BIRC3", "TMEM116"],
+                "celltype_4": ["CD74", "CD79B", "MS4A1"],
+                "celltype_3": ["C5AR1"],
                 }
 
             Or the path to a csv-file containing the one column of markers for each celltype. The column names need to
@@ -128,11 +124,13 @@ class ProbesetSelector:  # (object)
         n_list_markers:
             Minimal number of markers per celltype that are at least selected. Selected means either selecting genes
             from the marker list or having correlated genes in the already selected panel. (Set the correlation
-            threshold with `marker_selection_hparams['penalty_threshold'])`.
+            threshold with `marker_selection_hparams['penalty_threshold'])`. The correlation based check only applies to
+            cell types that also occur in `adata.obs[celltype_key]` while for cell types that only occur in the 
+            `marker_list` the markers are just added.
             If you want to select a different number of markers for celltypes in adata and celltypes only in the marker
             list, set e.g.: ``n_list_markers = {'adata_celltypes':2,'list_celltypes':3}``.
         marker_corr_th:
-            Minimal correlation to consider a gene as captures.
+            Minimal correlation to consider a gene as captured.
         pca_penalties:
             List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores for
             PCA based gene selection.
@@ -156,7 +154,7 @@ class ProbesetSelector:  # (object)
         add_forest_genes_hparams:
             Dictionary with hyperparameters for adding marker genes to decision trees.
         marker_selection_hparams:
-            Dictionary with hyperparameters (so far only the threshold) for the penalty filtering of marker genes if a
+            Dictionary with hyperparameters. So far only the threshold for the penalty filtering of marker genes if a
             gene's penalty < threshold.
         verbosity:
             Verbosity level.
@@ -190,7 +188,7 @@ class ProbesetSelector:  # (object)
         min_mean_difference:
             Minimal difference of mean expression between at least one celltype and the background.
         n_min_markers:
-            The minimal number of identified and added markers.
+            The minimal number of identified and added markers for cell types of `adata.obs[ct_key]`.
         celltypes:
             Cell types for which trees are trained.
         adata_celltypes:
@@ -200,7 +198,9 @@ class ProbesetSelector:  # (object)
         marker_list:
             Dictionary of the form ``{'celltype': list of markers of celltype}``.
         n_list_markers:
-            Minimal number of markers per celltype that are at least selected.
+            Minimal number of markers from the `marker_list` that are at least selected per cell type. Note that for
+            those cell types in the `marker_list` that also occur in `adata.obs[ct_key]` genes that are correlated with
+            the markers might be selected (see :attr:`marker_corr_th`).
         marker_corr_th:
             Minimal correlation to consider a gene as captured.
         pca_penalties:
@@ -226,7 +226,7 @@ class ProbesetSelector:  # (object)
         add_forest_genes_hparams:
             Dictionary with hyperparameters for adding marker genes to decision trees.
         m_selection_hparams:
-            Dictionary with hyperparameters (so far only the threshold) for the penalty filtering of marker genes if a
+            Dictionary with hyperparameters. So far only the threshold for the penalty filtering of marker genes if a
             gene's penalty < threshold.
         verbosity:
             Verbosity level.
@@ -292,8 +292,7 @@ class ProbesetSelector:  # (object)
                     Whether a gene is listed as a marker in :attr:`~ProbesetSelector.marker_list`.
                 * **required_marker**
                     Whether a gene was required to reach the minimal number of markers per cell type 
-                    (:attr:`~ProbesetSelector.n_min_markers`, :attr:`~ProbesetSelector.n_list_markers` | TODO: check 
-                    these two attrs).
+                    (:attr:`~ProbesetSelector.n_min_markers`, :attr:`~ProbesetSelector.n_list_markers`).
                 * **required_list_marker**
                     Whether a gene was required to reach the minimal number of markers for cell types that only occur in
                     :attr:`~ProbesetSelector.marker_list` but not in :attr:`~ProbesetSelector.adata_celltypes`.
@@ -838,8 +837,6 @@ class ProbesetSelector:  # (object)
         """
         # Filter genes that occur multiple times # TODO: if a genes occurs multiple times for the same celltype we
         # should actually keep it!...
-        if self.verbosity > 0:
-            print("Filter out genes in marker dict that occur multiple times.")
         assert isinstance(self.marker_list, dict)
         self.marker_list = filter_marker_dict_by_shared_genes(self.marker_list, verbose=(self.verbosity > 1))
 
@@ -1907,101 +1904,99 @@ def select_reference_probesets(
     adata: sc.AnnData,
     n: int,
     genes_key: str = "highly_variable",
-    seeds: List[int] = None,
+    methods: Union[List[str], Dict[str, Dict]] = ['PCA', 'DE', 'HVG', 'random'],
+    seeds: List[int] = [0],
     verbosity: int = 2,
     save_dir: Union[str, None] = None,
-    reference_selections: Dict[str, Dict] = None,
 ) -> Dict[str, pd.DataFrame]:
-    """Select reference probeset with basic selection methods.
+    """Select reference probesets with basic selection methods.
 
     Args:
         adata:
-            Data with log normalised counts in adata.X. The selection runs with an adata subsetted on fewer genes. It
-            might be helpful though to keep all genes. The genes can be subsetted for selection via `genes_key`.
+            Data with log normalised counts in adata.X.
         n:
-            Set the number of selected genes.
+            Number of selected genes.
         genes_key:
-            adata.var key for preselected genes (typically 'highly_variable_genes').
+            adata.var key for subset of preselected genes to run the selections on (typically 'highly_variable_genes').
+        methods:
+            Methods used for selections. Supported methods and default are `['PCA', 'DE', 'HVG', 'random']`. To specify
+            hyperparameters of the methods provide a dictionary, e.g.::
+                
+                {
+                    'DE':{},
+                    'PCA':{'n_pcs':30},
+                    'HVG':{},
+                    'random':{},
+                }
+                        
         seeds:
-            List of random seeds. For each seed, one random gene set is selected.
+            List of random seeds. For each seed, one random gene set is selected if `'random'` in `methods`. 
         verbosity:
             Verbosity level.
         save_dir:
             Directory path where all results are saved.
-        reference_selections:
-            Dictionary with the names of selection methods as keys and their parameters as dictionaries of their
-            parameters as values.
 
     Returns:
-        Dictionary with one entry for each reference method. The key is the selection method name and the value is
-        a DataFrame with the same index as the adata and at least one boolean column called 'selection' representing
+        Dictionary with one entry for each method. The key is the selection method name and the value is
+        a DataFrame with the same index as adata.var and at least one boolean column called 'selection' representing
         the selected probeset. For some methods, additional information is provided in other columns.
     """
-    seeds = [0] if seeds is None else seeds
-    default_reference_selections: Dict[str, Dict] = {
-        "HVG": {"flavor": "cell_ranger"},
-        "random": {},
-        "PCA": {
-            "variance_scaled": False,
-            "absolute": True,
-            "n_pcs": 20,
-            "penalty_keys": [],
-            "corr_penalty": None,
-        },
-        "DE": {"per_group": False},
-    }
-    reference_methods: Dict[str, Callable] = {
+
+    # Supported selection functions
+    selection_fcts: Dict[str, Callable] = {
         "PCA": select.select_pca_genes,
         "DE": select.select_DE_genes,
         "random": select.random_selection,
         "HVG": select.select_highly_variable_features,
     }
-    reference_probesets = {}
 
-    if reference_selections is None:
-        reference_selections = default_reference_selections
-    assert reference_selections is not None
+    # Reshape methods to dict with empty hyperparams if given as a list
+    if isinstance(methods,list):
+        methods = {method:{} for method in methods}
+    assert isinstance(methods,dict)
 
-    # check whether to create more than one random set
-    if "random" in reference_selections and len(seeds) > 1:
-        del reference_selections["random"]
-        for seed in seeds:
-            reference_selections[f"random (seed={seed})"] = {"seed": seed}
-            default_reference_selections[f"random (seed={seed})"] = {"seed": seed}
-            reference_methods[f"random (seed={seed})"] = reference_methods["random"]
-
+    # Filter unsupported methods
+    for method in methods:
+        if method not in selection_fcts:
+            print(
+                f'Method {method} is not available. Supported methods are {[key for key in selection_fcts]}.' 
+            )
+            del methods[method]
+    methods = {m:methods[m] for m in methods if m in selection_fcts}
+    
+    # Create list of planed selections
+    selections: List[dict] = []
+    for method in methods:
+        if method == "random":
+            for seed in seeds:    
+                seed_str = "" if len(seeds) == 0 else f" (seed={seed})"
+                selections.append({
+                    "method":method, 
+                    "name":f"{method}{seed_str}", 
+                    "params":dict(methods[method], **{"seed":seed})
+                })
+        else:
+            selections.append({"method":method,"name":method,"params":methods[method]})
+    
+    # Run selections
     progress = util.NestedProgress(disable=(verbosity == 0))
+    probesets = {}
 
     with progress:
-        ref_task = progress.add_task("Reference probeset selection...", total=len(reference_selections), level=1)
-
-        for selection_name in reference_selections:
-
-            if selection_name not in default_reference_selections:
-                print(
-                    f'Selecting {selection_name} genes as reference is not available. Options are "hvg_selection", '
-                    f'"random_selection", "DE_selection", "pca_selection".'
-                )
-                continue
-            else:
-                # check parameters
-                params = default_reference_selections[selection_name]
-                for param in params:
-                    if param not in reference_selections[selection_name]:
-                        reference_selections[selection_name][param] = default_reference_selections[selection_name][
-                            param
-                        ]
-
-                if verbosity > 1:
-                    sel_task = progress.add_task(f"Selecting {selection_name} genes...", total=1, level=2)
-
-                reference_probesets[f"ref_{selection_name}"] = reference_methods[selection_name](
-                    adata[:, adata.var[genes_key]], n, inplace=False, **reference_selections[selection_name]
-                )
-
-                if save_dir:
-                    reference_probesets[f"ref_{selection_name}"].to_csv(os.path.join(save_dir, f"ref_{selection_name}"))
-
+        ref_task = progress.add_task("Reference probeset selection...", total=len(selections), level=1)
+        
+        for s in selections:
+            
+            if verbosity > 1:
+                sel_task = progress.add_task(f"Selecting {s['name']} genes...", total=1, level=2)
+                
+            probesets[s["name"]] = selection_fcts[s["method"]](
+                adata[:, adata.var[genes_key]], n, inplace=False, **s["params"]
+            )
+            
+            if save_dir:
+                probesets[s["name"]].to_csv(os.path.join(save_dir, s["name"]))
+                
             if verbosity > 0:
                 progress.advance(ref_task)
 
@@ -2011,4 +2006,4 @@ def select_reference_probesets(
         if verbosity > 0:
             progress.add_task("Finished", total=1, footer=True, only_text=True)
 
-    return reference_probesets
+    return probesets
