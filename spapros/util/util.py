@@ -27,6 +27,37 @@ from sklearn.utils import sparsefuncs
 ##############
 
 
+def get_processed_pbmc_data(n_hvg: int = 1000):
+    """Get log normalised pbmc AnnData with selection and evaluation relevant quantities
+    
+    Args:
+        n_hvg:
+            Number of highly variable genes
+    
+    Returns:
+        processed AnnData.
+        
+    """
+    adata = sc.datasets.pbmc3k()
+    adata_tmp = sc.datasets.pbmc3k_processed()
+
+    # Get infos from the processed dataset
+    adata = adata[adata_tmp.obs_names, adata_tmp.var_names]
+    adata.obs['celltype'] = adata_tmp.obs['louvain']
+    adata.obsm['X_umap'] = adata_tmp.obsm['X_umap']  # TODO: umap True/False
+    del adata_tmp
+
+    # Preprocess counts and get highly variable genes
+    sc.pp.normalize_total(adata)
+    sc.pp.log1p(adata)
+    sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=1000)
+
+    #TODO: with "quantiles" or "with_expr_penalty"  bool / Add note that these expression constraints might not fit 
+    #      real experiments
+
+    return adata
+
+
 def clean_adata(
     adata: sc.AnnData,
     obs_keys: Optional[List[str]] = None,
