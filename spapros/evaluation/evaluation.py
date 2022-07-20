@@ -348,118 +348,118 @@ class ProbesetEvaluator:
                 is set to `True` only these pre calculations are computed.
         """
 
-        try:
-            self.progress, self.started = init_progress(None, verbosity=self.verbosity, level=1)
-            if self.progress and self.verbosity > 0:
-                evaluation_task = self.progress.add_task(
-                    description="SPAPROS PROBESET EVALUATION:", only_text=True, header=True, total=0
+        if self.progress:
+            # it is possible that a progress is already active because it was not stopped earlier because of an exception
+            # it is not possible to reuse such a progress instance, so stop it here
+            self.progress.stop()
+
+        self.progress, self.started = init_progress(None, verbosity=self.verbosity, level=1)
+
+        if self.progress and self.verbosity > 0:
+            evaluation_task = self.progress.add_task(
+                description="SPAPROS PROBESET EVALUATION:", only_text=True, header=True, total=0
+            )
+
+        if not pre_only:
+            self.compute_or_load_shared_results()
+
+        # Probeset specific pre computation (shared results are not needed for these)
+
+        if self.progress and self.verbosity > 0:
+            task_pre = self.progress.add_task(
+                "Probeset specific pre computations...", total=len(self.metrics), level=1
+            )
+
+        for metric in self.metrics:
+            if self.dir:
+                pre_res_file: str = self._res_file(metric, set_id, pre=True)
+                pre_res_file_isfile = os.path.isfile(pre_res_file)
+            else:
+                pre_res_file_isfile = False
+            if (self.dir is None) or (not pre_res_file_isfile):
+                self.pre_results[metric][set_id] = metric_pre_computations(
+                    genes,
+                    adata=self.adata,
+                    metric=metric,
+                    parameters=self.metrics_params[metric],
+                    progress=self.progress if self.verbosity > 1 else None,
+                    level=2,
+                    verbosity=self.verbosity,
+                )
+                if self.dir and (self.pre_results[metric][set_id] is not None):
+                    Path(os.path.dirname(self._res_file(metric, set_id, pre=True))).mkdir(
+                        parents=True, exist_ok=True
+                    )
+                    self.pre_results[metric][set_id].to_csv(self._res_file(metric, set_id, pre=True))
+            elif os.path.isfile(self._res_file(metric, set_id, pre=True)):
+
+                if self.progress and self.verbosity > 1:
+                    task_pre_load = self.progress.add_task(
+                        "Loading pre computations for " + metric + "...", total=1, level=2
+                    )
+
+                self.pre_results[metric][set_id] = pd.read_csv(
+                    self._res_file(metric, set_id, pre=True), index_col=0
                 )
 
-            if not pre_only:
-                self.compute_or_load_shared_results()
-
-            # Probeset specific pre computation (shared results are not needed for these)
+                if self.progress and self.verbosity > 1:
+                    self.progress.advance(task_pre_load)
 
             if self.progress and self.verbosity > 0:
-                task_pre = self.progress.add_task(
-                    "Probeset specific pre computations...", total=len(self.metrics), level=1
-                )
+                self.progress.advance(task_pre)
 
+        # Probeset specific computation (shared results are needed)
+
+        if self.progress and self.verbosity > 0:
+            task_final = self.progress.add_task(
+                "Final probeset specific computations...", total=len(self.metrics), level=1
+            )
+
+        if not pre_only:
             for metric in self.metrics:
-                if self.dir:
-                    pre_res_file: str = self._res_file(metric, set_id, pre=True)
-                    pre_res_file_isfile = os.path.isfile(pre_res_file)
-                else:
-                    pre_res_file_isfile = False
-                if (self.dir is None) or (not pre_res_file_isfile):
-                    self.pre_results[metric][set_id] = metric_pre_computations(
+                if (self.dir is None) or (not os.path.isfile(self._res_file(metric, set_id))):
+                    self.results[metric][set_id] = metric_computations(
                         genes,
                         adata=self.adata,
                         metric=metric,
+                        shared_results=self.shared_results[metric],
+                        pre_results=self.pre_results[metric][set_id],
                         parameters=self.metrics_params[metric],
+                        n_jobs=self.n_jobs,
                         progress=self.progress if self.verbosity > 1 else None,
                         level=2,
                         verbosity=self.verbosity,
                     )
-                    if self.dir and (self.pre_results[metric][set_id] is not None):
-                        Path(os.path.dirname(self._res_file(metric, set_id, pre=True))).mkdir(
-                            parents=True, exist_ok=True
-                        )
-                        self.pre_results[metric][set_id].to_csv(self._res_file(metric, set_id, pre=True))
-                elif os.path.isfile(self._res_file(metric, set_id, pre=True)):
+                    if self.dir:
+                        Path(os.path.dirname(self._res_file(metric, set_id))).mkdir(parents=True, exist_ok=True)
+                        self.results[metric][set_id].to_csv(self._res_file(metric, set_id))
+
+                elif os.path.isfile(self._res_file(metric, set_id, pre=False)):
 
                     if self.progress and self.verbosity > 1:
-                        task_pre_load = self.progress.add_task(
-                            "Loading pre computations for " + metric + "...", total=1, level=2
+                        task_final_load = self.progress.add_task(
+                            "Loading final computations for " + metric + "...", total=1, level=2
                         )
 
-                    self.pre_results[metric][set_id] = pd.read_csv(
-                        self._res_file(metric, set_id, pre=True), index_col=0
+                    self.results[metric][set_id] = pd.read_csv(
+                        self._res_file(metric, set_id, pre=False), index_col=0
                     )
 
                     if self.progress and self.verbosity > 1:
-                        self.progress.advance(task_pre_load)
+                        self.progress.advance(task_final_load)
 
                 if self.progress and self.verbosity > 0:
-                    self.progress.advance(task_pre)
+                    self.progress.advance(task_final)
 
-            # Probeset specific computation (shared results are needed)
+            if update_summary:
+                self.summary_statistics(set_ids=[set_id])
 
-            if self.progress and self.verbosity > 0:
-                task_final = self.progress.add_task(
-                    "Final probeset specific computations...", total=len(self.metrics), level=1
-                )
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(evaluation_task)
+            self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
 
-            if not pre_only:
-                for metric in self.metrics:
-                    if (self.dir is None) or (not os.path.isfile(self._res_file(metric, set_id))):
-                        self.results[metric][set_id] = metric_computations(
-                            genes,
-                            adata=self.adata,
-                            metric=metric,
-                            shared_results=self.shared_results[metric],
-                            pre_results=self.pre_results[metric][set_id],
-                            parameters=self.metrics_params[metric],
-                            n_jobs=self.n_jobs,
-                            progress=self.progress if self.verbosity > 1 else None,
-                            level=2,
-                            verbosity=self.verbosity,
-                        )
-                        if self.dir:
-                            Path(os.path.dirname(self._res_file(metric, set_id))).mkdir(parents=True, exist_ok=True)
-                            self.results[metric][set_id].to_csv(self._res_file(metric, set_id))
-
-                    elif os.path.isfile(self._res_file(metric, set_id, pre=False)):
-
-                        if self.progress and self.verbosity > 1:
-                            task_final_load = self.progress.add_task(
-                                "Loading final computations for " + metric + "...", total=1, level=2
-                            )
-
-                        self.results[metric][set_id] = pd.read_csv(
-                            self._res_file(metric, set_id, pre=False), index_col=0
-                        )
-
-                        if self.progress and self.verbosity > 1:
-                            self.progress.advance(task_final_load)
-
-                    if self.progress and self.verbosity > 0:
-                        self.progress.advance(task_final)
-
-                if update_summary:
-                    self.summary_statistics(set_ids=[set_id])
-
-            if self.progress and self.verbosity > 0:
-                self.progress.advance(evaluation_task)
-                self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
-
-            if self.progress and self.started:
-                self.progress.stop()
-
-        except Exception as error:
-            if self.progress:
-                self.progress.stop()
-            raise error
+        if self.progress and self.started:
+            self.progress.stop()
 
     def evaluate_probeset_pipeline(
         self, genes: List, set_id: str, shared_pre_results_path: List, step_specific_results: List
@@ -724,13 +724,11 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.clustering_lineplot(
-            selections_info,
-            data=self.results["cluster_similarity"],
-            xlabel="number of clusters",
-            ylabel="NMI",
-            **kwargs,
-        )
+        pl.clustering_lineplot(selections_info,
+                               data=self.results["cluster_similarity"],
+                               xlabel="number of clusters",
+                               ylabel="NMI",
+                               **kwargs)
 
     def plot_knn_overlap(
         self, set_ids: List[str] = None, selections_info: Optional[pd.DataFrame] = None, **kwargs
@@ -771,13 +769,11 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.clustering_lineplot(
-            selections_info,
-            data=self.results["knn_overlap"],
-            xlabel="number of neighbors",
-            ylabel="mean knn overlap",
-            **kwargs,
-        )
+        pl.clustering_lineplot(selections_info,
+                               data=self.results["knn_overlap"],
+                               xlabel="number of neighbors",
+                               ylabel="mean knn overlap",
+                               **kwargs)
 
     def plot_confusion_matrix(self, set_ids: List[str] = None, **kwargs) -> None:
         """Wrapper for plotting a heatmap of cell type classification confusion matrices.
