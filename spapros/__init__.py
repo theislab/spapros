@@ -6,6 +6,6 @@ __version__ = "0.1.0"
 
 __all__ = ["se", "ev", "pl"]
 
-import spapros.selection.selection_procedure as se
-import spapros.evaluation.evaluation as ev
-from spapros.plotting import plot as pl
+from . import selection as se
+from . import evaluation as ev
+from . import plotting as pl
