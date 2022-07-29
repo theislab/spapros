@@ -42,7 +42,7 @@ def get_processed_pbmc_data(n_hvg: int = 1000):
     adata_tmp = sc.datasets.pbmc3k_processed()
 
     # Get infos from the processed dataset
-    adata = adata[adata_tmp.obs_names, adata_tmp.var_names]
+    adata = adata[adata_tmp.obs_names, adata_tmp.var_names].copy()
     adata.obs['celltype'] = adata_tmp.obs['louvain']
     adata.obsm['X_umap'] = adata_tmp.obsm['X_umap']  # TODO: umap True/False
     del adata_tmp
