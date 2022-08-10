@@ -31,6 +31,11 @@ spapros
    :target: https://github.com/psf/black
    :alt: Black
 
+Note
+----
+
+Please check out the `development` branch for the latest version. The full docs and updated verison will be available and pushed to main in the next days.
+
 
 Features
 --------
