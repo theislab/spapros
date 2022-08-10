@@ -916,13 +916,35 @@ class ProbesetEvaluator:
         set_ids: Union[str, List[str]] = "all",
         **plot_kwargs,
     ) -> None:
-        """Plot heatmap of summary metrics.
+        """Plot heatmap of summary metrics
+
+        See our basic evaluation tutorial for descriptions of each metric.
 
         Args:
             set_ids:
-                IDs of the current probesets or "all". Check out self.summary_results for available sets.
+                IDs of the current probesets or "all". Check out :attr:`.ProbesetEvaluator.summary_results` for 
+                available sets.
             **plot_kwargs:
                 Keyword arguments for :func:`.summary_table`.
+                
+        Example:
+        
+            .. code-block:: python
+                    
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["PCA", "DE", "HVG", "random"], n=30, verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(adata, verbosity=0, results_dir=None)
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+                    
+                evaluator.plot_summary(set_ids=["PCA", "DE", "HVG", "random (seed=0)"])
+        
+            .. image:: ../../docs/plot_examples/Evaluator_plot_summary.png
+            
+                            
         """
         if self.summary_results is _empty:
             if self.dir:
@@ -938,30 +960,49 @@ class ProbesetEvaluator:
     def plot_cluster_similarity(
         self, set_ids: List[str] = None, selections_info: Optional[pd.DataFrame] = None, **kwargs
     ) -> None:
-        """Wrapper for plotting NMI of clusterings over number of clusters.
+        """Plot cluster similarity as NMI over number of clusters
 
         Args:
             set_ids:
-                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+                List of probeset IDs. Check out :attr:`.ProbesetEvaluator.summary_results` for available sets.
             selections_info:
-                Information on each selection for plotting. The dataframe includes:
-
+                Information on selections for plotting. The dataframe includes:
+    
                     - selection ids or alternative names as index
-                    - mandatory (only if ``kwargs[nmi_dfs]=None``) column `path`: path to results csv of each selection
-                      (contains number of clusters (as index) and NMI values in column `nmi`.)
-                    - optional columns (Note that the legend order will follow the row order in :attr:`selections_info.):
-
+                    - column: `path` (mandatory if ``data=None``): path to results csv of each selection (which contains
+                      number of clusters (as index) and one column containing the data to plot)
+                    - optional columns:
+    
                         - `color`: matplotlib color
                         - `linewidth`: matplotlib linewidth
                         - `linestyle`: matplotlib linestyle
-                        - `<groupby>`: some annotation that can be used to group the legend.
-
+                        - `<groupby>`: some annotation that can be used to group the legend
+                        
+                Note that the legend order will follow the row order in :attr:`selections_info`.
             **kwargs:
-                Further arguments for :func:`.cluster_similarity`.
+                Any keyword argument from :func:`.cluster_similarity`.
 
-        Returns:
-            Figure can be showed (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+        
+            (Takes a few minutes to calculate)
+        
+            .. code-block:: python
+                    
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["PCA", "DE", "HVG", "random"], n=30, seeds=[0, 777], verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(
+                    adata, verbosity=0, results_dir=None, scheme="custom", metrics=["cluster_similarity"])
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+                
+                evaluator.plot_cluster_similarity()
+        
+            .. image:: ../../docs/plot_examples/Evaluator_plot_cluster_similarity.png
+
 
         """
 
@@ -974,41 +1015,56 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.clustering_lineplot(
+        pl.cluster_similarity(
             selections_info,
             data=self.results["cluster_similarity"],
-            xlabel="number of clusters",
-            ylabel="NMI",
             **kwargs,
         )
 
     def plot_knn_overlap(
         self, set_ids: List[str] = None, selections_info: Optional[pd.DataFrame] = None, **kwargs
     ) -> None:
-        """Wrapper for plotting the mean overlap of knn clusterings over number of clusters.
+        """Plot mean knn overlap over k
 
         Args:
             set_ids:
-                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+                List of probeset IDs. Check out :attr:`.ProbesetEvaluator.summary_results` for available sets.
             selections_info:
-                Information on each selection for plotting. The dataframe includes:
-
+                Information on selections for plotting. The dataframe includes:
+    
                     - selection ids or alternative names as index
-                    - mandatory (only if ``kwargs[knn_dfs]=None``) column `path`: path to results csv of each selection
-                      (contains number of clusters (as index) and KNN values in column `knn`.)
-                    - optional columns (Note that the legend order will follow the row order in :attr:`selections_info.):
-
+                    - column: `path` (mandatory if ``data=None``): path to results csv of each selection (which contains
+                      number of clusters (as index) and one column containing the data to plot)
+                    - optional columns:
+    
                         - `color`: matplotlib color
                         - `linewidth`: matplotlib linewidth
                         - `linestyle`: matplotlib linestyle
                         - `<groupby>`: some annotation that can be used to group the legend
-
+                        
+                Note that the legend order will follow the row order in :attr:`selections_info`.
             **kwargs:
-                Further arguments for :func:`.knn_overlap`.
+                Any keyword argument from :func:`.knn_overlap`.
 
-        Returns:
-            Figure can be shown (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+        
+            .. code-block:: python
+                    
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["PCA", "DE", "HVG", "random"], n=30, seeds=[0, 777], verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(
+                    adata, verbosity=0, results_dir=None, scheme="custom", metrics=["knn_overlap"])
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+                
+                evaluator.plot_knn_overlap()
+        
+            .. image:: ../../docs/plot_examples/Evaluator_plot_knn_overlap.png
+
 
         """
 
@@ -1021,26 +1077,38 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.clustering_lineplot(
+        pl.knn_overlap(
             selections_info,
             data=self.results["knn_overlap"],
-            xlabel="number of neighbors",
-            ylabel="mean knn overlap",
             **kwargs,
         )
 
     def plot_confusion_matrix(self, set_ids: List[str] = None, **kwargs) -> None:
-        """Wrapper for plotting a heatmap of cell type classification confusion matrices.
+        """Plot heatmaps of cell type classification confusion matrices
 
         Args:
             set_ids:
-                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+                List of probeset IDs. Check out :attr:`.ProbesetEvaluator.summary_results` for available sets.
             **kwargs:
-                Further arguments for :func:`.confusion_matrix`.
+                Any keyword argument from :func:`.confusion_matrix`.
 
-        Returns:
-            Figure can be shown (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+        
+            .. code-block:: python
+                    
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(adata,methods=["DE","HVG","random"],n=30,verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(adata, verbosity=0, results_dir=None, scheme="custom", metrics=["forest_clfs"])
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+                    
+                evaluator.plot_confusion_matrix()
+        
+            .. image:: ../../docs/plot_examples/Evaluator_plot_confusion_matrix.png
+
 
         """
 
@@ -1055,22 +1123,36 @@ class ProbesetEvaluator:
 
         pl.confusion_matrix(set_ids, self.results["forest_clfs"], **kwargs)
 
-    def plot_correlation_matrix(
+    def plot_coexpression(
         self,
         set_ids: List[str] = None,
         **kwargs,
     ) -> None:
-        """Wrapper for plotting a heatmap of gene correlation matrices.
+        """Plot heatmaps of gene correlation matrices
 
         Args:
             set_ids:
-                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+                List of probeset IDs. Check out :attr:`.ProbesetEvaluator.summary_results` for available sets.
             **kwargs:
-                Further arguments for :func:`.correlation_matrix`.
-
-        Returns:
-            Figure can be shown (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+                Any keyword argument from :func:`.correlation_matrix`.
+                
+            
+        Example:
+        
+            .. code-block:: python
+                    
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(adata, methods=["PCA","DE", "HVG", "random"], n=30, verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(adata, verbosity=0, results_dir=None, scheme="custom", metrics=["gene_corr"])
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+                    
+                evaluator.plot_coexpression(n_cols=4)
+        
+            .. image:: ../../docs/plot_examples/Evaluator_plot_coexpression.png
+            
 
         """
 
@@ -1085,15 +1167,49 @@ class ProbesetEvaluator:
 
         pl.correlation_matrix(set_ids, self.results["gene_corr"], **kwargs)
 
-    def plot_marker_correlation(self):
-        pass
+    def plot_marker_corr(self,**kwargs):
+        """Plot maximal correlations with marker genes
+        
+        Args:
+            **kwargs:
+                Any keyword argument from :func:`.marker_correlation`.
+               
+               
+        Example:
+        
+            .. code-block:: python
+                    
+                import spapros as sp
+                marker_list ={
+                    'B cells': ['EAF2', 'MS4A1', 'HVCN1', 'TCL1A', 'LINC00926', 'CD79A', 'IGLL5'],
+                    'NK cells': ['XCL2', 'CLIC3', 'AKR1C3'],
+                    'CD8 T cells': ['GZMK'],
+                    'Dendritic cells': ['FCER1A', 'CLEC10A'],
+                    'Megakaryocytes': ['RGS18','C2orf88','SDPR','TMEM40','GP9','MFSD1','PF4','PPBP'],
+                }
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["PCA", "DE", "HVG", "random"], n=30, seeds=range(7), verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(
+                    adata, verbosity=0, results_dir=None, scheme="custom", metrics=["marker_corr"], marker_list=marker_list)
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+                    
+                evaluator.plot_marker_corr()
+        
+            .. image:: ../../docs/plot_examples/Evaluator_plot_marker_corr.png
+                            
+                
+        """
 
-    # plot_evaluations for marker_corr:
-    #   heatmap like gene_corr
-    # TODO
+        if "marker_corr" not in self.results:
+            raise ValueError("Can't plot marker correlations since no results are found.")
+
+        pl.marker_correlation(marker_corr=self.results["marker_corr"],**kwargs)
+        
 
     # TODO remove this function (instead, we now have individual plot_'metric'() functions)
-
     def plot_evaluations(
         self,
         set_ids: Union[str, List[str]] = "all",
@@ -1110,9 +1226,10 @@ class ProbesetEvaluator:
 
         Args:
             set_ids:
-                ID of the current probeset or "all". Check out :attr:`.summary_results` for available sets.
+                ID of the current probeset or "all". Check out :attr:`.ProbesetEvaluator.summary_results` for available 
+                sets.
             metrics:
-                List of calculated metrics or "all". Check out :attr:`.metrics` for available metrics.
+                List of calculated metrics or "all". Check out :attr:`.ProbesetEvaluator.metrics` for available metrics.
             save:
                 If `True` or a `str`, save the figure.
             show:

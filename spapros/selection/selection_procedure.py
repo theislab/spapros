@@ -537,6 +537,7 @@ class ProbesetSelector:  # (object)
                 
             # Compile probe set
             self.probeset = self._compile_probeset_list()
+            self.selection["final"] = self.probeset
             
             # Save attribute genes_of_primary_trees
             self.genes_of_primary_trees = self._get_genes_of_primary_trees()
@@ -1413,7 +1414,7 @@ class ProbesetSelector:  # (object)
         This is an interactive plotting function to investigate if the constructed penalty kernels are well chosen.
 
         Note:
-            The green line shows a linear interpolation of the penalty scores which is only an opproximation of the
+            The green line shows a linear interpolation of the penalty scores which is only an approximation of the
             penalty function.
 
         Args:
@@ -1537,50 +1538,73 @@ class ProbesetSelector:  # (object)
 
     def plot_coexpression(
         self,
-        selections: List[Literal["pca", "DE", "marker"]] = None,
+        selections: List[str] = ["final", "pca", "DE", "marker", "pre", "prior"],
         **kwargs,
     ) -> None:
-        """Plot gene correlations of basic selections.
+        """Plot correlation matrix of selected genes
 
-        When plotting for some selection: Print where these genes are used:
-
-            - pca -> first genes on which the forests are trained
-            - DE -> first genes on which the baseline forests are trained
-            - marker -> possible genes that are selected from the marker list
 
         Args:
-            selections: Plot the coexpression of selections based on
+            selections: Plot the coexpression of 
 
-                - 'pca' : pca loadings based selection of prior genes
-                - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
-                - 'marker' : genes from the marker list
+                - 'final' : all selected genes (see :attr:`.ProbesetSelector.probeset`)
+                - 'pca' : selected genes that also occured in the pca based selection
+                - 'DE' : selected genes that also occured in the 1-vs-all DE based selection
+                - 'marker' : selected genes from the marker list
+                - 'pre' : selected genes that were given as pre selected genes
+                - 'prior' : selected genes that were given as prioritized genes
+
             kwargs:
-                Further arguments for :func:`.selection_histogram`.
+                Any keyword argument from :func:`.correlation_matrix`.
 
-        Returns:
-            Figure can be showed (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+        
+            (Takes a few minutes to calculate)        
+        
+            .. code-block:: python
+                    
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selector = sp.se.ProbesetSelector(adata, "celltype", n=30, verbosity=0)
+                selector.select_probeset()
+                
+                selector.plot_coexpression()
+        
+            .. image:: ../../docs/plot_examples/Selector_plot_coexpression.png
+            
+
         """
-        # TODO
-        #   for marker you could use max nr of markers (2?) from each celltype
 
-        SELECTIONS = ["final", "pca", "DE", "marker"]
+        # Supported selections for plotting 
+        SELECTIONS = ["final", "pca", "DE", "marker", "pre", "prior"]
 
         if selections is None:
             selections = SELECTIONS
+
+        # Check selections
+        for selection in selections:
+            if selection not in self.selection:
+                raise ValueError(f"{selection} selection can't be plottet because no results were found.")
+            elif selection not in SELECTIONS:
+                raise ValueError(f"{selection} not in supported selections for plotting.")
+            elif (self.selection[selection] is None) or (len(self.selection[selection]) == 0):
+                print(f"No genes were selected for selection {selection}.")
+                
+        # Throw out selections for which no genes were selected
+        selections = [s for s in selections if (not (self.selection[s] is None)) and (len(self.selection[s]) > 0)]
 
         cor_matrices = {}
         assert isinstance(selections, list)
         for selection in selections:
 
-            # check selection:
-            if selection not in self.selection or selection not in SELECTIONS:
-                raise ValueError(f"{selection} selection can't be plottet because no results were found.")
-
-            # get data of selected genes (overlap between adata and self.selection[selection] and
+            # Get data of selected genes (overlap between adata and self.selection[selection] and
             # self.probeset["selection"]):
             a = self.adata.copy()
-            selected_genes = self.selection[selection].index[self.selection[selection]["selection"]]
+            if isinstance(self.selection[selection],list):
+                selected_genes = self.selection[selection]
+            else:
+                selected_genes = self.selection[selection].index[self.selection[selection]["selection"]]
             selection_mask = a.var_names.isin(selected_genes)
             probeset = self.probeset.index[self.probeset["selection"]]
             probeset_mask = a.var_names.isin(probeset)
@@ -1590,7 +1614,7 @@ class ProbesetSelector:  # (object)
                 print(f"No plot is drawn for {selection} because it contains less than 2 genes. ")
                 continue
 
-            # create correlation matrix
+            # Create correlation matrix
             if issparse(a.X):
                 cor_mat = pd.DataFrame(
                     index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X.toarray(), rowvar=False)
@@ -1600,54 +1624,83 @@ class ProbesetSelector:  # (object)
 
             cor_mat = util.cluster_corr(cor_mat)
             cor_matrices[selection] = cor_mat
+        
+        # Add number of genes in title
+        selections_n_genes = []
+        for selection in selections:
+            n_genes = f" ({cor_matrices[selection].shape[0]} genes)"
+            selections_n_genes.append(selection+n_genes)
+            cor_matrices[selection+n_genes] = cor_matrices[selection]
+            del cor_matrices[selection]
+        
+        pl.correlation_matrix(set_ids=selections_n_genes, cor_matrices=cor_matrices, **kwargs)
 
-        pl.correlation_matrix(set_ids=selections, cor_matrices=cor_matrices, **kwargs)
-
-    def plot_classification_rule_umaps(
+    def plot_clf_genes(
         self,
         basis: int = "X_umap",
         celltypes: Optional[List[str]] = None,
-        till_rank: Optional[int] = 3,
+        till_rank: Optional[int] = 1,
         importance_th: Optional[float] = None,
         add_marker_genes: bool = True,
         neighbors_params: dict = {},
         umap_params: dict = {},
         **kwargs,
     ):
-        """Plot umaps of genes needed for cell type classification of each cell type.
+        """Plot umaps of selected genes needed for cell type classification of each cell type.
 
         Args:
             basis:
-                Name of the ``obsm`` basis to use.
+                Name of the ``obsm`` embedding to use.
             celltypes:
                 Subset of cell types for which to plot decision genes. If `None`, :attr:`celltypes` is used.
             till_rank:
-                 Plot decision genes only up to the given rank of the ranked probeset list.
+                Plot decision genes only up to the given tree rank of the probeset list.
             importance_th:
                 Only plot genes with a tree feature importance above the given threshold.
             add_marker_genes:
                 Whether to add subplots for marker genes from :attr:`marker_list` for each celltype.
+                TODO: what about cell types that only occur in the marker list?
             neighbors_params:
-                Parameters for :meth:`sc.pp.neighbors`.
+                Parameters for :meth:`sc.pp.neighbors`. Only applicable if ``adata.obsm[basis]`` does not exist.
+                TODO: do we rly need that parameter? Would be fine to always expect a pre calculated embedding!
             umap_params:
-                Parameters for :meth:`sc.tl.umap`.
+                Parameters for :meth:`sc.tl.umap`. Only applicable if ``adata.obsm[basis]`` does not exist.
+                TODO: do we rly need that parameter? Would be fine to always expect a pre calculated embedding!
             kwargs:
-                Further arguments for :func:`.selection_histogram`.
+                Keyword arguments of :func:`.selection_histogram`.
 
-        Returns:
-            Figure can be showed (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+        
+            (Takes a few minutes to calculate)        
+        
+            .. code-block:: python
+                    
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selector = sp.se.ProbesetSelector(adata, "celltype", n=30, verbosity=0)
+                selector.select_probeset()
+                
+                selector.plot_clf_genes(n_cols=4,celltypes=["FCGR3A+ Monocytes","Megakaryocytes"])
+        
+            .. image:: ../../docs/plot_examples/Selector_plot_clf_genes.png
+        
+            
+        TODO: this function and pl.clf_genes_umaps need to be tested on all argument combinations + can be optimized.
+        
         """
-        adata = self.adata.copy()
+        adata = self.adata.copy() # TODO: why copy?? should be avoided here... ah okay, because of umap recalc...
 
         # filter rank and importance:
         if till_rank is None:
             till_rank = max(self.selection["forest"]["rank"])
         if importance_th is None:
             importance_th = min(self.selection["forest"]["importance_score"])
-        df = self.selection["forest"][self.selection["forest"]["rank"] <= till_rank][
-            self.selection["forest"]["importance_score"] > importance_th
+        df = self.selection["forest"].loc[(self.selection["forest"]["rank"] <= till_rank) &
+            (self.selection["forest"]["importance_score"] > importance_th)
         ].copy()
+        selected_genes = [g for g in df.index if g in self.probeset[self.probeset["selection"]].index]
+        df = df.loc[selected_genes]
         if len(df) < 1:
             raise ValueError("Filtering for rank and importance score left no genes. Set lower thresholds.")
 
@@ -1655,19 +1708,18 @@ class ProbesetSelector:  # (object)
         if celltypes is None:
             celltypes = self.celltypes
         df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)
-        if add_marker_genes:
+        if add_marker_genes and (self.selection["marker"] is not None):
             df["marker_celltypes"] = [self.selection["marker"]["celltype"][gene] for gene in df.index]
 
         # check if embedding, neighbors, pca already in adata
-        # TODO think about shortening this: always redo umap and neighbors
-        redo_umap = False
-        try:
-            # check params
-            for param, value in adata.uns[basis]["params"].items():
-                if value != umap_params[param]:
-                    redo_umap = True
-        except KeyError:
-            redo_umap = True
+        redo_umap = (adata.obsm is None) or (basis not in adata.obsm)
+        ###try:
+        ###    # check params
+        ###    for param, value in adata.uns[basis]["params"].items():
+        ###        if value != umap_params[param]:
+        ###            redo_umap = True
+        ###except KeyError:
+        ###    redo_umap = True
 
         if redo_umap:
             redo_neighbors = False
@@ -1684,26 +1736,9 @@ class ProbesetSelector:  # (object)
 
             sc.tl.umap(adata, **umap_params)
 
-        df = df.sort_values(by=["rank", "importance_score"])
+        df = df.sort_values(by=["rank", "importance_score"],ascending=[True,False])
 
-        pl.classification_rule_umaps(adata, df, **kwargs)
-
-    def plot_decision_genes(self, add_markers: bool = True, tree_levels: List[int] = [1]) -> None:
-        """Plot umaps of genes that are used for celltype classification.
-
-        Args:
-            add_markers:
-                Also plot genes originating from selection from marker list.
-            tree_levels:
-                In case that genes were added not only based on the best performing tree we can plot more genes.
-        """
-        # TODO: maybe find a better way than this variable (tree_levels) to control this
-        # TODO remove --> now plot classification_rule_umaps
-
-        # check if embedding already in adata
-        # sc.pl.embedding() (wie umap aber alternatives embedding darf schon in adata.uns sein, same basis)
-        # get kwargs
-        # check neighbors und pca
+        pl.clf_genes_umaps(adata, df, **kwargs)
 
     # def plot_tree_performances(self) -> None:
     #     """Plot histograms of tree performances of DE baseline and final forests.
@@ -1723,7 +1758,7 @@ class ProbesetSelector:  # (object)
         ] = None,
         **kwargs,
     ) -> None:
-        """Plot the intersection of different selected gene sets.
+        """Plot the overlap of origins for the selected genes
 
         Args:
            origins:
@@ -1731,18 +1766,31 @@ class ProbesetSelector:  # (object)
 
                     - "pre_selected"   : User defined pre selected genes
                     - "prior_selected" : User defined prior selected genes
-                    - "pca"            : Genes that originate the prior pca based selection
-                    - "DE"             : Genes that occur in DE test when building the reference DE trees
-                    - "DE_1vsall"      : Subset of DE from tests of single cell types vs background
-                    - "DE_specific"    : Subset of DE from tests of single cell types vs subset of background
+                    - "pca"            : Genes that originate from the prior pca based selection
+                    - "DE"             : Genes that occur in the DE test when building the reference DE trees
+                    - "DE_1vsall"      : Subset of "DE" from tests of single cell types vs background
+                    - "DE_specific"    : Subset of "DE" from tests of single cell types vs subset of background
                     - "marker_list"    : Genes that occur in the user defined marker list
 
            **kwargs:
-               Further arguments for :func:`.gene_overlap`.
+               Any keyword argument from :func:`.gene_overlap`.
 
-        Returns:
-            Figure can be shown (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+        
+            (Takes a few minutes to calculate)        
+        
+            .. code-block:: python
+                
+                import spapros as sp    
+                adata = sp.ut.get_processed_pbmc_data()
+                selector = sp.se.ProbesetSelector(adata, "celltype", n=30, verbosity=0, marker_list={"celltypeX": ["PF4"]})
+                selector.select_probeset()
+                
+                selector.plot_gene_overlap()
+        
+            .. image:: ../../docs/plot_examples/Selector_plot_gene_overlap.png
+
 
         """
         ORIGINS: List[
@@ -1760,6 +1808,7 @@ class ProbesetSelector:  # (object)
 
         if not origins:
             origins = ORIGINS
+            origins.remove("DE")
         assert isinstance(origins, list)
 
         probeset_selection = self.probeset[self.probeset["selection"]]

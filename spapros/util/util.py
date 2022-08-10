@@ -177,21 +177,23 @@ def preprocess_adata(
 
 
 def get_expression_quantile(
-    adata: sc.AnnData, q: float = 0.9, normalise: bool = True, log1p: bool = True, zeros_to_nan: bool = False
+    adata: sc.AnnData, q: float = 0.9, normalise: bool = False, log1p: bool = False, zeros_to_nan: bool = False
 ) -> None:
     """Compute each genes q'th quantile on normalised (and log1p) data.
 
     Args:
         adata:
-            AnnData needs to contain raw counts (`adata.X`) and some size factor (`adata.obs['size_factors']`).
+            AnnData object. If ``normalise is True`` we expect raw counts in ``adata.X`` and size factors in 
+            ``adata.obs['size_factors']``.
         q:
-           Value between 0 = :attr:`q` = 1, the quantile(s) to compute.
+            Value between 0 = :attr:`q` = 1, the quantile to compute.
         normalise:
             Normalise data with a.obs['size_factors'].
         log1p:
-            log1p the data to get quantile values of log data.
+            log1p the data to get quantile values of log data. Not necessary if log1p was already applied on 
+            ``adata.X``.
         zeros_to_nan:
-            Don't include zeros into quantile calculation (we might drop this option, it doesn't make sense).
+            Don't include zeros into quantile calculation.
 
     Returns.
         Adds column ``adata.var[f'quantile_{q}']`` or ``adata.var[f'quantile_{} expr > 0']``:
@@ -460,28 +462,54 @@ def plateau_penalty_kernel(
 ) -> Callable:
     """Return penalty function.
 
+    The kernel can be one or two sided (one-sided if either :attr:`x_min` or :attr:`x_max` is `None`).
+    The kernel is 1 between :attr:`x_min` and :attr:`x_max`. If one-sided it's 1 from :attr:`x_min` or till
+    :attr:`x_max`. Outside the defined range the kernal decays with a gaussian function with variance = ``var``.
+
     Args:
         var:
-            Outside the defined range, the kernel decays with a gaussian kernel with variance=:attr:`var`.
+            Outside the defined range, the kernel decays with a gaussian function with variance = ``var``.
         x_min:
             Lower border above which the kernel is 1.
         x_max:
-            Upper boder below which the kernel is 1.
-
-    Notes:
-        The kernel can be one or two sided (one-sided if either :attr:`x_min` or :attr:`x_max` is `None`).
-        The kernel is 1 between :attr:`x_min` and :attr:`x_max`. If one-sided it's 1 from :attr:`x_min` or till
-        :attr`x_max`. Outside the defined range the kernel decays with a gaussian kernel with variance=:attr:`var`.
+            Upper border below which the kernel is 1.
 
     Returns:
         Penalty function.
+        
+        
+    Example:
+    
+        .. code-block:: python
+                
+            import numpy as np
+            import matplotlib.pyplot as plt
+            import spapros as sp
+            
+            penalty_fcts = {
+                "left"  : sp.ut.plateau_penalty_kernel(var=0.5, x_min=2, x_max=None),
+                "right" : sp.ut.plateau_penalty_kernel(var=2, x_min=None, x_max=5),
+                "dual"  : sp.ut.plateau_penalty_kernel(var=[0.5,2], x_min=2, x_max=5),
+            }
+            
+            x = np.linspace(0,10,100)
+            _, axs = plt.subplots(nrows=1,ncols=3,figsize=(10,2))
+            for i, (title, penalty_fct) in enumerate(penalty_fcts.items()):
+                axs[i].plot(x,penalty_fct(x))
+                axs[i].set_title(title)
+            plt.show()        
+    
+        .. image:: ../../docs/plot_examples/Utils_plateau_penalty_kernel.png        
+        
+
+        
     """
 
     if type(var) == list:
         var_l = var[0]
         var_r = var[1]
     else:
-        assert isinstance(var, float)
+        assert isinstance(var, float) or isinstance(var, int)
         var_l = var
         var_r = var
 
