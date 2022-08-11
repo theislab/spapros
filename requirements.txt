@@ -91,7 +91,6 @@ pypi-latest==0.1.2
 pyrsistent==0.18.1
 python-dateutil==2.8.2
 pytz==2022.1
-pywin32==304
 pywinpty==2.0.7
 pyyaml==5.4.1
 pyzmq==23.2.0
