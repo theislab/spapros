@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "spapros"
 version = "0.1.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
-description = "Fully automated spatial transcriptomics probe selection."
+description = "Probe set selection for targeted spatial transcriptomics."
 authors = ["Lukas Heumos <lukas.heumos@posteo.net>", "Louis Kümmerle <louis.kuemmerle@helmholtz-muenchen.de>"]
 license = "MIT"
 readme = "README.rst"
@@ -30,6 +30,14 @@ questionary = "^1.10.0"
 xgboost = "^1.6.1"
 pypi-latest = "^0.1.0"
 "ruamel.yaml" = "^0.17.10"
+jupyter-sphinx = "^0.3.2"
+nox = "^2022.1.7"
+nox-poetry = "^0.9.0"
+pandoc = "^2.1"
+bandit = "1.7.2"
+venndata = "^0.1.0"
+Pillow = "9.0.0"
+UpSetPlot = "^0.6.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.2.4"
@@ -57,6 +65,18 @@ sphinx-click = "^3.0.0"
 types-pkg-resources = "^0.1.3"
 types-requests = "^2.25.0"
 types-attrs = "^19.1.0"
+zipp = "^3.7.0"
+importlib-metadata = "^4.11.2"
+panel = "^0.12.6"
+nbsphinx = "^0.8.8"
+sphinx-gallery = "^0.10.1"
+nbsphinx-link = "^1.3.0"
+jupyter = "^1.0.0"
+ipython = "7.18.1"
+ipykernel = "5.4.3"
+nbconvert = "^6.4.2"
+nox = "^2022.1.7"
+nox-poetry = "^0.9.0"
 
 [tool.poetry.scripts]
 spapros = "spapros.__main__:main"

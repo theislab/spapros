@@ -1,24 +1,48 @@
 from datetime import datetime
+from typing import Any
+from typing import Callable
+from typing import Dict
+from typing import Iterable
+from typing import List
+from typing import Literal
+from typing import Optional
+from typing import Tuple
+from typing import Union
 
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
+from rich.progress import Progress
+from rich.progress import TaskID
 from sklearn.decomposition import SparsePCA
 from spapros.evaluation.evaluation import forest_classifications
 from spapros.util.util import clean_adata
 
 
-def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=[]):
-    """Compute correlations and iteratively penalize genes according max corr with selected genes
+def apply_correlation_penalty(
+    scores: pd.DataFrame, adata: sc.AnnData, corr_penalty: Callable, preselected_genes: list = []
+) -> pd.DataFrame:
+    """Compute correlations and iteratively penalize genes according max corr with selected genes.
 
-    This function is thoroughly tested.
+    Args:
+        scores:
+            Sum of PCA loading variance for each gene. No gene in preselected_genes should occur in
+            :attr:`scores.index`.
+        adata:
+            Data with log normalised counts in adata.X.
+        corr_penalty:
+            Function that maps values from [0,1] to [0,1]. It describes an iterative penalty function
+            that is applied on pca selected genes. The highest correlation with already selected genes
+            to the next selected genes are penalized according the given function. (max correlation is
+            recomputed after each selected gene).
+        preselected_genes:
+            Pre selected genes (these will also have the highest ranking in the final list).
 
-    TODO: write docstring
-
-    scores: pd.DataFrame
-        no gene in preselected_genes should occur in scores.index
     """
+    #     TODO: proofread dodstring
+    #     Note that the param preselected_genes is never set!
+    #     This function is thoroughly tested.
 
     penalized_scores = scores.copy()
 
@@ -49,19 +73,21 @@ def apply_correlation_penalty(scores, adata, corr_penalty, preselected_genes=[])
     return penalized_scores
 
 
-def apply_penalties(scores, adata, penalty_keys=[]):
-    """
-    adata: AnnData
-        contains penalty_keys
-    scores: pd.DataFrame
-        index: genes, any columns. Values in a row are penalized in the same way
-    penalty_keys: list of strs
-        columns in adata.var containing penalty factors
+def apply_penalties(scores: pd.DataFrame, adata: sc.AnnData, penalty_keys: list = []) -> pd.DataFrame:
+    """Multipy penalty scores with the data.
+
+    Args:
+        scores:
+            Dataframe with genes as index and columns with any name containing penalty scores. Values in a row are
+            penalized in the same way.
+        adata:
+            Data with log normalised counts in adata.X and columns :attr:`penalty_keys`in adata.var.
+        penalty_keys:
+            List of the columns in adata.var containing penalty factors.
 
     Returns
-    -------
-    pd.DataFrame
-        scores multiplied with each gene's penalty factors
+        pd.DataFrame
+            scores multiplied with each gene's penalty factors
     """
     s = scores
     penalty = pd.DataFrame(
@@ -73,49 +99,60 @@ def apply_penalties(scores, adata, penalty_keys=[]):
 
 
 def select_pca_genes(
-    adata,
-    n,
-    variance_scaled=False,
-    absolute=True,
-    n_pcs=20,
-    penalty_keys=[],
-    corr_penalty=None,
-    inplace=True,
-):
-    """Select n features based on pca loadings
+    adata: sc.AnnData,
+    n: int,
+    variance_scaled: bool = False,
+    absolute: bool = True,
+    n_pcs: int = 20,
+    penalty_keys: list = [],
+    corr_penalty: Callable = None,
+    inplace: bool = True,
+    progress: Optional[Progress] = None,
+    level: int = 1,
+    verbosity: int = 2,
+) -> pd.DataFrame:
+    """Select n features based on pca loadings.
 
-    Arguments
-    ---------
-    adata: AnnData
-        log normalised data
-    n: int
-        number of selected features
-    variance_scaled: bool
-        If True loadings are defined as eigenvector_component * sqrt(eigenvalue).
-        If False loadings are defined as eigenvector_component.
-    absolute: bool
-        Take absolute value of loadings.
-    n_pcs: int
-        number of PCs used to calculate loadings sums.
-    penalty_keys: list of strs
-        List of keys for columns in adata.var that are multiplied with the scores
-    corr_penalty: function
-        Function that maps values from [0,1] to [0,1]. It describes an iterative penalty function
-        that is applied on pca selected genes. The highest correlation with already selected genes
-        to the next selected genes are penalized according the given function. (max correlation is
-        recomputed after each selected gene)
-    inplace: bool
-        Save results in adata.var or return dataframe
+    Args:
+        adata:
+            Data with log normalised counts in adata.X.
+        n:
+            Number of selected features.
+        variance_scaled:
+            If `True`, loadings are defined as `eigenvector_component * sqrt(eigenvalue)`.
+            If False loadings are defined as eigenvector_component.
+        absolute:
+            Take absolute value of loadings.
+        n_pcs:
+            Number of PCs used to calculate loadings sums.
+        penalty_keys:
+            List of keys for columns in adata.var that are multiplied with the scores.
+        corr_penalty:
+            Function that maps values from [0,1] to [0,1]. It describes an iterative penalty function
+            that is applied on pca selected genes. The highest correlation with already selected genes
+            to the next selected genes are penalized according the given function. (max correlation is
+            recomputed after each selected gene).
+        inplace:
+            Save results in :attr:`adata.var` or return dataframe.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        level:
+            Progress bar level.
+        verbosity:
+            Verbosity level.
 
-    Returns
-    -------
-    if not inplace:
-        pd.DataFrame (like adata.var) with columns
-        - 'selection': bool indicator of selected genes
-        - 'selection_score': pca loadings based score of each gene
-        - 'selection_ranking': ranking according selection scores
-    if inplace:
-        Save results in adata.var[['selection','selection_score','selection_ranking']]
+    Returns:
+
+        - if not inplace:
+            pd.DataFrame (like adata.var) with columns:
+
+                - 'selection': bool indicator of selected genes
+                - 'selection_score': pca loadings based score of each gene
+                - 'selection_ranking': ranking according selection scores
+
+        - if inplace:
+            Save results in `adata.var[['selection','selection_score','selection_ranking']]`.
+
     """
 
     a = adata.copy()
@@ -124,6 +161,9 @@ def select_pca_genes(
         n_pcs = a.n_vars
 
     clean_adata(a)
+
+    if progress and 2 * verbosity >= level:
+        pca_task = progress.add_task("Select pca genes...", total=1, level=1)
 
     sc.pp.pca(
         a,
@@ -134,6 +174,9 @@ def select_pca_genes(
         return_info=True,
         copy=False,
     )
+
+    if progress and 2 * verbosity >= level:
+        progress.advance(pca_task)
 
     loadings = a.varm["PCs"].copy()[:, :n_pcs]
     if variance_scaled:
@@ -165,19 +208,30 @@ def select_pca_genes(
         return selection
 
 
-def marker_scores(adata, obs_key="cell_types", groups="all", reference="rest", rankby_abs=False):
-    """Compute marker scores for genes in adata
+def marker_scores(
+    adata: sc.AnnData,
+    obs_key: str = "celltype",
+    groups: Union[Literal["all"], Iterable[str]] = "all",
+    reference: str = "rest",
+    rankby_abs: bool = False,
+) -> pd.DataFrame:
+    """Compute marker scores for genes in adata.
 
-    adata: AnnData
-        log normalised data
-    obs_key: str
-        column name of adata.obs for which marker scores are calculated
-    groups, reference, rankby_abs: see sc.tl.rank_genes_groups()
+    Args:
+        adata:
+            Data with log normalised counts in adata.X.
+        obs_key:
+            Column name of adata.obs for which marker scores are calculated.
+        groups:
+            See sc.tl.rank_genes_groups().
+        reference:
+            See sc.tl.rank_genes_groups().
+        rankby_abs:
+            See sc.tl.rank_genes_groups().
 
-    Returns
-    -------
-    pd.DataFrame
-        index are genes as in adata.var.index, columns are names of groups in adata.obs[obs_key]
+    Returns:
+        pd.DataFrame:
+            Index are genes as in adata.var.index, columns are names of groups in adata.obs[obs_key].
     """
     df = pd.DataFrame(index=adata.var.index)
     adata_ = adata if isinstance(reference, str) else adata[adata.obs[obs_key].isin(reference)]
@@ -207,37 +261,55 @@ def marker_scores(adata, obs_key="cell_types", groups="all", reference="rest", r
 
 
 def select_DE_genes(
-    adata,
-    n,
-    per_group=False,
-    obs_key="cell_types",
-    penalty_keys=[],
-    groups="all",
-    reference="rest",
-    rankby_abs=False,
-    inplace=True,
-):
-    """Select genes based on wilxocon rank genes test
+    adata: sc.AnnData,
+    n: int,
+    per_group: bool = False,
+    obs_key: str = "celltype",
+    penalty_keys: list = [],
+    groups: Union[Literal["all"], Iterable[str]] = "all",
+    reference: str = "rest",
+    rankby_abs: bool = False,
+    inplace: bool = True,
+    progress: Optional[Progress] = None,
+    verbosity: int = 2,
+    level: int = 2,
+    task: str = "Select DE genes...",
+) -> pd.DataFrame:
+    """Select genes based on wilxocon rank genes test.
 
-    adata: AnnData
-        log normalised data
-    n: int
-        nr of genes to selected (in total if not per_group else per group)
-    per_group: bool
-        Select `n` genes per group of adata.obs[obs_key] (default: False). Note that the same gene can be selected for
-        multiple groups.
-    obs_key: str
-        column name of adata.obs for which marker scores are calculated
-    penalty_keys: list of strs
-        penalty factor for gene selection.
-    groups, reference, rankby_abs: see sc.tl.rank_genes_groups()
-        we extended `reference` also to lists of reference groups though. Note that in case of providing such list you
-        need to include all elements of `groups` in `reference`.
+    Args:
+        adata:
+            Data with log normalised counts in `adata.X`.
+        n: int
+            Number of genes to selected (in total if not :attr:`per_group` else per group).
+        per_group:
+            Select :attr:`n` genes per group of adata.obs[obs_key] (default: False). Note that the same gene can be
+            selected for multiple groups.
+        obs_key:
+            Column name of `adata.obs` for which marker scores are calculated.
+        penalty_keys:
+            Penalty factor for gene selection.
+        groups:
+            See sc.tl.rank_genes_groups().
+        reference:
+            See sc.tl.rank_genes_groups() but extended to lists of reference groups. Note that in case of providing
+            such a list you need to include all elements of `groups` in `reference`.
+        rankby_abs:
+            See :meth:`sc.tl.rank_genes_groups()`.
+        inplace:
+            Save results in :attr:`adata.var` or return dataframe.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown.
+        verbosity:
+            Verbosity level.
+        level:
+            Progress bar level.
+        task:
+            Description of progress task.
 
-    Returns
-    -------
-    pd.DataFrame
-        index are genes as in adata.var.index, bool column: 'selection'
+    Returns:
+        pd.DataFrame:
+            Index are genes as in `adata.var.index`. It contains a bool column named 'selection'.
     """
 
     a = adata
@@ -253,13 +325,19 @@ def select_DE_genes(
     scores = marker_scores(a, obs_key=obs_key, groups=groups, reference=reference, rankby_abs=rankby_abs)
     scores = apply_penalties(scores, a, penalty_keys=penalty_keys)
     if per_group:
+        if progress and 2 * verbosity >= level:
+            de_task = progress.add_task(task, total=len(scores.columns), level=level)
         for group in scores.columns:
             scores.loc[scores.index.difference(scores.nlargest(n, group).index), group] = 0
+            if progress and 2 * verbosity >= level:
+                progress.advance(de_task)
         genes = scores.loc[(scores > 0).any(axis=1)].index.tolist()
     else:
         genes = []
         groups_of_genes = {}
         tmp_scores = scores.copy()
+        if progress and 2 * verbosity >= level:
+            de_task = progress.add_task("Select DE genes...", total=n, level=level)
         while len(genes) < n:
             for group in scores.columns:
                 gene = tmp_scores[group].idxmax()
@@ -269,9 +347,11 @@ def select_DE_genes(
                 elif gene in genes:
                     groups_of_genes[gene].append(group)
             tmp_scores = scores.loc[~scores.index.isin(genes)].copy()
+            if progress and 2 * verbosity >= level:
+                progress.advance(de_task)
         scores.loc[~scores.index.isin(list(groups_of_genes.keys()))] = 0
-        for gene, groups in groups_of_genes.items():
-            scores.loc[gene, [group for group in scores.columns if group not in groups]] = 0
+        for gene_g, groups in groups_of_genes.items():
+            scores.loc[gene_g, [group for group in scores.columns if group not in groups]] = 0
     selection.loc[genes, "selection"] = True
     selection[scores.columns] = scores
     if inplace:
@@ -286,8 +366,31 @@ def select_DE_genes(
 # Toroughly tested.
 
 
-def outlier_mask(df, n_stds=1.0, min_outlier_dif=0.02, min_score=0.9):
-    """Get mask over df.index based on values in df columns"""
+def outlier_mask(
+    df: pd.DataFrame, n_stds: float = 1.0, min_outlier_dif: float = 0.02, min_score: float = 0.9
+) -> pd.DataFrame:
+    """Get mask over df.index based on values in df columns.
+
+    Args:
+        df:
+            Dataframe where columns are the celltypes of interest and the index are potential outlier celltypes for a
+            given celltype of interest.
+        n_stds:
+            Celltypes are considered as outliers if their specificity is `n_stds` standard deviations below the mean
+            specificity.
+        min_outlier_dif:
+            Lower bound of `n_stds` x standard_deviation in the outlier criterion
+        min_score:
+            Minimal specificty score to not classify a reference celltype as outlier.
+
+    Returns:
+        pd.DataFrame:
+            Same shape as input. The values are boolean indicating whether criteria 1 (mean specificity) and 2 (outlier)
+            or criterion 3 (min specificity)3 is fullfilled.
+
+    """
+    # TODO proofread docstring
+
     crit1 = df < (df.mean(axis=0) - (n_stds * df.std(axis=0))).values[np.newaxis, :]
     crit2 = df < (df.mean(axis=0) - min_outlier_dif).values[np.newaxis, :]
     crit3 = df < min_score
@@ -295,104 +398,127 @@ def outlier_mask(df, n_stds=1.0, min_outlier_dif=0.02, min_score=0.9):
 
 
 def add_DE_genes_to_trees(
-    adata,
-    tree_results,
-    ct_key="Celltypes",
-    n_DE=1,
-    min_score=0.9,
-    n_stds=1.0,
-    penalty_keys=[],
-    min_outlier_dif=0.02,
-    n_terminal_repeats=3,
-    max_step=12,
-    tree_clf_kwargs={},
-    verbosity=1,
-    save=None,
-    return_clfs=False,
-):
-    """Improve decision trees by adding DE genes wrt reduced sets of reference celltypes
+    adata: sc.AnnData,
+    tree_results: list,
+    ct_key: str = "Celltypes",
+    n_DE: int = 1,
+    min_score: float = 0.9,
+    n_stds: float = 1.0,
+    penalty_keys: list = [],
+    min_outlier_dif: float = 0.02,
+    n_terminal_repeats: int = 3,
+    max_step: int = 12,
+    tree_clf_kwargs: dict = {},
+    verbosity: int = 1,
+    save: Union[str, bool] = False,
+    return_clfs: bool = False,
+    progress: Optional[Progress] = None,
+    level: int = 2,
+    baseline_task=None,
+) -> Union[
+    Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], pd.DataFrame, pd.DataFrame],  # return_clfs = True
+    Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], pd.DataFrame],  # return_clfs = False
+]:
+    """Improve decision trees by adding DE genes wrt reduced sets of reference celltypes.
 
-    Typically we train trees on genes preselected by simple 1-vs-all differential expression.
-    We now test for the best tree of each celltype of interest if some other celltype is hard to distinguish.
-    If that's the case we add DE genes that are calculated in a 1-vs-"hard to distinguish celltypes" fashion.
-    The adding procedure is as follows:
-    - For each tree for a celltype of interest (ct_oi) we take specificity scores of all other celltypes (ct_others)
-    - Based on those scores we find celltypes that are low specificity outliers.
-    - we consider celltypes as outliers if
-        - specificity < `min_score` or
-        - (specificity < mean_specificy - `n_stds` x standard deviation) && (specificity < mean_specificy - min_outlier_dif)
-    - if we have outliers: add `n_DE` genes from a DE test ct_oi-vs-outliers
-    - recalculate trees and repeat
-    - stop criteria: either no more outliers, or the same outliers occured in the last `n_terminal_repeats` (each tree is
-                     stopped individually), or `max_step` is reached.
+    Notes:
+        Typically we train trees on genes preselected by simple 1-vs-all differential expression.
+        We now test for the best tree of each celltype of interest if some other celltype is hard to distinguish.
+        If that's the case we add DE genes that are calculated in a 1-vs-"hard to distinguish celltypes" fashion.
+        The adding procedure is as follows:
 
-    Arguments
-    ---------
-    adata: AnnData
-    tree_results: list
-        Results of forest_classifications()
-    ct_key: str
-        adata.obs key with celltype annotations
-    n_DE: int
-        Number of DE genes added per tree and iteration
-    min_score: float
-        Minimal specificty score to not classify a reference celltype as outlier.
-    n_stds: float
-        Celltypes are considered as outliers if their specificity is `n_stds` standard deviations below the mean specificity
-    penalty_keys: list of strs
-        adata.obs keys for penalties applied to DE genes selection
-    min_outlier_dif: float
-        Lower bound of `n_stds` x standard_deviation in the outlier criterion
-    n_terminal_repeats: int
-        If the same outliers are identified `n_terminal_repeats` times for a given celltype then optimisation for that celltype
-        is stopped
-    max_step: int
-        Maximal number of iterations as a manual step threshold also to stop the while loop in case of unexpected behavior.
-        Unexpected behavior really shouldn't happen but we can't say that for sure.
-    tree_clf_kwargs: dict
-        Keyword arguments that are passed to forest_classifications(). The same arguments that were used to
-        compute `tree_results` should be used here.
-    verbosity: int
-        verbosity level
-    save: str
-        Path to save the final classification forest
-    return_clfs: bool
-        Wether to return the sklearn tree classifiers of the final retrained trees
+            - For each tree for a celltype of interest (ct_oi) we take specificity scores of all other celltypes
+            (ct_others)
+            - Based on those scores we find celltypes that are low specificity outliers.
+            - we consider celltypes as outliers if
 
-    Returns
-    -------
-    forest_results: list
-        Output of forest_classification() on the final set of genes (initial genes + added DE genes)
-    forest_classifiers (if `return_clfs`):
-        dict: keys are celltypes, values are list of sklearn tree classifiers.
-    DE_info: pd.DataFrame
-        Infos of added DE genes:
-        - index: added genes, sorted by 'rank' (no sorting within the same rank)
-        - columns:
-            - column = 'step': iteration step where DE gene was selected
-            - column.names = "celltypes": float DE scores for each selected gene (the score is only > 0 if a gene was selected
-                                          for a given celltype)
-            - column.names = "celltypes (ref)": if celltype was in the reference of a given DE test (these might include
-                                                pooled references of multiple tests which yielded the same selected DE gene)
+               - specificity < :attr:`min_score` or
+               - (specificity < mean_specificy - `n_stds` x standard deviation) && (specificity < mean_specificy -
+               min_outlier_dif)
+
+            - if we have outliers: add :attr:`n_DE` genes from a DE test ct_oi-vs-outliers
+            - recalculate trees and repeat
+            - stop criteria: either no more outliers, or the same outliers occured in the last
+            :attr:`n_terminal_repeats` (each tree is stopped individually), or :attr:`max_step` is reached.
+
+    Args:
+        adata:
+            Data with log normalised counts in `adata.X`.
+        tree_results:
+            Results of :meth:`ev.forest_classifications()`.
+        ct_key:
+            Key of adata.obs with celltype annotations.
+        n_DE:
+            Number of DE genes added per tree and iteration.
+        min_score:
+            Minimal specificty score to not classify a reference celltype as outlier.
+        n_stds:
+            Celltypes are considered as outliers if their specificity is :attr:`n_stds` standard deviations below the
+            mean specificity.
+        penalty_keys:
+            Keys of adata.obs for penalties applied to DE genes selection.
+        min_outlier_dif:
+            Lower bound of :attr:`n_stds` x standard_deviation in the outlier criterion.
+        n_terminal_repeats:
+            If the same outliers are identified :attr:`n_terminal_repeats` times for a given celltype then optimisation
+            for that celltype is stopped.
+        max_step:
+            Maximal number of iterations as a manual step threshold also to stop the while loop in case of unexpected
+            behavior.
+            Unexpected behavior really shouldn't happen but we can't say that for sure.
+        tree_clf_kwargs:
+            Keyword arguments that are passed to :meth:`ev.forest_classifications()`. The same arguments that were used to
+            compute :attr:`tree_results` should be used here.
+        verbosity:
+            Verbosity level.
+        save:
+            Path to save the final classification forest.
+        return_clfs:
+            Wether to return the sklearn tree classifiers of the final retrained trees.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown for each step of adding genes from reference
+            trees.
+        level:
+            Progress bar level.
+        baseline_task:
+            ID of the supertask.
+
+    Returns:
+        forest_results: list
+            Output of forest_classification() on the final set of genes (initial genes + added DE genes).
+        forest_classifiers (if :attr:`return_clfs`):
+            dict: keys are celltypes, values are list of sklearn tree classifiers.
+        DE_info: pd.DataFrame
+            Infos of added DE genes:
+
+                - index: added genes, sorted by 'rank' (no sorting within the same rank)
+                - columns:
+
+                    - column = 'step': iteration step where DE gene was selected
+                    - column.names = "celltypes": float DE scores for each selected gene (the score is only > 0 if a
+                      gene was selected for a given celltype)
+                    - column.names = "celltypes (ref)": if celltype was in the reference of a given DE test (these might
+                      include pooled references of multiple tests which yielded the same selected DE gene)
     """
-    
+
     # Throw out "return_clfs" from forest_kwargs since we set them to False except for the last forest
     if "return_clfs" in tree_clf_kwargs:
-        del tree_clf_kwargs["return_clfs"]    
-    
+        del tree_clf_kwargs["return_clfs"]
+
     # Note: in specificities we have celltype keys and dataframes with reference celltypes as index
     # the ct keys might be fewer and in a different order then the reference cts in the index
-    # - we want to create an "outlier" dataframe with symmetric celltype order in index (references) and columns (celltypes of
-    #   interest)
-    # - therefore we need to add columns that are actually not used to identify outliers (we just set the performance to 1 in
-    #   those cols)
-    # - the design could have been different (but i first only regarded the case where cts_oi and reference_cts were the same...)
+    # - we want to create an "outlier" dataframe with symmetric celltype order in index (references) and columns
+    #   (celltypes of interest)
+    # - therefore we need to add columns that are actually not used to identify outliers (we just set the performance
+    #   to 1 in those cols)
+    # - the design could have been different (but i first only regarded the case where cts_oi and reference_cts were the
+    #   same...)
     init_summary, specificities, im = tree_results
     all_celltypes = specificities[list(specificities)[0]].index.tolist()
     # all_celltypes = [ct for ct in specificities]
 
-    # Get all input genes of the initial forest training (the `genes` variable will be updated with new selected DE genes each
-    # iteration)
+    # Get all input genes of the initial forest training (the `genes` variable will be updated with new selected DE
+    # genes each iteration)
     genes = im[list(im)[0]].index.tolist()
 
     # Specificities table (True negative rates) of best trees
@@ -404,8 +530,8 @@ def add_DE_genes_to_trees(
     # TN_rates = pd.concat([d['0'] for ct,d in specificities.items()],axis=1)
     # TN_rates.columns = [ct for ct in all_celltypes]
 
-    # Get outlier mask. Note the columns are the celltypes of interest, and the index are potential outlier celltypes for a
-    # given celltype of interest
+    # Get outlier mask. Note the columns are the celltypes of interest, and the index are potential outlier celltypes
+    # for a given celltype of interest
     outliers = outlier_mask(TN_rates, n_stds, min_outlier_dif, min_score)
     celltypes = outliers.columns[outliers.any(axis=0)].tolist()
 
@@ -418,12 +544,16 @@ def add_DE_genes_to_trees(
 
     step = 1
 
-    if verbosity > 0:
-        print("Add DE genes with specific reference groups to improve tree performance...")
+    # if verbosity > 0:
+    #     print("Add DE genes with specific reference groups to improve tree performance...")
 
+    if progress and 2 * verbosity >= level:
+        DE_tree_task = progress.add_task(
+            "Iteratively add DE genes to DE_baseline forest...", total=max_step, level=level
+        )
     while (outliers.values.sum() > 0) and celltypes and (step < max_step + 1):
-        if verbosity > 1:
-            print(f"  Iteration step {step}:")
+        # if verbosity > 1:
+        #     print(f"  Iteration step {step}:")
         # Get mapping of each celltype to its test reference group
         reference = outliers.copy()
         np.fill_diagonal(reference.values, True)
@@ -432,11 +562,15 @@ def add_DE_genes_to_trees(
         }
 
         # DE selection for celltypes with outliers
-        if verbosity > 1:
-            print("\t Select DE genes...")
+        # if verbosity > 1:
+        #     print("\t Select DE genes...")
+        if progress and 2 * verbosity >= level + 1:
+            select_DE_task = progress.add_task(
+                "Select DE genes for celltypes with outliers...", total=len(ct_to_reference), level=level + 1
+            )
         for ct in ct_to_reference:
-            if verbosity > 2:
-                print(f"\t ...for celltype {ct} with reference group {ct_to_reference[ct]}")
+            # if verbosity > 2:
+            #     print(f"\t ...for celltype {ct} with reference group {ct_to_reference[ct]}")
             df_ct_DE = select_DE_genes(
                 adata[:, [g for g in adata.var_names if not (g in genes)]],
                 n_DE,
@@ -447,6 +581,10 @@ def add_DE_genes_to_trees(
                 reference=ct_to_reference[ct],
                 rankby_abs=False,
                 inplace=False,
+                progress=progress,
+                level=level + 2,
+                task=f"Select DE genes for {ct}...",
+                verbosity=verbosity,
             )
             if verbosity > 2:
                 print(f"\t\t Selected: {df_ct_DE[df_ct_DE['selection']].index.tolist()}")
@@ -464,13 +602,16 @@ def add_DE_genes_to_trees(
             DE_info.loc[df_ct_DE.index, df_ct_DE.columns] = df_ct_DE
             DE_info.loc[df_ct_DE.index, "step"] = step
 
+            if progress and verbosity > 1:
+                progress.advance(select_DE_task)
+
         new_genes = DE_info.loc[~DE_info.index.isin(genes)].index.tolist()
         genes += new_genes
 
         # Retrain forests
-        if verbosity > 1:
-            print(f"\t Train decision trees on celltypes:\n\t\t {celltypes}")
-        _, specificities, _ = forest_classifications(
+        # if verbosity > 1:
+        #     print(f"\t Train decision trees on celltypes:\n\t\t {celltypes}")
+        *_, specificities, _ = forest_classifications(
             adata,
             genes,
             celltypes=celltypes,
@@ -480,9 +621,12 @@ def add_DE_genes_to_trees(
             **tree_clf_kwargs,
             verbosity=verbosity,
             return_clfs=False,
+            progress=progress,
+            level=level + 1,
+            task="Train forest with added DE genes...",
         )
-        if verbosity > 1:
-            print("\t\t Training finished.")
+        # if verbosity > 1:
+        #     print("\t\t Training finished.")
 
         if verbosity > 2:
             print("\t Identify outliers with new trees...")
@@ -502,12 +646,21 @@ def add_DE_genes_to_trees(
 
         step += 1
 
+        if progress and 2 * verbosity >= level:
+            progress.advance(DE_tree_task)
+
+    if progress and 2 * verbosity >= level:
+        progress.update(DE_tree_task, completed=3)
+
+    if progress and 2 * verbosity >= level - 1 and baseline_task:
+        progress.advance(baseline_task)
+
     # Sort DE info
     DE_info = DE_info.sort_values("step")
 
     # Train final forest on all celltypes
-    if verbosity > 1:
-        print("Train final trees on all celltypes, now with the added genes...")
+    # if verbosity > 1:
+    #     print("Train final trees on all celltypes, now with the added genes...")
     celltypes = init_summary.index.tolist()
 
     forest_results = forest_classifications(
@@ -520,15 +673,21 @@ def add_DE_genes_to_trees(
         **tree_clf_kwargs,
         verbosity=verbosity,
         return_clfs=return_clfs,
+        progress=progress,
+        level=level,
+        task="Train final baseline forest on all celltypes...",
     )
     if return_clfs:
-        results, tree_clfs = forest_results
+        assert isinstance(forest_results, tuple)
+        results = forest_results[0]
+        tree_clfs = forest_results[1]
         summary, ct_spec_summary, im = results
     else:
+        assert isinstance(forest_results, list)
         summary, ct_spec_summary, im = forest_results
 
-    if verbosity > 1:
-        print("\t Finished...")
+        # if verbosity > 1:
+        #     print("\t Finished...")
         if save:
             print(f"\t Results saved at {save}")
 
@@ -552,92 +711,126 @@ def add_DE_genes_to_trees(
 
 
 def add_tree_genes_from_reference_trees(
-    adata,
-    tree_results,
-    ref_tree_results,
-    ct_key="Celltypes",
-    ref_celltypes="all",
-    n_max_per_it=5,
-    n_max=None,
-    performance_th=0.02,
-    importance_th=0,
-    verbosity=1,
-    max_step=12,
-    save=None,
-    tree_clf_kwargs={},
-    return_clfs=False,
-):
-    """Add markers till reaching classification performance of reference
+    adata: sc.AnnData,
+    tree_results: List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]],
+    ref_tree_results: List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]],
+    ct_key: str = "Celltypes",
+    ref_celltypes: Union[str, list] = "all",
+    n_max_per_it: int = 5,
+    n_max: int = None,
+    performance_th: float = 0.02,
+    importance_th: float = 0,
+    verbosity: int = 1,
+    max_step: int = 12,
+    save: Union[str, bool] = False,
+    tree_clf_kwargs: dict = {},
+    return_clfs: bool = False,
+    final_forest_task: Optional[TaskID] = None,
+    progress: Optional[Progress] = None,
+    level: int = 2,
+    task: str = "Iteratively add genes from DE_baseline_forest...",
+) -> Union[
+    Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], list],  # len(f1_diffs) == 0 && return_clfs=True
+    Tuple[
+        pd.DataFrame, Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]
+    ],  # (len(f1_diffs) == 0 && return_clfs=False) | return_clfs=False
+    Tuple[List[Union[pd.DataFrame, Dict[str, pd.DataFrame]]], dict],  # return_clfs=True
+]:
+    """Add markers till reaching classification performance of reference.
 
-    Classification trees are given for the pre selected genes and a reference. Classification performance and
-    the feature importance of the reference trees are used to add markers.
-    Markers are added according the following procedure:
-    - take best tree of each celltype from `tree_results` (trees_1) and `ref_tree_results` (trees_2) respectively
-    - whenever we retrain trees (for checking the performance after adding genes) we train on all genes in `tree_results` and the
-      already iteratively added new genes from trees_2
-    - each step we add 1 gene per celltype from trees_2 for those celltypes with: performance difference(trees_2 - trees_1) >
-      performance_th
-    - Added genes are chosen according the feature importance in trees_2
-    - If the same gene occurs in more than one tree of trees_2 the importance is summed over the multiple celltypes and if the
-      importance of the multi occuring gene is the highest, then only this one gene is added for the multiple celltypes
-    - additionally we only add `n_max_per_it` genes per step
+    Notes:
+        Classification trees are given for the pre selected genes and a reference. Classification performance and
+        the feature importance of the reference trees are used to add markers.
+        Markers are added according the following procedure:
+            - Take best tree of each celltype from :attr:`tree_results` (trees_1) and :attr:`ref_tree_results` (trees_2)
+            respectively.
+            - Whenever we retrain trees (for checking the performance after adding genes) we train on all genes in
+            :attr:`tree_results` and the already iteratively added new genes from trees_2.
+            - At each step we add 1 gene per celltype from trees_2 for those celltypes with: performance
+            difference(trees_2 - trees_1) > :attr:`performance_th`.
+            - Added genes are chosen according the feature importance in trees_2.
+            - If the same gene occurs in more than one tree of trees_2 the importance is summed over the multiple
+            celltypes and if the importance of the multi occuring gene is the highest, then only this one gene is added
+            for the multiple celltypes.
+            - Additionally we only add :attr:`n_max_per_it` genes per step.
 
+    Args:
+        adata:
+            Data with log normalised counts in `adata.X`.
+        tree_results:
+            Info of trees that we want to improve. List of output variables of the function
+            :meth:`ev.forest_classifications()`.
+            Note that tree_results include the info on which genes the trees were trained. We still allow all genes for
+            the updated table, not only those that are in the initial best trees.
+        ref_tree_results:
+            Like :attr:`tree_results` but for reference trees.
+        ct_key:
+            Key of adata.obs with celltype annotations.
+        ref_celltypes:
 
-    Arugments
-    ---------
-    adata: AnnData
-    tree_results: list
-        Info of trees that we want to improve. List of output variables of the function forest_classifications().
-        Note that tree_results include the info on which genes the trees were trained. We still allow all genes for
-        the updated table, not only those that are in the initial best trees.
-    ref_tree_results: list
-        Like `tree_results` but for reference trees.
-    ct_key: str
-    ref_celltypes: str or list
-    n_max_per_it: int
-        Add `n_max_per_it` genes per iteration. In each iteration tree_classifications will be calculated.
-        Note that per celltype only one gene per iteration is added.
-        TODO: check if this parameter works, and eventually fix the bug (i think it actually works, thought there is
-        a bug since the number of potential markers dropped more than difference of n_max_per_it, but this can be the
-        case when we reach the wanted classification performance for several celltypes)
-    n_max: int
-        Limit the upper number of added genes
-    performance_th: float
-        Further markers are only added for celltypes that have a performance difference above performance_th compared to
-        the reference performance
-    importance_th: float
-        Only reference genes with at least importance_th as feature importance in the reference tree are added as markers.
-        TODO: We're working with a relative importance measure here. An absolute value could be better.
-              (If classification is bad for a given celltype then useless genes have a high importance)
-    verbosity: int
-    max_step: int
-        Number of maximal iteration steps.
-    save: str
-        path to save final forest results
-    TODO: add Arguments for kwargs for forest_calssifications()
-          (it's mainly about subsample=1000,test_subsample=3000 - but it's probably best to also include n_trees and
-          ref_celltypes!!!) ... ok n_trees is also in there now - don't know about ref_celltypes
-    tree_clf_kwargs: dict
-        Keyword arguments that are passed to forest_classifications(). The same arguments that were used to
-        compute `tree_results` should be used here.
-    return_clfs: bool
-        Wether to return the sklearn tree classifiers of the final retrained trees
+        n_max_per_it:
+            Add :attr:`n_max_per_it` genes per iteration. In each iteration tree classifications will be calculated.
+            Note that per celltype only one gene per iteration is added.
+        n_max:
+            Limit the upper number of added genes.
+        performance_th:
+            Further markers are only added for celltypes that have a performance difference above :attr:`performance_th`
+            compared to the reference performance.
+        importance_th:
+            Only reference genes with at least :attr:`importance_th` as feature importance in the reference tree are
+            added as markers.
+        verbosity:
+            Verbosity level.
+        max_step:
+            Number of maximal iteration steps.
+        save:
+            Path to save final forest results.
+        tree_clf_kwargs:
+            Keyword arguments that are passed to :meth:`ev.forest_classifications()`. The same arguments that were used
+            to compute :attr:`tree_results` should be used here.
+        return_clfs:
+            Wether to return the sklearn tree classifiers of the final retrained trees.
+        final_forest_task:
+            :attr:`Task_ID` of taks of progress for final forest training.
+        progress:
+            :attr:`rich.Progress` object if progress bars should be shown for each step of adding genes from reference
+            trees.
+        level:
+            Progress bar level.
+        task:
+            Description of progress task.
 
-    Returns
-    -------
-    Results of the final trees trained on union of old genes and new markers
-        (results are in the form of the output from forest_classifications())
-    forest_classifiers (if `return_clfs`):
-        dict: keys are celltypes, values are list of sklearn tree classifiers.
+    Returns:
+        object:
+            Results of the final trees trained on union of old genes and new markers
+            (results are in the form of the output from :meth:`ev.forest_classifications()`)
+        dict (if `return_clfs`):
+            Forest classifiers. Keys are celltypes, values are list of sklearn tree classifiers.
 
     """
-    
+
+    #  TODO:
+    #   - check if the parameter n_max_per_it works, and eventually fix the bug (i think it actually works, thought there is
+    #     a bug since the number of potential markers dropped more than difference of n_max_per_it, but this can be the
+    #     case when we reach the wanted classification performance for several celltypes)
+    #   - write docstring for ref_celltypes
+    #   - importance_th: We're working with a relative importance measure here. An absolute value could be better.
+    #     (If classification is bad for a given celltype then useless genes have a high importance)
+    #   - add Arguments for kwargs for forest_calssifications()
+    #     (it's mainly about subsample=1000,test_subsample=3000 - but it's probably best to also include n_trees and
+    #     ref_celltypes!!!) ... ok n_trees is also in there now - don't know about ref_celltypes
+
     # Throw out "return_clfs" from forest_kwargs since we set them to False except for the last forest
     if "return_clfs" in tree_clf_kwargs:
         del tree_clf_kwargs["return_clfs"]
-    
+
     initial_summary, initial_ct_spec_summary, im = tree_results
+    assert isinstance(initial_summary, pd.DataFrame)
+    assert isinstance(initial_ct_spec_summary, dict)
+    assert isinstance(im, dict)
     initial_summary_ref, _, im_ref = ref_tree_results
+    assert isinstance(initial_summary_ref, pd.DataFrame)
+    assert isinstance(im_ref, dict)
     # get summary metrics from best trees
     f1 = initial_summary["0"]
     f1_ref = initial_summary_ref["0"]
@@ -648,6 +841,13 @@ def add_tree_genes_from_reference_trees(
 
     # Return initial results if all cell types' performances are good enough already
     if len(f1_diffs) == 0:
+
+        if progress and 2 * verbosity >= level:
+            progress.add_task("Initial results are good enough. No genes are added...", only_text=True, level=level)
+
+        if progress and 2 * verbosity >= (level - 1) and final_forest_task:
+            progress.advance(final_forest_task)  # retrain final tree is skipped
+
         if return_clfs:
             # raise ValueError("No classifiers were trained since no cell type needs a performance improvement. "\
             #                 "Set return_clfs=False or scip the function call.")
@@ -677,8 +877,8 @@ def add_tree_genes_from_reference_trees(
     n_max_unreached = True
     selected_all = False
     n_added = 0
-    if verbosity > 0:
-        print("Adding genes from reference tree...")
+    # if verbosity > 0:
+    #     print("Adding genes from reference tree...")
     if verbosity > 2:
         print("\t Performance table before training with new markers:")
         tmp = pd.concat([f1, f1_ref, f1_diffs], axis=1)
@@ -687,6 +887,9 @@ def add_tree_genes_from_reference_trees(
 
     max_step_reached = False
     step = 0
+
+    if progress and 2 * verbosity >= level:
+        add_ref_task = progress.add_task(task, total=max_step if max_step else 12, level=level)
 
     while celltypes and n_max_unreached and (not selected_all) and (not importances.empty) and (not max_step_reached):
 
@@ -701,11 +904,11 @@ def add_tree_genes_from_reference_trees(
         selected += new_markers
         n_added += len(new_markers)
         unselected = [g for g in importances.index if not (g in new_markers)]
-        if verbosity > 1:
-            print(f"\t Added new markers:\n\t\t {new_markers} \n\t\t ({len(unselected)} potential new markers left)")
-        if verbosity > 1:
-            print(f"\t Train decision trees on celltypes:\n\t\t {celltypes}")
-        summary, _, _ = forest_classifications(
+        # if verbosity > 1:
+        #     print(f"\t Added new markers:\n\t\t {new_markers} \n\t\t ({len(unselected)} potential new markers left)")
+        # if verbosity > 1:
+        #     print(f"\t Train decision trees on celltypes:\n\t\t {celltypes}")
+        summary, *_, _ = forest_classifications(
             adata,
             selected,
             celltypes=celltypes,
@@ -714,11 +917,15 @@ def add_tree_genes_from_reference_trees(
             save=False,
             verbosity=verbosity,
             return_clfs=False,
+            progress=progress,
+            level=level + 1,
+            task="Train forest with added genes...",
             **tree_clf_kwargs,
         )
+        assert isinstance(summary, pd.DataFrame)
         f1 = summary["0"].copy()
-        if verbosity > 1:
-            print("\t\t Training finished.")
+        # if verbosity > 1:
+        #     print("\t\t Training finished.")
         f1_diffs = f1_ref.loc[f1.index] - f1
         f1_diffs = f1_diffs.loc[f1_diffs > performance_th]
         if (verbosity > 1) and not np.all([(ct in importances.columns) for ct in f1_diffs.index]):
@@ -746,11 +953,23 @@ def add_tree_genes_from_reference_trees(
         step += 1
         if max_step and (step >= max_step):
             max_step_reached = True
-            if verbosity > 1:
-                print(f"\t\t Maximal iteration step ({step}) reached.")
+            if progress and 2 * verbosity >= level + 1:
+                progress.add_task(f"Maximal iteration step ({step}) reached.", total=0, level=level + 1, only_text=True)
+            # if verbosity > 1:
+            #     print(f"\t\t Maximal iteration step ({step}) reached.")
 
-    if verbosity > 0:
-        print("Train final trees on all celltypes, now with the added genes...")
+        if progress and 2 * verbosity >= level:
+            progress.advance(add_ref_task)
+
+    if progress and 2 * verbosity >= level:
+        progress.update(add_ref_task, completed=max_step if max_step else 12)
+
+    if progress and 2 * verbosity >= (level - 1) and final_forest_task:
+        progress.advance(final_forest_task)
+
+    # if verbosity > 0:
+    #     print("Train final trees on all celltypes, now with the added genes...")
+
     celltypes = initial_summary.index.tolist()
     forest_results = forest_classifications(
         adata,
@@ -761,16 +980,23 @@ def add_tree_genes_from_reference_trees(
         save=save,
         verbosity=verbosity,
         return_clfs=return_clfs,
+        progress=progress,
+        level=level,
+        task="Train final forest on all celltypes...",
         **tree_clf_kwargs,
     )
+
     if return_clfs:
-        results, tree_clfs = forest_results
+        assert isinstance(forest_results, tuple)
+        results = forest_results[0]
+        tree_clfs = forest_results[1]
         summary, ct_spec_summary, im = results
     else:
+        assert isinstance(forest_results, list)
         summary, ct_spec_summary, im = forest_results
 
-    if verbosity > 0:
-        print("\t Finished...")
+        # if verbosity > 0:
+        #     print("\t Finished...")
         if save:
             print(f"\t Results saved at {save}")
 
@@ -792,41 +1018,52 @@ def add_tree_genes_from_reference_trees(
 ################################################
 
 
-def get_markers_and_correlated_genes(cor_mat, markers, selection, n_min=2, th=0.5):
-    """Get markers and marker correlated genes for seletion from marker list
+def get_markers_and_correlated_genes(
+    cor_mat: pd.DataFrame, markers: list, selection: Union[pd.DataFrame, list], n_min: int = 2, th: float = 0.5
+) -> Tuple[List[str], List[str]]:
+    """Get markers and marker correlated genes for seletion from marker list.
 
-    Typically use this function for markers of one celltype in a marker_list dictionary
+    Notes:
+        Typically use this function for markers of one celltype in a marker_list dictionary.
 
-    We consider gene pairs when selecting based on correlations, e.g. n_min = 2 and th = 0.5:
-    - take gene A from selection with the highest correlation to all markers (let marker M and gene A have the highest correlation)
-    - if correlation(gene A,marker M) > th=0.5 add gene A to `correlated_genes` (we then have 1 of n_min=2 genes selected)
-        - if not we add the first n_min - len(already_selected) markers
-    - for the next correlation checks we exclude gene A and marker M (since we want to make sure to capture n_min markers with
-      n_min genes) and repeat the previous steps till we reached n_min selected genes (or the possible maximum)
+        We consider gene pairs when selecting based on correlations, e.g. n_min = 2 and th = 0.5:
 
-    Arguments
-    ---------
-    cor_mat: pd.DataFrame
-        Dataframe with index = columns = genes. Genes in cor_mat must include all genes in `markers` and all
-        genes with `selection['selection'] == True`
-    markers: dict
-    selection: pd.DataFrame or list
-    n_min: int
-        Minimal number of markers per ct that are captured with a min correlation of `th`
-    th: float
-        Minimal correlation to consider a gene as captures
+            - take gene A from selection with the highest correlation to all markers (let marker M and gene A have the
+            highest correlation)
+            - if correlation(gene A,marker M) > th=0.5 add gene A to `correlated_genes` (we then have 1 of n_min=2 genes
+            selected)
+            - if not we add the first n_min - len(already_selected) markers
+            - for the next correlation checks we exclude gene A and marker M (since we want to make sure to capture
+            n_min markers with n_min genes) and repeat the previous steps till we reached n_min selected genes (or the
+            possible maximum)
 
-    Returns
-    -------
-    add_markers: list
-        The markers that are added to reach `n_min` (if there are enough markers provided)
-    correlated_genes: list
-        Genes in `selection` that have correlations > `th` with specific markers
+    Args:
+        cor_mat:
+            Dataframe with index = columns = genes. Genes in cor_mat must include all genes in :attr:`markers` and all
+            genes with `selection['selection'] == True`.
+        markers:
+            List of marker genes for one celltype.
+        selection:
+            List or dataframe of the selected genes.
+        n_min:
+            Minimal number of markers per celltype that are captured with a min correlation of :attr:`th`.
+        th:
+            Minimal correlation to consider a gene as captures.
+
+    Returns:
+        add_markers: list
+            The markers that are added to reach `n_min` (if there are enough markers provided).
+        correlated_genes: list
+            Genes in `selection` that have correlations > `th` with specific markers
 
     """
+    # TODO
+    #   - check attr markers
+    #   - proofread docstrings
+
     # Initialize output lists
-    add_markers = []
-    correlated_genes = []
+    add_markers: List[str] = []
+    correlated_genes: List[str] = []
 
     # Prepare gene list of already selected genes
     if isinstance(selection, pd.DataFrame):
@@ -836,7 +1073,7 @@ def get_markers_and_correlated_genes(cor_mat, markers, selection, n_min=2, th=0.
 
     # Transfer markers from `markers` into `already_selected` if markers are already in the selection
     already_selected = [g for g in markers if g in selected_genes]
-    markers = [g for g in markers if g not in already_selected]
+    markers = [ge for ge in markers if ge not in already_selected]
     selected_genes = [g for g in selected_genes if g not in already_selected]
     if already_selected:
         add_markers += already_selected
@@ -880,40 +1117,52 @@ def get_markers_and_correlated_genes(cor_mat, markers, selection, n_min=2, th=0.
 ###### This is an old pca selection function with several different options how the loadings are aggregated to scores
 ###### My first runs showed that `method="sum"` performed best (as used in the function `select_pca_genes()`).
 ###### We should also include the old options to rerun the comparisons at the end.
-def select_features_pca_loadings(adata, n, method="sum", absolute=True, n_pcs=30, inplace=True, verbose=True):
-    """
-    Arguments
-    ---------
-    n: int
-        number of features to select
-    method: str
-        different loadings based method for feature selection
-        "sum" - features with highest sum of loadings
-        "max" - features with highest single loadings
-        "max_PC" - features of `n` highest loadings of different PC components
-        "max_PC_order" - features with highest loadings of first `n` PC components.
-                         If a feature was already picked the 2nd highest is chosen
-                         and so on.
-                         --> make sure that n_pcs >= n if you use this method
-    absolute: bool
-        if True the absolute values of loadings are taken into account such
-        that also negative loadings with high abs() can lead to chose features.
-    n_pcs: int
-        number of calculated PC components. If None n_pcs is set to the number of
-        genes in adata. Only interesting for method = "sum" or if there are no
-        existing PCA results
-    inplace: bool
-        If True add results to adata.var, else results are returned
-    verbose: bool
-        optionally print infos
+def select_features_pca_loadings(
+    adata: sc.AnnData,
+    n: int,
+    method: Literal["sum", "max", "max_PC", "max_PC_order"] = "max",
+    absolute: bool = True,
+    n_pcs: int = 30,
+    inplace: bool = True,
+    verbose: bool = True,
+):
+    """Select genes based on PCA loadings.
 
-    Returns
-    -------
-    if inplace: add
-        - adata.var['selection'] - boolean pd.Series of n selected features
-        - adata.var['selection_score'] - float pd.Series with selection scores (if scores exist for all features)
-    else: return
-        pd.Dataframe with columns 'selection', 'selection_score' (latter only for some methods)
+    Args:
+        adata:
+            Data with log normalised counts in `adata.X`.
+        n:
+            Number of features to select.
+        method:
+            Different loadings based method for feature selection:
+
+                - "sum" - features with highest sum of loadings
+                - "max" - features with highest single loadings
+                - "max_PC" - features of `n` highest loadings of different PC components
+                - "max_PC_order" - features with highest loadings of first :attr:`n` PC components.
+                If a feature was already picked the 2nd highest is chosen and so on.
+                --> make sure that n_pcs >= n if you use this method
+
+        absolute:
+            If True the absolute values of loadings are taken into account such
+            that also negative loadings with high abs() can lead to chose features.
+        n_pcs:
+            Number of calculated PC components. If None, n_pcs is set to the number of
+            genes in adata. Only interesting for :attr:`method` = "sum" or if there are no
+            existing PCA results.
+        inplace:
+            If True add results to `adata.var`, else results are returned.
+        verbose:
+            Optionally print infos.
+
+    Returns:
+        if inplace: add
+
+            - adata.var['selection'] - boolean pd.Series of n selected features
+            - adata.var['selection_score'] - float pd.Series with selection scores (if scores exist for all features)
+
+        else: return
+            pd.Dataframe with columns 'selection', 'selection_score' (latter only for some methods)
     """
 
     a = adata.copy()
@@ -1034,7 +1283,31 @@ def select_features_pca_loadings(adata, n, method="sum", absolute=True, n_pcs=30
             return a.var[["selection"]].copy()
 
 
-def select_highly_variable_features(adata, n, flavor="cell_ranger", inplace=True):
+def select_highly_variable_features(
+    adata: sc.AnnData,
+    n: int,
+    flavor: Literal["seurat", "cell_ranger", "seurat_v3"] = "cell_ranger",
+    inplace: bool = True,
+):
+    """Select genes based on variability.
+
+    Args:
+        adata:
+            Data with log normalised counts in `adata.X`.
+        n:
+            Number of features to select.
+        flavor:
+            See sc.pp.highly_variable genes. Options are `'seurat', 'cell_ranger' and 'seurat_v3'.
+        inplace:
+            If True add results to `adata.var`, else results are returned.
+
+    Returns:
+        if inplace: add
+            adata.var['selection'] - boolean pd.Series of n selected features
+
+        else: return
+            pd.Dataframe with column 'selection'
+    """
     a = adata.copy()
     clean_adata(a)
     sc.pp.highly_variable_genes(
@@ -1053,7 +1326,26 @@ def select_highly_variable_features(adata, n, flavor="cell_ranger", inplace=True
         return a.var[["selection"]].copy()
 
 
-def random_selection(adata, n, seed=0, inplace=True):
+def random_selection(adata: sc.AnnData, n: int, seed: int = 0, inplace: bool = True):
+    """Select random genes.
+
+    Args:
+        adata:
+            Data with log normalised counts in `adata.X`.
+        n:
+            Number of features to select.
+        seed:
+            Random number seed.
+        inplace:
+            If True add results to `adata.var`, else results are returned.
+
+    Returns:
+        if inplace: add
+            adata.var['selection'] - boolean pd.Series of n selected features
+
+        else: return
+            pd.Dataframe with column 'selection'
+    """
     np.random.seed(seed=seed)
     f_idxs = np.random.choice(adata.n_vars, n, replace=False)
     df = pd.DataFrame(index=adata.var.index, columns=["selection"])
@@ -1068,7 +1360,20 @@ def random_selection(adata, n, seed=0, inplace=True):
 ############################ Highest expressed genes ################################
 
 
-def get_mean(X, axis=0):
+def get_mean(X: np.ndarray, axis: int = 0) -> np.ndarray:
+    """Get mean of array.
+
+    Args:
+        X:
+            Data matrix, eg. `adata.X`.
+        axis:
+            Axis along which the means are computed.
+
+    Returns:
+        np.ndarray:
+            Array containing the means.
+
+    """
     if scipy.sparse.issparse(X):
         mean = X.mean(axis=axis, dtype=np.float64)
         mean = np.array(mean)[0]
@@ -1077,9 +1382,26 @@ def get_mean(X, axis=0):
     return mean
 
 
-def highest_expressed_genes(adata, n, inplace=True, use_existing_means=False):
-    """Select n highest expressed genes in adata"""
+def highest_expressed_genes(adata: sc.AnnData, n: int, inplace: bool = True, use_existing_means: bool = False):
+    """Select n highest expressed genes in adata.
 
+    Args:
+        adata:
+            Data with log normalised counts in `adata.X`.
+        n:
+            Number of features to select.
+        inplace:
+            If True add results to `adata.var`, else results are returned.
+        use_existing_means:
+            Means can already be found in the columns 'means'. It `False`, calculate the means.
+
+    Returns:
+        if inplace: add
+            adata.var['selection'] - boolean pd.Series of n selected features
+
+        else: return
+            pd.Dataframe with column 'selection'
+    """
     a = adata
 
     df = pd.DataFrame(index=a.var.index, columns=["means"])
@@ -1103,7 +1425,27 @@ def highest_expressed_genes(adata, n, inplace=True, use_existing_means=False):
 ##################################################################################
 
 
-def sparse_pca(X, n_pcs, alpha, seed, n_jobs):
+def sparse_pca(X: np.ndarray, n_pcs: int, alpha: float, seed: int, n_jobs: int) -> Tuple[np.ndarray, Any]:
+    """Extract the sparse components that can optimally reconstruct the data.
+
+    Args:
+        X:
+            Data matrix, eg. `adata.X`.
+        n_pcs:
+            Number of sparse PC components.
+        alpha:
+            Sparsity controlling parameter. Higher values lead to sparser components.
+        seed:
+            Random number seed. Used during dictionary learning.
+        n_jobs:
+            Number of parallel jobs to run. `None` means 1, `-1` means using all processors.
+
+    Returns:
+        np.ndarray:
+            Features with any abs(loading) > 0.
+        Any:
+            Transformed data.
+    """
     transformer = SparsePCA(n_components=n_pcs, alpha=alpha, random_state=seed, n_jobs=n_jobs)
     transformer.fit(X)
     transformer.transform(X)
@@ -1112,7 +1454,22 @@ def sparse_pca(X, n_pcs, alpha, seed, n_jobs):
     return features, loadings
 
 
-def sort_alphas(alphas, n_features):
+def sort_alphas(alphas: list, n_features: list) -> Tuple[list, list]:
+    """Sort lists of parameter values in ascending order of :attr:`alphas`.
+
+    Args:
+        alphas:
+            List of already applied alpha values. Alpha is the parsity controlling parameter. Higher values lead to
+            sparser components.
+        n_features:
+            Lists of already selected number of features.
+
+    Returns:
+        list:
+            List of a alphas sorted in ascending order.
+        list:
+            List of n_pcs sorted according to :attr:`alphas`.
+    """
     zipped_lists = zip(alphas, n_features)
     sorted_pairs = sorted(zipped_lists)
     tuples = zip(*sorted_pairs)
@@ -1120,7 +1477,18 @@ def sort_alphas(alphas, n_features):
     return alphas, n_features
 
 
-def next_alpha(n, alphas, n_features):
+def next_alpha(n: int, alphas: list, n_features: list):
+    """
+
+    Args:
+        n:
+            Number of features to select.
+        alphas:
+            List of already applied alpha values. Alpha is the parsity controlling parameter. Higher values lead to
+            sparser components.
+        n_features:
+            Lists of already selected number of features.
+    """
     for i, a in enumerate(alphas):
         if (i == 0) and (n_features[i] < n):
             return a / 2
@@ -1131,26 +1499,27 @@ def next_alpha(n, alphas, n_features):
 
 
 def spca_feature_selection(
-    adata,
-    n,
-    n_pcs=30,
-    a_init=150,
-    n_alphas_max=25,
-    n_alphas_min=5,
-    tolerance=0.1,
-    seed=0,
-    verbosity=1,
-    inplace=True,
-    n_jobs=-1,
+    adata: sc.AnnData,
+    n: int,
+    n_pcs: int = 30,
+    a_init: float = 150,
+    n_alphas_max: Optional[int] = 25,
+    n_alphas_min: Optional[int] = 5,
+    tolerance: float = 0.1,
+    seed: int = 0,
+    verbosity: int = 1,
+    inplace: bool = True,
+    n_jobs: int = -1,
 ):
-    """Select features based on sparse pca
+    """Select features based on sparse pca.
 
     Sparse PCA is based on the regression formulation of pca with an additional lasso constraint.
     The lasso constraint leads to sparse loadings vectors for the found principal components.
     The higher the lasso parameter alpha the sparser the loadings vectors. We apply a search through
     different alphas to find sparse loadings vectors that are based on approximately n features in total.
     Since searching for the correct alpha takes a long time we define a tolerance: An accepted alpha is chosen
-    if it comes with n_features selected such that
+    if it comes with n_features selected such that::
+
         n <= n_features <= (1+tolerance)*n
 
 
@@ -1164,37 +1533,39 @@ def spca_feature_selection(
 
     Note that SPCA takes much longer for small alphas (less sparsity). Keep that in mind when choosing a_init etc.
 
-    Parameters
-    ----------
-    adata:
-    n: int
-        number of features to select.
-    n_pcs: int
-        number of sparse PC components
-    a_init: float
-        first lasso alpha that is tried
-    n_alphas_max: int (or None)
-        The maximal number of alphas that is tried to find n_features in the defined tolerance to n
-    n_alphas_min: int (or None)
-        Minimal number of alphas to try. This is interesting to set if we are already in the tolerance
-        but the search should still go on to ultimately find exactly n features.
-    tolerance: float
-        accept solutions for n_features such that n <= n_features <= (1+tolerance)*n
-    seed: int
-        random seed for sparse pca optimization
-    verbosity: int
-    inplace: bool
-        if True save results in adata.var else return results
-    n_jobs: int
-        Number of parallel jobs to run.
+    Args:
+        adata:
+            Data with log normalised counts in `adata.X`.
+        n:
+            Number of features to select.
+        n_pcs:
+            Number of sparse PC components.
+        a_init:
+            First lasso alpha that is tried.
+        n_alphas_max:
+            The maximal number of alphas that is tried to find n_features in the defined tolerance to :attr:`n`.
+        n_alphas_min:
+            Minimal number of alphas to try. This is interesting to set if we are already in the tolerance
+            but the search should still go on to ultimately find exactly :attr:`n` features.
+        tolerance:
+            Accept solutions for n_features such that n <= n_features <= (1+tolerance)*n
+        seed:
+            Random seed for sparse pca optimization.
+        verbosity:
+            Verbosity level.
+        inplace: bool
+            if True save results in adata.var else return results
+        n_jobs: int
+            Number of parallel jobs to run.
 
-    Return
-    ------
-    if inplace: add
-        - adata.var['selection'] - boolean column of n selected features
-        - adata.var['selection_scores'] - column with sum of abs loadings for each feature
-    else: return
-        pd.Dataframe with columns 'selection', 'selection_scores'
+    Returns:
+        if inplace: add
+
+            - `adata.var['selection']` - boolean column of n selected features
+            - `adata.var['selection_scores']` - column with sum of abs loadings for each feature
+
+        else:
+            pd.Dataframe with columns 'selection', 'selection_scores'
     """
     print(type(adata.X), flush=True)
     if scipy.sparse.issparse(adata.X):
@@ -1235,6 +1606,7 @@ def spca_feature_selection(
         # get next alpha
         alphas, n_features = sort_alphas(alphas, n_features)
         alpha = next_alpha(n, alphas, n_features)
+        assert alpha is not None
         alphas.append(alpha)
         if verbosity >= 1:
             print(f"Start alpha trial {len(alphas)} ({datetime.now() - t0})", flush=True)
@@ -1300,28 +1672,25 @@ def spca_feature_selection(
 # implementation was written in R - it's quite slow in general, especially for high `n`s
 
 
-def select_selfE_features(adata, n, inplace=True, verbosity=0):
-    """
-    this method selects a subset of genes which expresses all the other genes best
-    (SOMP-Algorithm)
+def select_selfE_features(adata: sc.AnnData, n: int, inplace: bool = True, verbosity: int = 0):
+    """Select a subset of genes which expresses all the other genes best (SOMP-Algorithm).
     ... inspired by Rai et al ...
 
-    Arguments
-    ---------------
-    adata: AnnData
-        adata.X needs to be sc.sparse.csr_matrix, if a np.array is provided it's converted to a sprase matrix.
-    n: int
-        number of features to be selected
-    inplace: bool
-        save results in adata, otherwise return a dataframe
-    verbosity: int
+    Args:
+        adata:
+            adata.X needs to be sc.sparse.csr_matrix, if a np.array is provided it's converted to a sprase matrix.
+        n:
+            Number of features to be selected.
+        inplace:
+            Save results in adata, otherwise return a dataframe.
+        verbosity:
+            Verbosity level.
 
-    Returns
-    ---------------
-    if inplace: add
-        - adata.var['selection'] - boolean pd.Series of n selected features
-    else: return
-        pd.Dataframe with column 'selection'
+    Returns:
+        if inplace: add
+            `adata.var['selection']` - boolean pd.Series of n selected features
+        else: return
+            pd.Dataframe with column 'selection'
     """
 
     a = adata.copy()

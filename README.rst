@@ -36,7 +36,7 @@ spapros
 Features
 --------
 
-* Select probe sets for spatial transcriptomics which capture data variability, distinguish cell types and incorporate prior knowledge
+* Select probe sets for targeted spatial transcriptomics
 * Evaluate probe sets with an extensive pipeline
 
 
@@ -53,7 +53,7 @@ You can install *spapros* via pip_ from PyPI_:
 Usage
 -----
 
-Please see the `Command-line Reference <Usage_>`_ for details.
+Visit our `documentation`_ for installation, tutorials, examples and more.
 
 
 Credits
@@ -70,3 +70,4 @@ This package was created with cookietemple_ using Cookiecutter_ based on Hypermo
 .. _pip: https://pip.pypa.io/
 .. _Contributor Guide: CONTRIBUTING.rst
 .. _Usage: https://spapros.readthedocs.io/en/latest/usage.html
+.. _documentation: https://squidpy.readthedocs.io/en/latest/
