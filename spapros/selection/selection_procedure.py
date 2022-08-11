@@ -64,7 +64,7 @@ class ProbesetSelector:  # (object)
             5. all other genes
         * Afterwards within each "rank" group genes are further ranked by
             1. the **marker_rank**: first the best markers of celltypes, then 2nd best markers of celltypes, ..., then 
-               `n_min_markers`th best marker of celltypes, then genes that are not identified as required markers.
+               `n_min_markers` th best marker of celltypes, then genes that are not identified as required markers.
             2. the **tree_rank**: for each cell type the genes that occur in cell type classification trees with 2nd 
                best performance, then 3rd best performance, and so on. Genes that don't occur in trees have the worst
                tree_rank.
@@ -121,6 +121,7 @@ class ProbesetSelector:  # (object)
 
             Or the path to a csv-file containing the one column of markers for each celltype. The column names need to
             be the celltype identifiers used in ``adata.obs[celltype_key]``.
+            
         n_list_markers:
             Minimal number of markers per celltype that are at least selected. Selected means either selecting genes
             from the marker list or having correlated genes in the already selected panel. (Set the correlation
@@ -169,6 +170,7 @@ class ProbesetSelector:  # (object)
                  before!
         n_jobs:
             Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+            
             
     Attributes:
         adata:

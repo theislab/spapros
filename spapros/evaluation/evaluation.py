@@ -1768,7 +1768,7 @@ def single_forest_classifications(
         ct_spec_ref:
             Celltype specific references (e.g.:
             ``{'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}``). This argument was introduced to
-             train secondary trees.
+            train secondary trees.
         save:
             If not False load results if the given file exists, otherwise save results after computation.
         n_trees:
