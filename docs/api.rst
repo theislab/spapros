@@ -27,8 +27,8 @@ Selection
   :toctree: se
 
     se.select_reference_probesets
-    se.select_pca_genes   
-    se.select_DE_genes 
+    se.select_pca_genes
+    se.select_DE_genes
 
 
 Evaluation
@@ -59,34 +59,34 @@ Utility functions
 -------------------
 
 .. module:: spapros.ut
-    
+
 .. currentmodule:: spapros
 
 .. rubric:: Expression Constraints
 
 .. autosummary::
     :toctree: ut
-    
+
     ut.get_expression_quantile
     ut.transfered_expression_thresholds
     ut.plateau_penalty_kernel
-    
+
 .. rubric:: Spatial Data Analysis
 
 .. autosummary::
     :toctree: ut
-    
+
 
 Plotting
 ----------
 
-The sp.pl functions are used directly only in rare cases, instead always try to use the wrapper methods from the 
+The sp.pl functions are used directly only in rare cases, instead always try to use the wrapper methods from the
 ProbesetEvaluator and ProbesetSelector (see 2nd table below).
 
 .. module:: spapros.pl
 
-.. currentmodule:: spapros         
-         
+.. currentmodule:: spapros
+
 .. autosummary::
     :toctree: pl
 
@@ -98,8 +98,8 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).
     pl.explore_constraint
     pl.gene_overlap
     pl.masked_dotplot
-    pl.clf_genes_umaps   
-    pl.marker_correlation        
+    pl.clf_genes_umaps
+    pl.marker_correlation
 
 
 .. tabularcolumns:: |C|C|C|
@@ -109,7 +109,7 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).
    :widths: 1 1 1
    :align: left
 
-   * - .. centered:: `pl` module   
+   * - .. centered:: `pl` module
      - .. centered:: :class:`.ProbesetSelector`
      - .. centered:: :class:`.ProbesetEvaluator`
 
@@ -118,13 +118,13 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).
      - n/a
    * - :func:`pl.explore_constraint`
      - :meth:`.ProbesetSelector.plot_explore_constraint`
-     - 
+     -
    * - :func:`pl.selection_histogram`
      - :meth:`.ProbesetSelector.plot_histogram`
-     - 
+     -
    * - :func:`pl.clf_genes_umaps`
      - :meth:`.ProbesetSelector.plot_clf_genes`
-     - 
+     -
    * - :func:`pl.gene_overlap`
      - :meth:`.ProbesetSelector.plot_gene_overlap`
      - potentially added soon
@@ -132,20 +132,20 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).
      - :meth:`.ProbesetSelector.plot_coexpression`
      - :meth:`.ProbesetEvaluator.plot_coexpression`
    * - :func:`pl.confusion_matrix`
-     - 
+     -
      - :meth:`.ProbesetEvaluator.plot_confusion_matrix`
    * - :func:`pl.cluster_similarity`
-     - 
+     -
      - :meth:`.ProbesetEvaluator.plot_cluster_similarity`
    * - :func:`pl.knn_overlap`
-     - 
+     -
      - :meth:`.ProbesetEvaluator.plot_knn_overlap`
    * - :func:`pl.summary_table`
-     - 
+     -
      - :meth:`.ProbesetEvaluator.plot_summary`
    * - :func:`pl.marker_correlation`
-     - 
+     -
      - :meth:`.ProbesetEvaluator.plot_marker_corr`
-         
-                            
+
+
 

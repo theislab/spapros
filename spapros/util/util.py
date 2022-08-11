@@ -29,22 +29,22 @@ from sklearn.utils import sparsefuncs
 
 def get_processed_pbmc_data(n_hvg: int = 1000):
     """Get log normalised pbmc AnnData with selection and evaluation relevant quantities
-    
+
     Args:
         n_hvg:
             Number of highly variable genes
-    
+
     Returns:
         processed AnnData.
-        
+
     """
     adata = sc.datasets.pbmc3k()
     adata_tmp = sc.datasets.pbmc3k_processed()
 
     # Get infos from the processed dataset
     adata = adata[adata_tmp.obs_names, adata_tmp.var_names].copy()
-    adata.obs['celltype'] = adata_tmp.obs['louvain']
-    adata.obsm['X_umap'] = adata_tmp.obsm['X_umap']  # TODO: umap True/False
+    adata.obs["celltype"] = adata_tmp.obs["louvain"]
+    adata.obsm["X_umap"] = adata_tmp.obsm["X_umap"]  # TODO: umap True/False
     del adata_tmp
 
     # Preprocess counts and get highly variable genes
@@ -52,7 +52,7 @@ def get_processed_pbmc_data(n_hvg: int = 1000):
     sc.pp.log1p(adata)
     sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=1000)
 
-    #TODO: with "quantiles" or "with_expr_penalty"  bool / Add note that these expression constraints might not fit 
+    # TODO: with "quantiles" or "with_expr_penalty"  bool / Add note that these expression constraints might not fit
     #      real experiments
 
     return adata
@@ -183,14 +183,14 @@ def get_expression_quantile(
 
     Args:
         adata:
-            AnnData object. If ``normalise is True`` we expect raw counts in ``adata.X`` and size factors in 
+            AnnData object. If ``normalise is True`` we expect raw counts in ``adata.X`` and size factors in
             ``adata.obs['size_factors']``.
         q:
             Value between 0 = :attr:`q` = 1, the quantile to compute.
         normalise:
             Normalise data with a.obs['size_factors'].
         log1p:
-            log1p the data to get quantile values of log data. Not necessary if log1p was already applied on 
+            log1p the data to get quantile values of log data. Not necessary if log1p was already applied on
             ``adata.X``.
         zeros_to_nan:
             Don't include zeros into quantile calculation.
@@ -476,33 +476,33 @@ def plateau_penalty_kernel(
 
     Returns:
         Penalty function.
-        
-        
+
+
     Example:
-    
+
         .. code-block:: python
-                
+
             import numpy as np
             import matplotlib.pyplot as plt
             import spapros as sp
-            
+
             penalty_fcts = {
                 "left"  : sp.ut.plateau_penalty_kernel(var=0.5, x_min=2, x_max=None),
                 "right" : sp.ut.plateau_penalty_kernel(var=2, x_min=None, x_max=5),
                 "dual"  : sp.ut.plateau_penalty_kernel(var=[0.5,2], x_min=2, x_max=5),
             }
-            
+
             x = np.linspace(0,10,100)
             _, axs = plt.subplots(nrows=1,ncols=3,figsize=(10,2))
             for i, (title, penalty_fct) in enumerate(penalty_fcts.items()):
                 axs[i].plot(x,penalty_fct(x))
                 axs[i].set_title(title)
-            plt.show()        
-    
-        .. image:: ../../docs/plot_examples/Utils_plateau_penalty_kernel.png        
-        
+            plt.show()
 
-        
+        .. image:: ../../docs/plot_examples/Utils_plateau_penalty_kernel.png
+
+
+
     """
 
     if type(var) == list:

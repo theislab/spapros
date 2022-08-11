@@ -7,12 +7,12 @@
 # relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
 #
-from sphinx.ext.napoleon.docstring import GoogleDocstring
 import os
 import sys
 from pathlib import Path
 
 from nbconvert.preprocessors import TagRemovePreprocessor
+from sphinx.ext.napoleon.docstring import GoogleDocstring
 
 HERE = Path(__file__).parent
 sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
@@ -75,7 +75,7 @@ napoleon_include_init_with_doc = False
 napoleon_use_rtype = True
 napoleon_use_param = True
 napoleon_custom_sections = [("Params", "Parameters")]  # ('Returns', 'params_style')]
-#napoleon_use_ivar = True # Displays class attributes like class parameters. Even better solved with extra code below.
+# napoleon_use_ivar = True # Displays class attributes like class parameters. Even better solved with extra code below.
 
 todo_include_todos = False
 
@@ -249,31 +249,38 @@ def setup(app):
 
 # first, we define new methods for any new sections and add them to the class
 
+
 def parse_keys_section(self, section):
-    return self._format_fields('Keys', self._consume_fields())
+    return self._format_fields("Keys", self._consume_fields())
+
 
 GoogleDocstring._parse_keys_section = parse_keys_section
 
+
 def parse_attributes_section(self, section):
-    return self._format_fields('Attributes', self._consume_fields())
+    return self._format_fields("Attributes", self._consume_fields())
+
 
 GoogleDocstring._parse_attributes_section = parse_attributes_section
 
+
 def parse_class_attributes_section(self, section):
-    return self._format_fields('Class Attributes', self._consume_fields())
+    return self._format_fields("Class Attributes", self._consume_fields())
+
 
 GoogleDocstring._parse_class_attributes_section = parse_class_attributes_section
 
 # we now patch the parse method to guarantee that the the above methods are
 # assigned to the _section dict
 
+
 def patched_parse(self):
-    self._sections['keys'] = self._parse_keys_section
-    self._sections['class attributes'] = self._parse_class_attributes_section
+    self._sections["keys"] = self._parse_keys_section
+    self._sections["class attributes"] = self._parse_class_attributes_section
     self._unpatched_parse()
+
 
 GoogleDocstring._unpatched_parse = GoogleDocstring._parse
 GoogleDocstring._parse = patched_parse
 
 # --------------------------------------------------------------------------
-
