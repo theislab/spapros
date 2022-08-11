@@ -70,4 +70,4 @@ This package was created with cookietemple_ using Cookiecutter_ based on Hypermo
 .. _pip: https://pip.pypa.io/
 .. _Contributor Guide: CONTRIBUTING.rst
 .. _Usage: https://spapros.readthedocs.io/en/latest/usage.html
-.. _documentation: https://squidpy.readthedocs.io/en/latest/
+.. _documentation: https://spapros.readthedocs.io/en/latest/
