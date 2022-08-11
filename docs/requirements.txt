@@ -7,3 +7,4 @@ ipykernel
 nbsphinx
 sphinx_gallery
 nbsphinx-link
+-r ../requirements.txt
