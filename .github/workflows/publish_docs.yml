@@ -24,6 +24,7 @@ jobs:
                   pip install -r docs/requirements.txt
 
             - name: Build docs
+              uses: docker://pandoc/core:2.9
               run: |
                   cd docs
                   make html
