@@ -15,13 +15,13 @@ from nbconvert.preprocessors import TagRemovePreprocessor
 from sphinx.ext.napoleon.docstring import GoogleDocstring
 
 HERE = Path(__file__).parent
-sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
+#sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.append(os.path.abspath("../.."))
 sys.path.append(os.path.abspath("../spapros"))
-sys.path.append(os.path.abspath("../spapros/evaluation"))
-sys.path.append(os.path.abspath("../spapros/selection"))
-sys.path.append(os.path.abspath("../tutorials"))
+#sys.path.append(os.path.abspath("../spapros/evaluation"))
+#sys.path.append(os.path.abspath("../spapros/selection"))
+#sys.path.append(os.path.abspath("../tutorials"))
 
 
 # -- General configuration ---------------------------------------------
@@ -45,7 +45,7 @@ extensions = [
     "sphinx_gallery.load_style",
     "nbsphinx_link",
     # "jupyter_sphinx.embed_widgets",
-    *[p.stem for p in (HERE / "_extensions").glob("*.py")],
+    #*[p.stem for p in (HERE / "_extensions").glob("*.py")],
 ]
 
 
@@ -236,8 +236,8 @@ suppress_warnings = [
 ]
 
 
-def setup(app):
-    app.add_css_file("custom_cookietemple.css")
+#def setup(app):
+#    app.add_css_file("custom_cookietemple.css")
 
 
 # -- Extensions to the  Napoleon GoogleDocstring class ---------------------

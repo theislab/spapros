@@ -91,7 +91,6 @@ pypi-latest==0.1.2
 pyrsistent==0.18.1
 python-dateutil==2.8.2
 pytz==2022.1
-pywinpty==2.0.7
 pyyaml==5.4.1
 pyzmq==23.2.0
 questionary==1.10.0
@@ -110,7 +109,7 @@ six==1.16.0
 smmap==5.0.0
 snowballstemmer==2.2.0
 soupsieve==2.3.2.post1
-sphinx==4.5.0
+sphinx==5.0.2
 sphinxcontrib-applehelp==1.0.2
 sphinxcontrib-devhelp==1.0.2
 sphinxcontrib-htmlhelp==2.0.0
