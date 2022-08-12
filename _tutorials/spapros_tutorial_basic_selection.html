@@ -1,0 +1,909 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Probeset selection with Spapros &mdash; spapros docs</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="../_static/dark_mode_js/default_light.js"></script>
+        <script src="../_static/dark_mode_js/theme_switcher.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Evaluation of probe sets" href="spapros_tutorial_basic_evaluation.html" />
+    <link rel="prev" title="tutorials" href="../tutorials.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> spapros
+            <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">CONTENTS:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">tutorials</a><ul class="current">
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Probeset selection with Spapros</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Import-packages">Import packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Load-and-preprocess-data">Load and preprocess data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Run-selection">Run selection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Vizualize-and-investigate-the-results">Vizualize and investigate the results</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#What’s-next?">What’s next?</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_basic_evaluation.html">Evaluation of probe sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_advanced_selection.html">Advanced probeset selection with Spapros</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_advanced_evaluation.html">Spapros Tutorial: Advanced Evaluation.</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_end_to_end_selection.html">End to end selection with Spapros</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">spapros</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../tutorials.html">tutorials</a> &raquo;</li>
+      <li>Probeset selection with Spapros</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/_tutorials/spapros_tutorial_basic_selection.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS for nbsphinx extension */
+
+/* remove conflicting styling from Sphinx themes */
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt *,
+div.nbinput.container div.input_area pre,
+div.nboutput.container div.output_area pre,
+div.nbinput.container div.input_area .highlight,
+div.nboutput.container div.output_area .highlight {
+    border: none;
+    padding: 0;
+    margin: 0;
+    box-shadow: none;
+}
+
+div.nbinput.container > div[class*=highlight],
+div.nboutput.container > div[class*=highlight] {
+    margin: 0;
+}
+
+div.nbinput.container div.prompt *,
+div.nboutput.container div.prompt * {
+    background: none;
+}
+
+div.nboutput.container div.output_area .highlight,
+div.nboutput.container div.output_area pre {
+    background: unset;
+}
+
+div.nboutput.container div.output_area div.highlight {
+    color: unset;  /* override Pygments text color */
+}
+
+/* avoid gaps between output lines */
+div.nboutput.container div[class*=highlight] pre {
+    line-height: normal;
+}
+
+/* input/output containers */
+div.nbinput.container,
+div.nboutput.container {
+    display: -webkit-flex;
+    display: flex;
+    align-items: flex-start;
+    margin: 0;
+    width: 100%;
+}
+@media (max-width: 540px) {
+    div.nbinput.container,
+    div.nboutput.container {
+        flex-direction: column;
+    }
+}
+
+/* input container */
+div.nbinput.container {
+    padding-top: 5px;
+}
+
+/* last container */
+div.nblast.container {
+    padding-bottom: 5px;
+}
+
+/* input prompt */
+div.nbinput.container div.prompt pre {
+    color: #307FC1;
+}
+
+/* output prompt */
+div.nboutput.container div.prompt pre {
+    color: #BF5B3D;
+}
+
+/* all prompts */
+div.nbinput.container div.prompt,
+div.nboutput.container div.prompt {
+    width: 4.5ex;
+    padding-top: 5px;
+    position: relative;
+    user-select: none;
+}
+
+div.nbinput.container div.prompt > div,
+div.nboutput.container div.prompt > div {
+    position: absolute;
+    right: 0;
+    margin-right: 0.3ex;
+}
+
+@media (max-width: 540px) {
+    div.nbinput.container div.prompt,
+    div.nboutput.container div.prompt {
+        width: unset;
+        text-align: left;
+        padding: 0.4em;
+    }
+    div.nboutput.container div.prompt.empty {
+        padding: 0;
+    }
+
+    div.nbinput.container div.prompt > div,
+    div.nboutput.container div.prompt > div {
+        position: unset;
+    }
+}
+
+/* disable scrollbars on prompts */
+div.nbinput.container div.prompt pre,
+div.nboutput.container div.prompt pre {
+    overflow: hidden;
+}
+
+/* input/output area */
+div.nbinput.container div.input_area,
+div.nboutput.container div.output_area {
+    -webkit-flex: 1;
+    flex: 1;
+    overflow: auto;
+}
+@media (max-width: 540px) {
+    div.nbinput.container div.input_area,
+    div.nboutput.container div.output_area {
+        width: 100%;
+    }
+}
+
+/* input area */
+div.nbinput.container div.input_area {
+    border: 1px solid #e0e0e0;
+    border-radius: 2px;
+    /*background: #f5f5f5;*/
+}
+
+/* override MathJax center alignment in output cells */
+div.nboutput.container div[class*=MathJax] {
+    text-align: left !important;
+}
+
+/* override sphinx.ext.imgmath center alignment in output cells */
+div.nboutput.container div.math p {
+    text-align: left;
+}
+
+/* standard error */
+div.nboutput.container div.output_area.stderr {
+    background: #fdd;
+}
+
+/* ANSI colors */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-default-inverse-fg { color: #FFFFFF; }
+.ansi-default-inverse-bg { background-color: #000000; }
+
+.ansi-bold { font-weight: bold; }
+.ansi-underline { text-decoration: underline; }
+
+
+div.nbinput.container div.input_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight] > pre,
+div.nboutput.container div.output_area div[class*=highlight].math,
+div.nboutput.container div.output_area.rendered_html,
+div.nboutput.container div.output_area > div.output_javascript,
+div.nboutput.container div.output_area:not(.rendered_html) > img{
+    padding: 5px;
+    margin: 0;
+}
+
+/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
+div.nbinput.container div.input_area > div[class^='highlight'],
+div.nboutput.container div.output_area > div[class^='highlight']{
+    overflow-y: hidden;
+}
+
+/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
+.prompt .copybtn {
+    display: none;
+}
+
+/* Some additional styling taken form the Jupyter notebook CSS */
+.jp-RenderedHTMLCommon table,
+div.rendered_html table {
+  border: none;
+  border-collapse: collapse;
+  border-spacing: 0;
+  color: black;
+  font-size: 12px;
+  table-layout: fixed;
+}
+.jp-RenderedHTMLCommon thead,
+div.rendered_html thead {
+  border-bottom: 1px solid black;
+  vertical-align: bottom;
+}
+.jp-RenderedHTMLCommon tr,
+.jp-RenderedHTMLCommon th,
+.jp-RenderedHTMLCommon td,
+div.rendered_html tr,
+div.rendered_html th,
+div.rendered_html td {
+  text-align: right;
+  vertical-align: middle;
+  padding: 0.5em 0.5em;
+  line-height: normal;
+  white-space: normal;
+  max-width: none;
+  border: none;
+}
+.jp-RenderedHTMLCommon th,
+div.rendered_html th {
+  font-weight: bold;
+}
+.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
+div.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.jp-RenderedHTMLCommon tbody tr:hover,
+div.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="Probeset-selection-with-Spapros">
+<h1>Probeset selection with Spapros<a class="headerlink" href="#Probeset-selection-with-Spapros" title="Permalink to this headline"></a></h1>
+<p>In this tutorial we showcase how to select a gene set with Spapros.</p>
+<p>Here we use the default settings only. Check out the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_advanced_selection.html">advanced selection tutorial</a> for adjustments for specific use cases and the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_end_to_end_selection.html">end-to-end probe set selection tutorial</a> which includes the probe design.</p>
+<div class="section" id="Import-packages">
+<h2>Import packages<a class="headerlink" href="#Import-packages" title="Permalink to this headline"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
+<span class="kn">import</span> <span class="nn">spapros</span> <span class="k">as</span> <span class="nn">sp</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">print_header</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;spapros==</span><span class="si">{</span><span class="n">sp</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+scanpy==1.8.2 anndata==0.8.0 umap==0.5.2 numpy==1.21.5 scipy==1.7.3 pandas==1.3.5 scikit-learn==1.0.2 statsmodels==0.13.2 python-igraph==0.9.9 pynndescent==0.5.6
+spapros==0.1.0
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Load-and-preprocess-data">
+<h2>Load and preprocess data<a class="headerlink" href="#Load-and-preprocess-data" title="Permalink to this headline"></a></h2>
+<p>For Spapros selections the count data should be log-normalised. Notably genes should <strong>not</strong> be scaled to mean=0 and std=1. We pre-select a given number of highly variable genes, here 1000. In real world applications we typically go for 8000.</p>
+<p>The example data set that we use here has a raw version and a processed version with scaled counts. To get log normalised counts we use the raw version. Cell and gene filters, cell type annotations, and the umap embedding we get from the processed version.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">adata</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">pbmc3k</span><span class="p">()</span>
+<span class="n">adata_tmp</span> <span class="o">=</span> <span class="n">sc</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">pbmc3k_processed</span><span class="p">()</span>
+
+<span class="c1"># Get infos from the processed dataset</span>
+<span class="n">adata</span> <span class="o">=</span> <span class="n">adata</span><span class="p">[</span><span class="n">adata_tmp</span><span class="o">.</span><span class="n">obs_names</span><span class="p">,</span><span class="n">adata_tmp</span><span class="o">.</span><span class="n">var_names</span><span class="p">]</span>
+<span class="n">adata</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;celltype&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata_tmp</span><span class="o">.</span><span class="n">obs</span><span class="p">[</span><span class="s1">&#39;louvain&#39;</span><span class="p">]</span>
+<span class="n">adata</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s1">&#39;X_umap&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata_tmp</span><span class="o">.</span><span class="n">obsm</span><span class="p">[</span><span class="s1">&#39;X_umap&#39;</span><span class="p">]</span>
+<span class="k">del</span> <span class="n">adata_tmp</span>
+
+<span class="c1"># Preprocess counts and get highly variable genes</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">normalize_total</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">log1p</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">pp</span><span class="o">.</span><span class="n">highly_variable_genes</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span><span class="n">flavor</span><span class="o">=</span><span class="s2">&quot;cell_ranger&quot;</span><span class="p">,</span><span class="n">n_top_genes</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+
+<span class="n">adata</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+AnnData object with n_obs × n_vars = 2638 × 1838
+    obs: &#39;celltype&#39;
+    var: &#39;gene_ids&#39;, &#39;highly_variable&#39;, &#39;means&#39;, &#39;dispersions&#39;, &#39;dispersions_norm&#39;
+    uns: &#39;log1p&#39;, &#39;hvg&#39;
+    obsm: &#39;X_umap&#39;
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sc</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">umap</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span><span class="n">color</span><span class="o">=</span><span class="s2">&quot;celltype&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_tutorials_spapros_tutorial_basic_selection_7_0.png" src="../_images/_tutorials_spapros_tutorial_basic_selection_7_0.png" />
+</div>
+</div>
+</div>
+<div class="section" id="Run-selection">
+<h2>Run selection<a class="headerlink" href="#Run-selection" title="Permalink to this headline"></a></h2>
+<p>First we create an instance of the <code class="docutils literal notranslate"><span class="pre">ProbesetSelector</span></code> class. We specify the number of genes <code class="docutils literal notranslate"><span class="pre">n</span></code> (20) and the key in <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> where we find the cell type annotations (<code class="docutils literal notranslate"><span class="pre">celltype_key=&quot;celltype&quot;</span></code>). Note that you can specify a <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> to save results during selection and reload them next time a <code class="docutils literal notranslate"><span class="pre">ProbesetSelector</span></code> with the given <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> is instantiated.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">selector</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">se</span><span class="o">.</span><span class="n">ProbesetSelector</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">celltype_key</span><span class="o">=</span><span class="s2">&quot;celltype&quot;</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+The following celltypes&#39; test set sizes for forest training are below min_test_n (=20):
+         Dendritic cells : 9
+         Megakaryocytes  : 3
+</pre></div></div>
+</div>
+<p>We get a warning that the cell type clusters for dendritic cells and megakaroycytes are quite small and therefore the genes that are selected to identify these cell types potentially don’t generalize very well. The method won’t exclude these cell types automatically, it could be done manually though by setting the parameter <code class="docutils literal notranslate"><span class="pre">celltypes</span></code> to a subset of cell types instead of <code class="docutils literal notranslate"><span class="pre">celltypes=&quot;all&quot;</span></code>.</p>
+<p>Run the central method for probe set selection. (Takes ~5 min for the given example. Note that the progress bars should be properly displayed with jupyter notebook, however jupyter lab or e.g. vscode can lead to incomplete display)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">selector</span><span class="o">.</span><span class="n">select_probeset</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "3867ec9e2d774c90a9cea3e572826e63", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line">The selected probeset can be examined like this:</div>
+<div class="line">(See <a class="reference external" href="https://spapros.readthedocs.io/en/latest/se/spapros.se.ProbesetSelector.html#spapros.se.ProbesetSelector.probeset">here</a> for a detailed description of the output table)</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">selector</span><span class="o">.</span><span class="n">probeset</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
+</pre></div>
+</div>
+<div class="output_area rendered_html docutils container">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>gene_nr</th>
+      <th>selection</th>
+      <th>rank</th>
+      <th>marker_rank</th>
+      <th>tree_rank</th>
+      <th>importance_score</th>
+      <th>pca_score</th>
+      <th>pre_selected</th>
+      <th>prior_selected</th>
+      <th>pca_selected</th>
+      <th>celltypes_DE_1vsall</th>
+      <th>celltypes_DE_specific</th>
+      <th>celltypes_DE</th>
+      <th>celltypes_marker</th>
+      <th>list_only_ct_marker</th>
+      <th>required_marker</th>
+      <th>required_list_marker</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>PF4</th>
+      <td>1</td>
+      <td>True</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>1.000000</td>
+      <td>0.810399</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>Megakaryocytes</td>
+      <td></td>
+      <td>Megakaryocytes</td>
+      <td>Megakaryocytes</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>HLA-DPB1</th>
+      <td>2</td>
+      <td>True</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>0.649235</td>
+      <td>1.997253</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>B cells,Dendritic cells</td>
+      <td></td>
+      <td>B cells,Dendritic cells</td>
+      <td>B cells,Dendritic cells</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>FCGR3A</th>
+      <td>3</td>
+      <td>True</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>0.612390</td>
+      <td>1.321373</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td></td>
+      <td>FCGR3A+ Monocytes</td>
+      <td>FCGR3A+ Monocytes</td>
+      <td>FCGR3A+ Monocytes</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>GZMB</th>
+      <td>4</td>
+      <td>True</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>0.512924</td>
+      <td>1.252898</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>NK cells</td>
+      <td></td>
+      <td>NK cells</td>
+      <td>NK cells</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>CCL5</th>
+      <td>5</td>
+      <td>True</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>0.478418</td>
+      <td>2.553322</td>
+      <td>False</td>
+      <td>False</td>
+      <td>True</td>
+      <td>CD8 T cells</td>
+      <td></td>
+      <td>CD8 T cells</td>
+      <td>CD8 T cells</td>
+      <td>False</td>
+      <td>True</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>...</th>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+      <td>...</td>
+    </tr>
+    <tr>
+      <th>ARHGAP19</th>
+      <td>996</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.016906</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>SLC22A4</th>
+      <td>997</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.016718</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>DRAXIN</th>
+      <td>998</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.016547</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>C1QC</th>
+      <td>999</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.014339</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+    <tr>
+      <th>PARS2</th>
+      <td>1000</td>
+      <td>False</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>NaN</td>
+      <td>0.012845</td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td>False</td>
+      <td>False</td>
+      <td>False</td>
+    </tr>
+  </tbody>
+</table>
+<p>1000 rows × 17 columns</p>
+</div></div>
+</div>
+<p>The list of selected genes can be retrieved with</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">selector</span><span class="o">.</span><span class="n">probeset</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">selector</span><span class="o">.</span><span class="n">probeset</span><span class="o">.</span><span class="n">selection</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Index([&#39;PF4&#39;, &#39;HLA-DPB1&#39;, &#39;FCGR3A&#39;, &#39;GZMB&#39;, &#39;CCL5&#39;, &#39;S100A8&#39;, &#39;IL32&#39;,
+       &#39;HLA-DQA1&#39;, &#39;NKG7&#39;, &#39;AIF1&#39;, &#39;CD79A&#39;, &#39;LTB&#39;, &#39;TYROBP&#39;, &#39;HLA-DMA&#39;, &#39;GZMK&#39;,
+       &#39;HLA-DRB1&#39;, &#39;FCN1&#39;, &#39;S100A11&#39;, &#39;GNLY&#39;, &#39;GZMH&#39;],
+      dtype=&#39;object&#39;)
+</pre></div></div>
+</div>
+</div>
+<div class="section" id="Vizualize-and-investigate-the-results">
+<h2>Vizualize and investigate the results<a class="headerlink" href="#Vizualize-and-investigate-the-results" title="Permalink to this headline"></a></h2>
+<p>Let’s first plot the mean expression in each cell type cluster with some additional information for the selected genes.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">sp</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">masked_dotplot</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">selector</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_tutorials_spapros_tutorial_basic_selection_19_0.png" src="../_images/_tutorials_spapros_tutorial_basic_selection_19_0.png" />
+</div>
+</div>
+<p>For each cell type the Spapros markers are those that build a combinatorial rule to classify the cell type. Often you find cell type specific markers, and negative markers. When selecting genes for high numbers of cell types including similar clusters the rules tend to show more sophisticated combinatorics.</p>
+<p>The Spapros selection procedure consists of multiple steps, we can also investigate how many genes originate from the different steps:</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">selector</span><span class="o">.</span><span class="n">plot_gene_overlap</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_tutorials_spapros_tutorial_basic_selection_22_0.png" src="../_images/_tutorials_spapros_tutorial_basic_selection_22_0.png" />
+</div>
+</div>
+<ul class="simple">
+<li><p>All finally selected 20 genes occured in the PCA-based pre-selection which selects genes that capture a high amount of variation</p></li>
+<li><p>they strongly overlap with the (16) differentially expressed genes since marker genes are one source of high variation in transcriptomics data. The overlap is especially high for datasets with only a few cell type clusters that are also well separated as in the given example.</p></li>
+<li><p>The first DE tests to train optimal classification trees are tests between each cell type and all other cell types as background (DE_1vsall). To further optimise the trees we run DE tests between cell type clusters that are more difficult to distinguish (DE_specific). We find 4 genes that originate from the specific tests that didn’t occur in the 1 vs all tests.</p></li>
+</ul>
+</div>
+<div class="section" id="What’s-next?">
+<h2>What’s next?<a class="headerlink" href="#What’s-next?" title="Permalink to this headline"></a></h2>
+<p>You can now evaluate the selected probeset. See our <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_basic_evaluation.html">basic evaluation tutorial</a>.</p>
+<p>If you want to customize and improve the probeset selection, have a look at the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_advanced_selection.html">advanced selection tutorial</a>.</p>
+<p>Check out the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_end_to_end_selection.html">end-to-end selection tutorial</a> for the full pipline that includes probe design and gene panel selection.</p>
+<script type="application/vnd.jupyter.widget-state+json">
+{"state": {"02393dfba5ab4f1cabd8bb6744f02214": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}, "1347918bb0b1472ca19c1f4006430ac1": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_c87e2acba092400ea7935dbae8e1e240", "style": "IPY_MODEL_2f06875313224f359890c437723a5589", "value": "100%"}}, "211e831c42474aa5b57918a706a869fd": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "259715f79cc949e4ae815d20e662da4a": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}, "2689382cdcd042e3ab97b1eb9c5b79d3": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "2ab055d6db5c4930b6e9abf236d0bfdb": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "2b7002d82fb944678e291b270e256c6c": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_3e42c611c37e40c4bc1ad6f44dd8a96d", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">SPAPROS PROBESET SELECTION:                                                                 </span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Select pca genes..........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train baseline forest based on DE genes...................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 4/4</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:59</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Select DE genes.........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 8/8</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train prior forest for DE_baseline forest...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:20</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Iteratively add DE genes to DE_baseline forest..........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:04</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train final baseline trees on all celltypes.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:33</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train final forests.......................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:36</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train forest on pre/prior/pca selected genes............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:36</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Initial results are good enough. No genes are added.......................................</span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Compile probeset list.....................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">FINISHED</span>  \n          \n</pre>\n", "text/plain": "\u001b[1;30mSPAPROS PROBESET SELECTION:                                                                 \u001b[0m \n\u001b[1;34mSelect pca genes..........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mTrain baseline forest based on DE genes...................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 4/4\u001b[0m \u001b[33m0:01:59\u001b[0m\n  \u001b[1;2;36mSelect DE genes.........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 8/8\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mTrain prior forest for DE_baseline forest...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:20\u001b[0m\n  \u001b[1;2;36mIteratively add DE genes to DE_baseline forest..........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:01:04\u001b[0m\n  \u001b[1;2;36mTrain final baseline trees on all celltypes.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:33\u001b[0m\n\u001b[1;34mTrain final forests.......................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:36\u001b[0m\n  \u001b[1;2;36mTrain forest on pre/prior/pca selected genes............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:36\u001b[0m\n  \u001b[1;2;36mInitial results are good enough. No genes are added.......................................\u001b[0m \n\u001b[1;34mCompile probeset list.....................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;30mFINISHED\u001b[0m  \n          \n"}, "metadata": {}, "output_type": "display_data"}]}}, "2ba633ee93584c818eb0575e4281dd53": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "2f06875313224f359890c437723a5589": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}, "30272550a3f84a218235866669751869": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "ProgressStyleModel", "state": {"description_width": ""}}, "34315b97b262443fab7e426057f2f510": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "ProgressStyleModel", "state": {"description_width": ""}}, "34fce517e03d4e52ace44e570d5a71a1": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_761116eeed6c40ff8005ce3321dd0ecf", "style": "IPY_MODEL_e2dbfd3cdab049e7aafe01b95e9009e4", "value": "100%"}}, "352c8fe6f9d24144a5eaed0c432e93b6": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "FloatProgressModel", "state": {"bar_style": "success", "layout": "IPY_MODEL_92f06a5939424ade856f043bc0f71f79", "max": 24653425, "style": "IPY_MODEL_c9cdb33283074f8ab44a529e45406819", "value": 24653425}}, "3772758621a44757b89efe2985b2758b": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "38c3fbfcb250437486d8d26293374e5e": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HBoxModel", "state": {"children": ["IPY_MODEL_85c1cfa3ea2e47d288b348f032f4c5c4", "IPY_MODEL_c3f5c0e630124189a05ab0ab81338dcc", "IPY_MODEL_56d9accd7ee94fd4876a010298adde9d"], "layout": "IPY_MODEL_af9cb6ec7a0346ed9cedbf123b5cf3e1"}}, "3e42c611c37e40c4bc1ad6f44dd8a96d": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "429642e62d3c4db99884b2779a65ea52": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}, "467e528b2fe64849939bdbb4803d8a23": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "ProgressStyleModel", "state": {"description_width": ""}}, "49e2d4dd5908400dac197f0f7a9c4a85": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_aacd2c6b6b984795bf04b39d6e17eb16", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Select pca genes..................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train baseline forest based on DE genes...........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:02:57</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Select DE genes.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">8/8</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train prior forest for DE_baseline forest.......</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:30</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees...................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:14</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees...................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:06</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees...................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:06</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Iteratively add DE genes to DE_baseline forest...</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:34</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Select DE genes for celltypes with outliers...</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">5/5</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for CD14+ Monocytes.........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for CD4 T cells.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for CD8 T cells.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for Dendritic cells.........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for FCGR3A+ Monocytes.......</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees with added DE genes...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:23</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Train trees.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:06</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Train trees.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:06</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Train trees.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:07</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Select DE genes for celltypes with outliers...</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">5/5</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for CD14+ Monocytes.........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for CD4 T cells.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for CD8 T cells.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for Dendritic cells.........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for FCGR3A+ Monocytes.......</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees with added DE genes...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:25</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Train trees.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:07</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Train trees.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:07</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Train trees.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:07</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Select DE genes for celltypes with outliers...</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">5/5</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for CD14+ Monocytes.........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for CD4 T cells.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for CD8 T cells.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for Dendritic cells.........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Select DE genes for FCGR3A+ Monocytes.......</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees with added DE genes...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:43</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Train trees.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:14</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Train trees.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:13</span>\n      <span style=\"color: #008000; text-decoration-color: #008000\">Train trees.................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:12</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train final baseline trees on all celltypes.....</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:52</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees...................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:18</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees...................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:15</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees...................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:14</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train final forests...............................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">4/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:51</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train forest on pre/prior/pca selected genes....</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:51</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees...................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:17</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees...................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:14</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Train trees...................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">50/50</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:14</span>\n    <span style=\"color: #008000; text-decoration-color: #008000; font-weight: bold\">Initial results are good enough. No genes are added.....................................</span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Compile probeset list.............................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n</pre>\n", "text/plain": "\u001b[1;34mSelect pca genes..................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mTrain baseline forest based on DE genes...........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m3/3\u001b[0m \u001b[33m0:02:57\u001b[0m\n  \u001b[1;2;36mSelect DE genes.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m8/8\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mTrain prior forest for DE_baseline forest.......\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m3/3\u001b[0m \u001b[33m0:00:30\u001b[0m\n    \u001b[1;32mTrain trees...................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:14\u001b[0m\n    \u001b[1;32mTrain trees...................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:06\u001b[0m\n    \u001b[1;32mTrain trees...................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:06\u001b[0m\n  \u001b[1;2;36mIteratively add DE genes to DE_baseline forest...\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m3/3\u001b[0m \u001b[33m0:01:34\u001b[0m\n    \u001b[1;32mSelect DE genes for celltypes with outliers...\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m5/5\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for CD14+ Monocytes.........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for CD4 T cells.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for CD8 T cells.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for Dendritic cells.........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for FCGR3A+ Monocytes.......\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n    \u001b[1;32mTrain trees with added DE genes...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m3/3\u001b[0m \u001b[33m0:00:23\u001b[0m\n      \u001b[32mTrain trees.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:06\u001b[0m\n      \u001b[32mTrain trees.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:06\u001b[0m\n      \u001b[32mTrain trees.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:07\u001b[0m\n    \u001b[1;32mSelect DE genes for celltypes with outliers...\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m5/5\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for CD14+ Monocytes.........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for CD4 T cells.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for CD8 T cells.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for Dendritic cells.........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for FCGR3A+ Monocytes.......\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n    \u001b[1;32mTrain trees with added DE genes...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m3/3\u001b[0m \u001b[33m0:00:25\u001b[0m\n      \u001b[32mTrain trees.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:07\u001b[0m\n      \u001b[32mTrain trees.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:07\u001b[0m\n      \u001b[32mTrain trees.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:07\u001b[0m\n    \u001b[1;32mSelect DE genes for celltypes with outliers...\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m5/5\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for CD14+ Monocytes.........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for CD4 T cells.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for CD8 T cells.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for Dendritic cells.........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n      \u001b[32mSelect DE genes for FCGR3A+ Monocytes.......\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n    \u001b[1;32mTrain trees with added DE genes...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m3/3\u001b[0m \u001b[33m0:00:43\u001b[0m\n      \u001b[32mTrain trees.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:14\u001b[0m\n      \u001b[32mTrain trees.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:13\u001b[0m\n      \u001b[32mTrain trees.................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:12\u001b[0m\n  \u001b[1;2;36mTrain final baseline trees on all celltypes.....\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m3/3\u001b[0m \u001b[33m0:00:52\u001b[0m\n    \u001b[1;32mTrain trees...................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:18\u001b[0m\n    \u001b[1;32mTrain trees...................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:15\u001b[0m\n    \u001b[1;32mTrain trees...................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:14\u001b[0m\n\u001b[1;34mTrain final forests...............................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m4/3\u001b[0m \u001b[33m0:00:51\u001b[0m\n  \u001b[1;2;36mTrain forest on pre/prior/pca selected genes....\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m3/3\u001b[0m \u001b[33m0:00:51\u001b[0m\n    \u001b[1;32mTrain trees...................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:17\u001b[0m\n    \u001b[1;32mTrain trees...................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:14\u001b[0m\n    \u001b[1;32mTrain trees...................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m50/50\u001b[0m \u001b[33m0:00:14\u001b[0m\n    \u001b[1;32mInitial results are good enough. No genes are added.....................................\u001b[0m \n\u001b[1;34mCompile probeset list.............................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n"}, "metadata": {}, "output_type": "display_data"}]}}, "49ea189bd7794d90a2cd05fec0d24754": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_9f5321848cec4d3e82cdc0ecafb5bbb6", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">SPAPROS PROBESET SELECTION:                                                                 </span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Select pca genes..........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train baseline forest based on DE genes...................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 4/4</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:55</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Select DE genes.........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 8/8</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train prior forest for DE_baseline forest...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:20</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Iteratively add DE genes to DE_baseline forest..........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:01</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train final baseline trees on all celltypes.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:32</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train final forests.......................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:35</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train forest on pre/prior/pca selected genes............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:35</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Initial results are good enough. No genes are added.......................................</span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Compile probeset list.....................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">FINISHED</span>  \n          \n</pre>\n", "text/plain": "\u001b[1;30mSPAPROS PROBESET SELECTION:                                                                 \u001b[0m \n\u001b[1;34mSelect pca genes..........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mTrain baseline forest based on DE genes...................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 4/4\u001b[0m \u001b[33m0:01:55\u001b[0m\n  \u001b[1;2;36mSelect DE genes.........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 8/8\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mTrain prior forest for DE_baseline forest...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:20\u001b[0m\n  \u001b[1;2;36mIteratively add DE genes to DE_baseline forest..........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:01:01\u001b[0m\n  \u001b[1;2;36mTrain final baseline trees on all celltypes.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:32\u001b[0m\n\u001b[1;34mTrain final forests.......................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:35\u001b[0m\n  \u001b[1;2;36mTrain forest on pre/prior/pca selected genes............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:35\u001b[0m\n  \u001b[1;2;36mInitial results are good enough. No genes are added.......................................\u001b[0m \n\u001b[1;34mCompile probeset list.....................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;30mFINISHED\u001b[0m  \n          \n"}, "metadata": {}, "output_type": "display_data"}]}}, "4bee46f5c01e4de6a7c8e78f813f44b7": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "56d9accd7ee94fd4876a010298adde9d": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_de3bde42a33340ab9a37b61be5e100da", "style": "IPY_MODEL_02393dfba5ab4f1cabd8bb6744f02214", "value": " 5.58M/5.58M [00:00&lt;00:00, 15.2MB/s]"}}, "63acd4bd944743d4a0dba149c05552a5": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_2ba633ee93584c818eb0575e4281dd53", "style": "IPY_MODEL_79ce5d7e69d647b7a77742967bd878f6", "value": " 23.5M/23.5M [00:00&lt;00:00, 86.1MB/s]"}}, "722084e07bba4cca8598e4fcc303924e": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "73185aa9a33144669163f7d675ce0dab": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "761116eeed6c40ff8005ce3321dd0ecf": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "79ce5d7e69d647b7a77742967bd878f6": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}, "85c1cfa3ea2e47d288b348f032f4c5c4": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_c6ac1062b46940da983e4e4f6844ea23", "style": "IPY_MODEL_429642e62d3c4db99884b2779a65ea52", "value": "100%"}}, "9283dc66370642ae917f7c90ee003222": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HBoxModel", "state": {"children": ["IPY_MODEL_1347918bb0b1472ca19c1f4006430ac1", "IPY_MODEL_352c8fe6f9d24144a5eaed0c432e93b6", "IPY_MODEL_63acd4bd944743d4a0dba149c05552a5"], "layout": "IPY_MODEL_c35b7ce926cf48e5984a5e4fffddae55"}}, "92f06a5939424ade856f043bc0f71f79": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "9f5321848cec4d3e82cdc0ecafb5bbb6": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "a207e774f3fe46bab34f8379961375cc": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "FloatProgressModel", "state": {"bar_style": "success", "layout": "IPY_MODEL_73185aa9a33144669163f7d675ce0dab", "max": 5855727, "style": "IPY_MODEL_30272550a3f84a218235866669751869", "value": 5855727}}, "a6a675381f6c4491bdc27506433c3c34": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_d5bea3c5da264630b86d93b78b612bb1", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">SPAPROS PROBESET SELECTION:                                                                 </span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Select pca genes..........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train baseline forest based on DE genes...................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 4/4</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:02:22</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Select DE genes.........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 8/8</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train prior forest for DE_baseline forest...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:27</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Iteratively add DE genes to DE_baseline forest..........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:19</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train final baseline trees on all celltypes.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:35</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train final forests.......................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:34</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train forest on pre/prior/pca selected genes............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:34</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Initial results are good enough. No genes are added.......................................</span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Compile probeset list.....................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">FINISHED</span>  \n          \n</pre>\n", "text/plain": "\u001b[1;30mSPAPROS PROBESET SELECTION:                                                                 \u001b[0m \n\u001b[1;34mSelect pca genes..........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mTrain baseline forest based on DE genes...................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 4/4\u001b[0m \u001b[33m0:02:22\u001b[0m\n  \u001b[1;2;36mSelect DE genes.........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 8/8\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mTrain prior forest for DE_baseline forest...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:27\u001b[0m\n  \u001b[1;2;36mIteratively add DE genes to DE_baseline forest..........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:01:19\u001b[0m\n  \u001b[1;2;36mTrain final baseline trees on all celltypes.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:35\u001b[0m\n\u001b[1;34mTrain final forests.......................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:34\u001b[0m\n  \u001b[1;2;36mTrain forest on pre/prior/pca selected genes............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:34\u001b[0m\n  \u001b[1;2;36mInitial results are good enough. No genes are added.......................................\u001b[0m \n\u001b[1;34mCompile probeset list.....................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;30mFINISHED\u001b[0m  \n          \n"}, "metadata": {}, "output_type": "display_data"}]}}, "aacd2c6b6b984795bf04b39d6e17eb16": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "af9cb6ec7a0346ed9cedbf123b5cf3e1": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "b4e7859f462541f2b653b9e846e42460": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_4bee46f5c01e4de6a7c8e78f813f44b7", "style": "IPY_MODEL_e5ededa334b147dca313158ac29a7b4e", "value": " 5.58M/5.58M [00:00&lt;00:00, 13.3MB/s]"}}, "b8d9681a199d460abcca6e1a33534961": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_e8fb44ee9a8940d295f014af2b17da82", "style": "IPY_MODEL_259715f79cc949e4ae815d20e662da4a", "value": "100%"}}, "c35b7ce926cf48e5984a5e4fffddae55": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "c3f5c0e630124189a05ab0ab81338dcc": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "FloatProgressModel", "state": {"bar_style": "success", "layout": "IPY_MODEL_211e831c42474aa5b57918a706a869fd", "max": 5855727, "style": "IPY_MODEL_467e528b2fe64849939bdbb4803d8a23", "value": 5855727}}, "c6ac1062b46940da983e4e4f6844ea23": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "c87e2acba092400ea7935dbae8e1e240": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "c8d5c4cde14b4229ab87ffc7ca65ed82": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HBoxModel", "state": {"children": ["IPY_MODEL_34fce517e03d4e52ace44e570d5a71a1", "IPY_MODEL_f8f9c052a3f54a71a957672c2f3a7d06", "IPY_MODEL_f955d07419274b21b62b79bf2b85dbaa"], "layout": "IPY_MODEL_2ab055d6db5c4930b6e9abf236d0bfdb"}}, "c9cdb33283074f8ab44a529e45406819": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "ProgressStyleModel", "state": {"description_width": ""}}, "d157dda52f164e5293cdbf02433609c3": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_2689382cdcd042e3ab97b1eb9c5b79d3", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">SPAPROS PROBESET SELECTION:                                                                 </span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Select pca genes..........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train baseline forest based on DE genes...................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 4/4</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:56</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Select DE genes.........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 8/8</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train prior forest for DE_baseline forest...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:20</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Iteratively add DE genes to DE_baseline forest..........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:03</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train final baseline trees on all celltypes.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:32</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train final forests.......................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:36</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train forest on pre/prior/pca selected genes............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:36</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Initial results are good enough. No genes are added.......................................</span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Compile probeset list.....................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">FINISHED</span>  \n          \n</pre>\n", "text/plain": "\u001b[1;30mSPAPROS PROBESET SELECTION:                                                                 \u001b[0m \n\u001b[1;34mSelect pca genes..........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mTrain baseline forest based on DE genes...................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 4/4\u001b[0m \u001b[33m0:01:56\u001b[0m\n  \u001b[1;2;36mSelect DE genes.........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 8/8\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mTrain prior forest for DE_baseline forest...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:20\u001b[0m\n  \u001b[1;2;36mIteratively add DE genes to DE_baseline forest..........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:01:03\u001b[0m\n  \u001b[1;2;36mTrain final baseline trees on all celltypes.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:32\u001b[0m\n\u001b[1;34mTrain final forests.......................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:36\u001b[0m\n  \u001b[1;2;36mTrain forest on pre/prior/pca selected genes............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:36\u001b[0m\n  \u001b[1;2;36mInitial results are good enough. No genes are added.......................................\u001b[0m \n\u001b[1;34mCompile probeset list.....................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;30mFINISHED\u001b[0m  \n          \n"}, "metadata": {}, "output_type": "display_data"}]}}, "d53017f083af4a1c94742cb24fb109f0": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "d5bea3c5da264630b86d93b78b612bb1": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "de3bde42a33340ab9a37b61be5e100da": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "e0c16f34005a461194310c27cd28f2c1": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "e2dbfd3cdab049e7aafe01b95e9009e4": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}, "e5ededa334b147dca313158ac29a7b4e": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}, "e8fb44ee9a8940d295f014af2b17da82": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "ef40f5ee07604bca806a96b3ab85529f": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_3772758621a44757b89efe2985b2758b", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">SPAPROS PROBESET SELECTION:                                                                 </span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Select pca genes..........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train baseline forest based on DE genes...................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 4/4</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:04:12</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Select DE genes.........................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 8/8</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train prior forest for DE_baseline forest...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:54</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Iteratively add DE genes to DE_baseline forest..........</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:02:13</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train final baseline trees on all celltypes.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:04</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Train final forests.......................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:13</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Train forest on pre/prior/pca selected genes............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:13</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Initial results are good enough. No genes are added.......................................</span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Compile probeset list.....................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">FINISHED</span>  \n          \n</pre>\n", "text/plain": "\u001b[1;30mSPAPROS PROBESET SELECTION:                                                                 \u001b[0m \n\u001b[1;34mSelect pca genes..........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mTrain baseline forest based on DE genes...................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 4/4\u001b[0m \u001b[33m0:04:12\u001b[0m\n  \u001b[1;2;36mSelect DE genes.........................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 8/8\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mTrain prior forest for DE_baseline forest...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:54\u001b[0m\n  \u001b[1;2;36mIteratively add DE genes to DE_baseline forest..........\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:02:13\u001b[0m\n  \u001b[1;2;36mTrain final baseline trees on all celltypes.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:01:04\u001b[0m\n\u001b[1;34mTrain final forests.......................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:01:13\u001b[0m\n  \u001b[1;2;36mTrain forest on pre/prior/pca selected genes............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:01:13\u001b[0m\n  \u001b[1;2;36mInitial results are good enough. No genes are added.......................................\u001b[0m \n\u001b[1;34mCompile probeset list.....................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;30mFINISHED\u001b[0m  \n          \n"}, "metadata": {}, "output_type": "display_data"}]}}, "ef42fa0448ad4dd1a75f21963ff6b962": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HBoxModel", "state": {"children": ["IPY_MODEL_b8d9681a199d460abcca6e1a33534961", "IPY_MODEL_a207e774f3fe46bab34f8379961375cc", "IPY_MODEL_b4e7859f462541f2b653b9e846e42460"], "layout": "IPY_MODEL_d53017f083af4a1c94742cb24fb109f0"}}, "f8f9c052a3f54a71a957672c2f3a7d06": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "FloatProgressModel", "state": {"bar_style": "success", "layout": "IPY_MODEL_e0c16f34005a461194310c27cd28f2c1", "max": 24653425, "style": "IPY_MODEL_34315b97b262443fab7e426057f2f510", "value": 24653425}}, "f955d07419274b21b62b79bf2b85dbaa": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "HTMLModel", "state": {"layout": "IPY_MODEL_722084e07bba4cca8598e4fcc303924e", "style": "IPY_MODEL_fa3130def609451f81958ae6175d79b1", "value": " 23.5M/23.5M [00:00&lt;00:00, 80.2MB/s]"}}, "fa3130def609451f81958ae6175d79b1": {"model_module": "@jupyter-widgets/controls", "model_module_version": "1.5.0", "model_name": "DescriptionStyleModel", "state": {"description_width": ""}}}, "version_major": 2, "version_minor": 0}
+</script></div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../tutorials.html" class="btn btn-neutral float-left" title="tutorials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spapros_tutorial_basic_evaluation.html" class="btn btn-neutral float-right" title="Evaluation of probe sets" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Lukas Heumos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

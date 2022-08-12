@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API &mdash; spapros docs</title>
+      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="_static/dark_mode_css/general.css" type="text/css" />
+      <link rel="stylesheet" href="_static/dark_mode_css/dark.css" type="text/css" />
+    <link rel="shortcut icon" href="_static/logo.png"/>
+  <!--[if lt IE 9]>
+    <script src="_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+        <script src="_static/jquery.js"></script>
+        <script src="_static/underscore.js"></script>
+        <script src="_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="_static/dark_mode_js/default_light.js"></script>
+        <script src="_static/dark_mode_js/theme_switcher.js"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="spapros.se.ProbesetSelector" href="se/spapros.se.ProbesetSelector.html" />
+    <link rel="prev" title="Usage" href="usage.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="index.html" class="icon icon-home"> spapros
+            <img src="_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">CONTENTS:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-spapros.se">Selection</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="se/spapros.se.ProbesetSelector.html">spapros.se.ProbesetSelector</a></li>
+<li class="toctree-l3"><a class="reference internal" href="se/spapros.se.select_reference_probesets.html">spapros.se.select_reference_probesets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="se/spapros.se.select_pca_genes.html">spapros.se.select_pca_genes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="se/spapros.se.select_DE_genes.html">spapros.se.select_DE_genes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-spapros.ev">Evaluation</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.html">spapros.ev.ProbesetEvaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ev/spapros.ev.get_metric_default_parameters.html">spapros.ev.get_metric_default_parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ev/spapros.ev.forest_classifications.html">spapros.ev.forest_classifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ev/spapros.ev.single_forest_classifications.html">spapros.ev.single_forest_classifications</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-spapros.ut">Utility functions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="ut/spapros.ut.get_expression_quantile.html">spapros.ut.get_expression_quantile</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ut/spapros.ut.transfered_expression_thresholds.html">spapros.ut.transfered_expression_thresholds</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ut/spapros.ut.plateau_penalty_kernel.html">spapros.ut.plateau_penalty_kernel</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#plotting">Plotting</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.confusion_matrix.html">spapros.pl.confusion_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.correlation_matrix.html">spapros.pl.correlation_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.cluster_similarity.html">spapros.pl.cluster_similarity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.knn_overlap.html">spapros.pl.knn_overlap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.summary_table.html">spapros.pl.summary_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.explore_constraint.html">spapros.pl.explore_constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.gene_overlap.html">spapros.pl.gene_overlap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.masked_dotplot.html">spapros.pl.masked_dotplot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.clf_genes_umaps.html">spapros.pl.clf_genes_umaps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.marker_correlation.html">spapros.pl.marker_correlation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorials.html">tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">spapros</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>API</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="api">
+<h1>API<a class="headerlink" href="#api" title="Permalink to this headline"></a></h1>
+<p>Import the spapros API as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">spapros</span> <span class="k">as</span> <span class="nn">sp</span>
+</pre></div>
+</div>
+<div class="section" id="module-spapros.se">
+<span id="selection"></span><h2>Selection<a class="headerlink" href="#module-spapros.se" title="Permalink to this headline"></a></h2>
+<p class="rubric">Main Class</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.html#spapros.se.ProbesetSelector" title="spapros.se.ProbesetSelector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">se.ProbesetSelector</span></code></a>(adata, celltype_key[, ...])</p></td>
+<td><p>General class for probeset selection.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Other Functions</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="se/spapros.se.select_reference_probesets.html#spapros.se.select_reference_probesets" title="spapros.se.select_reference_probesets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">se.select_reference_probesets</span></code></a>(adata, n[, ...])</p></td>
+<td><p>Select reference probesets with basic selection methods.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="se/spapros.se.select_pca_genes.html#spapros.se.select_pca_genes" title="spapros.se.select_pca_genes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">se.select_pca_genes</span></code></a>(adata, n[, ...])</p></td>
+<td><p>Select n features based on pca loadings.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="se/spapros.se.select_DE_genes.html#spapros.se.select_DE_genes" title="spapros.se.select_DE_genes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">se.select_DE_genes</span></code></a>(adata, n[, per_group, ...])</p></td>
+<td><p>Select genes based on wilxocon rank genes test.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="module-spapros.ev">
+<span id="evaluation"></span><h2>Evaluation<a class="headerlink" href="#module-spapros.ev" title="Permalink to this headline"></a></h2>
+<p class="rubric">Main Class</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.html#spapros.ev.ProbesetEvaluator" title="spapros.ev.ProbesetEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ev.ProbesetEvaluator</span></code></a>(adata[, celltype_key, ...])</p></td>
+<td><p>General class for probe set evaluation, comparison, plotting.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Other Functions</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="ev/spapros.ev.get_metric_default_parameters.html#spapros.ev.get_metric_default_parameters" title="spapros.ev.get_metric_default_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ev.get_metric_default_parameters</span></code></a>()</p></td>
+<td><p>Get the default metric parameters.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ev/spapros.ev.forest_classifications.html#spapros.ev.forest_classifications" title="spapros.ev.forest_classifications"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ev.forest_classifications</span></code></a>(adata, selection)</p></td>
+<td><p>Train best trees including secondary trees.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ev/spapros.ev.single_forest_classifications.html#spapros.ev.single_forest_classifications" title="spapros.ev.single_forest_classifications"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ev.single_forest_classifications</span></code></a>(adata, ...)</p></td>
+<td><p>Compute or load decision tree classification results.</p></td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="module-spapros.ut">
+<span id="utility-functions"></span><h2>Utility functions<a class="headerlink" href="#module-spapros.ut" title="Permalink to this headline"></a></h2>
+<p class="rubric">Expression Constraints</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="ut/spapros.ut.get_expression_quantile.html#spapros.ut.get_expression_quantile" title="spapros.ut.get_expression_quantile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ut.get_expression_quantile</span></code></a>(adata[, q, ...])</p></td>
+<td><p>Compute each genes q'th quantile on normalised (and log1p) data.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="ut/spapros.ut.transfered_expression_thresholds.html#spapros.ut.transfered_expression_thresholds" title="spapros.ut.transfered_expression_thresholds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ut.transfered_expression_thresholds</span></code></a>(adata[, ...])</p></td>
+<td><p>Transfer expression thresholds between different normalisations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="ut/spapros.ut.plateau_penalty_kernel.html#spapros.ut.plateau_penalty_kernel" title="spapros.ut.plateau_penalty_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ut.plateau_penalty_kernel</span></code></a>(var[, x_min, x_max])</p></td>
+<td><p>Return penalty function.</p></td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Spatial Data Analysis</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+</tbody>
+</table>
+</div>
+<div class="section" id="plotting">
+<h2>Plotting<a class="headerlink" href="#plotting" title="Permalink to this headline"></a></h2>
+<p>The sp.pl functions are used directly only in rare cases, instead always try to use the wrapper methods from the
+ProbesetEvaluator and ProbesetSelector (see 2nd table below).</p>
+<span class="target" id="module-spapros.pl"></span><table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.confusion_matrix.html#spapros.pl.confusion_matrix" title="spapros.pl.confusion_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.confusion_matrix</span></code></a>(set_ids, conf_matrices)</p></td>
+<td><p>Plot heatmap of cell type classification confusion matrices.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.correlation_matrix.html#spapros.pl.correlation_matrix" title="spapros.pl.correlation_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.correlation_matrix</span></code></a>(set_ids, cor_matrices)</p></td>
+<td><p>Plot heatmap of gene correlation matrix.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.cluster_similarity.html#spapros.pl.cluster_similarity" title="spapros.pl.cluster_similarity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.cluster_similarity</span></code></a>(selections_info[, ...])</p></td>
+<td><p>Plot cluster similarity as NMI over number of clusters</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.knn_overlap.html#spapros.pl.knn_overlap" title="spapros.pl.knn_overlap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.knn_overlap</span></code></a>(selections_info[, data, ...])</p></td>
+<td><p>Plot mean knn overlap over k</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.summary_table.html#spapros.pl.summary_table" title="spapros.pl.summary_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.summary_table</span></code></a>(table[, summaries, ...])</p></td>
+<td><p>Plot table of summary statistics</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.explore_constraint.html#spapros.pl.explore_constraint" title="spapros.pl.explore_constraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.explore_constraint</span></code></a>(a, selections_tmp, ...)</p></td>
+<td><p>Plot histogram of quantiles for selected genes for different penalty kernels.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.gene_overlap.html#spapros.pl.gene_overlap" title="spapros.pl.gene_overlap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.gene_overlap</span></code></a>(selection_df[, style, ...])</p></td>
+<td><p>Plot overlap of gene sets</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.masked_dotplot.html#spapros.pl.masked_dotplot" title="spapros.pl.masked_dotplot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.masked_dotplot</span></code></a>(adata, selector[, ct_key, ...])</p></td>
+<td><p>Create dotplot with additional annotation masks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.clf_genes_umaps.html#spapros.pl.clf_genes_umaps" title="spapros.pl.clf_genes_umaps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.clf_genes_umaps</span></code></a>(adata, df[, basis, ...])</p></td>
+<td><p>Plot umaps of genes needed for cell type classification of each cell type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.marker_correlation.html#spapros.pl.marker_correlation" title="spapros.pl.marker_correlation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.marker_correlation</span></code></a>(marker_corr[, ...])</p></td>
+<td><p>Plot maximal correlations with marker genes</p></td>
+</tr>
+</tbody>
+</table>
+<table class="colwidths-given docutils align-left">
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p class="centered">
+<strong><cite>pl</cite> module</strong></p></th>
+<th class="head"><p class="centered">
+<strong><a class="reference internal" href="se/spapros.se.ProbesetSelector.html#spapros.se.ProbesetSelector" title="spapros.se.ProbesetSelector"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProbesetSelector</span></code></a></strong></p></th>
+<th class="head"><p class="centered">
+<strong><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.html#spapros.ev.ProbesetEvaluator" title="spapros.ev.ProbesetEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProbesetEvaluator</span></code></a></strong></p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.masked_dotplot.html#spapros.pl.masked_dotplot" title="spapros.pl.masked_dotplot"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.masked_dotplot()</span></code></a></p></td>
+<td><p>see pl.masked_dotplot for now</p></td>
+<td><p>n/a</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.explore_constraint.html#spapros.pl.explore_constraint" title="spapros.pl.explore_constraint"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.explore_constraint()</span></code></a></p></td>
+<td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_explore_constraint.html#spapros.se.ProbesetSelector.plot_explore_constraint" title="spapros.se.ProbesetSelector.plot_explore_constraint"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_explore_constraint()</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.selection_histogram()</span></code></p></td>
+<td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_histogram.html#spapros.se.ProbesetSelector.plot_histogram" title="spapros.se.ProbesetSelector.plot_histogram"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_histogram()</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.clf_genes_umaps.html#spapros.pl.clf_genes_umaps" title="spapros.pl.clf_genes_umaps"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.clf_genes_umaps()</span></code></a></p></td>
+<td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_clf_genes.html#spapros.se.ProbesetSelector.plot_clf_genes" title="spapros.se.ProbesetSelector.plot_clf_genes"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_clf_genes()</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.gene_overlap.html#spapros.pl.gene_overlap" title="spapros.pl.gene_overlap"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.gene_overlap()</span></code></a></p></td>
+<td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_gene_overlap.html#spapros.se.ProbesetSelector.plot_gene_overlap" title="spapros.se.ProbesetSelector.plot_gene_overlap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_gene_overlap()</span></code></a></p></td>
+<td><p>potentially added soon</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.correlation_matrix.html#spapros.pl.correlation_matrix" title="spapros.pl.correlation_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.correlation_matrix()</span></code></a></p></td>
+<td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_coexpression.html#spapros.se.ProbesetSelector.plot_coexpression" title="spapros.se.ProbesetSelector.plot_coexpression"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_coexpression()</span></code></a></p></td>
+<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_coexpression.html#spapros.ev.ProbesetEvaluator.plot_coexpression" title="spapros.ev.ProbesetEvaluator.plot_coexpression"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_coexpression()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.confusion_matrix.html#spapros.pl.confusion_matrix" title="spapros.pl.confusion_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.confusion_matrix()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_confusion_matrix.html#spapros.ev.ProbesetEvaluator.plot_confusion_matrix" title="spapros.ev.ProbesetEvaluator.plot_confusion_matrix"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_confusion_matrix()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.cluster_similarity.html#spapros.pl.cluster_similarity" title="spapros.pl.cluster_similarity"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.cluster_similarity()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_cluster_similarity.html#spapros.ev.ProbesetEvaluator.plot_cluster_similarity" title="spapros.ev.ProbesetEvaluator.plot_cluster_similarity"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_cluster_similarity()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.knn_overlap.html#spapros.pl.knn_overlap" title="spapros.pl.knn_overlap"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.knn_overlap()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_knn_overlap.html#spapros.ev.ProbesetEvaluator.plot_knn_overlap" title="spapros.ev.ProbesetEvaluator.plot_knn_overlap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_knn_overlap()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.summary_table.html#spapros.pl.summary_table" title="spapros.pl.summary_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.summary_table()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_summary.html#spapros.ev.ProbesetEvaluator.plot_summary" title="spapros.ev.ProbesetEvaluator.plot_summary"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_summary()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.marker_correlation.html#spapros.pl.marker_correlation" title="spapros.pl.marker_correlation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.marker_correlation()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_marker_corr.html#spapros.ev.ProbesetEvaluator.plot_marker_corr" title="spapros.ev.ProbesetEvaluator.plot_marker_corr"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_marker_corr()</span></code></a></p></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="usage.html" class="btn btn-neutral float-left" title="Usage" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="se/spapros.se.ProbesetSelector.html" class="btn btn-neutral float-right" title="spapros.se.ProbesetSelector" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Lukas Heumos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

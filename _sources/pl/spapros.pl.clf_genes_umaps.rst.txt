@@ -1,0 +1,6 @@
+﻿spapros.pl.clf\_genes\_umaps
+============================
+
+.. currentmodule:: spapros
+
+.. autofunction:: spapros.pl.clf_genes_umaps

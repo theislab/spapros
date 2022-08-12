@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spapros.pl.marker_correlation &mdash; spapros docs</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="../_static/dark_mode_js/default_light.js"></script>
+        <script src="../_static/dark_mode_js/theme_switcher.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="CLI" href="../cli.html" />
+    <link rel="prev" title="spapros.pl.clf_genes_umaps" href="spapros.pl.clf_genes_umaps.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> spapros
+            <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">CONTENTS:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.se">Selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.ev">Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.ut">Utility functions</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#plotting">Plotting</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="spapros.pl.confusion_matrix.html">spapros.pl.confusion_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.pl.correlation_matrix.html">spapros.pl.correlation_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.pl.cluster_similarity.html">spapros.pl.cluster_similarity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.pl.knn_overlap.html">spapros.pl.knn_overlap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.pl.summary_table.html">spapros.pl.summary_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.pl.explore_constraint.html">spapros.pl.explore_constraint</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.pl.gene_overlap.html">spapros.pl.gene_overlap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.pl.masked_dotplot.html">spapros.pl.masked_dotplot</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.pl.clf_genes_umaps.html">spapros.pl.clf_genes_umaps</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">spapros.pl.marker_correlation</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">spapros</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api.html">API</a> &raquo;</li>
+      <li>spapros.pl.marker_correlation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/pl/spapros.pl.marker_correlation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="spapros-pl-marker-correlation">
+<h1>spapros.pl.marker_correlation<a class="headerlink" href="#spapros-pl-marker-correlation" title="Permalink to this headline"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="spapros.pl.marker_correlation">
+<span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">marker_correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marker_corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'per</span> <span class="pre">marker</span> <span class="pre">mean</span> <span class="pre">&gt;</span> <span class="pre">0.025'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_below_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rename_set_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.marker_correlation" title="Permalink to this definition"></a></dt>
+<dd><p>Plot maximal correlations with marker genes</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>marker_corr</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>pandas.core.frame.DataFrame</em><em>]</em>) – For each set id a Dataframe containing maximal correlations for each marker gene. The index contains the marker
+genes symbols and the Dataframe needs to have one column named <code class="docutils literal notranslate"><span class="pre">corr_metric</span></code> with float values.</p></li>
+<li><p><strong>corr_metric</strong> (<em>str</em>) – Column in dataframes of <code class="docutils literal notranslate"><span class="pre">marker_corr</span></code> that contains the correlation values.</p></li>
+<li><p><strong>mask_below_max</strong> (<em>bool</em>) – Whether to mask values that are lower than the maximum correlation with a marker gene for each cell type.
+The masking applies per set id.</p></li>
+<li><p><strong>set_ids</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Plot subset of set ids (must occur as keys in <code class="docutils literal notranslate"><span class="pre">marker_corr</span></code>).</p></li>
+<li><p><strong>rename_set_ids</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Mapping to rename set_ids for tick labels.</p></li>
+<li><p><strong>size_factor</strong> (<em>float</em>) – Scale figure size.</p></li>
+<li><p><strong>save</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Optionally save figure to path.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="spapros.pl.clf_genes_umaps.html" class="btn btn-neutral float-left" title="spapros.pl.clf_genes_umaps" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../cli.html" class="btn btn-neutral float-right" title="CLI" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Lukas Heumos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

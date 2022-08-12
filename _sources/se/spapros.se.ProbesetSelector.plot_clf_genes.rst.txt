@@ -1,0 +1,6 @@
+spapros.se.ProbesetSelector.plot\_clf\_genes
+============================================
+
+.. currentmodule:: spapros
+
+.. automethod:: spapros.se.ProbesetSelector.plot_clf_genes

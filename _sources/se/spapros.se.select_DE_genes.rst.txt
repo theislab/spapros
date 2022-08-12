@@ -1,0 +1,6 @@
+﻿spapros.se.select\_DE\_genes
+============================
+
+.. currentmodule:: spapros
+
+.. autofunction:: spapros.se.select_DE_genes

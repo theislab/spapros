@@ -1,0 +1,6 @@
+spapros.ev.ProbesetEvaluator.load\_results
+==========================================
+
+.. currentmodule:: spapros
+
+.. automethod:: spapros.ev.ProbesetEvaluator.load_results

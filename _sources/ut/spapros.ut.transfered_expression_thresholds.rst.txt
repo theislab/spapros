@@ -1,0 +1,6 @@
+﻿spapros.ut.transfered\_expression\_thresholds
+=============================================
+
+.. currentmodule:: spapros
+
+.. autofunction:: spapros.ut.transfered_expression_thresholds

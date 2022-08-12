@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spapros.ev.single_forest_classifications &mdash; spapros docs</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="../_static/dark_mode_js/default_light.js"></script>
+        <script src="../_static/dark_mode_js/theme_switcher.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="spapros.ut.get_expression_quantile" href="../ut/spapros.ut.get_expression_quantile.html" />
+    <link rel="prev" title="spapros.ev.forest_classifications" href="spapros.ev.forest_classifications.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> spapros
+            <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">CONTENTS:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.se">Selection</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#module-spapros.ev">Evaluation</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.html">spapros.ev.ProbesetEvaluator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.ev.get_metric_default_parameters.html">spapros.ev.get_metric_default_parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.ev.forest_classifications.html">spapros.ev.forest_classifications</a></li>
+<li class="toctree-l3 current"><a class="current reference internal" href="#">spapros.ev.single_forest_classifications</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.ut">Utility functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#plotting">Plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">spapros</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api.html">API</a> &raquo;</li>
+      <li>spapros.ev.single_forest_classifications</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/ev/spapros.ev.single_forest_classifications.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="spapros-ev-single-forest-classifications">
+<h1>spapros.ev.single_forest_classifications<a class="headerlink" href="#spapros-ev-single-forest-classifications" title="Permalink to this headline"></a></h1>
+<dl class="py function">
+<dt class="sig sig-object py" id="spapros.ev.single_forest_classifications">
+<span class="sig-prename descclassname"><span class="pre">spapros.ev.</span></span><span class="sig-name descname"><span class="pre">single_forest_classifications</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selection</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ref_celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ct_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Celltypes'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ct_spec_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_trees</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">test_subsample</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sort_by_tree_performance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_clfs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'loky'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Train</span> <span class="pre">trees...'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.ev.single_forest_classifications" title="Permalink to this definition"></a></dt>
+<dd><p>Compute or load decision tree classification results.</p>
+<p class="rubric">Notes</p>
+<p>As metrics we use:
+macro f1 score as summary statistic - it’s a uniformly weighted statistic wrt celltype groups in ‘others’ since
+we sample uniformly.
+For the reference celltype specific metric we use specificity = TN/(FP+TN) (also because FN and TP are not
+feasible in the given setting)</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>adata</strong> (<em>anndata._core.anndata.AnnData</em>) – An already preprocessed annotated data matrix. Typically we use log normalised data.</p></li>
+<li><p><strong>selection</strong> (<em>Union</em><em>[</em><em>list</em><em>, </em><em>pandas.core.frame.DataFrame</em><em>]</em>) – Trees are trained on genes of the list or genes defined in the bool column <code class="docutils literal notranslate"><span class="pre">selection['selection']</span></code>.</p></li>
+<li><p><strong>celltypes</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>list</em><em>]</em>) – Trees are trained on the given celltypes</p></li>
+<li><p><strong>ref_celltypes</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>list</em><em>]</em>) – List of celltypes used as reference or <code class="docutils literal notranslate"><span class="pre">'all'</span></code>.</p></li>
+<li><p><strong>ct_key</strong> (<em>str</em>) – str
+Column name of adata.obs with celltype infos</p></li>
+<li><p><strong>ct_spec_ref</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – Celltype specific references (e.g.:
+<code class="docutils literal notranslate"><span class="pre">{'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth</span> <span class="pre">muscle']}</span></code>). This argument was introduced to
+train secondary trees.</p></li>
+<li><p><strong>save</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>bool</em><em>]</em>) – If not False load results if the given file exists, otherwise save results after computation.</p></li>
+<li><p><strong>n_trees</strong> (<em>int</em>) – Number of trees to train.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random seed.</p></li>
+<li><p><strong>max_depth</strong> (<em>int</em>) – max_depth argument of DecisionTreeClassifier.</p></li>
+<li><p><strong>subsample</strong> (<em>int</em>) – int
+For each trained tree we use samples of maximal size=`subsample` for each celltype. If fewer cells
+are present for a given celltype all cells are used.</p></li>
+<li><p><strong>test_subsample</strong> (<em>int</em>) – Number of random choices for drawing test sets.</p></li>
+<li><p><strong>sort_by_tree_performance</strong> (<em>bool</em>) – Wether to sort results and trees by tree performance (best first) per celltype</p></li>
+<li><p><strong>verbose</strong> (<em>bool</em>) – Verbosity level &gt; 1.</p></li>
+<li><p><strong>return_clfs</strong> (<em>bool</em>) – Wether to return the sklearn tree classifier objects. (if <cite>return_clfs</cite> and <cite>save_load</cite> we still on
+save the results tables, if you want to save the classifiers this needs to be done separately).</p></li>
+<li><p><strong>n_jobs</strong> (<em>int</em>) – Multiprocessing number of processes.</p></li>
+<li><p><strong>backend</strong> (<em>str</em>) – Which backend to use for multiprocessing. See class <cite>joblib.Parallel</cite> for valid options.</p></li>
+<li><p><strong>progress</strong> (<em>Optional</em><em>[</em><em>rich.progress.Progress</em><em>]</em>) – <code class="docutils literal notranslate"><span class="pre">rich.Progress</span></code> object if progress bars should be shown.</p></li>
+<li><p><strong>level</strong> (<em>int</em>) – Progress bar level.</p></li>
+<li><p><strong>task</strong> (<em>str</em>) – Description of progress task.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p><p>tuple containing:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt>summary_metric: pd.DataFrame</dt><dd><p>macro f1 scores for each celltype’s trees (Ordered according best performing trees)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>ct_specific_metric: dict of pd.DataFrame</dt><dd><p>For each celltype’s tree: specificity (= TN / (FP+TN)) wrt each other celltype’s test sample</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>importances: dict of pd.DataFrame</dt><dd><p>Gene’s feature importances for each tree.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>forests: dict</dt><dd><p>only returned if <code class="docutils literal notranslate"><span class="pre">return_clfs=True</span></code>. Then the other three return values will be packed in a list:
+<code class="docutils literal notranslate"><span class="pre">[summary_metric,ct_specific_metric,importances],</span> <span class="pre">forests</span></code>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>tuple</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In all output files trees are ordered according macro f1 performance.</p>
+</div>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="spapros.ev.forest_classifications.html" class="btn btn-neutral float-left" title="spapros.ev.forest_classifications" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../ut/spapros.ut.get_expression_quantile.html" class="btn btn-neutral float-right" title="spapros.ut.get_expression_quantile" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Lukas Heumos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

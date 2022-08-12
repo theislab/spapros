@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spapros.se.ProbesetSelector &mdash; spapros docs</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="../_static/dark_mode_js/default_light.js"></script>
+        <script src="../_static/dark_mode_js/theme_switcher.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="spapros.se.ProbesetSelector.info" href="spapros.se.ProbesetSelector.info.html" />
+    <link rel="prev" title="API" href="../api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> spapros
+            <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">CONTENTS:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#module-spapros.se">Selection</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">spapros.se.ProbesetSelector</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.info.html">spapros.se.ProbesetSelector.info</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.plot_clf_genes.html">spapros.se.ProbesetSelector.plot_clf_genes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.plot_coexpression.html">spapros.se.ProbesetSelector.plot_coexpression</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.plot_explore_constraint.html">spapros.se.ProbesetSelector.plot_explore_constraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.plot_gene_overlap.html">spapros.se.ProbesetSelector.plot_gene_overlap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.plot_histogram.html">spapros.se.ProbesetSelector.plot_histogram</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.select_probeset.html">spapros.se.ProbesetSelector.select_probeset</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.se.select_reference_probesets.html">spapros.se.select_reference_probesets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.se.select_pca_genes.html">spapros.se.select_pca_genes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.se.select_DE_genes.html">spapros.se.select_DE_genes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.ev">Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.ut">Utility functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#plotting">Plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">spapros</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api.html">API</a> &raquo;</li>
+      <li>spapros.se.ProbesetSelector</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/se/spapros.se.ProbesetSelector.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="spapros-se-probesetselector">
+<h1>spapros.se.ProbesetSelector<a class="headerlink" href="#spapros-se-probesetselector" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="spapros.se.ProbesetSelector">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spapros.se.</span></span><span class="sig-name descname"><span class="pre">ProbesetSelector</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltype_key</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'highly_variable'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preselected_genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prior_genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_pca_genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_mean_difference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_min_markers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_list_markers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_corr_th</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_penalties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DE_penalties</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_penalties_adata_celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">m_penalties_list_celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pca_selection_hparams</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">DE_selection_hparams</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'n':</span> <span class="pre">3,</span> <span class="pre">'per_group':</span> <span class="pre">True}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forest_hparams</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'n_trees':</span> <span class="pre">50,</span> <span class="pre">'subsample':</span> <span class="pre">1000,</span> <span class="pre">'test_subsample':</span> <span class="pre">3000}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forest_DE_baseline_hparams</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'max_step':</span> <span class="pre">3,</span> <span class="pre">'min_outlier_dif':</span> <span class="pre">0.02,</span> <span class="pre">'min_score':</span> <span class="pre">0.9,</span> <span class="pre">'n_DE':</span> <span class="pre">1,</span> <span class="pre">'n_stds':</span> <span class="pre">1.0,</span> <span class="pre">'n_terminal_repeats':</span> <span class="pre">3}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_forest_genes_hparams</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'importance_th':</span> <span class="pre">0,</span> <span class="pre">'n_max_per_it':</span> <span class="pre">5,</span> <span class="pre">'performance_th':</span> <span class="pre">0.02}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_selection_hparams</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{'penalty_threshold':</span> <span class="pre">1}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.se.ProbesetSelector" title="Permalink to this definition"></a></dt>
+<dd><p>General class for probeset selection.</p>
+<p class="rubric">Notes</p>
+<p>The selector creates a probeset which identifies the celltypes of interest and captures transcriptomic variation
+beyond cell type labels.</p>
+<p>The Spapros selection pipeline combines basic feature selection builing blocks while optionally taking into
+account prior knowledge.</p>
+<p><strong>The main steps of the selection pipeline are:</strong></p>
+<ol class="arabic simple">
+<li><p>PCA based selection of variation recovering genes.</p></li>
+<li><p>Selection of DE genes.</p></li>
+<li><p>Train decision trees on the DE genes (including an iterative optimization with additional DE tests).</p></li>
+<li><p>Train decision trees on the PCA genes (and optionally on pre-selected and prioritized genes).</p></li>
+<li><p>Enhancement of the PCA trees by adding beneficial DE genes.</p></li>
+<li><p>Rank genes, eventually add missing marker genes and compile probe set.</p></li>
+</ol>
+<p>The result of the selection is given in <code class="xref py py-attr docutils literal notranslate"><span class="pre">ProbesetSelector.probeset</span></code>.</p>
+<p><strong>Genes are ranked as follows (sorry it’s a bit complicated):</strong></p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>First the following groups are built</dt><dd><ol class="arabic simple">
+<li><p>preselected genes (optional, see parameter <cite>preselected_genes</cite>)</p></li>
+<li><p>genes that occur in the best decision trees of each cell type</p></li>
+<li><p>genes that are needed to achieve the minimal number of markers per cell type that occurs in
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">ProbesetSelector.marker_list</span></code> but not in <code class="xref py py-attr docutils literal notranslate"><span class="pre">ProbesetSelector.adata_celltypes</span></code> (optional, see
+parameter <cite>n_list_markers</cite>). This group is separated from 3. because genes of 2. take care of
+classifying cell types in <code class="xref py py-attr docutils literal notranslate"><span class="pre">ProbesetSelector.adata_celltypes</span></code>.</p></li>
+<li><p>genes that are needed to achieve the minimal number of markers per cell type in
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">ProbesetSelector.adata_celltypes</span></code>.  (optional, see parameter <cite>n_min_markers</cite>)</p></li>
+<li><p>all other genes</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Afterwards within each “rank” group genes are further ranked by</dt><dd><ol class="arabic simple">
+<li><p>the <strong>marker_rank</strong>: first the best markers of celltypes, then 2nd best markers of celltypes, …, then
+<cite>n_min_markers</cite> th best marker of celltypes, then genes that are not identified as required markers.</p></li>
+<li><p>the <strong>tree_rank</strong>: for each cell type the genes that occur in cell type classification trees with 2nd
+best performance, then 3rd best performance, and so on. Genes that don’t occur in trees have the worst
+tree_rank.</p></li>
+<li><p>the <strong>importance_score</strong> from the best cell type classification tree of each gene. Genes that don’t occur
+in any tree score worst.</p></li>
+<li><p>the <strong>pca_score</strong> which scores how much variation of the dataset each gene captures.</p></li>
+</ol>
+</dd>
+</dl>
+</li>
+</ul>
+<dl class="field-list">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>adata</strong> (<em>anndata._core.anndata.AnnData</em>) – Data with log normalised counts in <code class="docutils literal notranslate"><span class="pre">adata.X</span></code>. The selection runs with an adata subsetted on fewer
+genes. It might be helpful though to keep all genes (when a marker_list and penalties are provided). The
+genes can be subsetted for selection via <code class="xref py py-attr docutils literal notranslate"><span class="pre">genes_key</span></code>.</p></li>
+<li><p><strong>celltype_key</strong> (<em>str</em>) – Key in <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> with celltype annotations.</p></li>
+<li><p><strong>genes_key</strong> (<em>str</em>) – Key in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> for preselected genes (typically ‘highly_variable_genes’).</p></li>
+<li><p><strong>n</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Optionally set the number of finally selected genes. Note that when <code class="xref py py-attr docutils literal notranslate"><span class="pre">n</span></code> is <cite>None</cite> we automatically
+infer <code class="xref py py-attr docutils literal notranslate"><span class="pre">n</span></code> as the minimal number of recommended genes. This includes all preselected genes, genes in
+the best decision tree of each celltype, and the minimal number of identified and added markers defined by
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">n_min_markers</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">n_list_markers</span></code>. Als note that setting <code class="xref py py-attr docutils literal notranslate"><span class="pre">n</span></code> might change the gene
+ranking since the final added list_markers are added based on the theoretically added genes without
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">list_markers</span></code>.</p></li>
+<li><p><strong>preselected_genes</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Pre selected genes (these will also have the highest ranking in the final list).</p></li>
+<li><p><strong>prior_genes</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – Prioritized genes.</p></li>
+<li><p><strong>n_pca_genes</strong> (<em>int</em>) – Optionally set the number of preselected pca genes. If not set or set <cite>&lt;1</cite>, this step will be skipped.</p></li>
+<li><p><strong>min_mean_difference</strong> (<em>float</em>) – Minimal difference of mean expression between at least one celltype and the background. In this test only
+cell types from <code class="xref py py-attr docutils literal notranslate"><span class="pre">celltypes</span></code> are taken into account (also for the background). This minimal difference
+is applied as an additional binary penalty in pca_penalties, DE_penalties and m_penalties_adata_celltypes.</p></li>
+<li><p><strong>n_min_markers</strong> (<em>int</em>) – The minimal number of identified and added markers.</p></li>
+<li><p><strong>celltypes</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>str</em><em>]</em>) – <p>Cell types for which trees are trained.</p>
+<ul>
+<li><p>The probeset is optimised to be able to distinguish each of these cell types from all other cells
+occuring in the dataset.</p></li>
+<li><p>The pca selection is based on all cell types in the dataset (not only on <code class="xref py py-attr docutils literal notranslate"><span class="pre">celltypes</span></code>).</p></li>
+<li><p>The optionally provided marker list can include additional cell types not listed in <code class="xref py py-attr docutils literal notranslate"><span class="pre">celltypes</span></code>
+(and <code class="docutils literal notranslate"><span class="pre">adata.obs[celltype_key])</span></code>.</p></li>
+</ul>
+</p></li>
+<li><p><strong>marker_list</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – <p>List of marker genes. Can either be a dictionary like this:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="s2">&quot;celltype_1&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;S100A8&quot;</span><span class="p">,</span> <span class="s2">&quot;S100A9&quot;</span><span class="p">,</span> <span class="s2">&quot;LYZ&quot;</span><span class="p">,</span> <span class="s2">&quot;BLVRB&quot;</span><span class="p">],</span>
+<span class="s2">&quot;celltype_2&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;BIRC3&quot;</span><span class="p">,</span> <span class="s2">&quot;TMEM116&quot;</span><span class="p">],</span>
+<span class="s2">&quot;celltype_4&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;CD74&quot;</span><span class="p">,</span> <span class="s2">&quot;CD79B&quot;</span><span class="p">,</span> <span class="s2">&quot;MS4A1&quot;</span><span class="p">],</span>
+<span class="s2">&quot;celltype_3&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;C5AR1&quot;</span><span class="p">],</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Or the path to a csv-file containing the one column of markers for each celltype. The column names need to
+be the celltype identifiers used in <code class="docutils literal notranslate"><span class="pre">adata.obs[celltype_key]</span></code>.</p>
+</p></li>
+<li><p><strong>n_list_markers</strong> (<em>Union</em><em>[</em><em>int</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>int</em><em>]</em><em>]</em>) – Minimal number of markers per celltype that are at least selected. Selected means either selecting genes
+from the marker list or having correlated genes in the already selected panel. (Set the correlation
+threshold with <cite>marker_selection_hparams[‘penalty_threshold’])</cite>. The correlation based check only applies to
+cell types that also occur in <cite>adata.obs[celltype_key]</cite> while for cell types that only occur in the
+<cite>marker_list</cite> the markers are just added.
+If you want to select a different number of markers for celltypes in adata and celltypes only in the marker
+list, set e.g.: <code class="docutils literal notranslate"><span class="pre">n_list_markers</span> <span class="pre">=</span> <span class="pre">{'adata_celltypes':2,'list_celltypes':3}</span></code>.</p></li>
+<li><p><strong>marker_corr_th</strong> (<em>float</em>) – Minimal correlation to consider a gene as captured.</p></li>
+<li><p><strong>pca_penalties</strong> (<em>list</em>) – List of keys for columns in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing penalty factors that are multiplied with the scores for
+PCA based gene selection.</p></li>
+<li><p><strong>DE_penalties</strong> (<em>list</em>) – List of keys for columns in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing penalty factors that are multiplied with the scores for DE
+based gene selection.</p></li>
+<li><p><strong>m_penalties_adata_celltypes</strong> (<em>list</em>) – List of keys for columns in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing penalty factors to filter out marker genes if a gene’s
+penalty &lt; threshold for celltypes in adata.</p></li>
+<li><p><strong>m_penalties_list_celltypes</strong> (<em>list</em>) – List of keys for columns in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing penalty factors to filter out marker genes if a gene’s
+penalty &lt; threshold for celltypes not in adata.</p></li>
+<li><p><strong>pca_selection_hparams</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dictionary with hyperparameters for the PCA based gene selection.</p></li>
+<li><p><strong>DE_selection_hparams</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dictionary with hyperparameters for the DE based gene selection.</p></li>
+<li><p><strong>forest_hparams</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dictionary with hyperparameters for the forest based gene selection.</p></li>
+<li><p><strong>forest_DE_baseline_hparams</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dictionary with hyperparameters for adding DE genes to decision trees.</p></li>
+<li><p><strong>add_forest_genes_hparams</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dictionary with hyperparameters for adding marker genes to decision trees.</p></li>
+<li><p><strong>marker_selection_hparams</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Any</em><em>]</em>) – Dictionary with hyperparameters. So far only the threshold for the penalty filtering of marker genes if a
+gene’s penalty &lt; threshold.</p></li>
+<li><p><strong>verbosity</strong> (<em>int</em>) – Verbosity level.</p></li>
+<li><p><strong>seed</strong> (<em>int</em>) – Random number seed.</p></li>
+<li><p><strong>save_dir</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – <p>Directory path where all results are saved and loaded from if results already exist. Note for the case
+that results already exist:</p>
+<blockquote>
+<div><ul>
+<li><p>if self.select_probeset() was fully run through and all results exist: then the initialization arguments
+don’t matter much</p></li>
+<li><p>if only partial results were generated, make sure that the initialization arguments are the same as
+before!</p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>n_jobs</strong> (<em>int</em>) – Number of cpus for multi processing computations. Set to -1 to use all available cpus.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><ul>
+<li><p><strong>adata</strong> – Data with log normalised counts in <code class="docutils literal notranslate"><span class="pre">adata.X</span></code>.</p></li>
+<li><p><strong>ct_key</strong> – Key in <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> with celltype annotations.</p></li>
+<li><p><strong>g_key</strong> – Key in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> for preselected genes (typically <cite>‘highly_variable_genes’</cite>).</p></li>
+<li><p><strong>n</strong> – Number of finally selected genes.</p></li>
+<li><p><strong>genes</strong> – Pre selected genes (these will also have the highest ranking in the final list).</p></li>
+<li><p><strong>selection</strong> – Dictionary with the final and several other gene set selections.</p></li>
+<li><p><strong>n_pca_genes</strong> – The number of preselected pca genes. If <cite>None</cite> or <cite>&lt;1</cite>, this step is skipped.</p></li>
+<li><p><strong>min_mean_difference</strong> – Minimal difference of mean expression between at least one celltype and the background.</p></li>
+<li><p><strong>n_min_markers</strong> – The minimal number of identified and added markers for cell types of <cite>adata.obs[ct_key]</cite>.</p></li>
+<li><p><strong>celltypes</strong> – Cell types for which trees are trained.</p></li>
+<li><p><strong>adata_celltypes</strong> – List of all celltypes occuring in <code class="docutils literal notranslate"><span class="pre">adata.obs[ct_key]</span></code>.</p></li>
+<li><p><strong>obs</strong> – Keys of <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> on which most of the selections are run.</p></li>
+<li><p><strong>marker_list</strong> – Dictionary of the form <code class="docutils literal notranslate"><span class="pre">{'celltype':</span> <span class="pre">list</span> <span class="pre">of</span> <span class="pre">markers</span> <span class="pre">of</span> <span class="pre">celltype}</span></code>.</p></li>
+<li><p><strong>n_list_markers</strong> – Minimal number of markers from the <cite>marker_list</cite> that are at least selected per cell type. Note that for
+those cell types in the <cite>marker_list</cite> that also occur in <cite>adata.obs[ct_key]</cite> genes that are correlated with
+the markers might be selected (see <code class="xref py py-attr docutils literal notranslate"><span class="pre">marker_corr_th</span></code>).</p></li>
+<li><p><strong>marker_corr_th</strong> – Minimal correlation to consider a gene as captured.</p></li>
+<li><p><strong>pca_penalties</strong> – List of keys for columns in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing penalty factors that are multiplied with the scores
+for PCA based gene selection.</p></li>
+<li><p><strong>DE_penalties</strong> – List of keys for columns in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing penalty factors that are multiplied with the scores
+for DE based gene selection.</p></li>
+<li><p><strong>m_penalties_adata_celltypes</strong> – List of keys for columns in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing penalty factors to filter out marker genes if a
+gene’s penalty &lt; threshold for celltypes in adata.</p></li>
+<li><p><strong>m_penalties_list_celltypes</strong> – List of keys for columns in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing penalty factors to filter out marker genes if a
+gene’s penalty &lt; threshold for celltypes not in adata.</p></li>
+<li><p><strong>pca_selection_hparams</strong> – Dictionary with hyperparameters for the PCA based gene selection.</p></li>
+<li><p><strong>DE_selection_hparams</strong> – Dictionary with hyperparameters for the DE based gene selection.</p></li>
+<li><p><strong>forest_hparams</strong> – Dictionary with hyperparameters for the forest based gene selection.</p></li>
+<li><p><strong>forest_DE_baseline_hparams</strong> – Dictionary with hyperparameters for adding DE genes to decision trees.</p></li>
+<li><p><strong>add_forest_genes_hparams</strong> – Dictionary with hyperparameters for adding marker genes to decision trees.</p></li>
+<li><p><strong>m_selection_hparams</strong> – Dictionary with hyperparameters. So far only the threshold for the penalty filtering of marker genes if a
+gene’s penalty &lt; threshold.</p></li>
+<li><p><strong>verbosity</strong> – Verbosity level.</p></li>
+<li><p><strong>seed</strong> – Random number seed.</p></li>
+<li><p><strong>save_dir</strong> – Directory path where all results are saved and loaded from if results already exist.</p></li>
+<li><p><strong>n_jobs</strong> – Number of cpus for multi processing computations. Set to <cite>-1</cite> to use all available cpus.</p></li>
+<li><p><strong>forest_results</strong> – Forest results.</p></li>
+<li><p><strong>forest_clfs</strong> – Forest classifier.</p></li>
+<li><p><strong>min_test_n</strong> – Minimal number of samples in each celltype’s test set</p></li>
+<li><p><strong>loaded_attributes</strong> – List of which results were loaded from disc.</p></li>
+<li><p><strong>disable_pbars.</strong> – Disable progress bars.</p></li>
+<li><p><strong>probeset</strong> – The final probeset list. Available only after calling <a class="reference internal" href="spapros.se.ProbesetSelector.select_probeset.html#spapros.se.ProbesetSelector.select_probeset" title="spapros.se.ProbesetSelector.select_probeset"><code class="xref py py-func docutils literal notranslate"><span class="pre">select_probeset()</span></code></a>. The table
+contains the following columns:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt><strong>index</strong></dt><dd><p>Gene symbol.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>gene_nr</strong></dt><dd><p>Integer assigned to each gene.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>selection</strong></dt><dd><p>Wether a gene was selected.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>rank</strong></dt><dd><p>Gene ranking as describes in Notes above.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>marker_rank</strong></dt><dd><p>Rank of the required markers per cell type. The best marker per cell type has marker_rank 1, the
+second best 2, and so on. Required markers are ranked till <code class="xref py py-attr docutils literal notranslate"><span class="pre">n_min_markers</span></code>
+or <code class="xref py py-attr docutils literal notranslate"><span class="pre">n_list_markers</span></code> depending on the cell type.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>tree_rank</strong></dt><dd><p>Ranking of the best tree the gene occured in. Per cell type multiple decision trees are trained and
+the best one is selected. To extend the ranking of genes in the probeset list, the 2nd, 3rd, …
+best performing trees are considered.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>importance_score</strong></dt><dd><p>Highest importance score of a gene in the highest ranked trees that the gene occured in. (see TODO:
+reference tree training fct and there the description of the output)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>pca_score</strong></dt><dd><p>Score from PCA-based selection (see TODO: document pca based selection and reference procedure
+here). Genes with high scores capture high amounts of general transcriptomic variation.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>pre_selected</strong></dt><dd><p>Whether a gene was in the list of pre-selected genes.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>prior_selected</strong></dt><dd><p>Whether a gene was in the list of prioritized genes.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>pca_selected</strong></dt><dd><p>Whether a gene was in the list of <cite>n_pca_genes</cite> of PCA selected genes.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>celltypes_DE_1vsall</strong></dt><dd><p>Cell type in which a given gene is up-regulated (compared to all other cell types as background,
+identified via differential expression tests during the selection).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>celltypes_DE_specific</strong></dt><dd><p>Like <strong>celltypes_DE_1vsall</strong> but for DE tests that use a subset of the background (typically genes
+that distinguish similar cell types).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>celltypes_DE</strong></dt><dd><p><strong>celltypes_DE_1vsall</strong> and <strong>celltypes_DE_specific</strong> combined.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>celltypes_marker</strong></dt><dd><p><strong>celltypes_DE_1vsall</strong> combined with <strong>celltypes_DE_specific</strong> and the cell type of
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">marker_list</span></code> if the gene was listed as a marker there.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>list_only_ct_marker</strong></dt><dd><p>Whether a gene is listed as a marker in <code class="xref py py-attr docutils literal notranslate"><span class="pre">marker_list</span></code>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>required_marker</strong></dt><dd><p>Whether a gene was required to reach the minimal number of markers per cell type
+(<code class="xref py py-attr docutils literal notranslate"><span class="pre">n_min_markers</span></code>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">n_list_markers</span></code>).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>required_list_marker</strong></dt><dd><p>Whether a gene was required to reach the minimal number of markers for cell types that only occur in
+<code class="xref py py-attr docutils literal notranslate"><span class="pre">marker_list</span></code> but not in <code class="xref py py-attr docutils literal notranslate"><span class="pre">adata_celltypes</span></code>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</li>
+<li><p><strong>genes_of_primary_trees</strong> – The genes of the best tree of each cell type. Available only after calling
+<a class="reference internal" href="spapros.se.ProbesetSelector.select_probeset.html#spapros.se.ProbesetSelector.select_probeset" title="spapros.se.ProbesetSelector.select_probeset"><code class="xref py py-func docutils literal notranslate"><span class="pre">select_probeset()</span></code></a>. The table contains the following columns:</p>
+<blockquote>
+<div><ul class="simple">
+<li><dl class="simple">
+<dt><strong>gene</strong></dt><dd><p>Gene symbol.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>celltype</strong></dt><dd><p>Cell type in which the tree occurs.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>importance</strong></dt><dd><p>Importance score of the gene for the given cell type.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><strong>nr_of_celltypes</strong></dt><dd><p>Number of primary trees i.e. cell types in which the gene occurs.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+</li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.se.ProbesetSelector.info.html#spapros.se.ProbesetSelector.info" title="spapros.se.ProbesetSelector.info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">info</span></code></a>()</p></td>
+<td><p>Print info.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="spapros.se.ProbesetSelector.plot_clf_genes.html#spapros.se.ProbesetSelector.plot_clf_genes" title="spapros.se.ProbesetSelector.plot_clf_genes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_clf_genes</span></code></a>([basis, celltypes, ...])</p></td>
+<td><p>Plot umaps of selected genes needed for cell type classification of each cell type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.se.ProbesetSelector.plot_coexpression.html#spapros.se.ProbesetSelector.plot_coexpression" title="spapros.se.ProbesetSelector.plot_coexpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_coexpression</span></code></a>([selections])</p></td>
+<td><p>Plot correlation matrix of selected genes</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="spapros.se.ProbesetSelector.plot_explore_constraint.html#spapros.se.ProbesetSelector.plot_explore_constraint" title="spapros.se.ProbesetSelector.plot_explore_constraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_explore_constraint</span></code></a>([selection_method, ...])</p></td>
+<td><p>Plot histogram of quantiles for selected genes for different penalty kernels.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.se.ProbesetSelector.plot_gene_overlap.html#spapros.se.ProbesetSelector.plot_gene_overlap" title="spapros.se.ProbesetSelector.plot_gene_overlap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_gene_overlap</span></code></a>([origins])</p></td>
+<td><p>Plot the overlap of origins for the selected genes</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="spapros.se.ProbesetSelector.plot_histogram.html#spapros.se.ProbesetSelector.plot_histogram" title="spapros.se.ProbesetSelector.plot_histogram"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_histogram</span></code></a>([x_axis_keys, selections, ...])</p></td>
+<td><p>Plot histograms of (basic) selections under given penalties.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.se.ProbesetSelector.select_probeset.html#spapros.se.ProbesetSelector.select_probeset" title="spapros.se.ProbesetSelector.select_probeset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_probeset</span></code></a>()</p></td>
+<td><p>Run full selection procedure.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../api.html" class="btn btn-neutral float-left" title="API" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spapros.se.ProbesetSelector.info.html" class="btn btn-neutral float-right" title="spapros.se.ProbesetSelector.info" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Lukas Heumos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

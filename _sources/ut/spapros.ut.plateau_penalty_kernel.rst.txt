@@ -1,0 +1,6 @@
+﻿spapros.ut.plateau\_penalty\_kernel
+===================================
+
+.. currentmodule:: spapros
+
+.. autofunction:: spapros.ut.plateau_penalty_kernel

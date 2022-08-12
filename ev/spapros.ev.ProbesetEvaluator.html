@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spapros.ev.ProbesetEvaluator &mdash; spapros docs</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="../_static/dark_mode_js/default_light.js"></script>
+        <script src="../_static/dark_mode_js/theme_switcher.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="spapros.ev.ProbesetEvaluator.compute_or_load_shared_results" href="spapros.ev.ProbesetEvaluator.compute_or_load_shared_results.html" />
+    <link rel="prev" title="spapros.se.select_DE_genes" href="../se/spapros.se.select_DE_genes.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> spapros
+            <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">CONTENTS:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.se">Selection</a></li>
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#module-spapros.ev">Evaluation</a><ul class="current">
+<li class="toctree-l3 current"><a class="current reference internal" href="#">spapros.ev.ProbesetEvaluator</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.compute_or_load_shared_results.html">spapros.ev.ProbesetEvaluator.compute_or_load_shared_results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.evaluate_probeset.html">spapros.ev.ProbesetEvaluator.evaluate_probeset</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.evaluate_probeset_pipeline.html">spapros.ev.ProbesetEvaluator.evaluate_probeset_pipeline</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.load_results.html">spapros.ev.ProbesetEvaluator.load_results</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.pipeline_summary_statistics.html">spapros.ev.ProbesetEvaluator.pipeline_summary_statistics</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_cluster_similarity.html">spapros.ev.ProbesetEvaluator.plot_cluster_similarity</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_coexpression.html">spapros.ev.ProbesetEvaluator.plot_coexpression</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_confusion_matrix.html">spapros.ev.ProbesetEvaluator.plot_confusion_matrix</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_evaluations.html">spapros.ev.ProbesetEvaluator.plot_evaluations</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_knn_overlap.html">spapros.ev.ProbesetEvaluator.plot_knn_overlap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_marker_corr.html">spapros.ev.ProbesetEvaluator.plot_marker_corr</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_summary.html">spapros.ev.ProbesetEvaluator.plot_summary</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.ev.ProbesetEvaluator.summary_statistics.html">spapros.ev.ProbesetEvaluator.summary_statistics</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.ev.get_metric_default_parameters.html">spapros.ev.get_metric_default_parameters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.ev.forest_classifications.html">spapros.ev.forest_classifications</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.ev.single_forest_classifications.html">spapros.ev.single_forest_classifications</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.ut">Utility functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#plotting">Plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">spapros</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api.html">API</a> &raquo;</li>
+      <li>spapros.ev.ProbesetEvaluator</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/ev/spapros.ev.ProbesetEvaluator.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="spapros-ev-probesetevaluator">
+<h1>spapros.ev.ProbesetEvaluator<a class="headerlink" href="#spapros-ev-probesetevaluator" title="Permalink to this headline"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="spapros.ev.ProbesetEvaluator">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spapros.ev.</span></span><span class="sig-name descname"><span class="pre">ProbesetEvaluator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltype_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'celltype'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./probeset_evaluation/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quick'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'adata1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.ev.ProbesetEvaluator" title="Permalink to this definition"></a></dt>
+<dd><p>General class for probe set evaluation, comparison, plotting.</p>
+<p class="rubric">Notes</p>
+<p>The evaluator works on one given dataset and calculates metrics/analyses with respect to that dataset.</p>
+<p>The calculation steps of the metrics can be divided into:</p>
+<ol class="arabic simple">
+<li><p>calculations that need to be run one time for the given dataset (not all metrics have this step)</p></li>
+<li><p>calculations that need to be run for each probe set</p>
+<ol class="loweralpha simple">
+<li><p>calculations independent of 1.</p></li>
+<li><p>calculations dependent on 1. (if 1. existed for a given metric)</p></li>
+</ol>
+</li>
+<li><p>Summarize results into summary statistics</p></li>
+</ol>
+<p><strong>Run evaluations</strong></p>
+<blockquote>
+<div><p>Evaluate a single probeset:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">ProbesetEvaluator</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_probeset</span><span class="p">(</span><span class="n">gene_set</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In a pipeline to evaluate multiple probesets you would run</p>
+<blockquote>
+<div><ul>
+<li><p>sequential setup:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">ProbesetEvaluator</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">gene_set</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sets</span><span class="p">):</span>
+    <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_probeset</span><span class="p">(</span><span class="n">gene_set</span><span class="p">,</span> <span class="n">set_id</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;set_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</li>
+<li><p>parallelised setup:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">ProbesetEvaluator</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
+<span class="c1"># 1. step:</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">compute_or_load_shared_results</span><span class="p">()</span>
+<span class="c1"># 2. step: parallelised processes</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_probeset</span><span class="p">(</span><span class="n">gene_set</span><span class="p">,</span> <span class="n">set_id</span><span class="p">,</span> <span class="n">update_summary</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">pre</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1"># parallelised over set_ids</span>
+<span class="c1"># 3. step: parallelised processes (needs 1. to be finished)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_probeset</span><span class="p">(</span><span class="n">gene_set</span><span class="p">,</span> <span class="n">set_id</span><span class="p">,</span> <span class="n">update_summary</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="c1"># parallelised over set_ids</span>
+<span class="c1"># 4. step: (needs 3. to be finished)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">summary_statistics</span><span class="p">()</span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div></blockquote>
+</div></blockquote>
+<p><strong>Reference evaluations</strong></p>
+<p>In practice the evaluations are meaningful when having reference evaluations to compare to.</p>
+<p>A simple way to get reference probe sets:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">reference_sets</span> <span class="o">=</span> <span class="n">spapros</span><span class="o">.</span><span class="n">selection</span><span class="o">.</span><span class="n">select_reference_probesets</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Evaluate them (we also provide ids to keep track of the probesets):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">ProbesetEvaluator</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">set_id</span><span class="p">,</span> <span class="n">gene_set</span> <span class="ow">in</span> <span class="n">reference_sets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_probeset</span><span class="p">(</span><span class="n">gene_set</span><span class="p">,</span> <span class="n">set_id</span><span class="o">=</span><span class="n">set_id</span><span class="p">)</span>
+<span class="n">evaluator</span><span class="o">.</span><span class="n">plot_summary</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>Evaluation schemes</strong></p>
+<p>Some metrics take very long to compute, we prepared different metric sets for a quick or a full evaluation.
+You can also specify the list of metrics yourself by setting <code class="docutils literal notranslate"><span class="pre">scheme=&quot;custom&quot;</span></code>.
+Note that in any scheme it might still be reasonable to adjust <code class="xref py py-attr docutils literal notranslate"><span class="pre">metrics_params</span></code>.</p>
+<p><strong>Saving of results</strong></p>
+<p>If <code class="docutils literal notranslate"><span class="pre">results_dir</span></code> is not None we save the results in files.</p>
+<p>Why:</p>
+<ul class="simple">
+<li><p>some computations are time demanding, especially when you evaluate multiple sets it’s reasonable to keep results.</p></li>
+<li><p>load previous results when initializing a <a class="reference internal" href="#spapros.ev.ProbesetEvaluator" title="spapros.ev.ProbesetEvaluator"><code class="xref py py-class docutils literal notranslate"><span class="pre">ProbesetEvaluator</span></code></a>. Makes it very easy to access and compare
+old results.</p></li>
+</ul>
+<p>Two saving directories need to be distinguished:</p>
+<ol class="arabic simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">results_dir</span></code>: each probeset’s evaluation results are saved here</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">reference_dir</span></code>: for shared reference dataset results (default is <code class="docutils literal notranslate"><span class="pre">reference_dir</span> <span class="pre">=</span> <span class="pre">results_dir</span> <span class="pre">+</span> <span class="pre">reference_name</span></code>)</p></li>
+</ol>
+<p>In which files the results are saved:</p>
+<ul>
+<li><p>Shared computations are saved as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>reference_dir # (default: results_dir+&quot;references&quot;)
+└── {reference_name}_{metric}.csv # shared computations for given reference dataset
+</pre></div>
+</div>
+</li>
+<li><p>The final probeset specific results are saved as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>results_dir
+├── {metric} # one folder for each metric
+│   ├── {reference_name}_{set_id}_pre.csv # pre results file for given set_id, reference dataset, and metric
+│   │                                     # (only for some metrics)
+│   └── {reference_name}_{set_id}.csv # result file for given set_id, reference dataset, and metric
+└── {reference_name}_summary.csv # summary statistics
+</pre></div>
+</div>
+</li>
+</ul>
+<p><strong>Plotting</strong></p>
+<p>Plot a summary metrics table to get an overall performance overview:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span><span class="o">.</span><span class="n">plot_summary</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>For each evaluation we provide a detailed plot, e.g.:</p>
+<ul class="simple">
+<li><p><cite>forest_clfs</cite>: heatmap of normalised confusion matrix</p></li>
+<li><p><cite>gene_corr</cite>: heatmap of ordered correlation matrix</p></li>
+</ul>
+<p>Create detailed plots with:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span><span class="o">.</span><span class="n">plot_evaluations</span><span class="p">()</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>adata</strong> (<em>anndata._core.anndata.AnnData</em>) – An already preprocessed annotated data matrix. Typically we use log normalised data.</p></li>
+<li><p><strong>celltype_key</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The adata.obs key for cell type annotations. Provide a list of keys to calculate the according metrics on
+multiple keys.</p></li>
+<li><p><strong>results_dir</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Directory where probeset results are saved. Defaults to <cite>./probeset_evaluation/</cite>. Set to <cite>None</cite> if you don’t
+want to save results. When initializing the class we also check for existing results.
+Note if</p></li>
+<li><p><strong>scheme</strong> (<em>str</em>) – <p>Defines which metrics are calculated</p>
+<blockquote>
+<div><ul>
+<li><p><cite>’quick’</cite> : knn, forest classification, marker correlation (if marker list given), gene correlation</p></li>
+<li><p><cite>’full’</cite> : nmi, knn, forest classification, marker correlation (if marker list given), gene correlation</p></li>
+<li><p><cite>’custom’</cite>: define metrics of intereset in <code class="xref py py-attr docutils literal notranslate"><span class="pre">metrics</span></code></p></li>
+</ul>
+</div></blockquote>
+</p></li>
+<li><p><strong>metrics</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – <p>Define which metrics are calculated. This is set automatically if <code class="xref py py-attr docutils literal notranslate"><span class="pre">scheme</span> <span class="pre">!=</span> <span class="pre">&quot;custom&quot;</span></code>. Supported are:</p>
+<ul>
+<li><p><cite>’cluster_similarity’</cite></p></li>
+<li><p><cite>’knn_overlap’</cite></p></li>
+<li><p><cite>’forest_clfs’</cite></p></li>
+<li><p><cite>’marker_corr’</cite></p></li>
+<li><p><cite>’gene_corr’</cite></p></li>
+</ul>
+</p></li>
+<li><p><strong>metrics_params</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>]</em>) – <p>Provide parameters for the calculation of each metric. E.g.:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">metrics_params</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;nmi&quot;</span><span class="p">:{</span>
+        <span class="s2">&quot;ns&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span><span class="mi">20</span><span class="p">],</span>
+        <span class="s2">&quot;AUC_borders&quot;</span><span class="p">:</span> <span class="p">[[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">14</span><span class="p">],</span> <span class="p">[</span><span class="mi">15</span><span class="p">,</span> <span class="mi">20</span><span class="p">]],</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This overwrites the arguments <code class="docutils literal notranslate"><span class="pre">ns</span></code> and <code class="docutils literal notranslate"><span class="pre">AUC_borders</span></code> of the nmi metric. See
+<a class="reference internal" href="spapros.ev.get_metric_default_parameters.html#spapros.ev.get_metric_default_parameters" title="spapros.ev.get_metric_default_parameters"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_metric_default_parameters()</span></code></a> for the default values of each metric</p>
+</p></li>
+<li><p><strong>marker_list</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – Dictionary containing celltypes as keys and the respective markers as a list as values.</p></li>
+<li><p><strong>reference_name</strong> (<em>str</em>) – Name of reference dataset. This is chosen automatically if <cite>None</cite> is given.</p></li>
+<li><p><strong>reference_dir</strong> (<em>str</em>) – Directory where reference results are saved. If <cite>None</cite> is given <code class="docutils literal notranslate"><span class="pre">reference_dir</span></code> is set to
+<code class="docutils literal notranslate"><span class="pre">results_dir+'reference/'</span></code>.</p></li>
+<li><p><strong>verbosity</strong> (<em>int</em>) – Verbosity level.</p></li>
+<li><p><strong>n_jobs</strong> (<em>int</em>) – Number of CPUs for multi processing computations. Set to <cite>-1</cite> to use all available CPUs.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Attributes</dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>adata</strong> – An already preprocessed annotated data matrix. Typically we use log normalised data.</p></li>
+<li><p><strong>celltype_key</strong> – The <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> key for cell type annotations or list of keys.</p></li>
+<li><p><strong>dir</strong> – Directory where probeset results are saved.</p></li>
+<li><p><strong>scheme</strong> – Defines which metrics are calculated</p></li>
+<li><p><strong>marker_list</strong> – Celltypes and the respective markers.</p></li>
+<li><p><strong>metrics_params</strong> – Parameters for the calculation of each metric. Either default or user specified.</p></li>
+<li><p><strong>metrics</strong> – The metrics to be calculated. Either custom or defined according to <code class="xref py py-attr docutils literal notranslate"><span class="pre">scheme</span></code>.</p></li>
+<li><p><strong>ref_name</strong> – Name of reference dataset.</p></li>
+<li><p><strong>ref_dir</strong> – Directory where reference results are saved.</p></li>
+<li><p><strong>verbosity</strong> – Verbosity level.</p></li>
+<li><p><strong>n_jobs</strong> – Number of CPUs for multi processing computations. Set to <cite>-1</cite> to use all available CPUs.
+Verbosity level.</p></li>
+<li><p><strong>shared_results</strong> – Results of shared metric computations.</p></li>
+<li><p><strong>pre_results</strong> – Results of metric pre computations.</p></li>
+<li><p><strong>results</strong> – Results of probe set specific metric computations.</p></li>
+<li><p><strong>summary_results</strong> – Table of summary statistics.</p></li>
+</ul>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<colgroup>
+<col style="width: 10%" />
+<col style="width: 90%" />
+</colgroup>
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.compute_or_load_shared_results.html#spapros.ev.ProbesetEvaluator.compute_or_load_shared_results" title="spapros.ev.ProbesetEvaluator.compute_or_load_shared_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_or_load_shared_results</span></code></a>()</p></td>
+<td><p>Compute results that are potentially reused for evaluations of different probesets.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.evaluate_probeset.html#spapros.ev.ProbesetEvaluator.evaluate_probeset" title="spapros.ev.ProbesetEvaluator.evaluate_probeset"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_probeset</span></code></a>(genes[, set_id, ...])</p></td>
+<td><p>Compute probe set specific evaluations.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.evaluate_probeset_pipeline.html#spapros.ev.ProbesetEvaluator.evaluate_probeset_pipeline" title="spapros.ev.ProbesetEvaluator.evaluate_probeset_pipeline"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evaluate_probeset_pipeline</span></code></a>(genes, set_id, ...)</p></td>
+<td><p>Pipeline specific adaption of evaluate_probeset.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.load_results.html#spapros.ev.ProbesetEvaluator.load_results" title="spapros.ev.ProbesetEvaluator.load_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_results</span></code></a>([directories, reference_dir, ...])</p></td>
+<td><p>Load existing results from files of one or multiple evaluation output directories</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.pipeline_summary_statistics.html#spapros.ev.ProbesetEvaluator.pipeline_summary_statistics" title="spapros.ev.ProbesetEvaluator.pipeline_summary_statistics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pipeline_summary_statistics</span></code></a>(result_files, ...)</p></td>
+<td><p>Adaptation of the function summary_statistics for the spapros-pipeline.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_cluster_similarity.html#spapros.ev.ProbesetEvaluator.plot_cluster_similarity" title="spapros.ev.ProbesetEvaluator.plot_cluster_similarity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_cluster_similarity</span></code></a>([set_ids, ...])</p></td>
+<td><p>Plot cluster similarity as NMI over number of clusters</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_coexpression.html#spapros.ev.ProbesetEvaluator.plot_coexpression" title="spapros.ev.ProbesetEvaluator.plot_coexpression"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_coexpression</span></code></a>([set_ids])</p></td>
+<td><p>Plot heatmaps of gene correlation matrices</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_confusion_matrix.html#spapros.ev.ProbesetEvaluator.plot_confusion_matrix" title="spapros.ev.ProbesetEvaluator.plot_confusion_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_confusion_matrix</span></code></a>([set_ids])</p></td>
+<td><p>Plot heatmaps of cell type classification confusion matrices</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_evaluations.html#spapros.ev.ProbesetEvaluator.plot_evaluations" title="spapros.ev.ProbesetEvaluator.plot_evaluations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_evaluations</span></code></a>([set_ids, metrics, show, ...])</p></td>
+<td><p>Plot detailed results plots for specified metrics.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_knn_overlap.html#spapros.ev.ProbesetEvaluator.plot_knn_overlap" title="spapros.ev.ProbesetEvaluator.plot_knn_overlap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_knn_overlap</span></code></a>([set_ids, selections_info])</p></td>
+<td><p>Plot mean knn overlap over k</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_marker_corr.html#spapros.ev.ProbesetEvaluator.plot_marker_corr" title="spapros.ev.ProbesetEvaluator.plot_marker_corr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_marker_corr</span></code></a>(**kwargs)</p></td>
+<td><p>Plot maximal correlations with marker genes</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.plot_summary.html#spapros.ev.ProbesetEvaluator.plot_summary" title="spapros.ev.ProbesetEvaluator.plot_summary"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_summary</span></code></a>([set_ids])</p></td>
+<td><p>Plot heatmap of summary metrics</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.summary_statistics.html#spapros.ev.ProbesetEvaluator.summary_statistics" title="spapros.ev.ProbesetEvaluator.summary_statistics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">summary_statistics</span></code></a>(set_ids)</p></td>
+<td><p>Compute summary statistics and update summary csv.</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="../se/spapros.se.select_DE_genes.html" class="btn btn-neutral float-left" title="spapros.se.select_DE_genes" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spapros.ev.ProbesetEvaluator.compute_or_load_shared_results.html" class="btn btn-neutral float-right" title="spapros.ev.ProbesetEvaluator.compute_or_load_shared_results" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Lukas Heumos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

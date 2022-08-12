@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>spapros.se.ProbesetSelector.plot_clf_genes &mdash; spapros docs</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="../_static/dark_mode_js/default_light.js"></script>
+        <script src="../_static/dark_mode_js/theme_switcher.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="spapros.se.ProbesetSelector.plot_coexpression" href="spapros.se.ProbesetSelector.plot_coexpression.html" />
+    <link rel="prev" title="spapros.se.ProbesetSelector.info" href="spapros.se.ProbesetSelector.info.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> spapros
+            <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">CONTENTS:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API</a><ul class="current">
+<li class="toctree-l2 current"><a class="reference internal" href="../api.html#module-spapros.se">Selection</a><ul class="current">
+<li class="toctree-l3 current"><a class="reference internal" href="spapros.se.ProbesetSelector.html">spapros.se.ProbesetSelector</a><ul class="current">
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.info.html">spapros.se.ProbesetSelector.info</a></li>
+<li class="toctree-l4 current"><a class="current reference internal" href="#">spapros.se.ProbesetSelector.plot_clf_genes</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.plot_coexpression.html">spapros.se.ProbesetSelector.plot_coexpression</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.plot_explore_constraint.html">spapros.se.ProbesetSelector.plot_explore_constraint</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.plot_gene_overlap.html">spapros.se.ProbesetSelector.plot_gene_overlap</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.plot_histogram.html">spapros.se.ProbesetSelector.plot_histogram</a></li>
+<li class="toctree-l4"><a class="reference internal" href="spapros.se.ProbesetSelector.select_probeset.html">spapros.se.ProbesetSelector.select_probeset</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.se.select_reference_probesets.html">spapros.se.select_reference_probesets</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.se.select_pca_genes.html">spapros.se.select_pca_genes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="spapros.se.select_DE_genes.html">spapros.se.select_DE_genes</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.ev">Evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#module-spapros.ut">Utility functions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="../api.html#plotting">Plotting</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../cli.html">CLI</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../tutorials.html">tutorials</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../reference.html">Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">spapros</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../api.html">API</a> &raquo;</li>
+          <li><a href="spapros.se.ProbesetSelector.html">spapros.se.ProbesetSelector</a> &raquo;</li>
+      <li>spapros.se.ProbesetSelector.plot_clf_genes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/se/spapros.se.ProbesetSelector.plot_clf_genes.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  
+<style>
+/* CSS overrides for sphinx_rtd_theme */
+
+/* 24px margin */
+.nbinput.nblast.container,
+.nboutput.nblast.container {
+    margin-bottom: 19px;  /* padding has already 5px */
+}
+
+/* ... except between code cells! */
+.nblast.container + .nbinput.container {
+    margin-top: -19px;
+}
+
+.admonition > p:before {
+    margin-right: 4px;  /* make room for the exclamation icon */
+}
+
+/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
+.math {
+    text-align: unset;
+}
+</style>
+<div class="section" id="spapros-se-probesetselector-plot-clf-genes">
+<h1>spapros.se.ProbesetSelector.plot_clf_genes<a class="headerlink" href="#spapros-se-probesetselector-plot-clf-genes" title="Permalink to this headline"></a></h1>
+<dl class="py method">
+<dt class="sig sig-object py" id="spapros.se.ProbesetSelector.plot_clf_genes">
+<span class="sig-prename descclassname"><span class="pre">ProbesetSelector.</span></span><span class="sig-name descname"><span class="pre">plot_clf_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'X_umap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">till_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">importance_th</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_marker_genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighbors_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umap_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.se.ProbesetSelector.plot_clf_genes" title="Permalink to this definition"></a></dt>
+<dd><p>Plot umaps of selected genes needed for cell type classification of each cell type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>basis</strong> (<em>int</em>) – Name of the <code class="docutils literal notranslate"><span class="pre">obsm</span></code> embedding to use.</p></li>
+<li><p><strong>celltypes</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Subset of cell types for which to plot decision genes. If <cite>None</cite>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">celltypes</span></code> is used.</p></li>
+<li><p><strong>till_rank</strong> (<em>Optional</em><em>[</em><em>int</em><em>]</em>) – Plot decision genes only up to the given tree rank of the probeset list.</p></li>
+<li><p><strong>importance_th</strong> (<em>Optional</em><em>[</em><em>float</em><em>]</em>) – Only plot genes with a tree feature importance above the given threshold.</p></li>
+<li><p><strong>add_marker_genes</strong> (<em>bool</em>) – Whether to add subplots for marker genes from <code class="xref py py-attr docutils literal notranslate"><span class="pre">marker_list</span></code> for each celltype.
+TODO: what about cell types that only occur in the marker list?</p></li>
+<li><p><strong>neighbors_params</strong> (<em>dict</em>) – Parameters for <code class="xref py py-meth docutils literal notranslate"><span class="pre">sc.pp.neighbors()</span></code>. Only applicable if <code class="docutils literal notranslate"><span class="pre">adata.obsm[basis]</span></code> does not exist.
+TODO: do we rly need that parameter? Would be fine to always expect a pre calculated embedding!</p></li>
+<li><p><strong>umap_params</strong> (<em>dict</em>) – Parameters for <code class="xref py py-meth docutils literal notranslate"><span class="pre">sc.tl.umap()</span></code>. Only applicable if <code class="docutils literal notranslate"><span class="pre">adata.obsm[basis]</span></code> does not exist.
+TODO: do we rly need that parameter? Would be fine to always expect a pre calculated embedding!</p></li>
+<li><p><strong>kwargs</strong> – Keyword arguments of <code class="xref py py-func docutils literal notranslate"><span class="pre">selection_histogram()</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<p>(Takes a few minutes to calculate)</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">spapros</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="n">adata</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">get_processed_pbmc_data</span><span class="p">()</span>
+<span class="n">selector</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">se</span><span class="o">.</span><span class="n">ProbesetSelector</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="s2">&quot;celltype&quot;</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">selector</span><span class="o">.</span><span class="n">select_probeset</span><span class="p">()</span>
+
+<span class="n">selector</span><span class="o">.</span><span class="n">plot_clf_genes</span><span class="p">(</span><span class="n">n_cols</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span><span class="n">celltypes</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;FCGR3A+ Monocytes&quot;</span><span class="p">,</span><span class="s2">&quot;Megakaryocytes&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<img alt="../_images/Selector_plot_clf_genes.png" src="../_images/Selector_plot_clf_genes.png" />
+<p>TODO: this function and pl.clf_genes_umaps need to be tested on all argument combinations + can be optimized.</p>
+</dd></dl>
+
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="spapros.se.ProbesetSelector.info.html" class="btn btn-neutral float-left" title="spapros.se.ProbesetSelector.info" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spapros.se.ProbesetSelector.plot_coexpression.html" class="btn btn-neutral float-right" title="spapros.se.ProbesetSelector.plot_coexpression" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Lukas Heumos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

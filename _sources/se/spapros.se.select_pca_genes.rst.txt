@@ -1,0 +1,6 @@
+﻿spapros.se.select\_pca\_genes
+=============================
+
+.. currentmodule:: spapros
+
+.. autofunction:: spapros.se.select_pca_genes

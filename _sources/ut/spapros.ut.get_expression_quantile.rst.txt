@@ -1,0 +1,6 @@
+﻿spapros.ut.get\_expression\_quantile
+====================================
+
+.. currentmodule:: spapros
+
+.. autofunction:: spapros.ut.get_expression_quantile
