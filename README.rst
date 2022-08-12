@@ -1,5 +1,5 @@
 spapros
-===========================
+==========
 
 |PyPI| |Python Version| |License| |Read the Docs| |Build| |Tests| |Codecov| |pre-commit| |Black|
 
@@ -18,8 +18,8 @@ spapros
 .. |Build| image:: https://github.com/theislab/spapros/workflows/Build%20spapros%20Package/badge.svg
    :target: https://github.com/theislab/spapros/workflows/Build%20spapros%20Package/badge.svg
    :alt: Build package Status
-.. |Tests| image:: https://github.com/theislab/spapros/workflows/Tests/badge.svg
-   :target: https://github.com/theislab/spapros/actions?workflow=Tests
+.. |Tests| image:: https://github.com/theislab/spapros/actions/workflows/run_tests.yml/badge.svg
+   :target: https://github.com/theislab/spapros/actions/workflows/run_tests.yml/badge.svg
    :alt: Tests
 .. |Codecov| image:: https://codecov.io/gh/theislab/spapros/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/theislab/spapros
@@ -31,16 +31,13 @@ spapros
    :target: https://github.com/psf/black
    :alt: Black
 
-Note
-----
-
-Please check out the `development` branch for the latest version. The full docs and updated verison will be available and pushed to main in the next days.
-
+|logo|
 
 Features
 --------
 
-* TODO
+* Select probe sets for targeted spatial transcriptomics
+* Evaluate probe sets with an extensive pipeline
 
 
 Installation
@@ -56,13 +53,7 @@ You can install *spapros* via pip_ from PyPI_:
 Usage
 -----
 
-Please see the `Command-line Reference <Usage_>`_ for details.
-
-
-Contributing
-------------
-
-Contributions are very welcome. To learn more, see the `Contributor Guide`_.
+Visit our `documentation`_ for installation, tutorials, examples and more.
 
 
 Credits
@@ -70,6 +61,7 @@ Credits
 
 This package was created with cookietemple_ using Cookiecutter_ based on Hypermodern_Python_Cookiecutter_.
 
+.. |logo| image:: https://user-images.githubusercontent.com/21954664/111175015-409d9080-85a8-11eb-9055-f7452aed98b2.png
 .. _cookietemple: https://cookietemple.com
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _MIT: http://opensource.org/licenses/MIT
@@ -78,3 +70,4 @@ This package was created with cookietemple_ using Cookiecutter_ based on Hypermo
 .. _pip: https://pip.pypa.io/
 .. _Contributor Guide: CONTRIBUTING.rst
 .. _Usage: https://spapros.readthedocs.io/en/latest/usage.html
+.. _documentation: https://spapros.readthedocs.io/en/latest/

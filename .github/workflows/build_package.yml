@@ -9,25 +9,25 @@ jobs:
         strategy:
             matrix:
                 os: [macos-latest, ubuntu-latest, windows-latest]
-                python: [3.7, 3.8, 3.9]
+                python: [3.8, 3.9]
 
         steps:
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v2.4.0
               name: Check out source-code repository
 
             - name: Setup Python
-              uses: actions/setup-python@v2
+              uses: actions/setup-python@v2.3.1
               with:
                   python-version: ${{ matrix.python }}
 
             - name: Upgrade pip
               run: |
-                  pip install --constraint=.github/workflows/constraints.txt pip
+                  pip install --upgrade pip
                   pip --version
 
             - name: Install Poetry
               run: |
-                  pip install --constraint=.github/workflows/constraints.txt poetry
+                  pip install poetry
                   poetry --version
 
             - name: Build package

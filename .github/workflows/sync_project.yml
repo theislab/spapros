@@ -10,20 +10,20 @@ jobs:
         runs-on: ubuntu-latest
         steps:
             - name: Setup Python
-              uses: actions/setup-python@v1
+              uses: actions/setup-python@v2.3.1
               with:
                   python-version: 3.8
 
             - name: Install cookietemple
               run: pip install cookietemple
 
-            - uses: actions/checkout@v2
+            - uses: actions/checkout@v2.4.0
               with:
                   fetch-depth: 0
                   token: "${{ secrets.CT_SYNC_TOKEN }}"
               name: Check out source-code repository
 
-            - uses: oleksiyrudenko/gha-git-credentials@v2
+            - uses: oleksiyrudenko/gha-git-credentials@v2.1
               with:
                   name: "zethson"
                   email: "lukas.heumos@posteo.net"

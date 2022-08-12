@@ -1,6 +1,16 @@
 # Minimal makefile for Sphinx documentation
 #
 
+nblinks:
+	(\
+		for f in ../tutorials/*.ipynb; \
+			do\
+				filename=$$(echo "$$f" | rev | cut -d"/" -f1 | rev | cut -d"." -f1); \
+				echo $$filename; \
+				echo '{"path": "'$$f'"}' > ./$$filename.nblink; \
+			done; \
+	)
+
 # You can set these variables from the command line.
 SPHINXOPTS    =
 SPHINXBUILD   = python -msphinx

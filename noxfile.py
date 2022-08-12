@@ -1,24 +1,21 @@
 """Nox sessions."""
 import shutil
-import sys
 from pathlib import Path
 from textwrap import dedent
 
 import nox
-import nox_poetry.patch
-from nox.sessions import Session
-
+from nox_poetry import Session
+from nox_poetry import session
 
 package = "spapros"
-python_versions = ["3.9", "3.8", "3.7"]
+python_versions = ["3.8"]
 nox.options.sessions = (
     "pre-commit",
     "safety",
     "mypy",
     "tests",
-    "typeguard",
-    "xdoctest",
-    "docs-build",
+    # "xdoctest",
+    # "docs-build",
 )
 
 
@@ -49,9 +46,7 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
 
         text = hook.read_text()
         bindir = repr(session.bin)[1:-1]  # strip quotes
-        if not (
-            Path("A") == Path("a") and bindir.lower() in text.lower() or bindir in text
-        ):
+        if not (Path("A") == Path("a") and bindir.lower() in text.lower() or bindir in text):
             continue
 
         lines = text.splitlines()
@@ -73,13 +68,12 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
         hook.write_text("\n".join(lines))
 
 
-@nox.session(name="pre-commit", python="3.9")
+@session(name="pre-commit", python="3.8")
 def precommit(session: Session) -> None:
     """Lint using pre-commit."""
-    args = session.posargs or ["run", "--all-files", "--show-diff-on-failure"]
+    args = session.posargs or ["run", "--all-files"]
     session.install(
         "black",
-        "darglint",
         "flake8",
         "flake8-bandit",
         "flake8-bugbear",
@@ -95,26 +89,24 @@ def precommit(session: Session) -> None:
         activate_virtualenv_in_precommit_hooks(session)
 
 
-@nox.session(python="3.9")
+@session(python="3.8")
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
-    requirements = nox_poetry.export_requirements(session)
+    requirements = session.poetry.export_requirements()
     session.install("safety")
     session.run("safety", "check", f"--file={requirements}", "--bare")
 
 
-@nox.session(python=python_versions)
+@session(python=python_versions)
 def mypy(session: Session) -> None:
     """Type-check using mypy."""
-    args = session.posargs or ["src", "tests", "docs/conf.py"]
+    args = session.posargs or ["spapros", "tests", "docs/conf.py"]
     session.install(".")
-    session.install("mypy", "pytest")
+    session.install("mypy", "pytest", "types-pkg-resources", "types-requests", "types-attrs", "types-pyyaml")
     session.run("mypy", *args)
-    if not session.posargs:
-        session.run("mypy", f"--python-executable={sys.executable}", "noxfile.py")
 
 
-@nox.session(python=python_versions)
+@session(python=python_versions)
 def tests(session: Session) -> None:
     """Run the test suite."""
     session.install(".")
@@ -126,11 +118,12 @@ def tests(session: Session) -> None:
             session.notify("coverage")
 
 
-@nox.session
+@session
 def coverage(session: Session) -> None:
     """Produce the coverage report."""
     # Do not use session.posargs unless this is the only session.
-    has_args = session.posargs and len(session._runner.manifest) == 1
+    nsessions = len(session._runner.manifest)
+    has_args = session.posargs and nsessions == 1
     args = session.posargs if has_args else ["report"]
 
     session.install("coverage[toml]")
@@ -141,7 +134,7 @@ def coverage(session: Session) -> None:
     session.run("coverage", *args)
 
 
-@nox.session(python=python_versions)
+@session(python=python_versions)
 def typeguard(session: Session) -> None:
     """Runtime type checking using Typeguard."""
     session.install(".")
@@ -149,7 +142,7 @@ def typeguard(session: Session) -> None:
     session.run("pytest", f"--typeguard-packages={package}", *session.posargs)
 
 
-@nox.session(python=python_versions)
+@session(python=python_versions)
 def xdoctest(session: Session) -> None:
     """Run examples with xdoctest."""
     args = session.posargs or ["all"]
@@ -158,12 +151,21 @@ def xdoctest(session: Session) -> None:
     session.run("python", "-m", "xdoctest", package, *args)
 
 
-@nox.session(name="docs-build", python="3.8")
+@session(name="docs-build", python="3.8")
 def docs_build(session: Session) -> None:
     """Build the documentation."""
     args = session.posargs or ["docs", "docs/_build"]
     session.install(".")
-    session.install("sphinx", "sphinx-click", "sphinx-rtd-theme")
+    session.install(
+        "sphinx",
+        "sphinx-click",
+        "sphinx-rtd-theme",
+        "sphinx-rtd-dark-mode",
+        "jupyter-sphinx",
+        "nbsphinx",
+        "sphinx_gallery",
+        "nbsphinx_link",
+    )
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():
@@ -172,12 +174,22 @@ def docs_build(session: Session) -> None:
     session.run("sphinx-build", *args)
 
 
-@nox.session(python="3.8")
+@session(python="3.8")
 def docs(session: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]
     session.install(".")
-    session.install("sphinx", "sphinx-autobuild", "sphinx-click", "sphinx-rtd-theme")
+    session.install(
+        "sphinx",
+        "sphinx-autobuild",
+        "sphinx-click",
+        "sphinx-rtd-theme",
+        "sphinx-rtd-dark-mode",
+        "jupyter-sphinx",
+        "nbsphinx",
+        "sphinx_gallery",
+        "nbsphinx_link",
+    )
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():

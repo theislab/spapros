@@ -1,201 +1,142 @@
 @import "basic.css";
 
-/*Color main components with a dark theme*/
-div,
-span,
-code {
-    background-color: #181a1b !important;
-}
-
-.wy-side-nav-search {
-    background-color: #005fff !important;
-}
-
-.wy-side-nav-search div {
-    background-color: #005fff !important;
-}
-
-.wy-side-nav-search form {
-    background-color: #005fff !important;
-}
-
-.wy-side-nav-search .wy-form input {
-    background-color: #2d2e2f !important;
-}
-
-.wy-side-nav-search .wy-form input:focus {
-    background-color: #ffffff !important;
-    color: #000000 !important;
-}
-
-::placeholder {
-    /* Chrome, Firefox, Opera, Safari 10.1+ */
-    color: white;
-    opacity: 1; /* Firefox */
-}
-
-/*Font color is mainly white*/
-.rst-content p,
-li,
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.highlight-console,
-.n,
-.section {
-    color: #ffffff;
-}
-
-/*The side menu is slightly more grey and lighter than the overall theme*/
-.wy-menu,
-.wy-menu-vertical {
-    background-color: #2d2e2f !important;
-}
-
-.wy-side-scroll {
-    background-color: #2d2e2f !important;
-}
-
-.wy-menu .caption-text {
-    background-color: #2d2e2f !important;
-}
-
-.caption-text {
-    background-color: #181a1b !important;
-}
-
-.figure p {
-    background-color: #181a1b !important;
-}
-
-/*Toctree wrapper on index page has a dark background unlike the other menu items*/
-.toctree-wrapper .compound ul .toctree-l1,
-.toctree-wrapper .compound ul .toctree-l2 {
-    background-color: #181a1b !important;
-    color: #005fff !important;
-}
-
-/*The current menu section has a blue background*/
-.wy-menu-vertical li.toctree-l1.current li.toctree-l2 > a:hover {
-    color: #ffffff !important;
-    background: #005fff !important;
-}
-
-/*Subitems under the current section are displayed in grey again*/
-.wy-menu-vertical li.toctree-l1.current li.toctree-l2 > a {
-    color: #ffffff !important;
-    background: #2d2e2f !important;
-}
-
-/*Current hovered item has a blue background*/
-.wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a:hover {
-    color: #ffffff !important;
-    background: #005fff !important;
-}
-
-.wy-menu-vertical li.toctree-l3.current li.toctree-l4 > a {
-    color: #ffffff !important;
-    background: #2d2e2f !important;
-}
-
-.wy-menu-vertical li.toctree-l3.current li.toctree-l4 > a:hover {
-    color: #ffffff !important;
-    background: #005fff !important;
-}
-
-.wy-menu-vertical li.toctree-l2.current > a:hover {
-    color: #ffffff !important;
-    background: #005fff !important;
-}
-
-.wy-menu-vertical li.toctree-l2.current li.toctree-l3 > a {
-    color: #ffffff !important;
-    background: #2d2e2f !important;
-}
-
-.wy-menu-vertical li.toctree-l1.current {
-    color: #ffffff !important;
-    background: #005fff !important;
-    border-color: #005fff !important;
-}
-
-.wy-menu-vertical li.toctree-l1.current > a {
-    color: #ffffff !important;
-    background: #005fff !important;
-    border-color: #005fff !important;
-}
-
-.wy-menu-vertical li.toctree-l1.current > a:hover {
-    color: #ffffff !important;
-    background: #005fff !important;
-    border-color: #005fff !important;
-}
-
-/*The expand toctree items have the same background as its corresponding section*/
-.wy-menu-vertical li.toctree-l1 a span.toctree-expand {
-    background-color: #005fff !important;
-}
-
-.wy-menu-vertical li.toctree-l2 a span.toctree-expand {
-    background-color: #2d2e2f !important;
-}
-
-.wy-menu-vertical li.toctree-l2 a:hover span.toctree-expand {
-    background-color: #005fff !important;
-}
-
-.wy-menu-vertical li.toctree-l3 a span.toctree-expand {
-    background-color: #2d2e2f !important;
-}
-
-.wy-menu-vertical li.toctree-l2.current a .toctree-expand {
-    background-color: #2d2e2f !important;
-    color: #ffffff !important;
-}
-
-.wy-menu-vertical li.toctree-l2.current a:hover .toctree-expand {
-    background-color: #005fff !important;
-    color: #ffffff !important;
-}
-
-.wy-menu-vertical li.toctree-l3.current a .toctree-expand {
-    background-color: #2d2e2f !important;
-    color: #ffffff !important;
-}
-
-.wy-menu-vertical li.toctree-l3 a:hover span.toctree-expand {
-    background-color: #005fff !important;
-}
-
-.code .docutils .literal .notranslate .pre {
-    background-color: #181a1b !important;
-}
-
-/*Color footer separately corresponding to overall dark theme*/
-footer {
-    color: #ffffff;
-}
-
-/*Color footer buttons in blue*/
-.rst-footer-buttons a,
-.rst-footer-buttons a:hover,
-.rst-footer-buttons span {
-    background-color: #005fff !important;
-}
-
-.wy-side-nav-search a {
-    background-color: #005fff !important;
-}
-
-.version {
-    background-color: #005fff !important;
-    color: #ffffff !important;
-}
-
 /*Set max width to none so the theme uses all available width*/
 .wy-nav-content {
     max-width: none;
+}
+
+div.body td {
+    text-align: left;
+}
+
+.longtable {
+    text-align: left;
+}
+
+table.align-default {
+    margin-left: 0;
+    margin-right: 0;
+    width: 100%;
+}
+
+/* adapted from cellrank */
+
+/* color of top bar and side bar */
+.wy-side-nav-search,
+.wy-nav-top {
+    background-color: #000000;
+}
+
+/* Code: literals and links */
+
+.rst-content tt.literal,
+.rst-content code.literal {
+    color: #404040;
+}
+/* slim font weight for non-link code */
+.rst-content tt:not(.xref),
+.rst-content code:not(.xref),
+.rst-content *:not(a) > tt.xref,
+.rst-content *:not(a) > code.xref {
+    font-weight: normal !important;
+}
+
+/* sphinx-gallery */
+div.sphx-glr-download a {
+    background-color: #8dcaff !important;
+    background-image: none !important;
+    border-radius: 2px !important;
+    border: 1px solid #1761a0 !important;
+    color: #404040 !important;
+    font-weight: bold !important;
+    padding: 0.1cm !important;
+    text-align: center !important;
+}
+
+div.sphx-glr-download a[href$=".py"] {
+    display: none !important;
+}
+
+div.sphx-glr-example-title div[class="highlight"],
+div.nbinput.container div.input_area > div[class^="highlight"] {
+    background-color: #f5f5f5 !important;
+    border: none !important;
+}
+
+.sphx-glr-script-out .highlight pre {
+    background: #fcfcfc !important;
+}
+
+p.sphx-glr-script-out {
+    display: none !important;
+}
+
+div.sphx-glr-download p {
+    margin: 0 !important;
+    width: auto !important;
+}
+
+.sphx-glr-script-out {
+    color: #404040 !important;
+    margin: -24px 0px 0px 0px !important;
+}
+
+p.sphx-glr-signature {
+    display: none !important;
+}
+
+div.sphx-glr-download-link-note {
+    display: none !important;
+}
+
+/* this gets rid of uneven vertical padding */
+div.sphx-glr-download code.download {
+    display: block !important;
+}
+
+.sphx-glr-thumbcontainer {
+    background: none !important;
+    border: 1px solid #1761a0 !important;
+    text-align: center !important;
+    height: 260px !important;
+    /*min-height: 320px !important;*/
+    margin: 20px !important;
+    width: 450px !important;
+}
+.sphx-glr-thumbcontainer .figure {
+    width: 300px !important;
+    max-width: 300px !important;
+    height: auto !important;
+}
+.sphx-glr-thumbcontainer img {
+    width: 300px !important;
+    max-width: 300px !important;
+    height: auto !important;
+    max-height: 250px !important;
+}
+.sphx-glr-thumbcontainer a.internal {
+    padding: 210px 10px 0 !important;
+}
+
+.sphx-glr-thumbcontainer .headerlink {
+    display: none !important;
+}
+
+div.sphx-glr-thumbcontainer span {
+    font-style: normal !important;
+}
+
+p.sphx-glr-timing {
+    margin: 0 !important;
+    padding-top: 24px;
+    border-top: 1px solid #000;
+}
+
+.sphx-glr-thumbcontainer:hover {
+    box-shadow: 0 0 15px #8dcaff !important;
+}
+
+/* sphinx-gallery inserts 2 <br> after_repr_html_, ignore the 1st one */
+div[class="rendered_html"] + br {
+    display: none !important;
 }
