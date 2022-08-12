@@ -236,8 +236,8 @@ suppress_warnings = [
 ]
 
 
-def setup(app):
-    app.add_css_file("custom_cookietemple.css")
+#def setup(app):
+#    app.add_css_file("custom_cookietemple.css")
 
 
 # -- Extensions to the  Napoleon GoogleDocstring class ---------------------
