@@ -45,7 +45,7 @@ extensions = [
     "sphinx_gallery.load_style",
     "nbsphinx_link",
     # "jupyter_sphinx.embed_widgets",
-    *[p.stem for p in (HERE / "_extensions").glob("*.py")],
+    #*[p.stem for p in (HERE / "_extensions").glob("*.py")],
 ]
 
 
