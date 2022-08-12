@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -131,7 +132,7 @@
 }
 </style>
 <div class="section" id="spapros-pl-knn-overlap">
-<h1>spapros.pl.knn_overlap<a class="headerlink" href="#spapros-pl-knn-overlap" title="Permalink to this headline"></a></h1>
+<h1>spapros.pl.knn_overlap<a class="headerlink" href="#spapros-pl-knn-overlap" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.pl.knn_overlap">
 <span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">knn_overlap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">selections_info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groupby</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">interpolate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">figsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(8,</span> <span class="pre">5)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">18</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.knn_overlap" title="Permalink to this definition"></a></dt>
@@ -139,7 +140,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>selections_info</strong> (<em>pandas.core.frame.DataFrame</em>) – <p>Information on selections for plotting. The dataframe includes:</p>
+<li><p><strong>selections_info</strong> (<em>DataFrame</em>) – <p>Information on selections for plotting. The dataframe includes:</p>
 <blockquote>
 <div><ul>
 <li><p>selection ids or alternative names as index</p></li>
@@ -159,7 +160,7 @@ number of clusters (as index) and one column containing the data to plot)</p></l
 </div></blockquote>
 <p>Note that the legend order will follow the row order in <code class="xref py py-attr docutils literal notranslate"><span class="pre">selections_info</span></code>.</p>
 </p></li>
-<li><p><strong>data</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>pandas.core.frame.DataFrame</em><em>]</em><em>]</em>) – Dictionary with dataframes containing the data to plot for each selection. The keys need to be the same as
+<li><p><strong>data</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>DataFrame</em><em>]</em><em>]</em>) – Dictionary with dataframes containing the data to plot for each selection. The keys need to be the same as
 the index of <code class="docutils literal notranslate"><span class="pre">selections_info</span></code>.</p></li>
 <li><p><strong>groupby</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Column in <code class="docutils literal notranslate"><span class="pre">selections_info</span></code> to group the legend.</p></li>
 <li><p><strong>interpolate</strong> (<em>bool</em>) – Whether to interpolate the values.</p></li>

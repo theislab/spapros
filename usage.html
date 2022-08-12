@@ -19,6 +19,7 @@
         <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
         <script src="_static/jquery.js"></script>
         <script src="_static/underscore.js"></script>
+        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -125,7 +126,7 @@
 }
 </style>
 <div class="section" id="usage">
-<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline"></a></h1>
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h1>
 <p>The pipeline as well as the package is divided in three main parts: Selection, Evaluation and Plotting.
 Use either the spapros CLI or the spapros API to invoke the pipline:</p>
 <div class="contents local topic" id="contents">
@@ -146,14 +147,14 @@ Use either the spapros CLI or the spapros API to invoke the pipline:</p>
 </ul>
 </div>
 <div class="section" id="api">
-<h2>API<a class="headerlink" href="#api" title="Permalink to this headline"></a></h2>
+<h2>API<a class="headerlink" href="#api" title="Permalink to this heading"></a></h2>
 <p>Import the spapros API as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">spapros</span> <span class="k">as</span> <span class="nn">sp</span>
 </pre></div>
 </div>
 <p>You can then access the main classes like this:</p>
 <div class="section" id="selection">
-<h3>Selection<a class="headerlink" href="#selection" title="Permalink to this headline"></a></h3>
+<h3>Selection<a class="headerlink" href="#selection" title="Permalink to this heading"></a></h3>
 <p>The central class for probe set selection:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">selector</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">se</span><span class="o">.</span><span class="n">ProbesetSelector</span><span class="p">(</span><span class="n">adata</span><span class="p">)</span>
 <span class="n">selector</span><span class="o">.</span><span class="n">select_probeset</span><span class="p">()</span>
@@ -162,7 +163,7 @@ Use either the spapros CLI or the spapros API to invoke the pipline:</p>
 </div>
 </div>
 <div class="section" id="evaluation">
-<h3>Evaluation<a class="headerlink" href="#evaluation" title="Permalink to this headline"></a></h3>
+<h3>Evaluation<a class="headerlink" href="#evaluation" title="Permalink to this heading"></a></h3>
 <p>The central class for probe set evaluation and comparison:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">ev</span><span class="o">.</span><span class="n">ProbesetEvaluator</span><span class="p">()</span>
 <span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_probeset</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">selected_probeset</span><span class="p">)</span>
@@ -170,7 +171,7 @@ Use either the spapros CLI or the spapros API to invoke the pipline:</p>
 </div>
 </div>
 <div class="section" id="plotting">
-<h3>Plotting<a class="headerlink" href="#plotting" title="Permalink to this headline"></a></h3>
+<h3>Plotting<a class="headerlink" href="#plotting" title="Permalink to this heading"></a></h3>
 <p>The plotting module provides several methods to visualize the results:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sp</span><span class="o">.</span><span class="n">pl</span><span class="o">.</span><span class="n">cool_fancy_plot</span><span class="p">()</span>
 </pre></div>
@@ -178,15 +179,15 @@ Use either the spapros CLI or the spapros API to invoke the pipline:</p>
 </div>
 </div>
 <div class="section" id="cli">
-<h2>CLI<a class="headerlink" href="#cli" title="Permalink to this headline"></a></h2>
+<h2>CLI<a class="headerlink" href="#cli" title="Permalink to this heading"></a></h2>
 <div class="section" id="id1">
-<h3>Selection<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h3>
+<h3>Selection<a class="headerlink" href="#id1" title="Permalink to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>spapros selection data/small_data_raw_counts.h5ad
 </pre></div>
 </div>
 </div>
 <div class="section" id="id2">
-<h3>Evaluation<a class="headerlink" href="#id2" title="Permalink to this headline"></a></h3>
+<h3>Evaluation<a class="headerlink" href="#id2" title="Permalink to this heading"></a></h3>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>spapros evaluation data/small_data_raw_counts.h5ad results/selections_genesets_1.csv data/small_data_marker_list.csv genesets_1_0 genesets_1_1 genesets_1_13 --parameters data/parameters.yml
 </pre></div>
 </div>

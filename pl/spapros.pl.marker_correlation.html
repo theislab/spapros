@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -131,7 +132,7 @@
 }
 </style>
 <div class="section" id="spapros-pl-marker-correlation">
-<h1>spapros.pl.marker_correlation<a class="headerlink" href="#spapros-pl-marker-correlation" title="Permalink to this headline"></a></h1>
+<h1>spapros.pl.marker_correlation<a class="headerlink" href="#spapros-pl-marker-correlation" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.pl.marker_correlation">
 <span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">marker_correlation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">marker_corr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_metric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'per</span> <span class="pre">marker</span> <span class="pre">mean</span> <span class="pre">&gt;</span> <span class="pre">0.025'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mask_below_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">set_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rename_set_ids</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.marker_correlation" title="Permalink to this definition"></a></dt>
@@ -139,7 +140,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>marker_corr</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>pandas.core.frame.DataFrame</em><em>]</em>) – For each set id a Dataframe containing maximal correlations for each marker gene. The index contains the marker
+<li><p><strong>marker_corr</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>DataFrame</em><em>]</em>) – For each set id a Dataframe containing maximal correlations for each marker gene. The index contains the marker
 genes symbols and the Dataframe needs to have one column named <code class="docutils literal notranslate"><span class="pre">corr_metric</span></code> with float values.</p></li>
 <li><p><strong>corr_metric</strong> (<em>str</em>) – Column in dataframes of <code class="docutils literal notranslate"><span class="pre">marker_corr</span></code> that contains the correlation values.</p></li>
 <li><p><strong>mask_below_max</strong> (<em>bool</em>) – Whether to mask values that are lower than the maximum correlation with a marker gene for each cell type.

@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -131,7 +132,7 @@
 }
 </style>
 <div class="section" id="spapros-pl-gene-overlap">
-<h1>spapros.pl.gene_overlap<a class="headerlink" href="#spapros-pl-gene-overlap" title="Permalink to this headline"></a></h1>
+<h1>spapros.pl.gene_overlap<a class="headerlink" href="#spapros-pl-gene-overlap" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.pl.gene_overlap">
 <span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">gene_overlap</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">selection_df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">style</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'upset'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">min_degree</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">18</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.gene_overlap" title="Permalink to this definition"></a></dt>
@@ -139,7 +140,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>selection_df</strong> (<em>pandas.core.frame.DataFrame</em>) – Table with gene sets. Gene names are given in the index, gene sets are given as boolean columns.</p></li>
+<li><p><strong>selection_df</strong> (<em>DataFrame</em>) – Table with gene sets. Gene names are given in the index, gene sets are given as boolean columns.</p></li>
 <li><p><strong>style</strong> (<em>Literal</em><em>[</em><em>'upset'</em><em>, </em><em>'venn'</em><em>]</em>) – <p>Plot type. Options are</p>
 <blockquote>
 <div><ul>

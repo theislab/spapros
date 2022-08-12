@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -394,7 +395,7 @@ div.rendered_html tbody tr:hover {
 </div>
 <p><strong>TODO</strong>: describe each metric! (I actually refer to this tutorial for getting descriptions of the metrics). Probably best to do this after the summary plot</p>
 <div class="section" id="Evaluation-of-probe-sets">
-<h1>Evaluation of probe sets<a class="headerlink" href="#Evaluation-of-probe-sets" title="Permalink to this headline"></a></h1>
+<h1>Evaluation of probe sets<a class="headerlink" href="#Evaluation-of-probe-sets" title="Permalink to this heading"></a></h1>
 <p>This tutorial shows how to to evaluate a probeset with the Spapros evaluation pipeline. We examplary evaluate the probeset of 20 genes that was selected in our <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_basic_selection.html">basic selection tutoral</a>.</p>
 <div class="nboutput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
@@ -412,7 +413,7 @@ div.rendered_html tbody tr:hover {
 <li><p>computation time (yellow)</p></li>
 </ul>
 <div class="section" id="Import-packages-and-setup">
-<h2>Import packages and setup<a class="headerlink" href="#Import-packages-and-setup" title="Permalink to this headline"></a></h2>
+<h2>Import packages and setup<a class="headerlink" href="#Import-packages-and-setup" title="Permalink to this heading"></a></h2>
 <p>To run the notebook locally, create a conda environment using this <a class="reference external" href="../requirements_dev.yaml">yaml file</a>:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conda create -f environment.yaml
 </pre></div>
@@ -447,7 +448,7 @@ spapros==0.1.0
 </div>
 </div>
 <div class="section" id="Load-dataset">
-<h2>Load dataset<a class="headerlink" href="#Load-dataset" title="Permalink to this headline"></a></h2>
+<h2>Load dataset<a class="headerlink" href="#Load-dataset" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
 </pre></div>
@@ -485,7 +486,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </div>
 </div>
 <div class="section" id="Get-probesets">
-<h2>Get probesets<a class="headerlink" href="#Get-probesets" title="Permalink to this headline"></a></h2>
+<h2>Get probesets<a class="headerlink" href="#Get-probesets" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
@@ -531,7 +532,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </div>
 </div>
 <div class="section" id="Evaluate-sets">
-<h2>Evaluate sets<a class="headerlink" href="#Evaluate-sets" title="Permalink to this headline"></a></h2>
+<h2>Evaluate sets<a class="headerlink" href="#Evaluate-sets" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
@@ -702,7 +703,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </div>
 </div>
 <div class="section" id="Visualize-the-results">
-<h2>Visualize the results<a class="headerlink" href="#Visualize-the-results" title="Permalink to this headline"></a></h2>
+<h2>Visualize the results<a class="headerlink" href="#Visualize-the-results" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
@@ -721,7 +722,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </div>
 </div>
 <div class="section" id="What’s-next?">
-<h2>What’s next?<a class="headerlink" href="#What’s-next?" title="Permalink to this headline"></a></h2>
+<h2>What’s next?<a class="headerlink" href="#What’s-next?" title="Permalink to this heading"></a></h2>
 <p>You learned so far the very basic spapros evaluation probeset pipeline. There are several ways to customize and improve your evaluation with spapros. See our <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_advanced_evaluation.html">advanced evaluation tutorial</a> if you want to learn more. We also explain each available metric there (there are even more than shown here!) and show how to create pretty plots.</p>
 <p><strong>Note</strong>: After running the spapros evaluation pipeline, the results are stored in a directory, that is by default called <code class="docutils literal notranslate"><span class="pre">probeset_evaluation</span></code>. If you run another evaluation after this tutorial, be careful that you either specify another dir or delete the previously created results directory because otherwise parts will be overwritten and parts will be falsely reused! If you do not want to save results, initialize the <code class="docutils literal notranslate"><span class="pre">ProbesetEvaluator</span></code> with <code class="docutils literal notranslate"><span class="pre">dir=None</span></code>, like in this tutorial.</p>
 <script type="application/vnd.jupyter.widget-state+json">

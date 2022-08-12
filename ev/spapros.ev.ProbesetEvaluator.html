@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -140,7 +141,7 @@
 }
 </style>
 <div class="section" id="spapros-ev-probesetevaluator">
-<h1>spapros.ev.ProbesetEvaluator<a class="headerlink" href="#spapros-ev-probesetevaluator" title="Permalink to this headline"></a></h1>
+<h1>spapros.ev.ProbesetEvaluator<a class="headerlink" href="#spapros-ev-probesetevaluator" title="Permalink to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="spapros.ev.ProbesetEvaluator">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">spapros.ev.</span></span><span class="sig-name descname"><span class="pre">ProbesetEvaluator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltype_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'celltype'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">results_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'./probeset_evaluation/'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quick'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metrics_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_list</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'adata1'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-</span> <span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.ev.ProbesetEvaluator" title="Permalink to this definition"></a></dt>
@@ -257,7 +258,7 @@ old results.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>adata</strong> (<em>anndata._core.anndata.AnnData</em>) – An already preprocessed annotated data matrix. Typically we use log normalised data.</p></li>
+<li><p><strong>adata</strong> (<em>AnnData</em>) – An already preprocessed annotated data matrix. Typically we use log normalised data.</p></li>
 <li><p><strong>celltype_key</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The adata.obs key for cell type annotations. Provide a list of keys to calculate the according metrics on
 multiple keys.</p></li>
 <li><p><strong>results_dir</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Directory where probeset results are saved. Defaults to <cite>./probeset_evaluation/</cite>. Set to <cite>None</cite> if you don’t
@@ -320,9 +321,6 @@ Verbosity level.</p></li>
 <li><p><strong>results</strong> – Results of probe set specific metric computations.</p></li>
 <li><p><strong>summary_results</strong> – Table of summary statistics.</p></li>
 </ul>
-</dd>
-<dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 <p class="rubric">Methods</p>

@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -124,7 +125,7 @@
 }
 </style>
 <div class="section" id="spapros-ut-get-expression-quantile">
-<h1>spapros.ut.get_expression_quantile<a class="headerlink" href="#spapros-ut-get-expression-quantile" title="Permalink to this headline"></a></h1>
+<h1>spapros.ut.get_expression_quantile<a class="headerlink" href="#spapros-ut-get-expression-quantile" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.ut.get_expression_quantile">
 <span class="sig-prename descclassname"><span class="pre">spapros.ut.</span></span><span class="sig-name descname"><span class="pre">get_expression_quantile</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">q</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normalise</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log1p</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">zeros_to_nan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.ut.get_expression_quantile" title="Permalink to this definition"></a></dt>
@@ -132,7 +133,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>adata</strong> (<em>anndata._core.anndata.AnnData</em>) – AnnData object. If <code class="docutils literal notranslate"><span class="pre">normalise</span> <span class="pre">is</span> <span class="pre">True</span></code> we expect raw counts in <code class="docutils literal notranslate"><span class="pre">adata.X</span></code> and size factors in
+<li><p><strong>adata</strong> (<em>AnnData</em>) – AnnData object. If <code class="docutils literal notranslate"><span class="pre">normalise</span> <span class="pre">is</span> <span class="pre">True</span></code> we expect raw counts in <code class="docutils literal notranslate"><span class="pre">adata.X</span></code> and size factors in
 <code class="docutils literal notranslate"><span class="pre">adata.obs['size_factors']</span></code>.</p></li>
 <li><p><strong>q</strong> (<em>float</em>) – Value between 0 = <code class="xref py py-attr docutils literal notranslate"><span class="pre">q</span></code> = 1, the quantile to compute.</p></li>
 <li><p><strong>normalise</strong> (<em>bool</em>) – Normalise data with a.obs[‘size_factors’].</p></li>

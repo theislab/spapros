@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -390,7 +391,7 @@ div.rendered_html tbody tr:hover {
 }
 </style>
 <div class="section" id="Spapros-Tutorial:-Advanced-Evaluation.">
-<h1>Spapros Tutorial: Advanced Evaluation.<a class="headerlink" href="#Spapros-Tutorial:-Advanced-Evaluation." title="Permalink to this headline"></a></h1>
+<h1>Spapros Tutorial: Advanced Evaluation.<a class="headerlink" href="#Spapros-Tutorial:-Advanced-Evaluation." title="Permalink to this heading"></a></h1>
 <p>This tutorial explains the evaluation metrics that are used in the spapros evaluation pipeline and exemplifies how the results can be visualized.</p>
 <p>The used dataset contains 3k PBMCs from a healthy donor and is publicly available from <a class="reference external" href="https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k">10x Genomics</a> <a class="reference external" href="http://cf.10xgenomics.com/samples/cell-exp/1.1.0/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">here</a>.</p>
 <p>You can also derive it from scanpy <a class="reference external" href="https://scanpy.readthedocs.io/en/stable/generated/scanpy.datasets.pbmc3k.html#scanpy.datasets.pbmc3k">here</a>, like we will do in this tutorial.</p>
@@ -404,7 +405,7 @@ div.rendered_html tbody tr:hover {
 <li><p><a class="reference external" href="#4.-Visualize-the-evaluation-results">Visualize the evaluation results</a></p></li>
 </ol>
 <div class="section" id="0.-Import-packages-and-setup">
-<h2>0. Import packages and setup<a class="headerlink" href="#0.-Import-packages-and-setup" title="Permalink to this headline"></a></h2>
+<h2>0. Import packages and setup<a class="headerlink" href="#0.-Import-packages-and-setup" title="Permalink to this heading"></a></h2>
 <p>To run the notebook locally, create a conda environment using this <a class="reference external" href="../requirements_dev.yaml">yaml file</a>:</p>
 <div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conda create -f environment.yaml
 </pre></div>
@@ -450,7 +451,7 @@ spapros==0.1.0
 </div>
 </div>
 <div class="section" id="1.-Load-dataset">
-<h2>1. Load dataset<a class="headerlink" href="#1.-Load-dataset" title="Permalink to this headline"></a></h2>
+<h2>1. Load dataset<a class="headerlink" href="#1.-Load-dataset" title="Permalink to this heading"></a></h2>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -482,7 +483,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </div>
 </div>
 <div class="section" id="2.-Set-up-the-ProbesetEvaluator">
-<h2>2. Set up the ProbesetEvaluator<a class="headerlink" href="#2.-Set-up-the-ProbesetEvaluator" title="Permalink to this headline"></a></h2>
+<h2>2. Set up the ProbesetEvaluator<a class="headerlink" href="#2.-Set-up-the-ProbesetEvaluator" title="Permalink to this heading"></a></h2>
 <p>The quality of a selected probeset is not easy to describe. A useful probeset represents both the biological importance and the variability inherent in the total gene set. Spapros provides a set of evaluation metrics that measure the performance in these categories.</p>
 <p>By default, <code class="docutils literal notranslate"><span class="pre">metric_scheme=&quot;quick&quot;</span></code>, which means that only the faster metrics are calculated, which are:</p>
 <blockquote>
@@ -543,7 +544,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </div>
 </div>
 <div class="section" id="3.-Run-evaluation-methods">
-<h2>3. Run evaluation methods<a class="headerlink" href="#3.-Run-evaluation-methods" title="Permalink to this headline"></a></h2>
+<h2>3. Run evaluation methods<a class="headerlink" href="#3.-Run-evaluation-methods" title="Permalink to this heading"></a></h2>
 <p>The principal method for evaluation is <code class="docutils literal notranslate"><span class="pre">ProbesetEvaluator.evaluate_probeset()</span></code>, which needs to be invoked once for each probe set. All results are stored as class variables. The <code class="docutils literal notranslate"><span class="pre">set_id</span></code> has to be specified in each iteration. Otherwise, the results will be overwritten.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
@@ -706,7 +707,7 @@ spapros_selection
 </div>
 </div>
 <div class="section" id="4.-Visualize-the-evaluation-results">
-<h2>4. Visualize the evaluation results<a class="headerlink" href="#4.-Visualize-the-evaluation-results" title="Permalink to this headline"></a></h2>
+<h2>4. Visualize the evaluation results<a class="headerlink" href="#4.-Visualize-the-evaluation-results" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
 </pre></div>
@@ -801,7 +802,7 @@ clusterings should picture the heterogeinity of the expression data, a variabili
 <p>The last two, blue columns (9, 10) evaluate the correlation within a selected probeset. If genes with highly correlated expression are selected, the information content could also be provided by just one of them.</p>
 <p>Next, we will have a closer look on single evaluation metrics with individual visualizations via the <code class="docutils literal notranslate"><span class="pre">ProbesetSelector.plot_evaluations</span></code> function.</p>
 <div class="section" id="Random-forest-classification">
-<h3>Random forest classification<a class="headerlink" href="#Random-forest-classification" title="Permalink to this headline"></a></h3>
+<h3>Random forest classification<a class="headerlink" href="#Random-forest-classification" title="Permalink to this heading"></a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
 </pre></div>
@@ -819,7 +820,7 @@ clusterings should picture the heterogeinity of the expression data, a variabili
 </div>
 </div>
 <div class="section" id="Gene-correlation">
-<h3>Gene correlation<a class="headerlink" href="#Gene-correlation" title="Permalink to this headline"></a></h3>
+<h3>Gene correlation<a class="headerlink" href="#Gene-correlation" title="Permalink to this heading"></a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[19]:
 </pre></div>
@@ -837,7 +838,7 @@ clusterings should picture the heterogeinity of the expression data, a variabili
 </div>
 </div>
 <div class="section" id="KNN">
-<h3>KNN<a class="headerlink" href="#KNN" title="Permalink to this headline"></a></h3>
+<h3>KNN<a class="headerlink" href="#KNN" title="Permalink to this heading"></a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
@@ -855,7 +856,7 @@ clusterings should picture the heterogeinity of the expression data, a variabili
 </div>
 </div>
 <div class="section" id="NMI-cluster-similarity">
-<h3>NMI cluster similarity<a class="headerlink" href="#NMI-cluster-similarity" title="Permalink to this headline"></a></h3>
+<h3>NMI cluster similarity<a class="headerlink" href="#NMI-cluster-similarity" title="Permalink to this heading"></a></h3>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
 </pre></div>
@@ -873,7 +874,7 @@ clusterings should picture the heterogeinity of the expression data, a variabili
 </div>
 </div>
 <div class="section" id="Marker-correlation">
-<h3>Marker correlation<a class="headerlink" href="#Marker-correlation" title="Permalink to this headline"></a></h3>
+<h3>Marker correlation<a class="headerlink" href="#Marker-correlation" title="Permalink to this heading"></a></h3>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[23]:
 </pre></div>

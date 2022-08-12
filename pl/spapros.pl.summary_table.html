@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -131,7 +132,7 @@
 }
 </style>
 <div class="section" id="spapros-pl-summary-table">
-<h1>spapros.pl.summary_table<a class="headerlink" href="#spapros-pl-summary-table" title="Permalink to this headline"></a></h1>
+<h1>spapros.pl.summary_table<a class="headerlink" href="#spapros-pl-summary-table" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.pl.summary_table">
 <span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">summary_table</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">summaries</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_maps</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rename_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rename_rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time_format</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_scale</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color_limits</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nan_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lightgrey'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">threshold_ann</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.summary_table" title="Permalink to this definition"></a></dt>
@@ -139,9 +140,9 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>table</strong> (<em>pandas.core.frame.DataFrame</em>) – Dataframe with set ids in the index and a metric in each column.</p></li>
-<li><p><strong>summaries</strong> (<em>Union</em><em>[</em><em>Literal</em><em>[</em><em>'all'</em><em>]</em><em>, </em><em>typing.List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – List of summary metrics that are plotted.</p></li>
-<li><p><strong>color_maps</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>matplotlib.colors.Colormap</em><em>]</em>) – Color maps assigned to summary metrics. Use the initial name and not the potential new name
+<li><p><strong>table</strong> (<em>DataFrame</em>) – Dataframe with set ids in the index and a metric in each column.</p></li>
+<li><p><strong>summaries</strong> (<em>Union</em><em>[</em><em>Literal</em><em>[</em><em>'all'</em><em>]</em><em>, </em><em>~typing.List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – List of summary metrics that are plotted.</p></li>
+<li><p><strong>color_maps</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>Colormap</em><em>]</em>) – Color maps assigned to summary metrics. Use the initial name and not the potential new name
 given via <cite>rename_cols</cite>.</p></li>
 <li><p><strong>rename_cols</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Rename summary metrics for plot.</p></li>
 <li><p><strong>rename_rows</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Rename set ids.</p></li>

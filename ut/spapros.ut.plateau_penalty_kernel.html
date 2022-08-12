@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -124,7 +125,7 @@
 }
 </style>
 <div class="section" id="spapros-ut-plateau-penalty-kernel">
-<h1>spapros.ut.plateau_penalty_kernel<a class="headerlink" href="#spapros-ut-plateau-penalty-kernel" title="Permalink to this headline"></a></h1>
+<h1>spapros.ut.plateau_penalty_kernel<a class="headerlink" href="#spapros-ut-plateau-penalty-kernel" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.ut.plateau_penalty_kernel">
 <span class="sig-prename descclassname"><span class="pre">spapros.ut.</span></span><span class="sig-name descname"><span class="pre">plateau_penalty_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">var</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_min</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_max</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.ut.plateau_penalty_kernel" title="Permalink to this definition"></a></dt>
@@ -136,8 +137,8 @@ The kernel is 1 between <code class="xref py py-attr docutils literal notranslat
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>var</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Outside the defined range, the kernel decays with a gaussian function with variance = <code class="docutils literal notranslate"><span class="pre">var</span></code>.</p></li>
-<li><p><strong>x_min</strong> (<em>Optional</em><em>[</em><em>numpy.ndarray</em><em>]</em>) – Lower border above which the kernel is 1.</p></li>
-<li><p><strong>x_max</strong> (<em>Optional</em><em>[</em><em>numpy.ndarray</em><em>]</em>) – Upper border below which the kernel is 1.</p></li>
+<li><p><strong>x_min</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – Lower border above which the kernel is 1.</p></li>
+<li><p><strong>x_max</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – Upper border below which the kernel is 1.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>

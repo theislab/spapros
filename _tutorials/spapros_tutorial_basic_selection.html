@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -383,11 +384,11 @@ div.rendered_html tbody tr:hover {
 }
 </style>
 <div class="section" id="Probeset-selection-with-Spapros">
-<h1>Probeset selection with Spapros<a class="headerlink" href="#Probeset-selection-with-Spapros" title="Permalink to this headline"></a></h1>
+<h1>Probeset selection with Spapros<a class="headerlink" href="#Probeset-selection-with-Spapros" title="Permalink to this heading"></a></h1>
 <p>In this tutorial we showcase how to select a gene set with Spapros.</p>
 <p>Here we use the default settings only. Check out the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_advanced_selection.html">advanced selection tutorial</a> for adjustments for specific use cases and the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_end_to_end_selection.html">end-to-end probe set selection tutorial</a> which includes the probe design.</p>
 <div class="section" id="Import-packages">
-<h2>Import packages<a class="headerlink" href="#Import-packages" title="Permalink to this headline"></a></h2>
+<h2>Import packages<a class="headerlink" href="#Import-packages" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
 </pre></div>
@@ -418,7 +419,7 @@ spapros==0.1.0
 </div>
 </div>
 <div class="section" id="Load-and-preprocess-data">
-<h2>Load and preprocess data<a class="headerlink" href="#Load-and-preprocess-data" title="Permalink to this headline"></a></h2>
+<h2>Load and preprocess data<a class="headerlink" href="#Load-and-preprocess-data" title="Permalink to this heading"></a></h2>
 <p>For Spapros selections the count data should be log-normalised. Notably genes should <strong>not</strong> be scaled to mean=0 and std=1. We pre-select a given number of highly variable genes, here 1000. In real world applications we typically go for 8000.</p>
 <p>The example data set that we use here has a raw version and a processed version with scaled counts. To get log normalised counts we use the raw version. Cell and gene filters, cell type annotations, and the umap embedding we get from the processed version.</p>
 <div class="nbinput docutils container">
@@ -473,7 +474,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </div>
 </div>
 <div class="section" id="Run-selection">
-<h2>Run selection<a class="headerlink" href="#Run-selection" title="Permalink to this headline"></a></h2>
+<h2>Run selection<a class="headerlink" href="#Run-selection" title="Permalink to this heading"></a></h2>
 <p>First we create an instance of the <code class="docutils literal notranslate"><span class="pre">ProbesetSelector</span></code> class. We specify the number of genes <code class="docutils literal notranslate"><span class="pre">n</span></code> (20) and the key in <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> where we find the cell type annotations (<code class="docutils literal notranslate"><span class="pre">celltype_key=&quot;celltype&quot;</span></code>). Note that you can specify a <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> to save results during selection and reload them next time a <code class="docutils literal notranslate"><span class="pre">ProbesetSelector</span></code> with the given <code class="docutils literal notranslate"><span class="pre">save_dir</span></code> is instantiated.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
@@ -825,7 +826,7 @@ Index([&#39;PF4&#39;, &#39;HLA-DPB1&#39;, &#39;FCGR3A&#39;, &#39;GZMB&#39;, &#39
 </div>
 </div>
 <div class="section" id="Vizualize-and-investigate-the-results">
-<h2>Vizualize and investigate the results<a class="headerlink" href="#Vizualize-and-investigate-the-results" title="Permalink to this headline"></a></h2>
+<h2>Vizualize and investigate the results<a class="headerlink" href="#Vizualize-and-investigate-the-results" title="Permalink to this heading"></a></h2>
 <p>Let’s first plot the mean expression in each cell type cluster with some additional information for the selected genes.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
@@ -866,7 +867,7 @@ Index([&#39;PF4&#39;, &#39;HLA-DPB1&#39;, &#39;FCGR3A&#39;, &#39;GZMB&#39;, &#39
 </ul>
 </div>
 <div class="section" id="What’s-next?">
-<h2>What’s next?<a class="headerlink" href="#What’s-next?" title="Permalink to this headline"></a></h2>
+<h2>What’s next?<a class="headerlink" href="#What’s-next?" title="Permalink to this heading"></a></h2>
 <p>You can now evaluate the selected probeset. See our <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_basic_evaluation.html">basic evaluation tutorial</a>.</p>
 <p>If you want to customize and improve the probeset selection, have a look at the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_advanced_selection.html">advanced selection tutorial</a>.</p>
 <p>Check out the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_end_to_end_selection.html">end-to-end selection tutorial</a> for the full pipline that includes probe design and gene panel selection.</p>

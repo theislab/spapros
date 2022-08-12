@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -131,7 +132,7 @@
 }
 </style>
 <div class="section" id="spapros-pl-confusion-matrix">
-<h1>spapros.pl.confusion_matrix<a class="headerlink" href="#spapros-pl-confusion-matrix" title="Permalink to this headline"></a></h1>
+<h1>spapros.pl.confusion_matrix<a class="headerlink" href="#spapros-pl-confusion-matrix" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.pl.confusion_matrix">
 <span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">confusion_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf_matrices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ordered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">18</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotate_x_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.confusion_matrix" title="Permalink to this definition"></a></dt>
@@ -140,7 +141,7 @@
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>set_ids</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of probe set ids.</p></li>
-<li><p><strong>conf_matrices</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>pandas.core.frame.DataFrame</em><em>]</em>) – Confusion matrix of each probe set given in <code class="docutils literal notranslate"><span class="pre">set_ids</span></code>.</p></li>
+<li><p><strong>conf_matrices</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>DataFrame</em><em>]</em>) – Confusion matrix of each probe set given in <code class="docutils literal notranslate"><span class="pre">set_ids</span></code>.</p></li>
 <li><p><strong>ordered</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>list</em><em>]</em>) – bool or list
 If set to True a linkage clustering is computed to order cell types together that are hard to distinguish.
 If multiple set_ids are provided the same order is applied to all of them.

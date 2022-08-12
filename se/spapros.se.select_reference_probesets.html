@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -125,7 +126,7 @@
 }
 </style>
 <div class="section" id="spapros-se-select-reference-probesets">
-<h1>spapros.se.select_reference_probesets<a class="headerlink" href="#spapros-se-select-reference-probesets" title="Permalink to this headline"></a></h1>
+<h1>spapros.se.select_reference_probesets<a class="headerlink" href="#spapros-se-select-reference-probesets" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.se.select_reference_probesets">
 <span class="sig-prename descclassname"><span class="pre">spapros.se.</span></span><span class="sig-name descname"><span class="pre">select_reference_probesets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'highly_variable'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">methods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['PCA',</span> <span class="pre">'DE',</span> <span class="pre">'HVG',</span> <span class="pre">'random']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.se.select_reference_probesets" title="Permalink to this definition"></a></dt>
@@ -133,7 +134,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>adata</strong> (<em>anndata._core.anndata.AnnData</em>) – Data with log normalised counts in adata.X.</p></li>
+<li><p><strong>adata</strong> (<em>AnnData</em>) – Data with log normalised counts in adata.X.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – Number of selected genes.</p></li>
 <li><p><strong>genes_key</strong> (<em>str</em>) – adata.var key for subset of preselected genes to run the selections on (typically ‘highly_variable_genes’).</p></li>
 <li><p><strong>methods</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>]</em><em>]</em>) – <p>Methods used for selections. Supported methods and default are <cite>[‘PCA’, ‘DE’, ‘HVG’, ‘random’]</cite>. To specify
@@ -158,7 +159,7 @@ a DataFrame with the same index as adata.var and at least one boolean column cal
 the selected probeset. For some methods, additional information is provided in other columns.</p>
 </dd>
 <dt class="field-odd">Return type</dt>
-<dd class="field-odd"><p><em>Dict</em>[str, pandas.core.frame.DataFrame]</p>
+<dd class="field-odd"><p><em>Dict</em>[str, <em>DataFrame</em>]</p>
 </dd>
 </dl>
 </dd></dl>

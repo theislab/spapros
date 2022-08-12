@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -125,7 +126,7 @@
 }
 </style>
 <div class="section" id="spapros-se-select-de-genes">
-<h1>spapros.se.select_DE_genes<a class="headerlink" href="#spapros-se-select-de-genes" title="Permalink to this headline"></a></h1>
+<h1>spapros.se.select_DE_genes<a class="headerlink" href="#spapros-se-select-de-genes" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.se.select_DE_genes">
 <span class="sig-prename descclassname"><span class="pre">spapros.se.</span></span><span class="sig-name descname"><span class="pre">select_DE_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">per_group</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'celltype'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">groups</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rest'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rankby_abs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">task</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Select</span> <span class="pre">DE</span> <span class="pre">genes...'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.se.select_DE_genes" title="Permalink to this definition"></a></dt>
@@ -133,19 +134,19 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>adata</strong> (<em>anndata._core.anndata.AnnData</em>) – Data with log normalised counts in <cite>adata.X</cite>.</p></li>
+<li><p><strong>adata</strong> (<em>AnnData</em>) – Data with log normalised counts in <cite>adata.X</cite>.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – int
 Number of genes to selected (in total if not <code class="xref py py-attr docutils literal notranslate"><span class="pre">per_group</span></code> else per group).</p></li>
 <li><p><strong>per_group</strong> (<em>bool</em>) – Select <code class="xref py py-attr docutils literal notranslate"><span class="pre">n</span></code> genes per group of adata.obs[obs_key] (default: False). Note that the same gene can be
 selected for multiple groups.</p></li>
 <li><p><strong>obs_key</strong> (<em>str</em>) – Column name of <cite>adata.obs</cite> for which marker scores are calculated.</p></li>
 <li><p><strong>penalty_keys</strong> (<em>list</em>) – Penalty factor for gene selection.</p></li>
-<li><p><strong>groups</strong> (<em>Union</em><em>[</em><em>Literal</em><em>[</em><em>'all'</em><em>]</em><em>, </em><em>typing.Iterable</em><em>[</em><em>str</em><em>]</em><em>]</em>) – See sc.tl.rank_genes_groups().</p></li>
+<li><p><strong>groups</strong> (<em>Union</em><em>[</em><em>Literal</em><em>[</em><em>'all'</em><em>]</em><em>, </em><em>~typing.Iterable</em><em>[</em><em>str</em><em>]</em><em>]</em>) – See sc.tl.rank_genes_groups().</p></li>
 <li><p><strong>reference</strong> (<em>str</em>) – See sc.tl.rank_genes_groups() but extended to lists of reference groups. Note that in case of providing
 such a list you need to include all elements of <cite>groups</cite> in <cite>reference</cite>.</p></li>
 <li><p><strong>rankby_abs</strong> (<em>bool</em>) – See <code class="xref py py-meth docutils literal notranslate"><span class="pre">sc.tl.rank_genes_groups()</span></code>.</p></li>
 <li><p><strong>inplace</strong> (<em>bool</em>) – Save results in <code class="xref py py-attr docutils literal notranslate"><span class="pre">adata.var</span></code> or return dataframe.</p></li>
-<li><p><strong>progress</strong> (<em>Optional</em><em>[</em><em>rich.progress.Progress</em><em>]</em>) – <code class="xref py py-attr docutils literal notranslate"><span class="pre">rich.Progress</span></code> object if progress bars should be shown.</p></li>
+<li><p><strong>progress</strong> (<em>Optional</em><em>[</em><em>Progress</em><em>]</em>) – <code class="xref py py-attr docutils literal notranslate"><span class="pre">rich.Progress</span></code> object if progress bars should be shown.</p></li>
 <li><p><strong>verbosity</strong> (<em>int</em>) – Verbosity level.</p></li>
 <li><p><strong>level</strong> (<em>int</em>) – Progress bar level.</p></li>
 <li><p><strong>task</strong> (<em>str</em>) – Description of progress task.</p></li>

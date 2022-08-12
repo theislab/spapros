@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -131,7 +132,7 @@
 }
 </style>
 <div class="section" id="spapros-pl-clf-genes-umaps">
-<h1>spapros.pl.clf_genes_umaps<a class="headerlink" href="#spapros-pl-clf-genes-umaps" title="Permalink to this headline"></a></h1>
+<h1>spapros.pl.clf_genes_umaps<a class="headerlink" href="#spapros-pl-clf-genes-umaps" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.pl.clf_genes_umaps">
 <span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">clf_genes_umaps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">df</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'X_umap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ct_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'celltype'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">18</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.clf_genes_umaps" title="Permalink to this definition"></a></dt>
@@ -139,8 +140,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>adata</strong> (<em>anndata._core.anndata.AnnData</em>) – <code class="docutils literal notranslate"><span class="pre">AnnData</span></code> with <code class="docutils literal notranslate"><span class="pre">ct_key</span></code> in <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> and <code class="docutils literal notranslate"><span class="pre">basis</span></code> in <code class="docutils literal notranslate"><span class="pre">adata.obsm</span></code>.</p></li>
-<li><p><strong>df</strong> (<em>pandas.core.frame.DataFrame</em>) – <p>Dataframe with genes as index and the following columns:</p>
+<li><p><strong>adata</strong> (<em>AnnData</em>) – <code class="docutils literal notranslate"><span class="pre">AnnData</span></code> with <code class="docutils literal notranslate"><span class="pre">ct_key</span></code> in <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> and <code class="docutils literal notranslate"><span class="pre">basis</span></code> in <code class="docutils literal notranslate"><span class="pre">adata.obsm</span></code>.</p></li>
+<li><p><strong>df</strong> (<em>DataFrame</em>) – <p>Dataframe with genes as index and the following columns:</p>
 <blockquote>
 <div><ul>
 <li><p><cite>’decision_celltypes’</cite>: List of celltypes for which the gene is needed for classification.</p></li>

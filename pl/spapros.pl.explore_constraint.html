@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -131,7 +132,7 @@
 }
 </style>
 <div class="section" id="spapros-pl-explore-constraint">
-<h1>spapros.pl.explore_constraint<a class="headerlink" href="#spapros-pl-explore-constraint" title="Permalink to this headline"></a></h1>
+<h1>spapros.pl.explore_constraint<a class="headerlink" href="#spapros-pl-explore-constraint" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.pl.explore_constraint">
 <span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">explore_constraint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">a</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selections_tmp</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_kernels</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_axis_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'quantile_99'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_rows</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">9</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.explore_constraint" title="Permalink to this definition"></a></dt>
@@ -139,8 +140,8 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>a</strong> (<em>List</em><em>[</em><em>anndata._core.anndata.AnnData</em><em>]</em>) – List of <code class="docutils literal notranslate"><span class="pre">sc.AnnData</span></code> objects containing the data for plotting.</p></li>
-<li><p><strong>selections_tmp</strong> (<em>List</em><em>[</em><em>pandas.core.frame.DataFrame</em><em>]</em>) – Dataframe containing the selection.</p></li>
+<li><p><strong>a</strong> (<em>List</em><em>[</em><em>AnnData</em><em>]</em>) – List of <code class="docutils literal notranslate"><span class="pre">sc.AnnData</span></code> objects containing the data for plotting.</p></li>
+<li><p><strong>selections_tmp</strong> (<em>List</em><em>[</em><em>DataFrame</em><em>]</em>) – Dataframe containing the selection.</p></li>
 <li><p><strong>factors</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – List of titles for the subplots, i.e. the factors of each penalty kernel.</p></li>
 <li><p><strong>upper</strong> (<em>float</em>) – Lower border above which the kernel is 1.</p></li>
 <li><p><strong>lower</strong> (<em>float</em>) – Upper boder below which the kernel is 1.</p></li>

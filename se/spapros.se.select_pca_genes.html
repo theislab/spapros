@@ -19,6 +19,7 @@
         <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
         <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
@@ -125,7 +126,7 @@
 }
 </style>
 <div class="section" id="spapros-se-select-pca-genes">
-<h1>spapros.se.select_pca_genes<a class="headerlink" href="#spapros-se-select-pca-genes" title="Permalink to this headline"></a></h1>
+<h1>spapros.se.select_pca_genes<a class="headerlink" href="#spapros-se-select-pca-genes" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.se.select_pca_genes">
 <span class="sig-prename descclassname"><span class="pre">spapros.se.</span></span><span class="sig-name descname"><span class="pre">select_pca_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">variance_scaled</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">absolute</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_pcs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">20</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">corr_penalty</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">progress</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">level</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.se.select_pca_genes" title="Permalink to this definition"></a></dt>
@@ -133,7 +134,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>adata</strong> (<em>anndata._core.anndata.AnnData</em>) – Data with log normalised counts in adata.X.</p></li>
+<li><p><strong>adata</strong> (<em>AnnData</em>) – Data with log normalised counts in adata.X.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – Number of selected features.</p></li>
 <li><p><strong>variance_scaled</strong> (<em>bool</em>) – If <cite>True</cite>, loadings are defined as <cite>eigenvector_component * sqrt(eigenvalue)</cite>.
 If False loadings are defined as eigenvector_component.</p></li>
@@ -145,7 +146,7 @@ that is applied on pca selected genes. The highest correlation with already sele
 to the next selected genes are penalized according the given function. (max correlation is
 recomputed after each selected gene).</p></li>
 <li><p><strong>inplace</strong> (<em>bool</em>) – Save results in <code class="xref py py-attr docutils literal notranslate"><span class="pre">adata.var</span></code> or return dataframe.</p></li>
-<li><p><strong>progress</strong> (<em>Optional</em><em>[</em><em>rich.progress.Progress</em><em>]</em>) – <code class="xref py py-attr docutils literal notranslate"><span class="pre">rich.Progress</span></code> object if progress bars should be shown.</p></li>
+<li><p><strong>progress</strong> (<em>Optional</em><em>[</em><em>Progress</em><em>]</em>) – <code class="xref py py-attr docutils literal notranslate"><span class="pre">rich.Progress</span></code> object if progress bars should be shown.</p></li>
 <li><p><strong>level</strong> (<em>int</em>) – Progress bar level.</p></li>
 <li><p><strong>verbosity</strong> (<em>int</em>) – Verbosity level.</p></li>
 </ul>
