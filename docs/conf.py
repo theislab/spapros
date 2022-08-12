@@ -15,13 +15,13 @@ from nbconvert.preprocessors import TagRemovePreprocessor
 from sphinx.ext.napoleon.docstring import GoogleDocstring
 
 HERE = Path(__file__).parent
-sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
-sys.path.insert(0, os.path.abspath(".."))
+#sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
+#sys.path.insert(0, os.path.abspath(".."))
 sys.path.append(os.path.abspath("../.."))
-sys.path.append(os.path.abspath("../spapros"))
-sys.path.append(os.path.abspath("../spapros/evaluation"))
-sys.path.append(os.path.abspath("../spapros/selection"))
-sys.path.append(os.path.abspath("../tutorials"))
+#sys.path.append(os.path.abspath("../spapros"))
+#sys.path.append(os.path.abspath("../spapros/evaluation"))
+#sys.path.append(os.path.abspath("../spapros/selection"))
+#sys.path.append(os.path.abspath("../tutorials"))
 
 
 # -- General configuration ---------------------------------------------
