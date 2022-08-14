@@ -2,9 +2,11 @@
 Usage
 ******
 
-Spapros provides functions for gene set selection, evaluation and several visualization utilities. To combine gene set
-selection with probe design (pre-filtering of genes and final probe sequence design) we use spapros in combination with
-our probe design package oligo-designer-toolsuite_. 
+Spapros provides functions for gene set selection, evaluation and several visualization utilities. For any selection and 
+evaluation an AnnData_ object (``adata``) of a scRNA-seq data set is needed. To combine gene set selection with probe design 
+(pre-filtering of genes and final probe sequence design) we use the spapros package in combination with our probe design
+package oligo-designer-toolsuite_. 
+
 
 Import package
 --------------
@@ -51,16 +53,16 @@ More information
 ----------------
 
 - The quickest way to learn how to use spapros is to follow our :doc:`tutorials`.
-- For an overview of available functions and detailed information on each of them check out the :doc:`api`.
+- For an overview of available functions and detailed information on each function check out the :doc:`api`.
 - If you run into issues or have further questions check out the 
-  `issue section on github <https://github.com/theislab/spapros/issues>`__ and raise your questions if no one else has 
-  yet.
+  `issue section on github <https://github.com/theislab/spapros/issues>`__ and please raise your question there if no 
+  one else has yet.
 
 
 
 
 
 
-
+.. _AnnData: https://anndata.readthedocs.io/en/latest/
 .. _oligo-designer-toolsuite: https://github.com/HelmholtzAI-Consultants-Munich/oligo-designer-toolsuite
 
