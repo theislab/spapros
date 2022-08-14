@@ -76,23 +76,21 @@
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#plotting">Plotting</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.confusion_matrix.html">spapros.pl.confusion_matrix</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.correlation_matrix.html">spapros.pl.correlation_matrix</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.cluster_similarity.html">spapros.pl.cluster_similarity</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.knn_overlap.html">spapros.pl.knn_overlap</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.summary_table.html">spapros.pl.summary_table</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.explore_constraint.html">spapros.pl.explore_constraint</a></li>
-<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.gene_overlap.html">spapros.pl.gene_overlap</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.masked_dotplot.html">spapros.pl.masked_dotplot</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.clf_genes_umaps.html">spapros.pl.clf_genes_umaps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.selection_histogram.html">spapros.pl.selection_histogram</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.gene_overlap.html">spapros.pl.gene_overlap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.correlation_matrix.html">spapros.pl.correlation_matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.summary_table.html">spapros.pl.summary_table</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.cluster_similarity.html">spapros.pl.cluster_similarity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.knn_overlap.html">spapros.pl.knn_overlap</a></li>
+<li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.confusion_matrix.html">spapros.pl.confusion_matrix</a></li>
 <li class="toctree-l3"><a class="reference internal" href="pl/spapros.pl.marker_correlation.html">spapros.pl.marker_correlation</a></li>
 </ul>
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="cli.html">CLI</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorials.html">Tutorials</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference.html">Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="authors.html">Credits</a></li>
 <li class="toctree-l1"><a class="reference internal" href="changelog.html">Changelog</a></li>
 <li class="toctree-l1"><a class="reference internal" href="code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
@@ -258,11 +256,23 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).</p>
 <col style="width: 90%" />
 </colgroup>
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.confusion_matrix.html#spapros.pl.confusion_matrix" title="spapros.pl.confusion_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.confusion_matrix</span></code></a>(set_ids, conf_matrices)</p></td>
-<td><p>Plot heatmap of cell type classification confusion matrices.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.masked_dotplot.html#spapros.pl.masked_dotplot" title="spapros.pl.masked_dotplot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.masked_dotplot</span></code></a>(adata, selector[, ct_key, ...])</p></td>
+<td><p>Create dotplot with additional annotation masks.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.correlation_matrix.html#spapros.pl.correlation_matrix" title="spapros.pl.correlation_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.correlation_matrix</span></code></a>(set_ids, cor_matrices)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.clf_genes_umaps.html#spapros.pl.clf_genes_umaps" title="spapros.pl.clf_genes_umaps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.clf_genes_umaps</span></code></a>(adata, df[, basis, ...])</p></td>
+<td><p>Plot umaps of genes needed for cell type classification of each cell type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.selection_histogram.html#spapros.pl.selection_histogram" title="spapros.pl.selection_histogram"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.selection_histogram</span></code></a>(adata, ...[, ...])</p></td>
+<td><p>Plot histogram of quantiles for selected genes for different penalty kernels.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.gene_overlap.html#spapros.pl.gene_overlap" title="spapros.pl.gene_overlap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.gene_overlap</span></code></a>(selection_df[, style, ...])</p></td>
+<td><p>Plot overlap of gene sets</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.correlation_matrix.html#spapros.pl.correlation_matrix" title="spapros.pl.correlation_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.correlation_matrix</span></code></a>(set_ids, cor_matrices)</p></td>
 <td><p>Plot heatmap of gene correlation matrix.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.summary_table.html#spapros.pl.summary_table" title="spapros.pl.summary_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.summary_table</span></code></a>(table[, summaries, ...])</p></td>
+<td><p>Plot table of summary statistics</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.cluster_similarity.html#spapros.pl.cluster_similarity" title="spapros.pl.cluster_similarity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.cluster_similarity</span></code></a>(selections_info[, ...])</p></td>
 <td><p>Plot cluster similarity as NMI over number of clusters</p></td>
@@ -270,20 +280,8 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).</p>
 <tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.knn_overlap.html#spapros.pl.knn_overlap" title="spapros.pl.knn_overlap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.knn_overlap</span></code></a>(selections_info[, data, ...])</p></td>
 <td><p>Plot mean knn overlap over k</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.summary_table.html#spapros.pl.summary_table" title="spapros.pl.summary_table"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.summary_table</span></code></a>(table[, summaries, ...])</p></td>
-<td><p>Plot table of summary statistics</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.explore_constraint.html#spapros.pl.explore_constraint" title="spapros.pl.explore_constraint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.explore_constraint</span></code></a>(a, selections_tmp, ...)</p></td>
-<td><p>Plot histogram of quantiles for selected genes for different penalty kernels.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.gene_overlap.html#spapros.pl.gene_overlap" title="spapros.pl.gene_overlap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.gene_overlap</span></code></a>(selection_df[, style, ...])</p></td>
-<td><p>Plot overlap of gene sets</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.masked_dotplot.html#spapros.pl.masked_dotplot" title="spapros.pl.masked_dotplot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.masked_dotplot</span></code></a>(adata, selector[, ct_key, ...])</p></td>
-<td><p>Create dotplot with additional annotation masks.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.clf_genes_umaps.html#spapros.pl.clf_genes_umaps" title="spapros.pl.clf_genes_umaps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.clf_genes_umaps</span></code></a>(adata, df[, basis, ...])</p></td>
-<td><p>Plot umaps of genes needed for cell type classification of each cell type.</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.confusion_matrix.html#spapros.pl.confusion_matrix" title="spapros.pl.confusion_matrix"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.confusion_matrix</span></code></a>(set_ids, conf_matrices)</p></td>
+<td><p>Plot heatmap of cell type classification confusion matrices.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.marker_correlation.html#spapros.pl.marker_correlation" title="spapros.pl.marker_correlation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.marker_correlation</span></code></a>(marker_corr[, ...])</p></td>
 <td><p>Plot maximal correlations with marker genes</p></td>
@@ -308,45 +306,41 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).</p>
 <tbody>
 <tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.masked_dotplot.html#spapros.pl.masked_dotplot" title="spapros.pl.masked_dotplot"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.masked_dotplot()</span></code></a></p></td>
 <td><p>see pl.masked_dotplot for now</p></td>
-<td><p>n/a</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.explore_constraint.html#spapros.pl.explore_constraint" title="spapros.pl.explore_constraint"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.explore_constraint()</span></code></a></p></td>
-<td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_explore_constraint.html#spapros.se.ProbesetSelector.plot_explore_constraint" title="spapros.se.ProbesetSelector.plot_explore_constraint"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_explore_constraint()</span></code></a></p></td>
-<td></td>
-</tr>
-<tr class="row-even"><td><p><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.selection_histogram()</span></code></p></td>
-<td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_histogram.html#spapros.se.ProbesetSelector.plot_histogram" title="spapros.se.ProbesetSelector.plot_histogram"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_histogram()</span></code></a></p></td>
 <td></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.clf_genes_umaps.html#spapros.pl.clf_genes_umaps" title="spapros.pl.clf_genes_umaps"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.clf_genes_umaps()</span></code></a></p></td>
 <td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_clf_genes.html#spapros.se.ProbesetSelector.plot_clf_genes" title="spapros.se.ProbesetSelector.plot_clf_genes"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_clf_genes()</span></code></a></p></td>
 <td></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.gene_overlap.html#spapros.pl.gene_overlap" title="spapros.pl.gene_overlap"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.gene_overlap()</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.selection_histogram.html#spapros.pl.selection_histogram" title="spapros.pl.selection_histogram"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.selection_histogram()</span></code></a></p></td>
+<td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_histogram.html#spapros.se.ProbesetSelector.plot_histogram" title="spapros.se.ProbesetSelector.plot_histogram"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_histogram()</span></code></a></p></td>
+<td></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.gene_overlap.html#spapros.pl.gene_overlap" title="spapros.pl.gene_overlap"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.gene_overlap()</span></code></a></p></td>
 <td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_gene_overlap.html#spapros.se.ProbesetSelector.plot_gene_overlap" title="spapros.se.ProbesetSelector.plot_gene_overlap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_gene_overlap()</span></code></a></p></td>
 <td><p>potentially added soon</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.correlation_matrix.html#spapros.pl.correlation_matrix" title="spapros.pl.correlation_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.correlation_matrix()</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.correlation_matrix.html#spapros.pl.correlation_matrix" title="spapros.pl.correlation_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.correlation_matrix()</span></code></a></p></td>
 <td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.plot_coexpression.html#spapros.se.ProbesetSelector.plot_coexpression" title="spapros.se.ProbesetSelector.plot_coexpression"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetSelector.plot_coexpression()</span></code></a></p></td>
 <td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_coexpression.html#spapros.ev.ProbesetEvaluator.plot_coexpression" title="spapros.ev.ProbesetEvaluator.plot_coexpression"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_coexpression()</span></code></a></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.confusion_matrix.html#spapros.pl.confusion_matrix" title="spapros.pl.confusion_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.confusion_matrix()</span></code></a></p></td>
-<td></td>
-<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_confusion_matrix.html#spapros.ev.ProbesetEvaluator.plot_confusion_matrix" title="spapros.ev.ProbesetEvaluator.plot_confusion_matrix"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_confusion_matrix()</span></code></a></p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.cluster_similarity.html#spapros.pl.cluster_similarity" title="spapros.pl.cluster_similarity"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.cluster_similarity()</span></code></a></p></td>
-<td></td>
-<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_cluster_similarity.html#spapros.ev.ProbesetEvaluator.plot_cluster_similarity" title="spapros.ev.ProbesetEvaluator.plot_cluster_similarity"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_cluster_similarity()</span></code></a></p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.knn_overlap.html#spapros.pl.knn_overlap" title="spapros.pl.knn_overlap"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.knn_overlap()</span></code></a></p></td>
-<td></td>
-<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_knn_overlap.html#spapros.ev.ProbesetEvaluator.plot_knn_overlap" title="spapros.ev.ProbesetEvaluator.plot_knn_overlap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_knn_overlap()</span></code></a></p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.summary_table.html#spapros.pl.summary_table" title="spapros.pl.summary_table"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.summary_table()</span></code></a></p></td>
 <td></td>
 <td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_summary.html#spapros.ev.ProbesetEvaluator.plot_summary" title="spapros.ev.ProbesetEvaluator.plot_summary"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_summary()</span></code></a></p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.marker_correlation.html#spapros.pl.marker_correlation" title="spapros.pl.marker_correlation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.marker_correlation()</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.cluster_similarity.html#spapros.pl.cluster_similarity" title="spapros.pl.cluster_similarity"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.cluster_similarity()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_cluster_similarity.html#spapros.ev.ProbesetEvaluator.plot_cluster_similarity" title="spapros.ev.ProbesetEvaluator.plot_cluster_similarity"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_cluster_similarity()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.knn_overlap.html#spapros.pl.knn_overlap" title="spapros.pl.knn_overlap"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.knn_overlap()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_knn_overlap.html#spapros.ev.ProbesetEvaluator.plot_knn_overlap" title="spapros.ev.ProbesetEvaluator.plot_knn_overlap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_knn_overlap()</span></code></a></p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="pl/spapros.pl.confusion_matrix.html#spapros.pl.confusion_matrix" title="spapros.pl.confusion_matrix"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.confusion_matrix()</span></code></a></p></td>
+<td></td>
+<td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_confusion_matrix.html#spapros.ev.ProbesetEvaluator.plot_confusion_matrix" title="spapros.ev.ProbesetEvaluator.plot_confusion_matrix"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_confusion_matrix()</span></code></a></p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.marker_correlation.html#spapros.pl.marker_correlation" title="spapros.pl.marker_correlation"><code class="xref py py-func docutils literal notranslate"><span class="pre">pl.marker_correlation()</span></code></a></p></td>
 <td></td>
 <td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.plot_marker_corr.html#spapros.ev.ProbesetEvaluator.plot_marker_corr" title="spapros.ev.ProbesetEvaluator.plot_marker_corr"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ProbesetEvaluator.plot_marker_corr()</span></code></a></p></td>
 </tr>
