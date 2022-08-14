@@ -21,7 +21,7 @@ sys.path.append(os.path.abspath("../.."))
 sys.path.append(os.path.abspath("../spapros"))
 #sys.path.append(os.path.abspath("../spapros/evaluation"))
 #sys.path.append(os.path.abspath("../spapros/selection"))
-#sys.path.append(os.path.abspath("../tutorials"))
+#sys.path.append(os.path.abspath("./_tutorials"))
 
 
 # -- General configuration ---------------------------------------------
@@ -51,9 +51,11 @@ extensions = [
 
 # nbsphinx setup (for tutorial gallery)
 
-sphinx_gallery_conf = {
-    "thumbnail_size": (250, 250),
-}
+# this doesn't work since we only use extension "sphinx_gallery.load_style" and not 'sphinx_gallery.gen_gallery'
+# --> instead we add a custom css files
+#sphinx_gallery_conf = { 
+#    "thumbnail_size": (250, 250),
+#}
 
 nbsphinx_timeout = -1
 

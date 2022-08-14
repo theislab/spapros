@@ -1,5 +1,5 @@
 Sphinx
-sphinx_rtd_theme>=0.52
+sphinx_rtd_theme>=1.0.0
 sphinx-rtd-dark-mode>=1.2.4
 sphinx-automodapi
 sphinx_click>=3.1.0
