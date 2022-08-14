@@ -109,10 +109,10 @@ div.sphx-glr-download code.download {
     height: auto !important;
 }
 .sphx-glr-thumbcontainer img {
-    width: 300px !important;
+    width: auto !important;
     max-width: 300px !important;
     height: auto !important;
-    max-height: 250px !important;
+    max-height: 175px !important;
 }
 .sphx-glr-thumbcontainer a.internal {
     padding: 210px 10px 0 !important;

@@ -53,13 +53,7 @@
   {
    "cell_type": "code",
    "execution_count": 3,
-   "metadata": {
-    "scrolled": true,
-    "tags": [
-     "remove_input",
-     "nbsphinx-thumbnail"
-    ]
-   },
+   "metadata": {},
    "outputs": [
     {
      "data": {
@@ -563,7 +557,7 @@
       ]
      },
      "metadata": {
-      "needs_background": "light"
+      "needs_background": "light"      
      },
      "output_type": "display_data"
     }
@@ -574,7 +568,7 @@
   },
   {
    "cell_type": "markdown",
-   "metadata": {},
+    "metadata": {},
    "source": [
     "## What's next?\n",
     "\n",
