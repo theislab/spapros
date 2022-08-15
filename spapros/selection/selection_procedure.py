@@ -1,3 +1,4 @@
+import itertools
 import json
 import os
 import pickle
@@ -96,7 +97,7 @@ class ProbesetSelector:  # (object)
         save_dir:
             Directory path where all results are saved and loaded from if results already exist.
         n_jobs:
-            Number of cpus for multi processing computations. Set to `-1` to use all available cpus.
+            Number of cpus for multiprocessing computations. Set to `-1` to use all available cpus.
         forest_results:
             Forest results.
         forest_clfs
@@ -105,10 +106,10 @@ class ProbesetSelector:  # (object)
             Minimal number of samples in each celltype's test set
         loaded_attributes:
             List of which results were loaded from disc.
-        disable_pbars.
-            Disable progress bars.
         probeset:
             The final probeset list.
+        progress:
+            Rich progress bar.
 
     Notes:
         The selector creates a probeset which captures the data variability and distinguishes the celltypes.
@@ -162,7 +163,7 @@ class ProbesetSelector:  # (object)
             - The optionally provided marker list can include additional cell types not listed in :attr:`celltypes`
               (and ``adata.obs[celltype_key])``.
 
-        marker_list: List of marker genes. Can either be the a dictionary like this::
+        marker_list: List of marker genes. Can either be a dictionary like this::
 
                 {
                 "celltype_1": ["S100A8", "S100A9", "LYZ", "BLVRB"],
@@ -222,7 +223,8 @@ class ProbesetSelector:  # (object)
                - if only partial results were generated, make sure that the initialization arguments are the same as
                  before!
         n_jobs:
-            Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+            Number of cpus for multiprocessing computations. Set to -1 to use all available cpus.
+
     """
 
     # TODO:
@@ -319,7 +321,7 @@ class ProbesetSelector:  # (object)
         self.DE_penalties = DE_penalties
         self.m_penalties_adata_celltypes = m_penalties_adata_celltypes
         self.m_penalties_list_celltypes = m_penalties_list_celltypes
-        # Set hyper parameters of selection steps
+        # Set hyperparameters of selection steps
         self.pca_selection_hparams = self._get_hparams(pca_selection_hparams, subject="pca_selection")
         self.DE_selection_hparams = self._get_hparams(DE_selection_hparams, subject="DE_selection")
         self.forest_hparams = self._get_hparams(forest_hparams, subject="forest")
@@ -328,6 +330,7 @@ class ProbesetSelector:  # (object)
         self.m_selection_hparams = self._get_hparams(marker_selection_hparams, subject="marker_selection")
 
         self.verbosity = verbosity
+
         self.seed = 0
         # TODO: there are probably a lot of places where the seed needs to be provided that are not captured yet.
         self.save_dir = save_dir
@@ -1095,13 +1098,13 @@ class ProbesetSelector:  # (object)
             The ``forest_hparams`` are given in the class init definition as ``{"n_trees": 50, "subsample": 1000,
             "test_subsample": 3000}``. If the class is called with ``forest_hparams={"n_trees": 100}`` we would actually
             like to have ``{"n_trees": 100, "subsample": 1000, "test_subsample": 3000}``.
-            The last two are added by this functions.
+            The last two are added by this function.
 
         Args:
             new_params:
                 Dictionary with custom hyperparameters for the selection method :attr:`subject`.
             subject:
-                Type of hyper parameters of interest.
+                Type of hyperparameters of interest.
 
         Returns:
             dict:
@@ -1264,7 +1267,7 @@ class ProbesetSelector:  # (object)
         """Plot histograms of (basic) selections under given penalties.
 
         The full selection procedure consists of steps partially based on basic score based selection procedures.
-        This is an interactive plotting function to investigate if the constructed penalty kernels are well chosen.
+        This is an interactive plotting function to investigate if the constructed penalty kernels are well-chosen.
 
         Note:
             The green line shows a linear interpolation of the penalty scores which is only an opproximation of the
@@ -1360,10 +1363,10 @@ class ProbesetSelector:  # (object)
                 for penalty_key in unapplied_penalty_keys[selection]:
                     x_axis_keys[penalty_key] = X_AXIS_KEYS[penalty_key]
 
-
             penalty_labels[selection] = {**{p_name: "partially applied" if selection == "marker" else "penalty" for
                                             p_name in penalty_keys[selection]},
-                                         **{p_name: "unapplied\npenal." for p_name in unapplied_penalty_keys[selection]}}
+                                         **{p_name: "unapplied\npenal." for p_name in
+                                            unapplied_penalty_keys[selection]}}
 
             # plot with penalties:
             penalty_keys[selection] = penalty_keys[selection] + unapplied_penalty_keys[selection]
@@ -1496,7 +1499,8 @@ class ProbesetSelector:  # (object)
             till_rank = max(self.selection["forest"]["rank"])
         if importance_th is None:
             importance_th = min(self.selection["forest"]["importance_score"])
-        df = self.selection["forest"][self.selection["forest"]["rank"] <= till_rank][self.selection["forest"]["importance_score"] > importance_th].copy()
+        df = self.selection["forest"][self.selection["forest"]["rank"] <= till_rank][
+            self.selection["forest"]["importance_score"] > importance_th].copy()
         if len(df) < 1:
             raise ValueError("Filtering for rank and importance score left no genes. Set lower thresholds.")
 
@@ -1629,114 +1633,234 @@ class ProbesetSelector:  # (object)
 
         pl.gene_overlap(selection_df=selection_df, **kwargs)
 
-    def plot_explore_constraint(
+    # def plot_explore_constraint(
+    #     self,
+    #     selection_method: str = "pca_selection",
+    #     selection_params: dict = None,
+    #     background_key: str = "highly_variable",
+    #     x_axis_key: str = "quantile_0.99",
+    #     penalty_kernels: List[Callable] = None,
+    #     factors: List[float] = None,
+    #     upper: float = 1,
+    #     lower: float = 0,
+    #     **kwargs
+    # ):
+    #     """Plot histogram of quantiles for selected genes for different penalty kernels.
+    #
+    #     Args:
+    #         selection_method:
+    #             Selection method to explore. Available are:
+    #
+    #                 - "pca_selection"
+    #                 - "DE_selection"
+    #                 - "marker"
+    #
+    #         selection_params:
+    #             Hyperparameter for the respective gene selection.
+    #         background_key:
+    #             Key of column in ``adata.var`` containing the values to be plottet as background.
+    #         x_axis_key:
+    #             Key of column in ``adata.var`` containing the values to be plottet.
+    #         penalty_kernels:
+    #             Any penalty kernel. If None, :func:`.plateau_penalty_kernel` is used to create three gaussian
+    #             plateau penalty kernels with different variances. Only then, ``factors,``, ``lower`` and ``upper`` are
+    #             used.
+    #         factors:
+    #             Factors for the variance for creating a gaussian penalty kernel.
+    #         lower:
+    #             Lower border above which the kernel is 1.
+    #         upper:
+    #             Upper boder below which the kernel is 1.
+    #         **kwargs:
+    #             Further arguments for :func:`.explore_constraint`.
+    #
+    #     Returns:
+    #         Figure can be shown (default `True`) and stored to path (default `None`).
+    #         Change this with `show` and `save` in ``kwargs``.
+    #     """
+    #
+    #     # TODO:
+    #     #  1) Fix explore_constraint plot. The following circular import is causing problems atm:
+    #     #     DONE: moved parts of this method to selector.plot_expore_constraint --> this solves the problem
+    #     #  2) How to generalize the plotting function, support:
+    #     #     - any selection method with defined hyperparameters --> DONE --> add more
+    #     #     - any penalty kernel --> DONE --> test
+    #     #     - any key to be plotted (not only quantiles) --> DONE --> test
+    #
+    #     SELECTION_METHODS: Dict[str, Callable] = {
+    #         "pca_selection": select.select_pca_genes,
+    #         "DE_selection": select.select_DE_genes,
+    #     }
+    #
+    #     if selection_method not in SELECTION_METHODS:
+    #         raise ValueError(f"Selection with method {selection_method} is not available.")
+    #
+    #     if selection_params is None:
+    #         selection_params = {}
+    #
+    #     selection_params = self._get_hparams(new_params=selection_params, subject=selection_method)
+    #
+    #     if factors is None:
+    #         factors = [10, 1, 0.1]
+    #
+    #     if penalty_kernels is None:
+    #         penalty_kernels = [util.plateau_penalty_kernel(var=[factor * 0.1, factor * 0.5], x_min=np.array(lower),
+    #                                                        x_max=np.array(upper))
+    #                            for factor in factors]
+    #
+    #     a = []
+    #     selections_tmp = []
+    #     for i, factor in enumerate(factors):
+    #
+    #         if background_key not in self.adata.var:
+    #             raise ValueError(f"Can't plot background histogram because {background_key} was not found.")
+    #         a.append(self.adata[:, self.adata.var[background_key]].copy())
+    #
+    #         if x_axis_key not in a[i].var:
+    #             raise ValueError(f"No column {x_axis_key} in adata.var found.")
+    #
+    #         a[i].var["penalty_expression"] = penalty_kernels[i](a[i].var[x_axis_key])
+    #         selections_tmp.append(
+    #             SELECTION_METHODS[selection_method](
+    #                 a[i],
+    #                 n=100,
+    #                 **selection_params,
+    #                 penalty_keys=["penalty_expression"],
+    #                 inplace=False,
+    #                 verbosity=self.verbosity,
+    #             )
+    #         )
+    #         print(f"N genes selected: {np.sum(selections_tmp[i]['selection'])}")
+    #
+    #     pl.explore_constraint(a,
+    #                           selections_tmp,
+    #                           penalty_kernels,
+    #                           factors=factors,
+    #                           x_axis_key=x_axis_key,
+    #                           upper=upper,
+    #                           lower=lower,
+    #                           **kwargs
+    #                           )
+
+    def plot_masked_dotplot(
         self,
-        selection_method: str = "pca_selection",
-        selection_params: dict = None,
-        background_key: str = "highly_variable",
-        x_axis_key: str = "quantile_0.99",
-        penalty_kernels: List[Callable] = None,
-        factors: List[float] = None,
-        upper: float = 1,
-        lower: float = 0,
-        **kwargs
+        imp_threshold: float = 0.05,
+        celltypes: Optional[List[str]] = None,
+        n_genes: Optional[int] = None,
+        comb_markers_only: bool = False,
+        markers_only: bool = False,
+        **kwargs,
     ):
-        """Plot histogram of quantiles for selected genes for different penalty kernels.
+        """Wrapper for an annotated dotplot.
 
         Args:
-            selection_method:
-                Selection method to explore. Available are:
-
-                    - "pca_selection"
-                    - "DE_selection"
-                    - "marker"
-
-            selection_params:
-                Hyperparameter for the respective gene selection.
-            background_key:
-                Key of column in ``adata.var`` containing the values to be plottet as background.
-            x_axis_key:
-                Key of column in ``adata.var`` containing the values to be plottet.
-            penalty_kernels:
-                Any penalty kernel. If None, :func:`.plateau_penalty_kernel` is used to create three gaussian
-                plateau penalty kernels with different variances. Only then, ``factors,``, ``lower`` and ``upper`` are
-                used.
-            factors:
-                Factors for the variance for creating a gaussian penalty kernel.
-            lower:
-                Lower border above which the kernel is 1.
-            upper:
-                Upper boder below which the kernel is 1.
+            imp_threshold:
+                Show genes as combinatorial marker only for those genes with importance > ``imp_threshold``.
+            celltypes:
+                Optional subset of celltypes (rows of dotplot).
+            n_genes:
+                Optionally plot top ``n_genes`` genes.
+            comb_markers_only:
+                Whether to plot only genes that are combinatorial markers for the plotted cell types. (can becombined
+                with markers_only, in that case markers that are not comb markers are also shown)
+            markers_only:
+                Whether to plot only genes that are markers for the plotted cell types. (can be combined with
+                ``comb_markers_only``, in that case comb markers that are not markers are also shown)
             **kwargs:
-                Further arguments for :func:`.explore_constraint`.
 
         Returns:
             Figure can be shown (default `True`) and stored to path (default `None`).
             Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+            (Takes a few minutes to calculate)
+            .. code-block:: python
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selector = sp.se.ProbesetSelector(adata, "celltype", n=30, verbosity=0)
+                selector.select_probeset()
+                selector.plot_masked_dotplot()
+            .. image:: ../../docs/plot_examples/masked_dotplot.png
+
         """
 
-        # TODO:
-        #  1) Fix explore_constraint plot. The following circular import is causing problems atm:
-        #     DONE: moved parts of this method to selector.plot_expore_constraint --> this solves the problem
-        #  2) How to generalize the plotting function, support:
-        #     - any selection method with defined hyperparameters --> DONE --> add more
-        #     - any penalty kernel --> DONE --> test
-        #     - any key to be plotted (not only quantiles) --> DONE --> test
+        # celltypes, possible origins:
+        # - adata.obs[ct_key] (could include cts not used for selection)
+        # - celltypes for selection (including markers, could include cts which are not in adata.obs[ct_key])
+        # --> pool all together... order?
 
-        SELECTION_METHODS: Dict[str, Callable] = {
-            "pca_selection": select.select_pca_genes,
-            "DE_selection": select.select_DE_genes,
-        }
+        adata = self.adata
+        ct_key = self.ct_key
 
-        if selection_method not in SELECTION_METHODS:
-            raise ValueError(f"Selection with method {selection_method} is not available.")
+        if celltypes is not None:
+            cts = celltypes
+            adata = adata[adata.obs[ct_key].isin(celltypes)].copy()
+            # a.obs[ct_key] = a.obs[ct_key].astype(str).astype("category")
+        else:
+            # Cell types from adata
+            cts = adata.obs[ct_key].unique().tolist()
+            # Cell types from marker list only
+            if "celltypes_marker" in self.probeset:
+                tmp = []
+                for markers_celltypes in self.probeset["celltypes_marker"].str.split(","):
+                    tmp += markers_celltypes
+                tmp = np.unique(tmp).tolist()
+                if "" in tmp:
+                    tmp.remove("")
+                cts += [ct for ct in tmp if ct not in cts]
+            a = adata
 
-        if selection_params is None:
-            selection_params = {}
+        # Get selected genes that are also in adata
+        selected_genes = [
+            g for g in self.probeset[self.probeset["selection"]].index.tolist() if g in adata.var_names
+        ]
 
-        selection_params = self._get_hparams(new_params=selection_params, subject=selection_method)
+        # Get tree genes
+        tree_genes = {}
+        assert isinstance(self.forest_results["forest"], list)
+        assert len(self.forest_results["forest"]) == 3
+        assert isinstance(self.forest_results["forest"][2], dict)
+        for ct, importance_tab in self.forest_results["forest"][2].items():
+            if ct in cts:
+                tree_genes[ct] = importance_tab["0"].loc[importance_tab["0"] > imp_threshold].index.tolist()
+                tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
 
-        if factors is None:
-            factors = [10, 1, 0.1]
+        # Get markers
+        marker_genes: Dict[str, list] = {ct: [] for ct in cts}
+        for ct in cts:
+            for gene in self.probeset[self.probeset["selection"]].index:
+                if ct in self.probeset.loc[gene, "celltypes_marker"].split(",") and (gene in adata.var_names):
+                    marker_genes[ct].append(gene)
+            marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
 
-        if penalty_kernels is None:
-            penalty_kernels = [util.plateau_penalty_kernel(var=[factor * 0.1, factor * 0.5], x_min=np.array(lower),
-                                                           x_max=np.array(upper))
-                               for factor in factors]
+        # Optionally subset genes:
+        # Subset to combinatorial markers of shown celltypes only
+        if comb_markers_only or markers_only:
+            allowed_genes = []
+            if comb_markers_only:
+                allowed_genes += list(itertools.chain(*[tree_genes[ct] for ct in tree_genes.keys()]))
+            if markers_only:
+                allowed_genes += list(itertools.chain(*[marker_genes[ct] for ct in marker_genes.keys()]))
+            selected_genes = [g for g in selected_genes if g in allowed_genes]
+        # Subset to show top n_genes only
+        if n_genes:
+            selected_genes = selected_genes[: min(n_genes, len(selected_genes))]
+        # Filter (combinatorial) markers by genes that are not in the selected genes
+        for ct in cts:
+            marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
+        for ct in tree_genes.keys():
+            tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
 
-        a = []
-        selections_tmp = []
-        for i, factor in enumerate(factors):
+        further_celltypes = [ct for ct in cts if ct not in adata.obs[ct_key].unique()]
 
-            if background_key not in self.adata.var:
-                raise ValueError(f"Can't plot background histogram because {background_key} was not found.")
-            a.append(self.adata[:, self.adata.var[background_key]].copy())
-
-            if x_axis_key not in a[i].var:
-                raise ValueError(f"No column {x_axis_key} in adata.var found.")
-
-            a[i].var["penalty_expression"] = penalty_kernels[i](a[i].var[x_axis_key])
-            selections_tmp.append(
-                SELECTION_METHODS[selection_method](
-                    a[i],
-                    n=100,
-                    **selection_params,
-                    penalty_keys=["penalty_expression"],
-                    inplace=False,
-                    verbosity=self.verbosity,
-                )
-            )
-            print(f"N genes selected: {np.sum(selections_tmp[i]['selection'])}")
-
-        pl.explore_constraint(a,
-                              selections_tmp,
-                              penalty_kernels,
-                              factors=factors,
-                              x_axis_key=x_axis_key,
-                              upper=upper,
-                              lower=lower,
-                              **kwargs
-                              )
+        pl.masked_dotplot(
+            self.adata,
+            var_names=selected_genes,
+            groupby=ct_key,
+            tree_genes=tree_genes,
+            marker_genes=marker_genes,
+            further_celltypes=further_celltypes,
+            **kwargs)
 
     def info(self) -> None:
         """Print info."""
@@ -1761,7 +1885,7 @@ def select_reference_probesets(
         n:
             Set the number of selected genes.
         genes_key:
-            adata.var key for preselected genes (typically 'highly_variable_genes').
+            Key of ``adata.var`` for preselected genes (typically 'highly_variable_genes').
         seeds:
             List of random seeds. For each seed, one random gene set is selected.
         verbosity:
@@ -1835,8 +1959,13 @@ def select_reference_probesets(
                 if verbosity > 1:
                     sel_task = progress.add_task(f"Selecting {selection_name} genes...", total=1, level=2)
 
+                if genes_key:
+                    if genes_key not in adata.var:
+                        raise KeyError(f"The genes_key {genes_key} was not found in adata.var.")
+                    adata = adata[:, adata.var[genes_key]].copy()
+
                 reference_probesets[f"ref_{selection_name}"] = reference_methods[selection_name](
-                    adata[:, adata.var[genes_key]], n, inplace=False, **reference_selections[selection_name]
+                    adata, n, inplace=False, **reference_selections[selection_name]
                 )
 
                 if save_dir:

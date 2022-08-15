@@ -94,7 +94,7 @@ def test_selection_plots(selector_with_penalties, fun, tmp_path, kwargs, id):
     ref_name = f"tests/plotting/test_data/selection_{fun}_{id}.png"
     fig_name = f"{tmp_path}/selection_{fun}_{id}.png"
     getattr(selector_with_penalties, fun)(save=fig_name, show=False, **kwargs)
-    # getattr(selector_with_penalties, fun)(save=ref_name, show=False, **kwargs)
+    getattr(selector_with_penalties, fun)(save=ref_name, show=False, **kwargs)
     assert compare_images(ref_name, fig_name, 0.001) is None
 
 
@@ -152,7 +152,7 @@ def test_evaluation_plots(evaluator_4_sets, fun, tmp_path, kwargs, request):
         if kwargs["selections_info"] is not None:
             kwargs["selections_info"] = request.getfixturevalue(kwargs["selections_info"])
     getattr(evaluator_4_sets, fun)(save=fig_name, show=False, **kwargs)
-    # getattr(evaluator_4_sets, fun)(save=ref_name, show=False, **kwargs)
+    getattr(evaluator_4_sets, fun)(save=ref_name, show=False, **kwargs)
     assert compare_images(ref_name, fig_name, 0.001) is None
 
 

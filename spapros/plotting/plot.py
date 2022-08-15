@@ -1,6 +1,6 @@
 """Plotting Module."""
 import itertools
-from typing import Dict, Any
+from typing import Dict, Mapping, Sequence
 from typing import Callable
 from typing import List
 from typing import Literal
@@ -21,7 +21,7 @@ from scipy.interpolate import interp1d
 from upsetplot import from_indicators
 from upsetplot import UpSet
 from venndata import venn
-from spapros.plotting._masked_dotplot import MaskedDotPlot
+from spapros.plotting._masked_dotplot import MaskedDotPlot, _VarNames
 
 
 #############################
@@ -592,107 +592,107 @@ def summary_table(
 ## selection related plots ##
 #############################
 
-def explore_constraint(
-    a: List[sc.AnnData],
-    selections_tmp: List[pd.DataFrame],
-    penalty_kernels: List[Callable],
-    x_axis_key: str = "quantile_99",
-    factors: List[float] = None,
-    upper: float = 6,
-    lower: float = 2,
-    size_factor: int = 6,
-    n_rows: int = 1,
-    legend_size: int = 9,
-    show: bool = True,
-    save: Optional[str] = None,
-):
-    """Plot histogram of quantiles for selected genes for different penalty kernels.
-
-    Args:
-        a:
-            List of ``sc.AnnData`` objects containing the data for plotting.
-        selections_tmp:
-            Dataframe containing the selection.
-        factors:
-            List of titles for the subplots, i.e. the factors of each penalty kernel.
-        upper:
-            Lower border above which the kernel is 1.
-        lower:
-            Upper boder below which the kernel is 1.
-        penalty_kernels:
-            List of penalty kernels, which were used for selection.
-        x_axis_key:
-            Key of column in ``adata.var`` that is used for the x axis of the plotted histograms.
-        size_factor:
-             Factor for scaling the figure size.
-        n_rows:
-            Number of subplot rows.
-        legend_size:
-            Matplotlib legend size.
-        show:
-            Whether to display the plot.
-        save:
-            Save the plot to path.
-
-    Returns:
-
-    """
-
-    # TODO:
-    #  remove --> now selection_histogram
-    #  1) Fix explore_constraint plot. The following circular import is causing problems atm:
-    #     DONE: moved parts of this method to selector.plot_expore_constraint --> this solves the problem
-    #  2) How to generalize the plotting function, support:
-    #     - any selection method with defined hyperparameters
-    #     - any penalty kernel
-    #     - any key to be plotted (not only quantiles)
-
-    if factors is None:
-        factors = [1]
-    assert isinstance(factors, list)
-
-    cols = len(factors)
-
-    fig = plt.figure(figsize=(size_factor * cols, 0.7 * size_factor * n_rows))
-    for i, factor in enumerate(factors):
-        ax1 = plt.subplot(n_rows, cols, i + 1)
-        hist_kws = {"range": (0, np.max(a[i].var[x_axis_key]))}
-        bins = 100
-        sns.distplot(
-            a[i].var[x_axis_key],
-            kde=False,
-            label="highly_var",
-            bins=bins,
-            hist_kws=hist_kws,
-        )
-        idx = selections_tmp[i]["selection"].index[selections_tmp[i]["selection"]]
-        sns.distplot(
-            a[i][:, idx].var[x_axis_key],
-            kde=False,
-            label="selection",
-            bins=bins,
-            hist_kws=hist_kws,
-        )
-        plt.axvline(x=lower, lw=0.5, ls="--", color="black")
-        plt.axvline(x=upper, lw=0.5, ls="--", color="black")
-        ax1.set_yscale("log")
-        plt.legend(prop={"size": legend_size}, loc=[0.73, 0.74], frameon=False)
-        plt.title(f"factor = {factor}")
-
-        ax2 = ax1.twinx()
-        x_values = np.linspace(0, np.max(a[i].var[x_axis_key]), 240)
-        plt.plot(x_values, 1 * penalty_kernels[i](x_values), label="penal.", color="green")
-        plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
-        plt.ylim([0, 2])
-        for label in ax2.get_yticklabels():
-            label.set_color("green")
-
-    plt.tight_layout()
-    if show:
-        plt.show()
-    if save:
-        fig.savefig(save, bbox_inches="tight", transparent=True)
-    plt.close()
+# def explore_constraint(
+#     a: List[sc.AnnData],
+#     selections_tmp: List[pd.DataFrame],
+#     penalty_kernels: List[Callable],
+#     x_axis_key: str = "quantile_99",
+#     factors: List[float] = None,
+#     upper: float = 6,
+#     lower: float = 2,
+#     size_factor: int = 6,
+#     n_rows: int = 1,
+#     legend_size: int = 9,
+#     show: bool = True,
+#     save: Optional[str] = None,
+# ):
+#     """Plot histogram of quantiles for selected genes for different penalty kernels.
+#
+#     Args:
+#         a:
+#             List of ``sc.AnnData`` objects containing the data for plotting.
+#         selections_tmp:
+#             Dataframe containing the selection.
+#         factors:
+#             List of titles for the subplots, i.e. the factors of each penalty kernel.
+#         upper:
+#             Lower border above which the kernel is 1.
+#         lower:
+#             Upper boder below which the kernel is 1.
+#         penalty_kernels:
+#             List of penalty kernels, which were used for selection.
+#         x_axis_key:
+#             Key of column in ``adata.var`` that is used for the x axis of the plotted histograms.
+#         size_factor:
+#              Factor for scaling the figure size.
+#         n_rows:
+#             Number of subplot rows.
+#         legend_size:
+#             Matplotlib legend size.
+#         show:
+#             Whether to display the plot.
+#         save:
+#             Save the plot to path.
+#
+#     Returns:
+#
+#     """
+#
+#     # TODO:
+#     #  remove --> now selection_histogram
+#     #  1) Fix explore_constraint plot. The following circular import is causing problems atm:
+#     #     DONE: moved parts of this method to selector.plot_expore_constraint --> this solves the problem
+#     #  2) How to generalize the plotting function, support:
+#     #     - any selection method with defined hyperparameters
+#     #     - any penalty kernel
+#     #     - any key to be plotted (not only quantiles)
+#
+#     if factors is None:
+#         factors = [1]
+#     assert isinstance(factors, list)
+#
+#     cols = len(factors)
+#
+#     fig = plt.figure(figsize=(size_factor * cols, 0.7 * size_factor * n_rows))
+#     for i, factor in enumerate(factors):
+#         ax1 = plt.subplot(n_rows, cols, i + 1)
+#         hist_kws = {"range": (0, np.max(a[i].var[x_axis_key]))}
+#         bins = 100
+#         sns.distplot(
+#             a[i].var[x_axis_key],
+#             kde=False,
+#             label="highly_var",
+#             bins=bins,
+#             hist_kws=hist_kws,
+#         )
+#         idx = selections_tmp[i]["selection"].index[selections_tmp[i]["selection"]]
+#         sns.distplot(
+#             a[i][:, idx].var[x_axis_key],
+#             kde=False,
+#             label="selection",
+#             bins=bins,
+#             hist_kws=hist_kws,
+#         )
+#         plt.axvline(x=lower, lw=0.5, ls="--", color="black")
+#         plt.axvline(x=upper, lw=0.5, ls="--", color="black")
+#         ax1.set_yscale("log")
+#         plt.legend(prop={"size": legend_size}, loc=[0.73, 0.74], frameon=False)
+#         plt.title(f"factor = {factor}")
+#
+#         ax2 = ax1.twinx()
+#         x_values = np.linspace(0, np.max(a[i].var[x_axis_key]), 240)
+#         plt.plot(x_values, 1 * penalty_kernels[i](x_values), label="penal.", color="green")
+#         plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
+#         plt.ylim([0, 2])
+#         for label in ax2.get_yticklabels():
+#             label.set_color("green")
+#
+#     plt.tight_layout()
+#     if show:
+#         plt.show()
+#     if save:
+#         fig.savefig(save, bbox_inches="tight", transparent=True)
+#     plt.close()
 
 
 def selection_histogram(
@@ -720,12 +720,12 @@ def selection_histogram(
             dictionary keys are used as label in the plot and need to be equivalent to the keys in ``penalty_kernels``
             and ``penalty_keys``.
         x_axis_keys:
-            Dictionary with the column in ``adata.var`` that is used for the x axis of the plotted histograms. There are
+            Dictionary with the column in ``adata.var`` that is used for the x-axis of the plotted histograms. There are
             two reasonable options:
 
                 - If a penalty is plottet: the column containing the values of which the penalty scores were derived by
                   applying the penalty kernel. Use the ``penalty_key`` as dictionary key in this case.
-                - If no penalty is plottet: a column containing some statistic, eg. 99% quantile. Use the same keys as
+                - If no penalty is plottet: a column containing some statistic, e.g. 99% quantile. Use the same keys as
                   ``selection_dict`` in this case.
 
         background_key:
@@ -1079,7 +1079,7 @@ def classification_rule_umaps(
         fontsize:
             Matplotlib fontsize.
         size_factor:
-
+             Factor for scaling the figure size.
         show:
             Whether to display the plot.
         save:
@@ -1213,7 +1213,8 @@ def classification_rule_umaps(
                 j = 0
 
             ax = fig.add_subplot(gs[2 * i + 1, j])
-            ax = sc.pl.embedding(adata=a, basis=basis, color=gene, show=False, ax=ax, title=df.loc[gene]["marker_title"],
+            ax = sc.pl.embedding(adata=a, basis=basis, color=gene, show=False, ax=ax,
+                                 title=df.loc[gene]["marker_title"],
                                  cmap=df["marker_cmap"][gene])
             ax.xaxis.label.set_fontsize(fontsize)
             ax.yaxis.label.set_fontsize(fontsize)
@@ -1231,134 +1232,73 @@ def classification_rule_umaps(
 
 def masked_dotplot(
     adata: sc.AnnData,
-    selector,
-    ct_key: str = "celltype",
-    imp_threshold: float = 0.05,
-    celltypes: Optional[List[str]] = None,
-    n_genes: Optional[int] = None,
-    comb_markers_only: bool = False,
-    markers_only: bool = False,
-    cmap: str = "Reds",
-    comb_marker_color: str = "darkblue",
-    marker_color: str = "green",
-    non_adata_celltypes_color: str = "grey",
-    save: Union[bool, str] = False,
+    var_names: Union[_VarNames, Mapping[str, _VarNames]],
+    groupby: Union[str, Sequence[str]],
+    tree_genes: Optional[dict] = None,
+    marker_genes: Optional[dict] = None,
+    further_celltypes: Optional[Sequence[str]] = None,
+    show: bool = True,
+    save: Optional[str] = None,
+    **kwargs
 ):
     """Create dotplot with additional annotation masks.
 
+    Note:
+        This method uses :py:class:`.MaskedDotPlot`, which is based on
+        :external:py:class:`scanpy.pl.DotPlot`.
+
     Args:
         adata:
-            AnnData with `adata.obs[ct_key]` cell type annotations.
-        selector:
-            ProbesetSelector object with selected selector.probeset.
-        ct_key:
-            Column of `adata.obs` with cell type annotation.
-        imp_threshold:
-            Show genes as combinatorial marker only for those genes with importance > ``imp_threshold``.
-        celltypes:
-            Optional subset of celltypes (rows of dotplot).
-        n_genes:
-            Optionally plot top ``n_genes`` genes.
-        comb_markers_only:
-            Whether to plot only genes that are combinatorial markers for the plotted cell types. (can be combined with
-            markers_only, in that case markers that are not comb markers are also shown)
-        markers_only:
-            Whether to plot only genes that are markers for the plotted cell types. (can be combined with
-            ``comb_markers_only``, in that case comb markers that are not markers are also shown)
-        cmap:
-            Colormap of mean expressions.
-        comb_marker_color:
-            Color for combinatorial markers.
-        marker_color:
-            Color for marker genes.
-        non_adata_celltypes_color:
-            Color for celltypes that don't occur in the data set.
+            AnnData with ``adata.obs[groupby]`` cell type annotations.
+        var_names:
+            ``var_names`` should be a valid subset of ``adata.var_names``. If ``var_names`` is a mapping, then the key
+            is used as label to group the values (see ``var_group_labels``). The mapping values should be sequences of
+            valid ``adata.var_names``. In this case either coloring or ‘brackets’ are used for the grouping of var names
+            depending on the plot. When ``var_names`` is a mapping, then the ``var_group_labels`` and
+            ``var_group_positions`` are set.
+        groupby:
+            The key of the observation grouping to consider.
+        tree_genes:
+            Dictionary with lists of forest selected genes.
+        marker_genes:
+            Dictionary with list of marker genes for each celltype.
+        further_celltypes:
+            Celltypes that are not in ``adata.obs[groupby]``.
+        show:
+            Whether to display the plot.
         save:
-            If `True` or a `str`, save the figure.
+            Save the plot to path.
+        kwargs:
+            Further arguments for :class:`spapros.plotting._masked_dotplot.MaskedDotPlot`, e.g.:
+
+                cmap:
+                    Colormap of mean expressions.
+                comb_marker_color:
+                    Color for combinatorial markers.
+                marker_color:
+                    Color for marker genes.
+                non_adata_celltypes_color:
+                    Color for celltypes that don't occur in the data set.
+                use_raw:
+                    Use ``raw`` attribute of ``adata`` if present.
+
     """
-    from spapros.selection import ProbesetSelector
 
-    if isinstance(selector, str):
-        selector = ProbesetSelector(adata, ct_key, save_dir=selector)
-        # TODO: think the last steps of the ProbesetSelector are still not saved..., needs to be fixed.
-
-    # celltypes, possible origins:
-    # - adata.obs[ct_key] (could include cts not used for selection)
-    # - celltypes for selection (including markers, could include cts which are not in adata.obs[ct_key])
-    # --> pool all together... order?
-
-    if celltypes is not None:
-        cts = celltypes
-        a = adata[adata.obs[ct_key].isin(celltypes)].copy()
-        # a.obs[ct_key] = a.obs[ct_key].astype(str).astype("category")
-    else:
-        # Cell types from adata
-        cts = adata.obs[ct_key].unique().tolist()
-        # Cell types from marker list only
-        if "celltypes_marker" in selector.probeset:
-            tmp = []
-            for markers_celltypes in selector.probeset["celltypes_marker"].str.split(","):
-                tmp += markers_celltypes
-            tmp = np.unique(tmp).tolist()
-            if "" in tmp:
-                tmp.remove("")
-            cts += [ct for ct in tmp if ct not in cts]
-        a = adata
-
-    # Get selected genes that are also in adata
-    selected_genes = [
-        g for g in selector.probeset[selector.probeset["selection"]].index.tolist() if g in adata.var_names
-    ]
-
-    # Get tree genes
-    tree_genes = {}
-    assert isinstance(selector.forest_results["forest"], list)
-    assert len(selector.forest_results["forest"]) == 3
-    assert isinstance(selector.forest_results["forest"][2], dict)
-    for ct, importance_tab in selector.forest_results["forest"][2].items():
-        if ct in cts:
-            tree_genes[ct] = importance_tab["0"].loc[importance_tab["0"] > imp_threshold].index.tolist()
-            tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
-
-    # Get markers
-    marker_genes: Dict[str, list] = {ct: [] for ct in (cts)}
-    for ct in cts:
-        for gene in selector.probeset[selector.probeset["selection"]].index:
-            if ct in selector.probeset.loc[gene, "celltypes_marker"].split(",") and (gene in adata.var_names):
-                marker_genes[ct].append(gene)
-        marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
-
-    # Optionally subset genes:
-    # Subset to combinatorial markers of shown celltypes only
-    if comb_markers_only or markers_only:
-        allowed_genes = []
-        if comb_markers_only:
-            allowed_genes += list(itertools.chain(*[tree_genes[ct] for ct in tree_genes.keys()]))
-        if markers_only:
-            allowed_genes += list(itertools.chain(*[marker_genes[ct] for ct in marker_genes.keys()]))
-        selected_genes = [g for g in selected_genes if g in allowed_genes]
-    # Subset to show top n_genes only
-    if n_genes:
-        selected_genes = selected_genes[: min(n_genes, len(selected_genes))]
-    # Filter (combinatorial) markers by genes that are not in the selected genes
-    for ct in cts:
-        marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
-    for ct in tree_genes.keys():
-        tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
+    # TODO
+    # docstring
 
     dp = MaskedDotPlot(
-        a,
-        var_names=selected_genes,
-        groupby=ct_key,
+        adata,
+        var_names=var_names,
+        groupby=groupby,
         tree_genes=tree_genes,
         marker_genes=marker_genes,
-        further_celltypes=[ct for ct in cts if ct not in adata.obs[ct_key].unique()],
-        cmap=cmap,
-        tree_genes_color=comb_marker_color,
-        marker_genes_color=marker_color,
-        non_adata_celltypes_color=non_adata_celltypes_color,
+        further_celltypes=further_celltypes,
+        **kwargs,
     )
     dp.make_figure()
+    if show:
+        plt.gcf().show()
     if save:
         plt.gcf().savefig(save, bbox_inches="tight", transparent=True)
 

@@ -27,6 +27,7 @@ Selection
   :toctree: se
 
     se.select_reference_probesets
+    se.select_pca
 
 
 Evaluation
@@ -64,9 +65,9 @@ Plotting
 
     pl.confusion_matrix
     pl.correlation_matrix
-    pl.cluster_similarity
-    pl.knn_overlap
+    pl.clustering_lineplot
     pl.summary_table
-    pl.explore_constraint
+    pl.selection_histogram
     pl.gene_overlap
+    pl.classification_rule_umaps
     pl.masked_dotplot
