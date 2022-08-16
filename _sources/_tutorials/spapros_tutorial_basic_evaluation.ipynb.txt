@@ -29,14 +29,6 @@
   },
   {
    "cell_type": "markdown",
-   "metadata": {},
-   "source": [
-    "**TODO**:\n",
-    "describe each metric! (I actually refer to this tutorial for getting descriptions of the metrics). Probably best to do this after the summary plot"
-   ]
-  },
-  {
-   "cell_type": "markdown",
    "metadata": {
     "collapsed": true,
     "pycharm": {
@@ -45,6 +37,15 @@
    },
    "source": [
     "# Evaluation of probe sets\n",
+    "\n",
+    "---\n",
+    "**NOTE NOTE NOTE NOTE**\n",
+    "\n",
+    "This tutorial will be updated the next days.\n",
+    "\n",
+    "**NOTE NOTE NOTE NOTE**\n",
+    "\n",
+    "---\n",
     "\n",
     "This tutorial shows how to to evaluate a probeset with the Spapros evaluation pipeline.\n",
     "We examplary evaluate the probeset of 20 genes that was selected in our [basic selection tutoral](https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_basic_selection.html).\n"
@@ -557,7 +558,7 @@
       ]
      },
      "metadata": {
-      "needs_background": "light"      
+      "needs_background": "light"
      },
      "output_type": "display_data"
     }
@@ -568,7 +569,15 @@
   },
   {
    "cell_type": "markdown",
-    "metadata": {},
+   "metadata": {},
+   "source": [
+    "**TODO**:\n",
+    "describe each metric! (we're refering to this tutorial for getting descriptions of the metrics). Probably best to do this after the summary plot"
+   ]
+  },
+  {
+   "cell_type": "markdown",
+   "metadata": {},
    "source": [
     "## What's next?\n",
     "\n",
