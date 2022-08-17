@@ -1,10 +1,7 @@
 """Plotting Module."""
 import itertools
-<<<<<<< HEAD
 from typing import Dict, Mapping, Sequence
-=======
 from typing import Any
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 from typing import Callable
 from typing import Dict
 from typing import List
@@ -27,10 +24,8 @@ from spapros.plotting._masked_dotplot import MaskedDotPlot
 from upsetplot import from_indicators
 from upsetplot import UpSet
 from venndata import venn
-<<<<<<< HEAD
 from spapros.plotting._masked_dotplot import MaskedDotPlot, _VarNames
-=======
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
+
 
 
 #############################
@@ -261,7 +256,6 @@ def correlation_matrix(
 
     # colorbar
     if colorbar:
-<<<<<<< HEAD
         CBAR_WIDTH = CBAR_WIDTH_INCHES / FIGURE_WIDTH
         CBAR_RIGHT = 1 - (CBAR_RIGHT_INCHES / FIGURE_WIDTH)
         CBAR_LEFT = CBAR_RIGHT - (CBAR_LEFT_INCHES / FIGURE_WIDTH)
@@ -272,9 +266,6 @@ def correlation_matrix(
             CBAR_BOTTOM,
             CBAR_WIDTH,
             CBAR_HEIGHT])
-=======
-        cbar_ax = fig.add_axes([CBAR_LEFT, TOP - SUBPLOT_HEIGHT, CBAR_WIDTH, SUBPLOT_HEIGHT])
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
         cbar = plt.colorbar(cax=cbar_ax)
         cbar.ax.tick_params(labelsize=fontsize)
 
@@ -852,109 +843,6 @@ def summary_table(
 ## selection related plots ##
 #############################
 
-<<<<<<< HEAD
-# def explore_constraint(
-#     a: List[sc.AnnData],
-#     selections_tmp: List[pd.DataFrame],
-#     penalty_kernels: List[Callable],
-#     x_axis_key: str = "quantile_99",
-#     factors: List[float] = None,
-#     upper: float = 6,
-#     lower: float = 2,
-#     size_factor: int = 6,
-#     n_rows: int = 1,
-#     legend_size: int = 9,
-#     show: bool = True,
-#     save: Optional[str] = None,
-# ):
-#     """Plot histogram of quantiles for selected genes for different penalty kernels.
-#
-#     Args:
-#         a:
-#             List of ``sc.AnnData`` objects containing the data for plotting.
-#         selections_tmp:
-#             Dataframe containing the selection.
-#         factors:
-#             List of titles for the subplots, i.e. the factors of each penalty kernel.
-#         upper:
-#             Lower border above which the kernel is 1.
-#         lower:
-#             Upper boder below which the kernel is 1.
-#         penalty_kernels:
-#             List of penalty kernels, which were used for selection.
-#         x_axis_key:
-#             Key of column in ``adata.var`` that is used for the x axis of the plotted histograms.
-#         size_factor:
-#              Factor for scaling the figure size.
-#         n_rows:
-#             Number of subplot rows.
-#         legend_size:
-#             Matplotlib legend size.
-#         show:
-#             Whether to display the plot.
-#         save:
-#             Save the plot to path.
-#
-#     Returns:
-#
-#     """
-#
-#     # TODO:
-#     #  remove --> now selection_histogram
-#     #  1) Fix explore_constraint plot. The following circular import is causing problems atm:
-#     #     DONE: moved parts of this method to selector.plot_expore_constraint --> this solves the problem
-#     #  2) How to generalize the plotting function, support:
-#     #     - any selection method with defined hyperparameters
-#     #     - any penalty kernel
-#     #     - any key to be plotted (not only quantiles)
-#
-#     if factors is None:
-#         factors = [1]
-#     assert isinstance(factors, list)
-#
-#     cols = len(factors)
-#
-#     fig = plt.figure(figsize=(size_factor * cols, 0.7 * size_factor * n_rows))
-#     for i, factor in enumerate(factors):
-#         ax1 = plt.subplot(n_rows, cols, i + 1)
-#         hist_kws = {"range": (0, np.max(a[i].var[x_axis_key]))}
-#         bins = 100
-#         sns.distplot(
-#             a[i].var[x_axis_key],
-#             kde=False,
-#             label="highly_var",
-#             bins=bins,
-#             hist_kws=hist_kws,
-#         )
-#         idx = selections_tmp[i]["selection"].index[selections_tmp[i]["selection"]]
-#         sns.distplot(
-#             a[i][:, idx].var[x_axis_key],
-#             kde=False,
-#             label="selection",
-#             bins=bins,
-#             hist_kws=hist_kws,
-#         )
-#         plt.axvline(x=lower, lw=0.5, ls="--", color="black")
-#         plt.axvline(x=upper, lw=0.5, ls="--", color="black")
-#         ax1.set_yscale("log")
-#         plt.legend(prop={"size": legend_size}, loc=[0.73, 0.74], frameon=False)
-#         plt.title(f"factor = {factor}")
-#
-#         ax2 = ax1.twinx()
-#         x_values = np.linspace(0, np.max(a[i].var[x_axis_key]), 240)
-#         plt.plot(x_values, 1 * penalty_kernels[i](x_values), label="penal.", color="green")
-#         plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
-#         plt.ylim([0, 2])
-#         for label in ax2.get_yticklabels():
-#             label.set_color("green")
-#
-#     plt.tight_layout()
-#     if show:
-#         plt.show()
-#     if save:
-#         fig.savefig(save, bbox_inches="tight", transparent=True)
-#     plt.close()
-=======
 
 def explore_constraint(
     a: List[sc.AnnData],
@@ -1057,7 +945,6 @@ def explore_constraint(
     if save:
         fig.savefig(save, bbox_inches="tight", transparent=True)
     plt.close()
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
 
 def selection_histogram(
@@ -1181,11 +1068,7 @@ def selection_histogram(
 
     n_rows = len(selections_dict)
     cols = [len(x_values_dict[x]) for x in x_values_dict]
-<<<<<<< HEAD
-    n_cols = max(cols + [1])
-=======
     n_cols = max(max(cols), 1)  # if cols else 1
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
     fig = plt.figure(figsize=(size_factor * n_cols, 0.7 * size_factor * n_rows))
     gs = GridSpec(n_rows, n_cols, figure=fig)
@@ -1198,11 +1081,7 @@ def selection_histogram(
             if len(x_values_dict[selection_label]) == 0 and j > 0:
                 continue
             # if less penalties given than n_cols, let space empty
-<<<<<<< HEAD
-            elif len(x_values_dict[selection_label]) <= j and j > 0:
-=======
             elif 0 < len(x_values_dict[selection_label]) <= j:
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
                 continue
             ax1 = fig.add_subplot(gs[i])
 
@@ -1470,11 +1349,7 @@ def clf_genes_umaps(
         fontsize:
             Matplotlib fontsize.
         size_factor:
-<<<<<<< HEAD
-             Factor for scaling the figure size.
-=======
             Scale factor for figure width and height.
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
         show:
             Whether to display the plot.
         save:
@@ -1634,11 +1509,6 @@ def clf_genes_umaps(
                 j = 0
 
             ax = fig.add_subplot(gs[2 * i + 1, j])
-<<<<<<< HEAD
-            ax = sc.pl.embedding(adata=a, basis=basis, color=gene, show=False, ax=ax,
-                                 title=df.loc[gene]["marker_title"],
-                                 cmap=df["marker_cmap"][gene])
-=======
             ax = sc.pl.embedding(
                 adata=a,
                 basis=basis,
@@ -1648,7 +1518,6 @@ def clf_genes_umaps(
                 title=df.loc[gene]["marker_title"],
                 cmap=df["marker_cmap"][gene],
             )
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
             ax.xaxis.label.set_fontsize(fontsize)
             ax.yaxis.label.set_fontsize(fontsize)
             ax.title.set_fontsize(fontsize)
@@ -1664,8 +1533,7 @@ def clf_genes_umaps(
 
 
 def masked_dotplot(
-<<<<<<< HEAD
-    adata: sc.AnnData,
+    adata: sc.AnnData,  # TODO: adjust type hint
     var_names: Union[_VarNames, Mapping[str, _VarNames]],
     groupby: Union[str, Sequence[str]],
     tree_genes: Optional[dict] = None,
@@ -1674,21 +1542,6 @@ def masked_dotplot(
     show: bool = True,
     save: Optional[str] = None,
     **kwargs
-=======
-    adata: sc.AnnData,  # TODO: adjust type hint
-    selector,
-    ct_key: str = "celltype",
-    imp_threshold: float = 0.05,
-    celltypes: Optional[List[str]] = None,
-    n_genes: Optional[int] = None,
-    comb_markers_only: bool = False,
-    markers_only: bool = False,
-    cmap: str = "Reds",
-    comb_marker_color: str = "darkblue",
-    marker_color: str = "blue",
-    non_adata_celltypes_color: str = "grey",
-    save: Union[bool, str] = False,
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 ):
     """Create dotplot with additional annotation masks.
 
@@ -1698,7 +1551,6 @@ def masked_dotplot(
 
     Args:
         adata:
-<<<<<<< HEAD
             AnnData with ``adata.obs[groupby]`` cell type annotations.
         var_names:
             ``var_names`` should be a valid subset of ``adata.var_names``. If ``var_names`` is a mapping, then the key
@@ -1731,35 +1583,6 @@ def masked_dotplot(
                     Color for celltypes that don't occur in the data set.
                 use_raw:
                     Use ``raw`` attribute of ``adata`` if present.
-=======
-            AnnData with cell type annotations in `adata.obs[ct_key]`.
-        selector:
-            `ProbesetSelector` object with selected `selector.probeset`.
-        ct_key:
-            Column of `adata.obs` with cell type annotation.
-        imp_threshold:
-            Annotate genes as "Spapros marker" only for those genes with importance > ``imp_threshold``.
-        celltypes:
-            Optional subset of celltypes (rows of dotplot).
-        n_genes:
-            Optionally plot top ``n_genes`` genes.
-        comb_markers_only:
-            Whether to plot only genes that are "Spapros markers" for the plotted cell types. (can be combined with
-            markers_only, in that case markers that are not Spapros markers are also shown)
-        markers_only:
-            Whether to plot only genes that are markers for the plotted cell types. (can be combined with
-            ``comb_markers_only``, in that case Spapros markers that are not markers are also shown)
-        cmap:
-            Colormap of mean expressions.
-        comb_marker_color:
-            Color for "Spapros markers".
-        marker_color:
-            Color for marker genes.
-        non_adata_celltypes_color:
-            Color for celltypes that don't occur in the data set.
-        save:
-            If `True` or a `str`, save the figure.
-
 
     Example:
 
@@ -1778,22 +1601,16 @@ def masked_dotplot(
 
 
     """
-    from spapros.selection import ProbesetSelector
 
-    if isinstance(selector, str):
-        selector = ProbesetSelector(adata, ct_key, save_dir=selector)
-        # TODO: think the last steps of the ProbesetSelector are still not saved..., needs to be fixed.
+    # TODO: think the last steps of the ProbesetSelector are still not saved..., needs to be fixed.
 
     # celltypes, possible origins:
     # - adata.obs[ct_key] (could include cts not used for selection)
     # - celltypes for selection (including markers, could include cts which are not in adata.obs[ct_key])
     # --> pool all together... order?
->>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
-
-    """
 
     # TODO
-    # docstring
+    # proofread docstring
 
     dp = MaskedDotPlot(
         adata,
