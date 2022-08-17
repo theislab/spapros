@@ -940,7 +940,7 @@ def xgboost_forest_classification(
         celltypes = adata.obs[ct_key].unique().tolist()
     # Filter out cell types with less cells than n_cells_min
     cell_counts = adata.obs[ct_key].value_counts().loc[celltypes]
-    if (cell_counts < n_cells_min).any():
+    if (cell_counts < n_cells_min).any() and (verbosity > 0):
         print(
             f"[bold yellow]The following cell types are not included in forest classifications since they have fewer "
             f"than {n_cells_min} cells: {cell_counts.loc[cell_counts < n_cells_min].index.tolist()}"

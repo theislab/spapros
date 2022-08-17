@@ -22,6 +22,7 @@ from rich.progress import Progress
 from sklearn import tree
 from sklearn.metrics import classification_report
 from spapros.evaluation.metrics import get_metric_default_parameters
+from spapros.evaluation.metrics import get_metric_names
 from spapros.evaluation.metrics import metric_computations
 from spapros.evaluation.metrics import metric_pre_computations
 from spapros.evaluation.metrics import metric_shared_computations
@@ -46,39 +47,6 @@ _empty = Empty.token
 
 class ProbesetEvaluator:
     """General class for probe set evaluation, comparison, plotting.
-
-    Attributes:
-        adata:
-            An already preprocessed annotated data matrix. Typically we use log normalised data.
-        celltype_key:
-            The ``adata.obs`` key for cell type annotations or list of keys.
-        dir:
-            Directory where probeset results are saved.
-        scheme:
-            Defines which metrics are calculated
-        marker_list:
-            Celltypes and the respective markers.
-        metrics_params:
-            Parameters for the calculation of each metric. Either default or user specified.
-        metrics:
-            The metrics to be calculated. Either custom or defined according to :attr:`scheme`.
-        ref_name:
-            Name of reference dataset.
-        ref_dir:
-            Directory where reference results are saved.
-        verbosity:
-            Verbosity level.
-        n_jobs:
-            Number of CPUs for multi processing computations. Set to `-1` to use all available CPUs.
-            Verbosity level.
-        shared_results:
-            Results of shared metric computations.
-        pre_results:
-            Results of metric pre computations.
-        results:
-            Results of probe set specific metric computations.
-        summary_results:
-            Table of summary statistics.
 
     Notes:
         The evaluator works on one given dataset and calculates metrics/analyses with respect to that dataset.
@@ -206,8 +174,8 @@ class ProbesetEvaluator:
 
         metrics: Define which metrics are calculated. This is set automatically if :attr:`scheme != "custom"`. Supported are:
 
-            - `'nmi'`
-            - `'knn'`
+            - `'cluster_similarity'`
+            - `'knn_overlap'`
             - `'forest_clfs'`
             - `'marker_corr'`
             - `'gene_corr'`
@@ -235,6 +203,40 @@ class ProbesetEvaluator:
             Verbosity level.
         n_jobs:
             Number of CPUs for multi processing computations. Set to `-1` to use all available CPUs.
+
+    Attributes:
+        adata:
+            An already preprocessed annotated data matrix. Typically we use log normalised data.
+        celltype_key:
+            The ``adata.obs`` key for cell type annotations or list of keys.
+        dir:
+            Directory where probeset results are saved.
+        scheme:
+            Defines which metrics are calculated
+        marker_list:
+            Celltypes and the respective markers.
+        metrics_params:
+            Parameters for the calculation of each metric. Either default or user specified.
+        metrics:
+            The metrics to be calculated. Either custom or defined according to :attr:`scheme`.
+        ref_name:
+            Name of reference dataset.
+        ref_dir:
+            Directory where reference results are saved.
+        verbosity:
+            Verbosity level.
+        n_jobs:
+            Number of CPUs for multi processing computations. Set to `-1` to use all available CPUs.
+            Verbosity level.
+        shared_results:
+            Results of shared metric computations.
+        pre_results:
+            Results of metric pre computations.
+        results:
+            Results of probe set specific metric computations.
+        summary_results:
+            Table of summary statistics.
+
     """
 
     # TODO:
@@ -247,7 +249,7 @@ class ProbesetEvaluator:
         celltype_key: Union[str, List[str]] = "celltype",
         results_dir: Union[str, None] = "./probeset_evaluation/",
         scheme: str = "quick",
-        metrics=None,
+        metrics: Optional[List[str]] = None,
         metrics_params: Dict[str, Dict] = {},
         marker_list: Union[str, Dict[str, List[str]]] = None,
         reference_name: str = "adata1",
@@ -451,15 +453,16 @@ class ProbesetEvaluator:
                 if self.progress and self.verbosity > 0:
                     self.progress.advance(task_final)
 
-            if update_summary:
-                self.summary_statistics(set_ids=[set_id])
+                if update_summary:
+                    # self.summary_statistics(set_ids=[set_id])
+                    self.summary_statistics(set_ids=list(set(self._get_set_ids_with_results() + [set_id])))
 
-        if self.progress and self.verbosity > 0:
-            self.progress.advance(evaluation_task)
-            self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
+            if self.progress and self.verbosity > 0:
+                self.progress.advance(evaluation_task)
+                self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
 
-        if self.progress and self.started:
-            self.progress.stop()
+            if self.progress and self.started:
+                self.progress.stop()
 
     def evaluate_probeset_pipeline(
         self, genes: List, set_id: str, shared_pre_results_path: List, step_specific_results: List
@@ -570,6 +573,17 @@ class ProbesetEvaluator:
 
         self.summary_results = df
 
+    def _get_set_ids_with_results(
+        self,
+    ):
+        """Get list of set ids that currently have results for any metric in the Evaluator"""
+
+        set_ids = []
+        for metric in self.metrics:
+            set_ids += list(self.results[metric].keys())
+
+        return list(set(set_ids))
+
     def _prepare_metrics_params(self, new_params: Dict[str, Dict]) -> Dict[str, Dict]:
         """Set metric parameters to default values and overwrite defaults in case user defined param is given.
 
@@ -633,6 +647,7 @@ class ProbesetEvaluator:
         metric: str,
         set_id: str,
         pre: bool = False,
+        dir: Optional[str] = None,
     ) -> str:
         """Get the default name for a result file.
 
@@ -643,10 +658,15 @@ class ProbesetEvaluator:
                 ID of the current probeset.
             pre:
                 Whether the file will should pre calculations or probeset specific metric calculations.
+            dir:
+                Alternative results directory (instead of self.dir)
         """
         pre_str = "_pre" if pre else ""
-        assert self.dir is not None
-        return os.path.join(self.dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
+        if dir is None:
+            assert self.dir is not None
+            return os.path.join(self.dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
+        else:
+            return os.path.join(dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
 
     def _default_reference_dir(
         self,
@@ -657,22 +677,270 @@ class ProbesetEvaluator:
         else:
             return None
 
-    #############################
-    ##    EVALUATION FIGUES    ##
-    #############################
+    def load_results(
+        self,
+        directories: Optional[Union[str, List[str]]] = None,
+        reference_dir: Optional[str] = None,
+        steps: List[str] = ["shared", "pre", "main", "summary"],
+        set_ids: Optional[List[str]] = None,
+        verbosity: int = 1,
+    ) -> pd.DataFrame:
+        """Load existing results from files of one or multiple evaluation output directories
+
+        In case of multiple directories we assume that the different evaluations were done with the same parameters. You
+        can control which metrics are loaded by setting :attr:`.ProbesetEvaluator.metrics`.
+
+        Args:
+            directories:
+                Directory or list of directories of previous evaluations. If `None` is given it's set to
+                :attr:`.ProbesetEvaluator.dir`.
+            reference_dir:
+                Directory with reference results. If `None` is given it's set to :attr:`.ProbesetEvaluator.ref_dir`.
+            steps:
+                The results steps that are loaded. These include
+                    * `'shared'` - computations on the reference gene set
+                    * `'pre'` - computations on the selected gene set independent of the results on the reference gene set
+                    * `'main'` - computations on the selected gene set taking into account the reference gene set results
+                    * `'summary'` - summary metrics
+            set_ids:
+                Optionally only load the results for a subset of set ids.
+            verbosity:
+                Verbosity level.
+
+        Returns:
+            pd.DataFrame
+                A boolean table that indicates which results were loaded for each set_id. Note that some metrics don't
+                have result files for certain steps.
+
+        Examples:
+
+            Load results from a previous evaluation
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(adata, methods=["DE", "HVG"], n=30, verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(adata, verbosity=0, results_dir="eval_results")
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+                del evaluator
+
+                evaluator = sp.ev.ProbesetEvaluator(adata, verbosity=0, results_dir="eval_results")
+                df_info = evaluator.load_results()
+
+            Load results from previous evaluations that were distributed in two directories
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["DE", "HVG"], n=30, verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(
+                    adata, verbosity=0, results_dir="eval_results1")
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["PCA", "random"], n=30, verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(
+                    adata, verbosity=0, results_dir="eval_results2")
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+
+                evaluator = sp.ev.ProbesetEvaluator(adata, verbosity=2)
+                df_info = evaluator.load_results(
+                    directories=['./eval_results1/', './eval_results2/'], reference_dir="./eval_results1/references")
+
+        """
+
+        # Check if given steps are sound
+        supported_steps = set(["shared", "pre", "main", "summary"])
+        assert set(steps) <= supported_steps, f"Unsupported results steps: {set(steps)-supported_steps}"
+
+        # Set directories to list
+        if directories is None:
+            if self.dir is None:
+                raise ValueError("Neither `directories` are given nor `ProbesetEvaluator.dir`.")
+            directories = [self.dir]
+        elif isinstance(directories, str):
+            directories = [directories]
+
+        # Eventually update self.ref_dir if argument reference_dir is given
+        if (reference_dir is not None) and (reference_dir != self.ref_dir):
+            if verbosity > 0:
+                print(f"Update self.ref_dir to {reference_dir}")
+            self.ref_dir = reference_dir
+        else:
+            if not os.path.isdir(self.ref_dir):
+                raise ValueError(
+                    f"Directory with expected reference results does not exist: {self.ref_dir}. Set the "
+                    "correct path with argument `reference_dir`."
+                )
+
+        self._shared_res_file = lambda metric: os.path.join(self.ref_dir, f"{self.ref_name}_{metric}.csv")
+
+        # Get metrics for which reference files do exist
+        metrics_with_ref_files = [metric for metric in self.metrics if os.path.isfile(self._shared_res_file(metric))]
+        # Check if any metric was found. If not: check if results exist for another self.ref_name
+        if (len(metrics_with_ref_files) == 0) and (len(os.listdir(self.ref_dir)) > 0):
+            # note that all metric names have an underscore (file name e.g.: <ref_name>_gene_corr.csv)
+            tmp_ref_names = list(set([file.rsplit("_", 2)[0] for file in os.listdir(self.ref_dir)]))
+            if len(tmp_ref_names) == 1:
+                self.ref_name = tmp_ref_names[0]
+                if verbosity > 0:
+                    print(f"Update self.ref_name to {self.ref_name}")
+                metrics_with_ref_files = [
+                    metric for metric in self.metrics if os.path.isfile(self._shared_res_file(metric))
+                ]
+            else:
+                raise ValueError(
+                    "No result files found for the given ref_name but for more than one other reference name."
+                )
+
+        # Check which set_ids and result files exist (note: "shared" results are no set_id specific and handled above)
+        results_found = []
+        summary_columns = []
+        for dir in directories:
+            for metric in self.metrics:
+                files = os.listdir(os.path.join(dir, metric))
+                for step in steps:
+                    if step == "pre":
+                        pre_files = [f for f in files if f.endswith("_pre.csv")]
+                        set_ids_tmp = [f.rsplit("_pre.csv")[0].rsplit(f"{self.ref_name}_")[-1] for f in pre_files]
+                        for set_id in set_ids_tmp:
+                            results_found.append([dir, metric, step, set_id])
+                    elif step == "main":
+                        main_files = [f for f in files if f.endswith(".csv") and not f.endswith("_pre.csv")]
+                        set_ids_tmp = [f.rsplit(".csv")[0].rsplit(f"{self.ref_name}_")[-1] for f in main_files]
+                        for set_id in set_ids_tmp:
+                            results_found.append([dir, metric, step, set_id])
+            if "summary" in steps:
+                tmp_summary_file = os.path.join(dir, f"{self.ref_name}_summary.csv")
+                tmp_summary = pd.read_csv(tmp_summary_file, index_col=0)
+                set_ids_tmp = tmp_summary.index.to_list()
+                columns_subset = []
+                for metric in get_metric_names():
+                    if (metric in self.metrics) and np.any([metric in col for col in tmp_summary.columns]):
+                        columns_subset += [col for col in tmp_summary.columns if metric in col]
+                        for set_id in set_ids_tmp:
+                            results_found.append([dir, metric, step, set_id])
+                summary_columns.append(columns_subset)
+        if len(summary_columns) > 1:
+            if not np.all([set(summary_columns[i]) == set(summary_columns[0]) for i in range(1, len(summary_columns))]):
+                raise ValueError("The column names in summary files of different directories are not identical.")
+
+        # Reduce found results to set ids of interest if given
+        if set_ids is not None:
+            results_found = [r for r in results_found if r[3] in set_ids]
+
+        # Create table with infos which result files were found
+        df = pd.DataFrame(columns=["dir", "metric", "step", "set_id"], data=results_found)
+
+        # Test if set_ids occur multiple times in different dirs
+        set_id_occurence_per_dir = pd.crosstab(df["dir"], df["set_id"])
+        set_id_in_multiple_dir = set_id_occurence_per_dir.sum() > set_id_occurence_per_dir.max()
+        if set_id_in_multiple_dir.any():
+            tmp_ids = set_id_in_multiple_dir.loc[set_id_in_multiple_dir]
+            raise ValueError(f"Found results for same set_ids in multiple directories, ids: {tmp_ids.index.to_list()}")
+
+        # Get all set ids with results if not set by user
+        if set_ids is None:
+            set_ids = df["set_id"].unique().tolist()
+
+        # Initialize boolean table of found results
+        df_bool = pd.DataFrame(
+            index=[f"{metric}_{step}" for step in steps for metric in self.metrics], columns=set_ids, data=False
+        )
+
+        # Load shared results
+        if "shared" in steps:
+            for metric in metrics_with_ref_files:
+                self.shared_results[metric] = pd.read_csv(self._shared_res_file(metric), index_col=0)
+                df_bool.loc[f"{metric}_shared"] = True
+
+        # Load pre results
+        if "pre" in steps:
+            for dir in df["dir"].unique():
+                for metric in df.loc[(df["dir"] == dir) & (df["step"] == "pre"), "metric"].unique():
+                    df_tmp = df.loc[(df["dir"] == dir) & (df["metric"] == metric) & (df["step"] == "pre")]
+                    for set_id in df_tmp["set_id"]:
+                        self.pre_results[metric][set_id] = pd.read_csv(
+                            self._res_file(metric, set_id, pre=True, dir=dir), index_col=0
+                        )
+                        df_bool.loc[f"{metric}_pre", set_id] = True
+
+        # Load main results
+        if "main" in steps:
+            for dir in df["dir"].unique():
+                for metric in df.loc[(df["dir"] == dir) & (df["step"] == "main"), "metric"].unique():
+                    df_tmp = df.loc[(df["dir"] == dir) & (df["metric"] == metric) & (df["step"] == "main")]
+                    for set_id in df_tmp["set_id"]:
+                        self.results[metric][set_id] = pd.read_csv(
+                            self._res_file(metric, set_id, pre=False, dir=dir), index_col=0
+                        )
+                        df_bool.loc[f"{metric}_main", set_id] = True
+
+        # Load summary results
+        if "summary" in steps:
+            summaries = []
+            for dir in df["dir"].unique():
+                summary_tmp = pd.read_csv(os.path.join(dir, f"{self.ref_name}_summary.csv"), index_col=0)
+                summary_tmp = summary_tmp.loc[df.loc[(df["dir"] == dir) & (df["step"] == "summary"), "set_id"].unique()]
+                summary_tmp = summary_tmp[summary_columns[0]]
+                summaries.append(summary_tmp)
+            if len(summaries) > 1:
+                self.summary_results = pd.concat(summaries)
+            else:
+                self.summary_results = summaries[0]
+            for _, row in df.loc[df["step"] == "summary"].iterrows():
+                df_bool.loc[f"{row['metric']}_summary", row["set_id"]] = True
+
+        return df_bool
+
+    ############################
+    ##    EVALUATION PLOTS    ##
+    ############################
 
     def plot_summary(
         self,
         set_ids: Union[str, List[str]] = "all",
         **plot_kwargs,
     ) -> None:
-        """Plot heatmap of summary metrics.
+        """Plot heatmap of summary metrics
+
+        See our basic evaluation tutorial for descriptions of each metric.
 
         Args:
             set_ids:
-                IDs of the current probesets or "all". Check out self.summary_results for available sets.
+                IDs of the current probesets or "all". Check out :attr:`.ProbesetEvaluator.summary_results` for
+                available sets.
             **plot_kwargs:
                 Keyword arguments for :func:`.summary_table`.
+
+        Example:
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["PCA", "DE", "HVG", "random"], n=30, verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(adata, verbosity=0, results_dir=None)
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+
+                evaluator.plot_summary(set_ids=["PCA", "DE", "HVG", "random (seed=0)"])
+
+            .. image:: ../../docs/plot_examples/Evaluator_plot_summary.png
+
+
         """
         if self.summary_results is _empty:
             if self.dir:
@@ -688,30 +956,49 @@ class ProbesetEvaluator:
     def plot_cluster_similarity(
         self, set_ids: List[str] = None, selections_info: Optional[pd.DataFrame] = None, **kwargs
     ) -> None:
-        """Wrapper for plotting NMI of clusterings over number of clusters.
+        """Plot cluster similarity as NMI over number of clusters
 
         Args:
             set_ids:
-                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+                List of probeset IDs. Check out :attr:`.ProbesetEvaluator.summary_results` for available sets.
             selections_info:
-                Information on each selection for plotting. The dataframe includes:
+                Information on selections for plotting. The dataframe includes:
 
                     - selection ids or alternative names as index
-                    - mandatory (only if ``kwargs[nmi_dfs]=None``) column `path`: path to results csv of each selection
-                      (contains number of clusters (as index) and NMI values in column `nmi`.)
-                    - optional columns (Note that the legend order will follow the row order in :attr:`selections_info.):
+                    - column: `path` (mandatory if ``data=None``): path to results csv of each selection (which contains
+                      number of clusters (as index) and one column containing the data to plot)
+                    - optional columns:
 
                         - `color`: matplotlib color
                         - `linewidth`: matplotlib linewidth
                         - `linestyle`: matplotlib linestyle
-                        - `<groupby>`: some annotation that can be used to group the legend.
+                        - `<groupby>`: some annotation that can be used to group the legend
 
+                Note that the legend order will follow the row order in :attr:`selections_info`.
             **kwargs:
-                Further arguments for :func:`.cluster_similarity`.
+                Any keyword argument from :func:`.cluster_similarity`.
 
-        Returns:
-            Figure can be showed (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+
+            (Takes a few minutes to calculate)
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["PCA", "DE", "HVG", "random"], n=30, seeds=[0, 777], verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(
+                    adata, verbosity=0, results_dir=None, scheme="custom", metrics=["cluster_similarity"])
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+
+                evaluator.plot_cluster_similarity()
+
+            .. image:: ../../docs/plot_examples/Evaluator_plot_cluster_similarity.png
+
 
         """
 
@@ -724,39 +1011,56 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.clustering_lineplot(selections_info,
-                               data=self.results["cluster_similarity"],
-                               xlabel="number of clusters",
-                               ylabel="NMI",
-                               **kwargs)
+        pl.cluster_similarity(
+            selections_info,
+            data=self.results["cluster_similarity"],
+            **kwargs,
+        )
 
     def plot_knn_overlap(
         self, set_ids: List[str] = None, selections_info: Optional[pd.DataFrame] = None, **kwargs
     ) -> None:
-        """Wrapper for plotting the mean overlap of knn clusterings over number of clusters.
+        """Plot mean knn overlap over k
 
         Args:
             set_ids:
-                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+                List of probeset IDs. Check out :attr:`.ProbesetEvaluator.summary_results` for available sets.
             selections_info:
-                Information on each selection for plotting. The dataframe includes:
+                Information on selections for plotting. The dataframe includes:
 
                     - selection ids or alternative names as index
-                    - mandatory (only if ``kwargs[knn_dfs]=None``) column `path`: path to results csv of each selection
-                      (contains number of clusters (as index) and KNN values in column `knn`.)
-                    - optional columns (Note that the legend order will follow the row order in :attr:`selections_info.):
+                    - column: `path` (mandatory if ``data=None``): path to results csv of each selection (which contains
+                      number of clusters (as index) and one column containing the data to plot)
+                    - optional columns:
 
                         - `color`: matplotlib color
                         - `linewidth`: matplotlib linewidth
                         - `linestyle`: matplotlib linestyle
                         - `<groupby>`: some annotation that can be used to group the legend
 
+                Note that the legend order will follow the row order in :attr:`selections_info`.
             **kwargs:
-                Further arguments for :func:`.knn_overlap`.
+                Any keyword argument from :func:`.knn_overlap`.
 
-        Returns:
-            Figure can be shown (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["PCA", "DE", "HVG", "random"], n=30, seeds=[0, 777], verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(
+                    adata, verbosity=0, results_dir=None, scheme="custom", metrics=["knn_overlap"])
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+
+                evaluator.plot_knn_overlap()
+
+            .. image:: ../../docs/plot_examples/Evaluator_plot_knn_overlap.png
+
 
         """
 
@@ -769,24 +1073,38 @@ class ProbesetEvaluator:
         if set_ids:
             selections_info = selections_info.loc[set_ids].copy()
 
-        pl.clustering_lineplot(selections_info,
-                               data=self.results["knn_overlap"],
-                               xlabel="number of neighbors",
-                               ylabel="mean knn overlap",
-                               **kwargs)
+        pl.knn_overlap(
+            selections_info,
+            data=self.results["knn_overlap"],
+            **kwargs,
+        )
 
     def plot_confusion_matrix(self, set_ids: List[str] = None, **kwargs) -> None:
-        """Wrapper for plotting a heatmap of cell type classification confusion matrices.
+        """Plot heatmaps of cell type classification confusion matrices
 
         Args:
             set_ids:
-                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+                List of probeset IDs. Check out :attr:`.ProbesetEvaluator.summary_results` for available sets.
             **kwargs:
-                Further arguments for :func:`.confusion_matrix`.
+                Any keyword argument from :func:`.confusion_matrix`.
 
-        Returns:
-            Figure can be shown (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(adata,methods=["DE","HVG","random"],n=30,verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(adata, verbosity=0, results_dir=None, scheme="custom", metrics=["forest_clfs"])
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+
+                evaluator.plot_confusion_matrix()
+
+            .. image:: ../../docs/plot_examples/Evaluator_plot_confusion_matrix.png
+
 
         """
 
@@ -801,22 +1119,36 @@ class ProbesetEvaluator:
 
         pl.confusion_matrix(set_ids, self.results["forest_clfs"], **kwargs)
 
-    def plot_correlation_matrix(
+    def plot_coexpression(
         self,
         set_ids: List[str] = None,
         **kwargs,
     ) -> None:
-        """Wrapper for plotting a heatmap of gene correlation matrices.
+        """Plot heatmaps of gene correlation matrices
 
         Args:
             set_ids:
-                List of probeset IDs. Check out :attr:`.summary_results` for available sets.
+                List of probeset IDs. Check out :attr:`.ProbesetEvaluator.summary_results` for available sets.
             **kwargs:
-                Further arguments for :func:`.correlation_matrix`.
+                Any keyword argument from :func:`.correlation_matrix`.
 
-        Returns:
-            Figure can be shown (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(adata, methods=["PCA","DE", "HVG", "random"], n=30, verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(adata, verbosity=0, results_dir=None, scheme="custom", metrics=["gene_corr"])
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+
+                evaluator.plot_coexpression(n_cols=4)
+
+            .. image:: ../../docs/plot_examples/Evaluator_plot_coexpression.png
+
 
         """
 
@@ -831,15 +1163,48 @@ class ProbesetEvaluator:
 
         pl.correlation_matrix(set_ids, self.results["gene_corr"], **kwargs)
 
-    def plot_marker_correlation(self):
-        pass
+    def plot_marker_corr(self, **kwargs):
+        """Plot maximal correlations with marker genes
 
-    # plot_evaluations for marker_corr:
-    #   heatmap like gene_corr
-    # TODO
+        Args:
+            **kwargs:
+                Any keyword argument from :func:`.marker_correlation`.
+
+
+        Example:
+
+            .. code-block:: python
+
+                import spapros as sp
+                marker_list ={
+                    'B cells': ['EAF2', 'MS4A1', 'HVCN1', 'TCL1A', 'LINC00926', 'CD79A', 'IGLL5'],
+                    'NK cells': ['XCL2', 'CLIC3', 'AKR1C3'],
+                    'CD8 T cells': ['GZMK'],
+                    'Dendritic cells': ['FCER1A', 'CLEC10A'],
+                    'Megakaryocytes': ['RGS18','C2orf88','SDPR','TMEM40','GP9','MFSD1','PF4','PPBP'],
+                }
+                adata = sp.ut.get_processed_pbmc_data()
+                selections = sp.se.select_reference_probesets(
+                    adata, methods=["PCA", "DE", "HVG", "random"], n=30, seeds=range(7), verbosity=0)
+                evaluator = sp.ev.ProbesetEvaluator(
+                    adata, verbosity=0, results_dir=None, scheme="custom", metrics=["marker_corr"], marker_list=marker_list)
+                for set_id, df in selections.items():
+                    gene_set = df[df["selection"]].index.to_list()
+                    evaluator.evaluate_probeset(gene_set, set_id=set_id)
+
+                evaluator.plot_marker_corr()
+
+            .. image:: ../../docs/plot_examples/Evaluator_plot_marker_corr.png
+
+
+        """
+
+        if "marker_corr" not in self.results:
+            raise ValueError("Can't plot marker correlations since no results are found.")
+
+        pl.marker_correlation(marker_corr=self.results["marker_corr"], **kwargs)
 
     # TODO remove this function (instead, we now have individual plot_'metric'() functions)
-
     def plot_evaluations(
         self,
         set_ids: Union[str, List[str]] = "all",
@@ -856,9 +1221,10 @@ class ProbesetEvaluator:
 
         Args:
             set_ids:
-                ID of the current probeset or "all". Check out :attr:`.summary_results` for available sets.
+                ID of the current probeset or "all". Check out :attr:`.ProbesetEvaluator.summary_results` for available
+                sets.
             metrics:
-                List of calculated metrics or "all". Check out :attr:`.metrics` for available metrics.
+                List of calculated metrics or "all". Check out :attr:`.ProbesetEvaluator.metrics` for available metrics.
             save:
                 If `True` or a `str`, save the figure.
             show:
@@ -1397,7 +1763,7 @@ def single_forest_classifications(
         ct_spec_ref:
             Celltype specific references (e.g.:
             ``{'AT1':['AT1','AT2','Club'],'Pericytes':['Pericytes','Smooth muscle']}``). This argument was introduced to
-             train secondary trees.
+            train secondary trees.
         save:
             If not False load results if the given file exists, otherwise save results after computation.
         n_trees:

@@ -34,6 +34,7 @@ from spapros.util.util import filter_marker_dict_by_shared_genes
 class ProbesetSelector:  # (object)
     """General class for probeset selection.
 
+<<<<<<< HEAD
     Attributes:
         adata:
             Data with log normalised counts in ``adata.X``.
@@ -111,20 +112,48 @@ class ProbesetSelector:  # (object)
         progress:
             Rich progress bar.
 
+=======
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
     Notes:
-        The selector creates a probeset which captures the data variability and distinguishes the celltypes.
+        The selector creates a probeset which identifies the celltypes of interest and captures transcriptomic variation
+        beyond cell type labels.
 
-        The Spapros selection pipeline combines basic feature selection builing blocks while taking into account
-        prior knowledge.
+        The Spapros selection pipeline combines basic feature selection builing blocks while optionally taking into
+        account prior knowledge.
 
-        The main steps of the selection pipeline are:
+        **The main steps of the selection pipeline are:**
 
-        1) PCA based selection of variability recovering genes.
+        1) PCA based selection of variation recovering genes.
         2) Selection of DE genes.
-        3) Forest tree training on the PCA based selection.
-        4) Forest tree training on the DE genes.
-        5) Enhancement of the PCA based selection by adding beneficial DE genes.
-        6) Add marker genes and preselected genes (if provided).
+        3) Train decision trees on the DE genes (including an iterative optimization with additional DE tests).
+        4) Train decision trees on the PCA genes (and optionally on pre-selected and prioritized genes).
+        5) Enhancement of the PCA trees by adding beneficial DE genes.
+        6) Rank genes, eventually add missing marker genes and compile probe set.
+
+        The result of the selection is given in :attr:`.ProbesetSelector.probeset`.
+
+        **Genes are ranked as follows (sorry it's a bit complicated):**
+
+        * First the following groups are built
+            1. preselected genes (optional, see parameter `preselected_genes`)
+            2. genes that occur in the best decision trees of each cell type
+            3. genes that are needed to achieve the minimal number of markers per cell type that occurs in
+               :attr:`.ProbesetSelector.marker_list` but not in :attr:`.ProbesetSelector.adata_celltypes` (optional, see
+               parameter `n_list_markers`). This group is separated from 3. because genes of 2. take care of
+               classifying cell types in :attr:`.ProbesetSelector.adata_celltypes`.
+            4. genes that are needed to achieve the minimal number of markers per cell type in
+               :attr:`.ProbesetSelector.adata_celltypes`.  (optional, see parameter `n_min_markers`)
+            5. all other genes
+        * Afterwards within each "rank" group genes are further ranked by
+            1. the **marker_rank**: first the best markers of celltypes, then 2nd best markers of celltypes, ..., then
+               `n_min_markers` th best marker of celltypes, then genes that are not identified as required markers.
+            2. the **tree_rank**: for each cell type the genes that occur in cell type classification trees with 2nd
+               best performance, then 3rd best performance, and so on. Genes that don't occur in trees have the worst
+               tree_rank.
+            3. the **importance_score** from the best cell type classification tree of each gene. Genes that don't occur
+               in any tree score worst.
+            4. the **pca_score** which scores how much variation of the dataset each gene captures.
+
 
     Args:
         adata:
@@ -167,25 +196,24 @@ class ProbesetSelector:  # (object)
 
                 {
                 "celltype_1": ["S100A8", "S100A9", "LYZ", "BLVRB"],
-                "celltype_6": ["BIRC3", "TMEM116", "CD3D"],
-                "celltype_7": ["CD74", "CD79B", "MS4A1"],
-                "celltype_2": ["C5AR1"],
-                "celltype_5": ["RNASE6"],
-                "celltype_4": ["PPBP", "SPARC", "CDKN2D"],
-                "celltype_8": ["NCR3"],
-                "celltype_9": ["NAPA-AS1"],
+                "celltype_2": ["BIRC3", "TMEM116"],
+                "celltype_4": ["CD74", "CD79B", "MS4A1"],
+                "celltype_3": ["C5AR1"],
                 }
 
             Or the path to a csv-file containing the one column of markers for each celltype. The column names need to
             be the celltype identifiers used in ``adata.obs[celltype_key]``.
+
         n_list_markers:
             Minimal number of markers per celltype that are at least selected. Selected means either selecting genes
             from the marker list or having correlated genes in the already selected panel. (Set the correlation
-            threshold with `marker_selection_hparams['penalty_threshold'])`.
+            threshold with `marker_selection_hparams['penalty_threshold'])`. The correlation based check only applies to
+            cell types that also occur in `adata.obs[celltype_key]` while for cell types that only occur in the
+            `marker_list` the markers are just added.
             If you want to select a different number of markers for celltypes in adata and celltypes only in the marker
             list, set e.g.: ``n_list_markers = {'adata_celltypes':2,'list_celltypes':3}``.
         marker_corr_th:
-            Minimal correlation to consider a gene as captures.
+            Minimal correlation to consider a gene as captured.
         pca_penalties:
             List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores for
             PCA based gene selection.
@@ -209,7 +237,7 @@ class ProbesetSelector:  # (object)
         add_forest_genes_hparams:
             Dictionary with hyperparameters for adding marker genes to decision trees.
         marker_selection_hparams:
-            Dictionary with hyperparameters (so far only the threshold) for the penalty filtering of marker genes if a
+            Dictionary with hyperparameters. So far only the threshold for the penalty filtering of marker genes if a
             gene's penalty < threshold.
         verbosity:
             Verbosity level.
@@ -223,7 +251,151 @@ class ProbesetSelector:  # (object)
                - if only partial results were generated, make sure that the initialization arguments are the same as
                  before!
         n_jobs:
+<<<<<<< HEAD
             Number of cpus for multiprocessing computations. Set to -1 to use all available cpus.
+=======
+            Number of cpus for multi processing computations. Set to -1 to use all available cpus.
+
+
+    Attributes:
+        adata:
+            Data with log normalised counts in ``adata.X``.
+        ct_key:
+            Key in ``adata.obs`` with celltype annotations.
+        g_key:
+            Key in ``adata.var`` for preselected genes (typically `'highly_variable_genes'`).
+        n:
+            Number of finally selected genes.
+        genes:
+            Pre selected genes (these will also have the highest ranking in the final list).
+        selection:
+            Dictionary with the final and several other gene set selections.
+        n_pca_genes:
+            The number of preselected pca genes. If `None` or `<1`, this step is skipped.
+        min_mean_difference:
+            Minimal difference of mean expression between at least one celltype and the background.
+        n_min_markers:
+            The minimal number of identified and added markers for cell types of `adata.obs[ct_key]`.
+        celltypes:
+            Cell types for which trees are trained.
+        adata_celltypes:
+            List of all celltypes occuring in ``adata.obs[ct_key]``.
+        obs:
+            Keys of ``adata.obs`` on which most of the selections are run.
+        marker_list:
+            Dictionary of the form ``{'celltype': list of markers of celltype}``.
+        n_list_markers:
+            Minimal number of markers from the `marker_list` that are at least selected per cell type. Note that for
+            those cell types in the `marker_list` that also occur in `adata.obs[ct_key]` genes that are correlated with
+            the markers might be selected (see :attr:`marker_corr_th`).
+        marker_corr_th:
+            Minimal correlation to consider a gene as captured.
+        pca_penalties:
+            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores
+            for PCA based gene selection.
+        DE_penalties:
+            List of keys for columns in ``adata.var`` containing penalty factors that are multiplied with the scores
+            for DE based gene selection.
+        m_penalties_adata_celltypes:
+            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a
+            gene's penalty < threshold for celltypes in adata.
+        m_penalties_list_celltypes:
+            List of keys for columns in ``adata.var`` containing penalty factors to filter out marker genes if a
+            gene's penalty < threshold for celltypes not in adata.
+        pca_selection_hparams:
+            Dictionary with hyperparameters for the PCA based gene selection.
+        DE_selection_hparams:
+            Dictionary with hyperparameters for the DE based gene selection.
+        forest_hparams:
+            Dictionary with hyperparameters for the forest based gene selection.
+        forest_DE_baseline_hparams:
+            Dictionary with hyperparameters for adding DE genes to decision trees.
+        add_forest_genes_hparams:
+            Dictionary with hyperparameters for adding marker genes to decision trees.
+        m_selection_hparams:
+            Dictionary with hyperparameters. So far only the threshold for the penalty filtering of marker genes if a
+            gene's penalty < threshold.
+        verbosity:
+            Verbosity level.
+        seed:
+            Random number seed.
+        save_dir:
+            Directory path where all results are saved and loaded from if results already exist.
+        n_jobs:
+            Number of cpus for multi processing computations. Set to `-1` to use all available cpus.
+        forest_results:
+            Forest results.
+        forest_clfs
+            Forest classifier.
+        min_test_n:
+            Minimal number of samples in each celltype's test set
+        loaded_attributes:
+            List of which results were loaded from disc.
+        disable_pbars.
+            Disable progress bars.
+        probeset:
+            The final probeset list. Available only after calling :func:`~ProbesetSelector.select_probeset`. The table
+            contains the following columns:
+                * **index**
+                    Gene symbol.
+                * **gene_nr**
+                    Integer assigned to each gene.
+                * **selection**
+                    Wether a gene was selected.
+                * **rank**
+                    Gene ranking as describes in Notes above.
+                * **marker_rank**
+                    Rank of the required markers per cell type. The best marker per cell type has marker_rank 1, the
+                    second best 2, and so on. Required markers are ranked till :attr:`~ProbesetSelector.n_min_markers`
+                    or :attr:`~ProbesetSelector.n_list_markers` depending on the cell type.
+                * **tree_rank**
+                    Ranking of the best tree the gene occured in. Per cell type multiple decision trees are trained and
+                    the best one is selected. To extend the ranking of genes in the probeset list, the 2nd, 3rd, ...
+                    best performing trees are considered.
+                * **importance_score**
+                    Highest importance score of a gene in the highest ranked trees that the gene occured in. (see TODO:
+                    reference tree training fct and there the description of the output)
+                * **pca_score**
+                    Score from PCA-based selection (see TODO: document pca based selection and reference procedure
+                    here). Genes with high scores capture high amounts of general transcriptomic variation.
+                * **pre_selected**
+                    Whether a gene was in the list of pre-selected genes.
+                * **prior_selected**
+                    Whether a gene was in the list of prioritized genes.
+                * **pca_selected**
+                    Whether a gene was in the list of `n_pca_genes` of PCA selected genes.
+                * **celltypes_DE_1vsall**
+                    Cell type in which a given gene is up-regulated (compared to all other cell types as background,
+                    identified via differential expression tests during the selection).
+                * **celltypes_DE_specific**
+                    Like **celltypes_DE_1vsall** but for DE tests that use a subset of the background (typically genes
+                    that distinguish similar cell types).
+                * **celltypes_DE**
+                    **celltypes_DE_1vsall** and **celltypes_DE_specific** combined.
+                * **celltypes_marker**
+                    **celltypes_DE_1vsall** combined with **celltypes_DE_specific** and the cell type of
+                    :attr:`~ProbesetSelector.marker_list` if the gene was listed as a marker there.
+                * **list_only_ct_marker**
+                    Whether a gene is listed as a marker in :attr:`~ProbesetSelector.marker_list`.
+                * **required_marker**
+                    Whether a gene was required to reach the minimal number of markers per cell type
+                    (:attr:`~ProbesetSelector.n_min_markers`, :attr:`~ProbesetSelector.n_list_markers`).
+                * **required_list_marker**
+                    Whether a gene was required to reach the minimal number of markers for cell types that only occur in
+                    :attr:`~ProbesetSelector.marker_list` but not in :attr:`~ProbesetSelector.adata_celltypes`.
+        genes_of_primary_trees:
+            The genes of the best tree of each cell type. Available only after calling
+            :func:`~ProbesetSelector.select_probeset`. The table contains the following columns:
+                * **gene**
+                    Gene symbol.
+                * **celltype**
+                    Cell type in which the tree occurs.
+                * **importance**
+                    Importance score of the gene for the given cell type.
+                * **nr_of_celltypes**
+                    Number of primary trees i.e. cell types in which the gene occurs.
+
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
     """
 
@@ -355,6 +527,14 @@ class ProbesetSelector:  # (object)
 
         self.forest_clfs: Dict[str, Union[dict, list, None]] = {"DE_baseline_forest": None, "forest": None}
 
+        if not (self.n_pca_genes and (self.n_pca_genes > 0)) and isinstance(self.n, int):
+            print(
+                f"Note: No PCA selection will be performed since n_pca_genes = {self.n_pca_genes}. The selected genes "
+                + f"will only be based on the DE forests. In that case it can happen that fewer than n = {self.n} "
+                + f"genes are selected. To get n = {self.n} exclude the selected genes of the first run from adata, "
+                + "rerun the method, and combine the results of the two runs.\n"
+            )
+
         self.min_test_n = 20
 
         cts_below_min_test_size, counts_below_min_test_size = ev.get_celltypes_with_too_small_test_sets(
@@ -362,12 +542,16 @@ class ProbesetSelector:  # (object)
         )
         if cts_below_min_test_size:
             print(
-                "The following celltypes' test set sizes for forest training are below min_test_n "
+                "Note: The following celltypes' test set sizes for forest training are below min_test_n "
                 + f"(={self.min_test_n}):"
             )
             max_length = max([len(ct) for ct in cts_below_min_test_size])  # TODO: bug fix: type(ct) != str doesnt work.
             for i, ct in enumerate(cts_below_min_test_size):
                 print(f"\t {ct:<{max_length}} : {counts_below_min_test_size[i]}")
+            print(
+                "The genes selected for those cell types potentially don't generalize well. Find the genes for each of "
+                + "those cell types in self.genes_of_primary_trees after running self.select_probeset()."
+            )
 
         self.loaded_attributes: list = []
         if self.save_dir:
@@ -417,21 +601,43 @@ class ProbesetSelector:  # (object)
         """
         assert isinstance(self.progress, RichCast)
         with self.progress:
+
             if self.verbosity > 0:
                 selection_task = self.progress.add_task(
                     description="SPAPROS PROBESET SELECTION:", only_text=True, header=True, total=0
                 )
+
+            # PCA based pre selection
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._pca_selection()
+
+            # DE forests
             self._forest_DE_baseline_selection()
-            self._forest_selection()
+
+            # PCA forests (including optimization based on DE forests), or just DE forests if no PCA genes were selected
+            if self.n_pca_genes and (self.n_pca_genes > 0):
+                self._forest_selection()
+            else:
+                self._set_DE_baseline_forest_to_final_forest()
+
+            # Add markers from curated list
             if self.marker_list:
                 self._marker_selection()
+
+            # Compile probe set
             self.probeset = self._compile_probeset_list()
             self.selection["final"] = self.probeset
+<<<<<<< HEAD
+=======
+
+            # Save attribute genes_of_primary_trees
+            self.genes_of_primary_trees = self._get_genes_of_primary_trees()
+
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
             if self.verbosity > 0:
                 self.progress.advance(selection_task)
                 self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
+
             if self.save_dir:
                 self.probeset.to_csv(self.probeset_path)
             # TODO: we haven't included the checks to load the probeset if it already exists
@@ -439,8 +645,6 @@ class ProbesetSelector:  # (object)
     def _pca_selection(self) -> None:
         """Select genes based on pca loadings."""
         if self.selection["pca"] is None:
-            # if self.verbosity > 0:
-            #     print("Select pca genes...")
             self.selection["pca"] = select.select_pca_genes(
                 self.adata[:, self.genes],
                 self.n_pca_genes,
@@ -453,8 +657,7 @@ class ProbesetSelector:  # (object)
             )
             assert self.selection["pca"] is not None
             self.selection["pca"] = self.selection["pca"].sort_values("selection_ranking")
-            # if self.verbosity > 1:
-            #     print("\t ...finished.")
+
             if self.save_dir:
                 self.selection["pca"].to_csv(self.selections_paths["pca"])
         else:
@@ -463,8 +666,7 @@ class ProbesetSelector:  # (object)
 
     def _forest_DE_baseline_selection(self) -> None:
         """Select genes based on forests and differentially expressed genes."""
-        # if self.verbosity > 0:
-        #     print("Select genes based on differential expression and forests as baseline for the final forests...")
+
         if self.progress and self.verbosity > 0:
             baseline_task = self.progress.add_task("Train baseline forest based on DE genes...", total=4, level=1)
 
@@ -536,11 +738,6 @@ class ProbesetSelector:  # (object)
             and self.forest_clfs["DE_baseline_forest"]
             and isinstance(self.selection["forest_DEs"], pd.DataFrame)
         ):
-            # if self.verbosity > 1:
-            #     print(
-            #         "\t Train DE_baseline forest by iteratively selecting specific differentially expressed genes for "
-            #         "celltypes that are hard to distinguish..."
-            #     )
             save_DE_baseline_forest: Union[str, bool] = (
                 self.forest_results_paths["DE_baseline_forest"] if self.save_dir else False
             )
@@ -593,6 +790,7 @@ class ProbesetSelector:  # (object)
         # TODO
         #  - eventually put this "test set size"-test somewhere (ideally at __init__)
 
+<<<<<<< HEAD
         # Train final forests by adding genes from the DE_baseline forest for celltypes with low performance
         if self.progress and self.verbosity > 0:
             final_forest_task = self.progress.add_task("Train final forests...", total=3, level=1)
@@ -668,17 +866,103 @@ class ProbesetSelector:  # (object)
                     )
                     self.progress.add_task("Final forest was alread trained...", only_text=True, level=2)
                     self.progress.advance(final_forest_task)
+=======
+        if self.progress and self.verbosity > 0:
+            final_forest_task = self.progress.add_task("Train final forests...", total=3, level=1)
 
-            if self.progress and self.verbosity > 0:
+        if not self.forest_results["pca_prior_forest"]:
+            pca_prior_forest_genes = (
+                self.selection["pre"]
+                + self.selection["prior"]
+                + self.selection["pca"].loc[self.selection["pca"]["selection"]].index.tolist()
+            )
+            pca_prior_forest_genes = [g for g in np.unique(pca_prior_forest_genes).tolist() if g in self.genes]
+            save_pca_prior_forest: Union[str, bool] = (
+                self.forest_results_paths["pca_prior_forest"] if self.save_dir else False
+            )
+            self.forest_results["pca_prior_forest"] = ev.forest_classifications(
+                self.adata[:, self.genes],
+                pca_prior_forest_genes,
+                celltypes=self.celltypes,
+                ref_celltypes="all",
+                ct_key=self.ct_key,
+                save=save_pca_prior_forest,
+                seed=self.seed,  # TODO!!! same seeds for all forests!
+                verbosity=self.verbosity,
+                progress=self.progress,
+                level=2,
+                task="Train forest on pre/prior/pca selected genes...",
+                **self.forest_hparams,
+            )
+            # if self.verbosity > 2:
+            #     print("\t\t ...finished.")
+        else:
+            if self.progress and 2 * self.verbosity >= 2:
+                self.progress.add_task(
+                    "Forest on pre/prior/pca selected genes already trained...", only_text=True, level=2
+                )
+
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(final_forest_task)
+        # if self.verbosity > 1:
+        #     print("\t Iteratively add genes from DE_baseline_forest...")
+        if (not self.forest_results["forest"]) or (not self.forest_clfs["forest"]):
+            save_forest: Union[str, bool] = self.forest_results_paths["forest"] if self.save_dir else False
+            assert isinstance(self.forest_results["pca_prior_forest"], list)
+            assert isinstance(self.forest_results["DE_baseline_forest"], list)
+            forest_results = select.add_tree_genes_from_reference_trees(
+                self.adata[:, self.genes],
+                self.forest_results["pca_prior_forest"],
+                self.forest_results["DE_baseline_forest"],
+                ct_key=self.ct_key,
+                ref_celltypes="all",
+                **self.add_forest_genes_hparams,
+                tree_clf_kwargs=self.forest_hparams,
+                verbosity=self.verbosity,
+                save=save_forest,
+                return_clfs=True,
+                final_forest_task=final_forest_task if (self.progress and self.verbosity > 0) else None,
+                progress=self.progress,
+                level=2,
+                task="Iteratively add genes from DE_baseline_forest...",
+            )
+            assert isinstance(forest_results[0], list)
+            # assert isinstance(forest_results[1], dict)
+            assert len(forest_results) == 2
+            self.forest_results["forest"] = forest_results[0]
+            self.forest_clfs["forest"] = forest_results[1]
+            if self.save_dir:
+                with open(self.forest_clfs_paths["forest"], "wb") as f:
+                    pickle.dump(self.forest_clfs["forest"], f)
+            # if self.verbosity > 2:
+            #     print("\t\t ...finished.")
+        else:
+            if self.progress and 2 * self.verbosity >= 2:
+                self.progress.add_task("Genes from DE_baseline_forest were already added...", only_text=True, level=2)
+                self.progress.add_task("Final forest was alread trained...", only_text=True, level=2)
                 self.progress.advance(final_forest_task)
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
-            if not isinstance(self.selection["forest"], pd.DataFrame):
-                assert isinstance(self.forest_results["forest"], list)
-                assert len(self.forest_results["forest"]) == 3
-                assert isinstance(self.forest_results["forest"][2], dict)
-                self.selection["forest"] = ev.forest_rank_table(self.forest_results["forest"][2])
-                if self.save_dir:
-                    self.selection["forest"].to_csv(self.selections_paths["forest"])
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(final_forest_task)
+
+        if not isinstance(self.selection["forest"], pd.DataFrame):
+            assert isinstance(self.forest_results["forest"], list)
+            assert len(self.forest_results["forest"]) == 3
+            assert isinstance(self.forest_results["forest"][2], dict)
+            self.selection["forest"] = ev.forest_rank_table(self.forest_results["forest"][2])
+            if self.save_dir:
+                self.selection["forest"].to_csv(self.selections_paths["forest"])
+
+    def _set_DE_baseline_forest_to_final_forest(self):
+        """Set the results of the DE forests as the final forest results.
+
+        This method is applied when no PCA genes were selected and therefore no forests were trained on PCA genes.
+        """
+
+        self.forest_results["forest"] = self.forest_results["DE_baseline_forest"]
+        self.forest_clfs["forest"] = self.forest_clfs["DE_baseline_forest"]
+        self.selection["forest"] = self.selection["DE_baseline_forest"]
 
     def _save_preselected_and_prior_genes(self):
         """Save pre selected and prior genes to files."""
@@ -721,8 +1005,6 @@ class ProbesetSelector:  # (object)
         """
         # Filter genes that occur multiple times # TODO: if a genes occurs multiple times for the same celltype we
         # should actually keep it!...
-        if self.verbosity > 0:
-            print("Filter out genes in marker dict that occur multiple times.")
         assert isinstance(self.marker_list, dict)
         self.marker_list = filter_marker_dict_by_shared_genes(self.marker_list, verbose=(self.verbosity > 1))
 
@@ -884,8 +1166,9 @@ class ProbesetSelector:  # (object)
         # Indicator if gene was in the prior selected pca set and all genes' pca scores
         probeset["pca_selected"] = False
         probeset["pca_score"] = 0
-        probeset.loc[self.selection["pca"][self.selection["pca"]["selection"]].index, "pca_selected"] = True
-        probeset.loc[self.selection["pca"].index, "pca_score"] = self.selection["pca"]["selection_score"]
+        if self.n_pca_genes and (self.n_pca_genes > 0):
+            probeset.loc[self.selection["pca"][self.selection["pca"]["selection"]].index, "pca_selected"] = True
+            probeset.loc[self.selection["pca"].index, "pca_score"] = self.selection["pca"]["selection_score"]
 
         # get celltypes of the 1-vs-all DE tests
         tmp_cts = [ct for ct in self.celltypes if ct in self.selection["DE"].columns]
@@ -1049,11 +1332,40 @@ class ProbesetSelector:  # (object)
         other_cols = [col for col in probeset.columns if col not in first_cols]
         cols = first_cols + other_cols
 
+        # Throw out genes that dont have any scoring or ranking but were still selected (this can only happen if no PCA
+        # selection was performed.)
+        no_rank_genes = probeset["rank"].isnull() & (probeset["pca_score"] == 0)
+        probeset.loc[no_rank_genes, "selection"] = False
+
         if self.progress and self.verbosity > 0 and with_markers_from_list:
             self.progress.advance(list_task)
             self.progress.advance(list_task)
 
         return probeset[cols].copy()
+
+    def _get_genes_of_primary_trees(self) -> pd.DataFrame:
+        """Get genes of the best trees of each cell type
+
+        Returns
+            pd.DataFrame
+
+        """
+
+        genes = []
+        cts = []
+        importances = []
+        for ct in self.forest_results["forest"][2].keys():
+            tmp = self.forest_results["forest"][2][ct]["0"]
+            tmp = tmp.loc[tmp > 0].sort_values(ascending=False)
+            genes += tmp.index.to_list()
+            cts += [ct for _ in range(len(tmp))]
+            importances += tmp.to_list()
+
+        df = pd.DataFrame(data={"gene": genes, "celltype": cts, "importance": importances})
+        nr_of_cts = df["gene"].value_counts().to_dict()
+        df["nr_of_celltypes"] = df["gene"].apply(lambda g: nr_of_cts[g])
+
+        return df
 
     def _prepare_mean_diff_constraint(self) -> None:
         """Compute if mean difference constraint is fullfilled."""
@@ -1270,7 +1582,7 @@ class ProbesetSelector:  # (object)
         This is an interactive plotting function to investigate if the constructed penalty kernels are well-chosen.
 
         Note:
-            The green line shows a linear interpolation of the penalty scores which is only an opproximation of the
+            The green line shows a linear interpolation of the penalty scores which is only an approximation of the
             penalty function.
 
         Args:
@@ -1390,48 +1702,94 @@ class ProbesetSelector:  # (object)
 
     def plot_coexpression(
         self,
-        selections: List[Literal["pca", "DE", "marker"]] = None,
+        selections: List[str] = ["final", "pca", "DE", "marker", "pre", "prior"],
         **kwargs,
     ) -> None:
+<<<<<<< HEAD
         """Plot gene correlations of basic selections.
+=======
+        """Plot correlation matrix of selected genes
+
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
         Args:
-            selections: Plot the coexpression of selections based on
+            selections: Plot the coexpression of
 
-                - 'pca' : pca loadings based selection of prior genes
-                - 'DE' : genes selected based on differential expressed which are used as the "forest_DE_baseline"
-                - 'marker' : genes from the marker list
+                - 'final' : all selected genes (see :attr:`.ProbesetSelector.probeset`)
+                - 'pca' : selected genes that also occured in the pca based selection
+                - 'DE' : selected genes that also occured in the 1-vs-all DE based selection
+                - 'marker' : selected genes from the marker list
+                - 'pre' : selected genes that were given as pre selected genes
+                - 'prior' : selected genes that were given as prioritized genes
+
             kwargs:
-                Further arguments for :func:`.selection_histogram`.
+                Any keyword argument from :func:`.correlation_matrix`.
 
-        Returns:
-            Figure can be showed (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+
+            (Takes a few minutes to calculate)
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selector = sp.se.ProbesetSelector(adata, "celltype", n=30, verbosity=0)
+                selector.select_probeset()
+
+                selector.plot_coexpression()
+
+            .. image:: ../../docs/plot_examples/Selector_plot_coexpression.png
+
+
         """
+<<<<<<< HEAD
         # TODO
         #   for marker you could use max nr of markers (2?) from each celltype
         #   When plotting for some selection: Print where these genes are used:
         #     - pca -> first genes on which the forests are trained
         #     - DE -> first genes on which the baseline forests are trained
         #     - marker -> possible genes that are selected from the marker list
+=======
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
-        SELECTIONS = ["final", "pca", "DE", "marker"]
+        # Supported selections for plotting
+        SELECTIONS = ["final", "pca", "DE", "marker", "pre", "prior"]
 
         if selections is None:
             selections = SELECTIONS
+
+        # Check selections
+        for selection in selections:
+            if selection not in self.selection:
+                raise ValueError(f"{selection} selection can't be plottet because no results were found.")
+            elif selection not in SELECTIONS:
+                raise ValueError(f"{selection} not in supported selections for plotting.")
+            elif (self.selection[selection] is None) or (len(self.selection[selection]) == 0):
+                print(f"No genes were selected for selection {selection}.")
+
+        # Throw out selections for which no genes were selected
+        selections = [s for s in selections if (not (self.selection[s] is None)) and (len(self.selection[s]) > 0)]
 
         cor_matrices = {}
         assert isinstance(selections, list)
         for selection in selections:
 
+<<<<<<< HEAD
             # check selection:
             if selection not in self.selection:  # or selection not in SELECTIONS:
                 raise ValueError(f"{selection} selection can't be plottet because no results were found.")
 
             # get data of selected genes (overlap between adata and self.selection[selection] and
+=======
+            # Get data of selected genes (overlap between adata and self.selection[selection] and
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
             # self.probeset["selection"]):
             a = self.adata.copy()
-            selected_genes = self.selection[selection].index[self.selection[selection]["selection"]]
+            if isinstance(self.selection[selection], list):
+                selected_genes = self.selection[selection]
+            else:
+                selected_genes = self.selection[selection].index[self.selection[selection]["selection"]]
             selection_mask = a.var_names.isin(selected_genes)
             probeset = self.probeset.index[self.probeset["selection"]]
             probeset_mask = a.var_names.isin(probeset)
@@ -1441,7 +1799,7 @@ class ProbesetSelector:  # (object)
                 print(f"No plot is drawn for {selection} because it contains less than 2 genes. ")
                 continue
 
-            # create correlation matrix
+            # Create correlation matrix
             if issparse(a.X):
                 cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index,
                                        data=np.corrcoef(a.X.toarray(), rowvar=False))
@@ -1451,56 +1809,100 @@ class ProbesetSelector:  # (object)
             cor_mat = util.cluster_corr(cor_mat)
             cor_matrices[selection] = cor_mat
 
+<<<<<<< HEAD
         pl.correlation_matrix(
             set_ids=selections,
             cor_matrices=cor_matrices,
             **kwargs
         )
+=======
+        # Add number of genes in title
+        selections_n_genes = []
+        for selection in selections:
+            n_genes = f" ({cor_matrices[selection].shape[0]} genes)"
+            selections_n_genes.append(selection + n_genes)
+            cor_matrices[selection + n_genes] = cor_matrices[selection]
+            del cor_matrices[selection]
 
-    def plot_classification_rule_umaps(
+        pl.correlation_matrix(set_ids=selections_n_genes, cor_matrices=cor_matrices, **kwargs)
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
+
+    def plot_clf_genes(
         self,
         basis: int = "X_umap",
         celltypes: Optional[List[str]] = None,
-        till_rank: Optional[int] = 3,
+        till_rank: Optional[int] = 1,
         importance_th: Optional[float] = None,
         add_marker_genes: bool = True,
         neighbors_params: dict = {},
         umap_params: dict = {},
         **kwargs,
     ):
-        """Plot umaps of genes needed for cell type classification of each cell type.
+        """Plot umaps of selected genes needed for cell type classification of each cell type.
 
         Args:
             basis:
-                Name of the ``obsm`` basis to use.
+                Name of the ``obsm`` embedding to use.
             celltypes:
                 Subset of cell types for which to plot decision genes. If `None`, :attr:`celltypes` is used.
             till_rank:
-                 Plot decision genes only up to the given rank of the ranked probeset list.
+                Plot decision genes only up to the given tree rank of the probeset list.
             importance_th:
                 Only plot genes with a tree feature importance above the given threshold.
             add_marker_genes:
                 Whether to add subplots for marker genes from :attr:`marker_list` for each celltype.
+                TODO: what about cell types that only occur in the marker list?
             neighbors_params:
-                Parameters for :meth:`sc.pp.neighbors`.
+                Parameters for :meth:`sc.pp.neighbors`. Only applicable if ``adata.obsm[basis]`` does not exist.
+                TODO: do we rly need that parameter? Would be fine to always expect a pre calculated embedding!
             umap_params:
-                Parameters for :meth:`sc.tl.umap`.
+                Parameters for :meth:`sc.tl.umap`. Only applicable if ``adata.obsm[basis]`` does not exist.
+                TODO: do we rly need that parameter? Would be fine to always expect a pre calculated embedding!
             kwargs:
-                Further arguments for :func:`.selection_histogram`.
+                Keyword arguments of :func:`.selection_histogram`.
 
-        Returns:
-            Figure can be showed (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+
+            (Takes a few minutes to calculate)
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selector = sp.se.ProbesetSelector(adata, "celltype", n=30, verbosity=0)
+                selector.select_probeset()
+
+                selector.plot_clf_genes(n_cols=4,celltypes=["FCGR3A+ Monocytes","Megakaryocytes"])
+
+            .. image:: ../../docs/plot_examples/Selector_plot_clf_genes.png
+
+
+        TODO: this function and pl.clf_genes_umaps need to be tested on all argument combinations + can be optimized.
+
         """
-        adata = self.adata.copy()
+        adata = self.adata.copy()  # TODO: why copy?? should be avoided here... ah okay, because of umap recalc...
 
         # filter rank and importance:
         if till_rank is None:
             till_rank = max(self.selection["forest"]["rank"])
         if importance_th is None:
             importance_th = min(self.selection["forest"]["importance_score"])
+<<<<<<< HEAD
         df = self.selection["forest"][self.selection["forest"]["rank"] <= till_rank][
             self.selection["forest"]["importance_score"] > importance_th].copy()
+=======
+        df = (
+            self.selection["forest"]
+            .loc[
+                (self.selection["forest"]["rank"] <= till_rank)
+                & (self.selection["forest"]["importance_score"] > importance_th)
+            ]
+            .copy()
+        )
+        selected_genes = [g for g in df.index if g in self.probeset[self.probeset["selection"]].index]
+        df = df.loc[selected_genes]
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
         if len(df) < 1:
             raise ValueError("Filtering for rank and importance score left no genes. Set lower thresholds.")
 
@@ -1508,19 +1910,18 @@ class ProbesetSelector:  # (object)
         if celltypes is None:
             celltypes = [ct for ct in self.celltypes if ct in df.columns]
         df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)
-        if add_marker_genes:
+        if add_marker_genes and (self.selection["marker"] is not None):
             df["marker_celltypes"] = [self.selection["marker"]["celltype"][gene] for gene in df.index]
 
         # check if embedding, neighbors, pca already in adata
-        # TODO think about shortening this: always redo umap and neighbors
-        redo_umap = False
-        try:
-            # check params
-            for param, value in adata.uns[basis]["params"].items():
-                if value != umap_params[param]:
-                    redo_umap = True
-        except KeyError:
-            redo_umap = True
+        redo_umap = (adata.obsm is None) or (basis not in adata.obsm)
+        ###try:
+        ###    # check params
+        ###    for param, value in adata.uns[basis]["params"].items():
+        ###        if value != umap_params[param]:
+        ###            redo_umap = True
+        ###except KeyError:
+        ###    redo_umap = True
 
         if redo_umap:
             redo_neighbors = False
@@ -1537,26 +1938,9 @@ class ProbesetSelector:  # (object)
 
             sc.tl.umap(adata, **umap_params)
 
-        df = df.sort_values(by=["rank", "importance_score"])
+        df = df.sort_values(by=["rank", "importance_score"], ascending=[True, False])
 
-        pl.classification_rule_umaps(adata, df, **kwargs)
-
-    def plot_decision_genes(self, add_markers: bool = True, tree_levels: List[int] = [1]) -> None:
-        """Plot umaps of genes that are used for celltype classification.
-
-        Args:
-            add_markers:
-                Also plot genes originating from selection from marker list.
-            tree_levels:
-                In case that genes were added not only based on the best performing tree we can plot more genes.
-        """
-        # TODO: maybe find a better way than this variable (tree_levels) to control this
-        # TODO remove --> now plot classification_rule_umaps
-
-        # check if embedding already in adata
-        # sc.pl.embedding() (wie umap aber alternatives embedding darf schon in adata.uns sein, same basis)
-        # get kwargs
-        # check neighbors und pca
+        pl.clf_genes_umaps(adata, df, **kwargs)
 
     # def plot_tree_performances(self) -> None:
     #     """Plot histograms of tree performances of DE baseline and final forests.
@@ -1576,7 +1960,7 @@ class ProbesetSelector:  # (object)
         None,
         **kwargs
     ) -> None:
-        """Plot the intersection of different selected gene sets.
+        """Plot the overlap of origins for the selected genes
 
         Args:
            origins:
@@ -1584,18 +1968,31 @@ class ProbesetSelector:  # (object)
 
                     - "pre_selected"   : User defined pre selected genes
                     - "prior_selected" : User defined prior selected genes
-                    - "pca"            : Genes that originate the prior pca based selection
-                    - "DE"             : Genes that occur in DE test when building the reference DE trees
-                    - "DE_1vsall"      : Subset of DE from tests of single cell types vs background
-                    - "DE_specific"    : Subset of DE from tests of single cell types vs subset of background
+                    - "pca"            : Genes that originate from the prior pca based selection
+                    - "DE"             : Genes that occur in the DE test when building the reference DE trees
+                    - "DE_1vsall"      : Subset of "DE" from tests of single cell types vs background
+                    - "DE_specific"    : Subset of "DE" from tests of single cell types vs subset of background
                     - "marker_list"    : Genes that occur in the user defined marker list
 
            **kwargs:
-               Further arguments for :func:`.gene_overlap`.
+               Any keyword argument from :func:`.gene_overlap`.
 
-        Returns:
-            Figure can be shown (default `True`) and stored to path (default `None`).
-            Change this with `show` and `save` in ``kwargs``.
+
+        Example:
+
+            (Takes a few minutes to calculate)
+
+            .. code-block:: python
+
+                import spapros as sp
+                adata = sp.ut.get_processed_pbmc_data()
+                selector = sp.se.ProbesetSelector(adata, "celltype", n=30, verbosity=0, marker_list={"celltypeX": ["PF4"]})
+                selector.select_probeset()
+
+                selector.plot_gene_overlap()
+
+            .. image:: ../../docs/plot_examples/Selector_plot_gene_overlap.png
+
 
         """
         ORIGINS: List[
@@ -1611,6 +2008,7 @@ class ProbesetSelector:  # (object)
 
         if not origins:
             origins = ORIGINS
+            origins.remove("DE")
         assert isinstance(origins, list)
 
         probeset_selection = self.probeset[self.probeset["selection"]]
@@ -1871,76 +2269,90 @@ def select_reference_probesets(
     adata: sc.AnnData,
     n: int,
     genes_key: str = "highly_variable",
-    seeds: List[int] = None,
+    methods: Union[List[str], Dict[str, Dict]] = ["PCA", "DE", "HVG", "random"],
+    seeds: List[int] = [0],
     verbosity: int = 2,
     save_dir: Union[str, None] = None,
-    reference_selections: Dict[str, Dict] = None,
 ) -> Dict[str, pd.DataFrame]:
-    """Select reference probeset with basic selection methods.
+    """Select reference probesets with basic selection methods.
 
     Args:
         adata:
-            Data with log normalised counts in adata.X. The selection runs with an adata subsetted on fewer genes. It
-            might be helpful though to keep all genes. The genes can be subsetted for selection via `genes_key`.
+            Data with log normalised counts in adata.X.
         n:
-            Set the number of selected genes.
+            Number of selected genes.
         genes_key:
+<<<<<<< HEAD
             Key of ``adata.var`` for preselected genes (typically 'highly_variable_genes').
+=======
+            adata.var key for subset of preselected genes to run the selections on (typically 'highly_variable_genes').
+        methods:
+            Methods used for selections. Supported methods and default are `['PCA', 'DE', 'HVG', 'random']`. To specify
+            hyperparameters of the methods provide a dictionary, e.g.::
+
+                {
+                    'DE':{},
+                    'PCA':{'n_pcs':30},
+                    'HVG':{},
+                    'random':{},
+                }
+
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
         seeds:
-            List of random seeds. For each seed, one random gene set is selected.
+            List of random seeds. For each seed, one random gene set is selected if `'random'` in `methods`.
         verbosity:
             Verbosity level.
         save_dir:
             Directory path where all results are saved.
-        reference_selections:
-            Dictionary with the names of selection methods as keys and their parameters as dictionaries of their
-            parameters as values.
 
     Returns:
-        Dictionary with one entry for each reference method. The key is the selection method name and the value is
-        a DataFrame with the same index as the adata and at least one boolean column called 'selection' representing
+        Dictionary with one entry for each method. The key is the selection method name and the value is
+        a DataFrame with the same index as adata.var and at least one boolean column called 'selection' representing
         the selected probeset. For some methods, additional information is provided in other columns.
     """
-    seeds = [0] if seeds is None else seeds
-    default_reference_selections: Dict[str, Dict] = {
-        "HVG": {"flavor": "cell_ranger"},
-        "random": {},
-        "PCA": {
-            "variance_scaled": False,
-            "absolute": True,
-            "n_pcs": 20,
-            "penalty_keys": [],
-            "corr_penalty": None,
-        },
-        "DE": {"per_group": False},
-    }
-    reference_methods: Dict[str, Callable] = {
+
+    # Supported selection functions
+    selection_fcts: Dict[str, Callable] = {
         "PCA": select.select_pca_genes,
         "DE": select.select_DE_genes,
         "random": select.random_selection,
         "HVG": select.select_highly_variable_features,
     }
-    reference_probesets = {}
 
-    if reference_selections is None:
-        reference_selections = default_reference_selections
-    assert reference_selections is not None
+    # Reshape methods to dict with empty hyperparams if given as a list
+    if isinstance(methods, list):
+        methods = {method: {} for method in methods}
+    assert isinstance(methods, dict)
 
-    # check whether to create more than one random set
-    if "random" in reference_selections and len(seeds) > 1:
-        del reference_selections["random"]
-        for seed in seeds:
-            reference_selections[f"random (seed={seed})"] = {"seed": seed}
-            default_reference_selections[f"random (seed={seed})"] = {"seed": seed}
-            reference_methods[f"random (seed={seed})"] = reference_methods["random"]
+    # Filter unsupported methods
+    for method in methods:
+        if method not in selection_fcts:
+            print(f"Method {method} is not available. Supported methods are {[key for key in selection_fcts]}.")
+            del methods[method]
+    methods = {m: methods[m] for m in methods if m in selection_fcts}
 
+    # Create list of planed selections
+    selections: List[dict] = []
+    for method in methods:
+        if method == "random":
+            for seed in seeds:
+                seed_str = "" if len(seeds) == 0 else f" (seed={seed})"
+                selections.append(
+                    {"method": method, "name": f"{method}{seed_str}", "params": dict(methods[method], **{"seed": seed})}
+                )
+        else:
+            selections.append({"method": method, "name": method, "params": methods[method]})
+
+    # Run selections
     progress = util.NestedProgress(disable=(verbosity == 0))
+    probesets = {}
 
     with progress:
-        ref_task = progress.add_task("Reference probeset selection...", total=len(reference_selections), level=1)
+        ref_task = progress.add_task("Reference probeset selection...", total=len(selections), level=1)
 
-        for selection_name in reference_selections:
+        for s in selections:
 
+<<<<<<< HEAD
             if selection_name not in default_reference_selections:
                 print(
                     f'Selecting {selection_name} genes as reference is not available. Options are "hvg_selection", '
@@ -1967,9 +2379,17 @@ def select_reference_probesets(
                 reference_probesets[f"ref_{selection_name}"] = reference_methods[selection_name](
                     adata, n, inplace=False, **reference_selections[selection_name]
                 )
+=======
+            if verbosity > 1:
+                sel_task = progress.add_task(f"Selecting {s['name']} genes...", total=1, level=2)
 
-                if save_dir:
-                    reference_probesets[f"ref_{selection_name}"].to_csv(os.path.join(save_dir, f"ref_{selection_name}"))
+            probesets[s["name"]] = selection_fcts[s["method"]](
+                adata[:, adata.var[genes_key]], n, inplace=False, **s["params"]
+            )
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
+
+            if save_dir:
+                probesets[s["name"]].to_csv(os.path.join(save_dir, s["name"]))
 
             if verbosity > 0:
                 progress.advance(ref_task)
@@ -1980,4 +2400,4 @@ def select_reference_probesets(
         if verbosity > 0:
             progress.add_task("Finished", total=1, footer=True, only_text=True)
 
-    return reference_probesets
+    return probesets

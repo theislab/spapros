@@ -12,16 +12,16 @@ import sys
 from pathlib import Path
 
 from nbconvert.preprocessors import TagRemovePreprocessor
+from sphinx.ext.napoleon.docstring import GoogleDocstring
 
 HERE = Path(__file__).parent
-sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
+#sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.append(os.path.abspath("../.."))
 sys.path.append(os.path.abspath("../spapros"))
-sys.path.append(os.path.abspath("../spapros/evaluation"))
-sys.path.append(os.path.abspath("../spapros/selection"))
-sys.path.append(os.path.abspath("../spapros/plotting"))
-sys.path.append(os.path.abspath("../tutorials"))
+#sys.path.append(os.path.abspath("../spapros/evaluation"))
+#sys.path.append(os.path.abspath("../spapros/selection"))
+#sys.path.append(os.path.abspath("./_tutorials"))
 
 # -- General configuration ---------------------------------------------
 
@@ -33,10 +33,10 @@ sys.path.append(os.path.abspath("../tutorials"))
 
 # Add 'sphinx_automodapi.automodapi' if you want to build modules
 extensions = [
+    "sphinx.ext.napoleon",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
-    "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "sphinx_click",
     "sphinx_rtd_dark_mode",
@@ -44,7 +44,7 @@ extensions = [
     "sphinx_gallery.load_style",
     "nbsphinx_link",
     # "jupyter_sphinx.embed_widgets",
-    *[p.stem for p in (HERE / "_extensions").glob("*.py")],
+    #*[p.stem for p in (HERE / "_extensions").glob("*.py")],
 ]
 
 intersphinx_mapping = {
@@ -53,9 +53,11 @@ intersphinx_mapping = {
 
 # nbsphinx setup (for tutorial gallery)
 
-sphinx_gallery_conf = {
-    "thumbnail_size": (250, 250),
-}
+# this doesn't work since we only use extension "sphinx_gallery.load_style" and not 'sphinx_gallery.gen_gallery'
+# --> instead we add a custom css files
+#sphinx_gallery_conf = {
+#    "thumbnail_size": (250, 250),
+#}
 
 nbsphinx_timeout = -1
 
@@ -76,15 +78,8 @@ napoleon_numpy_docstring = False
 napoleon_include_init_with_doc = False
 napoleon_use_rtype = True
 napoleon_use_param = True
-napoleon_use_ivar = True
-napoleon_custom_sections = []
-    # [
-    # ("Params", "Parameters"),
-    # ("Parameters", "params_style")
-    # ("Attributes", "params_style")  # ('Returns', 'params_style')
-# ]
-
-todo_include_todos = False
+napoleon_custom_sections = [("Params", "Parameters")]  # ('Returns', 'params_style')]
+# napoleon_use_ivar = True # Displays class attributes like class parameters. Even better solved with extra code below.
 
 default_dark_mode = False
 
@@ -116,12 +111,12 @@ release = "0.1.0"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This patterns also effect to html_static_path and html_extra_path
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "plot_examples", "readme.rst"]
 
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
@@ -239,5 +234,51 @@ suppress_warnings = [
 ]
 
 
-def setup(app):
-    app.add_css_file("custom_cookietemple.css")
+#def setup(app):
+#    app.add_css_file("custom_cookietemple.css")
+
+
+# -- Extensions to the  Napoleon GoogleDocstring class ---------------------
+# setting napoleon_use_ivar = True (see above) will create the correct formatting
+# for class attributes. However the attribute section has then the title "Variables".
+# The following lines fix that issue and additionally distinguish class vs instance attrs.
+# see https://michaelgoerz.net/notes/extending-sphinx-napoleon-docstring-sections.html
+# and https://github.com/sphinx-doc/sphinx/issues/2115
+
+# first, we define new methods for any new sections and add them to the class
+
+
+def parse_keys_section(self, section):
+    return self._format_fields("Keys", self._consume_fields())
+
+
+GoogleDocstring._parse_keys_section = parse_keys_section
+
+
+def parse_attributes_section(self, section):
+    return self._format_fields("Attributes", self._consume_fields())
+
+
+GoogleDocstring._parse_attributes_section = parse_attributes_section
+
+
+def parse_class_attributes_section(self, section):
+    return self._format_fields("Class Attributes", self._consume_fields())
+
+
+GoogleDocstring._parse_class_attributes_section = parse_class_attributes_section
+
+# we now patch the parse method to guarantee that the the above methods are
+# assigned to the _section dict
+
+
+def patched_parse(self):
+    self._sections["keys"] = self._parse_keys_section
+    self._sections["class attributes"] = self._parse_class_attributes_section
+    self._unpatched_parse()
+
+
+GoogleDocstring._unpatched_parse = GoogleDocstring._parse
+GoogleDocstring._parse = patched_parse
+
+# --------------------------------------------------------------------------

@@ -1,7 +1,12 @@
 """Plotting Module."""
 import itertools
+<<<<<<< HEAD
 from typing import Dict, Mapping, Sequence
+=======
+from typing import Any
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 from typing import Callable
+from typing import Dict
 from typing import List
 from typing import Literal
 from typing import Optional
@@ -11,17 +16,21 @@ from typing import Union
 import matplotlib
 import matplotlib.colors as colors
 import matplotlib.pyplot as plt
-from matplotlib.gridspec import GridSpec
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
+from matplotlib.gridspec import GridSpec
 from scipy.interpolate import interp1d
+from spapros.plotting._masked_dotplot import MaskedDotPlot
 from upsetplot import from_indicators
 from upsetplot import UpSet
 from venndata import venn
+<<<<<<< HEAD
 from spapros.plotting._masked_dotplot import MaskedDotPlot, _VarNames
+=======
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
 
 #############################
@@ -183,14 +192,14 @@ def correlation_matrix(
     Args:
         set_ids:
             List of probe set ids.
-        cor_matrices: dict of pd.DataFrames
+        cor_matrices:
             Ordered correlation matrix of each probe set given in ``set_ids``.
         show:
             Show the figure.
         save:
             Save plot to path.
         size_factor:
-             Factor for scaling the figure size.
+            Factor for scaling the figure size.
         fontsize:
             Matplotlib fontsize.
         n_cols:
@@ -252,6 +261,7 @@ def correlation_matrix(
 
     # colorbar
     if colorbar:
+<<<<<<< HEAD
         CBAR_WIDTH = CBAR_WIDTH_INCHES / FIGURE_WIDTH
         CBAR_RIGHT = 1 - (CBAR_RIGHT_INCHES / FIGURE_WIDTH)
         CBAR_LEFT = CBAR_RIGHT - (CBAR_LEFT_INCHES / FIGURE_WIDTH)
@@ -262,6 +272,9 @@ def correlation_matrix(
             CBAR_BOTTOM,
             CBAR_WIDTH,
             CBAR_HEIGHT])
+=======
+        cbar_ax = fig.add_axes([CBAR_LEFT, TOP - SUBPLOT_HEIGHT, CBAR_WIDTH, SUBPLOT_HEIGHT])
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
         cbar = plt.colorbar(cax=cbar_ax)
         cbar.ax.tick_params(labelsize=fontsize)
 
@@ -272,7 +285,136 @@ def correlation_matrix(
     plt.close()
 
 
-def clustering_lineplot(
+def marker_correlation(
+    marker_corr: Dict[str, pd.DataFrame],
+    corr_metric: str = "per marker mean > 0.025",
+    mask_below_max: bool = False,
+    set_ids: Optional[List[str]] = None,
+    rename_set_ids: Dict[str, str] = {},
+    size_factor: float = 1.0,
+    save: Optional[str] = None,
+) -> None:
+    """Plot maximal correlations with marker genes
+
+    Args:
+        marker_corr:
+            For each set id a Dataframe containing maximal correlations for each marker gene. The index contains the marker
+            genes symbols and the Dataframe needs to have one column named ``corr_metric`` with float values.
+        corr_metric:
+            Column in dataframes of ``marker_corr`` that contains the correlation values.
+        mask_below_max:
+            Whether to mask values that are lower than the maximum correlation with a marker gene for each cell type.
+            The masking applies per set id.
+        set_ids:
+            Plot subset of set ids (must occur as keys in ``marker_corr``).
+        rename_set_ids:
+            Mapping to rename set_ids for tick labels.
+        size_factor:
+            Scale figure size.
+        save:
+            Optionally save figure to path.
+
+    """
+
+    #######################
+    # Prepare data matrix #
+    #######################
+
+    if set_ids is None:
+        set_ids = list(marker_corr.keys())
+    set_id_names = [rename_set_ids[s] if (s in rename_set_ids) else s for s in set_ids]
+
+    # Sort genes alphabetically by cell type group and within group alphabetically by gene name
+    df_set0 = marker_corr[set_ids[0]]
+    df_set0["genes"] = df_set0.index
+    df_set0 = df_set0.sort_values(["celltype", "genes"])
+    df_set0 = df_set0.loc[~df_set0["per marker mean > 0.025"].isnull()]
+    genes = df_set0["genes"].values
+
+    # Create dataframe for heatmap
+    df = pd.DataFrame(
+        index=set_id_names,
+        data={gene: [marker_corr[set_id].loc[gene, corr_metric] for set_id in set_ids] for gene in genes},
+    )
+
+    # Create dataframe for masked heatmap
+    df_masked = df.copy()
+    for ct in df_set0["celltype"].unique():
+        genes_tmp = df_set0.loc[df_set0["celltype"] == ct].index.tolist()
+        for method, max_val in df[genes_tmp].max(axis=1).items():
+            genes_reduced = [g for g in genes_tmp if (df.loc[method, g] != max_val)]
+            df_masked.loc[method, genes_reduced] = np.nan
+
+    ########
+    # Plot #
+    ########
+
+    # plot parameters
+    width_per_gene = 0.25
+    height_per_set = 0.3
+    pos_factor = 0.02
+
+    # get positions for group brackets
+    group_positions = []
+    group_labels = []
+    for ct in df_set0["celltype"].unique():
+        tmp = pd.Series((df_set0["celltype"] == ct).values)
+        group_positions.append([tmp.idxmax(), tmp.where(tmp).last_valid_index()])
+        group_labels.append(ct)
+
+    # Set nrows, ncols and figsize
+    ncols_genes = len(df.columns)
+    ncols_cbar = 2  # max(int(0.03 * ncols), 1)
+    ncols = ncols_genes + ncols_cbar
+    nrows = len(df) + 1  # 1 for group brackets
+    fig = plt.figure(figsize=((width_per_gene * ncols) * size_factor, (height_per_set * nrows) * size_factor))
+
+    # Define axes
+    ax1 = plt.subplot2grid((nrows, ncols), (1, 0), colspan=ncols_genes, rowspan=nrows - 1)
+    ax2 = plt.subplot2grid((nrows, ncols), (1, ncols_genes), colspan=1, rowspan=nrows - 1)
+
+    # Plot heatmap and colorbar
+    df_ = df_masked if mask_below_max else df
+    hm = sns.heatmap(
+        df_,
+        square=False,
+        cbar_ax=ax2,
+        ax=ax1,
+        cmap="Reds",
+        xticklabels=df.columns,
+        yticklabels=set_id_names,
+        vmin=0,
+        vmax=1,
+        annot=False,
+    )
+    hm.set_facecolor("lightgrey")
+
+    # Add group brackets
+    for g_idx, group in enumerate(group_labels):
+        n_cols_group = group_positions[g_idx][1] - group_positions[g_idx][0] + 1
+        ax = plt.subplot2grid((nrows, ncols), (0, group_positions[g_idx][0]), colspan=n_cols_group, rowspan=1)
+
+        ax.axis("off")
+        ax.set_xlim([0, n_cols_group])
+        ax.set_ylim([0, 1])
+        x1, x2 = [0.2, n_cols_group - 0.2]
+        y, h = [0, 0.6]  # [0,0.12]#[0,0.3]
+        plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=2.0 * size_factor, c="black")
+        plt.text(
+            (x1 + x2) * 0.5, (y + h) * 1.5, group, ha="center", va="bottom", color="black", rotation=90
+        )  # , fontsize=fsize)
+
+    # Set axes labels
+    # ax1.set_xlabel("marker gene")
+    ax2.set_ylabel("max. correlation\nwith marker gene")
+
+    # Show and save
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.show()
+
+
+def _lineplot(
     selections_info: pd.DataFrame,
     data: Optional[Dict[str, pd.DataFrame]] = None,
     groupby: Optional[str] = None,
@@ -280,30 +422,31 @@ def clustering_lineplot(
     title: Optional[str] = None,
     xlabel: str = None,
     ylabel: str = None,
-    figsize: Tuple[int, int] = (10, 6),
+    figsize: Tuple[float, float] = (8, 5),
     fontsize: int = 18,
     show: bool = True,
     save: Optional[str] = None,
-):
-    """Plot lineplot for some clustering statistic.
+) -> None:
+    """Plot interpolated lineplot
 
     Args:
         selections_info:
-            Information on each selection for plotting. The dataframe includes:
+            Information on selections for plotting. The dataframe includes:
 
                 - selection ids or alternative names as index
-                - mandatory (only if ``data=None``) column: `path`: path to results csv of each selection (contains
-                  number of clusters (as index) and one column containing the data to plot.)
-                - optional columns (Note that the legend order will follow the row order in :attr:`selections_info`.):
+                - column: `path` (mandatory if ``data=None``): path to results csv of each selection (which contains
+                  number of clusters (as index) and one column containing the data to plot)
+                - optional columns:
 
                     - `color`: matplotlib color
                     - `linewidth`: matplotlib linewidth
                     - `linestyle`: matplotlib linestyle
-                    - `<groupby>`: some annotation that can be used to group the legend.
+                    - `<groupby>`: some annotation that can be used to group the legend
 
+            Note that the legend order will follow the row order in :attr:`selections_info`.
         data:
-            Dictionary with a dataframe with the data to plot for each selection. The keys need to be the same as the
-            index of ``selections_info``.
+            Dictionary with dataframes containing the data to plot for each selection. The keys need to be the same as
+            the index of ``selections_info``.
         groupby:
             Column in ``selections_info`` to group the legend.
         interpolate
@@ -323,9 +466,6 @@ def clustering_lineplot(
         save:
             Save the plot to path.
 
-    Returns:
-        Figure can be shown (default `True`) and stored to path (default `None`).
-        Change this with ``show`` and ``save``.
     """
 
     df = selections_info.copy()
@@ -337,7 +477,7 @@ def clustering_lineplot(
     if data is None:
         data = {}
     else:
-        data = {data[selection_id] for selection_id in df.index}
+        data = {selection_id: data[selection_id] for selection_id in df.index}
 
     # load data from files if necessary
     if "path" in df:
@@ -355,7 +495,7 @@ def clustering_lineplot(
         if col == "color" and groupby:
             # if necessary, set grouped line colors (note that just like matplotlib, we cycle over a limited number of
             # (default 10) colors)
-            cycler = matplotlib.rcParams['axes.prop_cycle']
+            cycler = matplotlib.rcParams["axes.prop_cycle"]
             prop_cycler = itertools.cycle(cycler)
             for group in df[groupby].drop_duplicates():
                 df["color"][df[groupby] == group] = next(prop_cycler)["color"]
@@ -405,12 +545,132 @@ def clustering_lineplot(
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False, fontsize=fontsize)
     plt.tick_params(axis="both", labelsize=fontsize)
 
-    plt.tight_layout()
+    # plt.tight_layout()
     if show:
         plt.show()
     if save:
         fig.savefig(save, bbox_inches="tight", transparent=True)
     plt.close()
+
+
+def knn_overlap(
+    selections_info: pd.DataFrame,
+    data: Optional[Dict[str, pd.DataFrame]] = None,
+    groupby: Optional[str] = None,
+    interpolate: bool = True,
+    figsize: Tuple[float, float] = (8, 5),
+    fontsize: int = 18,
+    show: bool = True,
+    save: Optional[str] = None,
+):
+    """Plot mean knn overlap over k
+
+    Args:
+        selections_info:
+            Information on selections for plotting. The dataframe includes:
+
+                - selection ids or alternative names as index
+                - column: `path` (mandatory if ``data=None``): path to results csv of each selection (which contains
+                  number of clusters (as index) and one column containing the data to plot)
+                - optional columns:
+
+                    - `color`: matplotlib color
+                    - `linewidth`: matplotlib linewidth
+                    - `linestyle`: matplotlib linestyle
+                    - `<groupby>`: some annotation that can be used to group the legend
+
+            Note that the legend order will follow the row order in :attr:`selections_info`.
+        data:
+            Dictionary with dataframes containing the data to plot for each selection. The keys need to be the same as
+            the index of ``selections_info``.
+        groupby:
+            Column in ``selections_info`` to group the legend.
+        interpolate
+            Whether to interpolate the values.
+        figsize:
+            Matplotlib figsize.
+        fontsize:
+            Matplotlib fontsize.
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+
+    """
+
+    _lineplot(
+        selections_info=selections_info,
+        data=data,
+        groupby=groupby,
+        interpolate=interpolate,
+        title=None,
+        xlabel="number of neighbors",
+        ylabel="mean knn overlap",
+        figsize=figsize,
+        fontsize=fontsize,
+        show=show,
+        save=save,
+    )
+
+
+def cluster_similarity(
+    selections_info: pd.DataFrame,
+    data: Optional[Dict[str, pd.DataFrame]] = None,
+    groupby: Optional[str] = None,
+    interpolate: bool = True,
+    figsize: Tuple[float, float] = (8, 5),
+    fontsize: int = 18,
+    show: bool = True,
+    save: Optional[str] = None,
+):
+    """Plot cluster similarity as NMI over number of clusters
+
+    Args:
+        selections_info:
+            Information on selections for plotting. The dataframe includes:
+
+                - selection ids or alternative names as index
+                - column: `path` (mandatory if ``data=None``): path to results csv of each selection (which contains
+                  number of clusters (as index) and one column containing the data to plot)
+                - optional columns:
+
+                    - `color`: matplotlib color
+                    - `linewidth`: matplotlib linewidth
+                    - `linestyle`: matplotlib linestyle
+                    - `<groupby>`: some annotation that can be used to group the legend
+
+            Note that the legend order will follow the row order in :attr:`selections_info`.
+        data:
+            Dictionary with dataframes containing the data to plot for each selection. The keys need to be the same as
+            the index of ``selections_info``.
+        groupby:
+            Column in ``selections_info`` to group the legend.
+        interpolate
+            Whether to interpolate the values.
+        figsize:
+            Matplotlib figsize.
+        fontsize:
+            Matplotlib fontsize.
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+
+    """
+
+    _lineplot(
+        selections_info=selections_info,
+        data=data,
+        groupby=groupby,
+        interpolate=interpolate,
+        title=None,
+        xlabel="number of clusters",
+        ylabel="NMI",
+        figsize=figsize,
+        fontsize=fontsize,
+        show=show,
+        save=save,
+    )
 
 
 def summary_table(
@@ -427,11 +687,11 @@ def summary_table(
     show: bool = True,
     save: Union[bool, str] = False,
 ) -> None:
-    """Plot table of summary statistics.
+    """Plot table of summary statistics
 
     Args:
-        table: pd.DataFrame
-
+        table:
+            Dataframe with set ids in the index and a metric in each column.
         summaries:
             List of summary metrics that are plotted.
         color_maps:
@@ -441,21 +701,21 @@ def summary_table(
             Rename summary metrics for plot.
         rename_rows:
             Rename set ids.
-        time_format
+        time_format:
             Summary names that are formatted to days, hours, mins and secs (seconds are expected as input).
         log_scale:
             Summary names for which a log scaled colormap is applied.
-        color_limits: dict of lists of two floats
+        color_limits:
             For each summary metric optionally provide vmin and vmax for the colormap.
         nan_color:
             Color for nan values.
-        threshold_ann: dict
-            Special annotation for values above defined threshold. E.g.
+        threshold_ann:
+            Special annotations for values above/below defined thresholds. E.g.
             ``{"time":{"th":1000,"above":True,"ann":"> 1k"}}``
         show:
             Show the figure.
         save:
-            If `True` or a `str`, save the figure.
+            Save the plot to path.
     """
 
     fsize = 15
@@ -592,6 +852,7 @@ def summary_table(
 ## selection related plots ##
 #############################
 
+<<<<<<< HEAD
 # def explore_constraint(
 #     a: List[sc.AnnData],
 #     selections_tmp: List[pd.DataFrame],
@@ -693,6 +954,110 @@ def summary_table(
 #     if save:
 #         fig.savefig(save, bbox_inches="tight", transparent=True)
 #     plt.close()
+=======
+
+def explore_constraint(
+    a: List[sc.AnnData],
+    selections_tmp: List[pd.DataFrame],
+    penalty_kernels: List[Callable],
+    x_axis_key: str = "quantile_99",
+    factors: List[float] = None,
+    upper: float = 6,
+    lower: float = 2,
+    size_factor: int = 6,
+    n_rows: int = 1,
+    legend_size: int = 9,
+    show: bool = True,
+    save: Optional[str] = None,
+) -> None:
+    """Plot histogram of quantiles for selected genes for different penalty kernels.
+
+    Args:
+        a:
+            List of ``sc.AnnData`` objects containing the data for plotting.
+        selections_tmp:
+            Dataframe containing the selection.
+        factors:
+            List of titles for the subplots, i.e. the factors of each penalty kernel.
+        upper:
+            Lower border above which the kernel is 1.
+        lower:
+            Upper boder below which the kernel is 1.
+        penalty_kernels:
+            List of penalty kernels, which were used for selection.
+        x_axis_key:
+            Key of column in ``adata.var`` that is used for the x axis of the plotted histograms.
+        size_factor:
+             Factor for scaling the figure size.
+        n_rows:
+            Number of subplot rows.
+        legend_size:
+            Matplotlib legend size.
+        show:
+            Whether to display the plot.
+        save:
+            Save the plot to path.
+
+    Returns:
+
+    """
+
+    # TODO:
+    #  remove --> now selection_histogram
+    #  1) Fix explore_constraint plot. The following circular import is causing problems atm:
+    #     DONE: moved parts of this method to selector.plot_expore_constraint --> this solves the problem
+    #  2) How to generalize the plotting function, support:
+    #     - any selection method with defined hyperparameters
+    #     - any penalty kernel
+    #     - any key to be plotted (not only quantiles)
+
+    if factors is None:
+        factors = [1]
+    assert isinstance(factors, list)
+
+    cols = len(factors)
+
+    fig = plt.figure(figsize=(size_factor * cols, 0.7 * size_factor * n_rows))
+    for i, factor in enumerate(factors):
+        ax1 = plt.subplot(n_rows, cols, i + 1)
+        hist_kws = {"range": (0, np.max(a[i].var[x_axis_key]))}
+        bins = 100
+        sns.distplot(
+            a[i].var[x_axis_key],
+            kde=False,
+            label="highly_var",
+            bins=bins,
+            hist_kws=hist_kws,
+        )
+        idx = selections_tmp[i]["selection"].index[selections_tmp[i]["selection"]]
+        sns.distplot(
+            a[i][:, idx].var[x_axis_key],
+            kde=False,
+            label="selection",
+            bins=bins,
+            hist_kws=hist_kws,
+        )
+        plt.axvline(x=lower, lw=0.5, ls="--", color="black")
+        plt.axvline(x=upper, lw=0.5, ls="--", color="black")
+        ax1.set_yscale("log")
+        plt.legend(prop={"size": legend_size}, loc=[0.73, 0.74], frameon=False)
+        plt.title(f"factor = {factor}")
+
+        ax2 = ax1.twinx()
+        x_values = np.linspace(0, np.max(a[i].var[x_axis_key]), 240)
+        plt.plot(x_values, 1 * penalty_kernels[i](x_values), label="penal.", color="green")
+        plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
+        plt.ylim([0, 2])
+        for label in ax2.get_yticklabels():
+            label.set_color("green")
+
+    plt.tight_layout()
+    if show:
+        plt.show()
+    if save:
+        fig.savefig(save, bbox_inches="tight", transparent=True)
+    plt.close()
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
 
 def selection_histogram(
@@ -705,11 +1070,11 @@ def selection_histogram(
     penalty_labels: Union[str, Dict[str, Dict[str, str]]] = "penalty",
     upper_borders: Union[bool, Dict[str, Union[float, bool]]] = None,
     lower_borders: Union[bool, Dict[str, Union[float, bool]]] = None,
-    size_factor: int = 6,
-    legend_size: int = 9,
+    size_factor: float = 4.5,
+    legend_size: float = 11,
     show: bool = True,
     save: Optional[str] = None,
-):
+) -> None:
     """Plot histogram of quantiles for selected genes for different penalty kernels.
 
     Args:
@@ -803,17 +1168,24 @@ def selection_histogram(
                     if penalty_key not in x_axis_keys:
                         raise ValueError(f"No adata.var key given for {penalty_key}.")
 
-                    penalty_interp = interp1d(adata.var[x_axis_keys[penalty_key]],
-                                              adata.var[penalty_key],
-                                              kind="linear")
+                    penalty_interp = interp1d(
+                        adata.var[x_axis_keys[penalty_key]], adata.var[penalty_key], kind="linear"
+                    )
                     x_values = np.linspace(penalty_interp.x[0], penalty_interp.x[-1], 240)
 
                     x_values_dict[selection_label][penalty_key] = x_values
                     y_values_dict[selection_label][penalty_key] = penalty_interp(x_values)
 
+    if (penalty_kernels is None) and (penalty_keys is None):
+        x_values_dict = {set_id: [] for set_id in selections_dict}
+
     n_rows = len(selections_dict)
     cols = [len(x_values_dict[x]) for x in x_values_dict]
+<<<<<<< HEAD
     n_cols = max(cols + [1])
+=======
+    n_cols = max(max(cols), 1)  # if cols else 1
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
     fig = plt.figure(figsize=(size_factor * n_cols, 0.7 * size_factor * n_rows))
     gs = GridSpec(n_rows, n_cols, figure=fig)
@@ -826,7 +1198,11 @@ def selection_histogram(
             if len(x_values_dict[selection_label]) == 0 and j > 0:
                 continue
             # if less penalties given than n_cols, let space empty
+<<<<<<< HEAD
             elif len(x_values_dict[selection_label]) <= j and j > 0:
+=======
+            elif 0 < len(x_values_dict[selection_label]) <= j:
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
                 continue
             ax1 = fig.add_subplot(gs[i])
 
@@ -841,7 +1217,7 @@ def selection_histogram(
             assert isinstance(var_key, str)
 
             # get histogram data
-            selected_genes = selection_df.index[selection_df]
+            selected_genes = selection_df.loc[selection_df["selection"]].index  # selection_df.index[selection_df]
             mask = adata.var.index.isin(selected_genes)
             hist_data = adata[:, mask].var[var_key]
             hist_kws = {"range": (0, np.max(hist_data))}
@@ -875,10 +1251,12 @@ def selection_histogram(
                 hist_kws=hist_kws,
             )
             ax1.set_yscale("log")
-            plt.legend(prop={"size": legend_size}, loc=[0.73, 0.74], frameon=False)
+            if j == 0:
+                ax1.set_ylabel("number of genes")
 
             # check if penalty is there to plot
             if len(x_values_dict[selection_label]) <= j:
+                plt.legend(prop={"size": legend_size}, bbox_to_anchor=[0.99, 0.99], loc="upper right", frameon=False)
                 continue
             assert isinstance(penalty_key, str)
 
@@ -915,11 +1293,11 @@ def selection_histogram(
             if upper is None:
                 # infer lower border from penanalty values
                 idx_of_last_one = np.where(y_values_dict[selection_label][penalty_key] > 0.999)[0][-1]
-                upper = x_values_dict[selection_label][penalty_key][idx_of_last_one] if idx_of_last_one < \
-                                                                                        len(x_values_dict[
-                                                                                                selection_label][
-                                                                                                penalty_key]) - 1 else \
-                    False
+                upper = (
+                    x_values_dict[selection_label][penalty_key][idx_of_last_one]
+                    if idx_of_last_one < len(x_values_dict[selection_label][penalty_key]) - 1
+                    else False
+                )
             if upper is not False:
                 assert isinstance(upper, float)
                 plt.axvline(x=upper, lw=0.5, ls="--", color="black")
@@ -930,9 +1308,24 @@ def selection_histogram(
             if selection_label in penalty_labels:
                 if penalty_key in penalty_labels[selection_label]:
                     penalty_label = penalty_labels[selection_label][penalty_key]
-            plt.plot(x_values_dict[selection_label][penalty_key], y_values_dict[selection_label][penalty_key],
-                     label=penalty_label, color="green")
-            plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
+            plt.plot(
+                x_values_dict[selection_label][penalty_key],
+                y_values_dict[selection_label][penalty_key],
+                label=penalty_label,
+                color="green",
+            )
+
+            h1, l1 = ax1.get_legend_handles_labels()
+            h2, l2 = ax2.get_legend_handles_labels()
+            plt.legend(
+                h1 + h2,
+                l1 + l2,
+                prop={"size": legend_size},
+                bbox_to_anchor=[0.99, 0.99],
+                loc="upper right",
+                frameon=False,
+            )
+
             plt.ylim([0, 2])
             for label in ax2.get_yticklabels():
                 label.set_color("green")
@@ -952,8 +1345,8 @@ def gene_overlap(
     fontsize: int = 18,
     show: bool = True,
     save: Optional[str] = None,
-):
-    """Plot the intersection of different selected gene sets.
+) -> None:
+    """Plot overlap of gene sets
 
     Args:
         selection_df:
@@ -965,17 +1358,14 @@ def gene_overlap(
                 - "venn": venn diagram
 
         min_degree:
-            Only for `style="upset"`: minimum degree of a subset to be shown in the plot.
+            Only for `style="upset"`: minimum degree (number of categories intersected) of a subset to be shown in the
+            plot.
         fontsize:
-                Matplotlib fontsize.
+            Matplotlib fontsize.
         show:
             Whether to display the plot.
         save:
             Save the plot to path.
-
-    Returns:
-        Figure can be shown (default `True`) and stored to path (default `None`).
-        Change this with ``show`` and ``save``.
 
     """
 
@@ -996,8 +1386,9 @@ def gene_overlap(
         upset_data = from_indicators(selection_df)
 
         # set up figure
-        upset_plot = UpSet(upset_data, subset_size="count", min_degree=min_degree, show_counts=True,
-                           sort_by="cardinality")
+        upset_plot = UpSet(
+            upset_data, subset_size="count", min_degree=min_degree, show_counts=True, sort_by="cardinality"
+        )
 
         # draw figure
         fig = plt.figure()
@@ -1039,39 +1430,39 @@ def gene_overlap(
 #     # TODO
 
 
-def classification_rule_umaps(
-    adata: sc.AnnData,
+def clf_genes_umaps(
+    adata: sc.AnnData,  # TODO: adjust type hint
     df: pd.DataFrame,
     basis: str = "X_umap",
     ct_key: str = "celltype",
-    n_cols: int = None,
+    n_cols: int = 4,
     size_factor: float = 1,
     fontsize: int = 18,
     show: bool = True,
     save: Optional[str] = None,
-):
-    """
+) -> None:
+    """Plot umaps of genes needed for cell type classification of each cell type.
 
     Args:
         adata:
-            ``sc.AnnData`` with ``ct_key`` in ``adata.obs`` and ``basis`` in ``adata.obsm``.
+            ``AnnData`` with ``ct_key`` in ``adata.obs`` and ``basis`` in ``adata.obsm``.
         df:
-            Dataframe with genes identifiers as index and the following mandatory columns:
+            Dataframe with genes as index and the following columns:
 
-                - `'decision_celltypes'`: List of celltypes for which the gene was needed for classification.
+                - `'decision_celltypes'`: List of celltypes for which the gene is needed for classification.
                 - `'rank'`: Forest classification rank of the gene.
                 - `'importance_score'`: Importance score of the gene.
 
-            Optional columns:
+            Optional columns: TODO: do we need to list them here?
                 - `'marker_celltypes'`: List of celltypes for which the gene is a marker according to the known marker
-                    list.
+                    list. TODO: check if also DE "markers" alowed?
                 - `'decision_title'`: Subplot title.
-                - `'marker_title'`: Subplot title used if gene is marker.
+                - `'marker_title'`: Subplot title used if gene is marker. TODO: why decision_title AND marker_title?
                 - `'decision_cmap'`: Matplotlib colormap.
-                - `'marker_cmap'`: Matplotlib colormap used if gene is marker.
+                - `'marker_cmap'`: Matplotlib colormap used if gene is marker. TODO: why decision_cmap and marker_cmap (and why cmap at all...)
 
         basis:
-            Name of the ``obsm`` basis to use.
+            Name of the ``obsm`` embedding to use.
         ct_key:
             Column name in ``adata.obs`` where celltypes are stored.
         n_cols:
@@ -1079,7 +1470,11 @@ def classification_rule_umaps(
         fontsize:
             Matplotlib fontsize.
         size_factor:
+<<<<<<< HEAD
              Factor for scaling the figure size.
+=======
+            Scale factor for figure width and height.
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
         show:
             Whether to display the plot.
         save:
@@ -1100,19 +1495,23 @@ def classification_rule_umaps(
 
     # set titles and palettes:
     if "decision_title" not in df:
-        df["decision_title"] = [f"{gene}: \n" \
-                                f"rank={int(df.loc[gene]['rank'])}, " \
-                                f"imp.={round(df.loc[gene]['importance_score'], 1)}" for gene in df.index]
+        df["decision_title"] = [
+            f"{gene}: \n" f"rank={int(df.loc[gene]['rank'])}, " f"imp.={round(df.loc[gene]['importance_score'], 2)}"
+            for gene in df.index
+        ]
     if "marker_title" not in df:
-        df["marker_title"] = [f"marker: {gene}: \n" \
-                              f"rank={int(df.loc[gene]['rank'])}, " \
-                              f"imp.={round(df.loc[gene]['importance_score'], 1)}" for gene in df.index]
+        df["marker_title"] = [
+            f"marker: {gene}: \n"
+            f"rank={int(df.loc[gene]['rank'])}, "
+            f"imp.={round(df.loc[gene]['importance_score'], 2)}"
+            for gene in df.index
+        ]
     if "decision_palette" not in df:
-        cmap = colors.LinearSegmentedColormap.from_list("mycmap", ["grey", "lime"])
-        df["decision_cmap"] = cmap
+        # cmap = colors.LinearSegmentedColormap.from_list("mycmap", ["grey", "lime"])
+        df["decision_cmap"] = "viridis"  # cmap
     if "marker_palette" not in df:
-        cmap = colors.LinearSegmentedColormap.from_list("mycmap", ["grey", "orangered"])
-        df["marker_cmap"] = cmap
+        # cmap = colors.LinearSegmentedColormap.from_list("mycmap", ["grey", "orangered"])
+        df["marker_cmap"] = "viridis"  # cmap
 
     # numbers of subplots in rows and columns
     n_decision_genes = [len(subplots_decision[ct] + subplots_marker[ct]) for ct in subplots_decision]
@@ -1138,10 +1537,15 @@ def classification_rule_umaps(
     SUBPLOT_HEIGHT_INCHES = 3
     SUBPLOT_WIDTH_INCHES = 3
 
-    FIGURE_WIDTH = ((SUBPLOT_WIDTH_INCHES * n_cols) + (
-        ((n_cols - 1) / n_cols) * WSPACE_INCHES) + RIGHT_INCHES + LEFT_INCHES) * size_factor
-    FIGURE_HEIGHT = (((SUBPLOT_HEIGHT_INCHES + CT_HEIGHT_INCHES) * n_rows) + (
-        ((n_rows - 1) / n_rows) * HSPACE_INCHES) + TOP_INCHES + BOTTOM_INCHES) * size_factor
+    FIGURE_WIDTH = (
+        (SUBPLOT_WIDTH_INCHES * n_cols) + (((n_cols - 1) / n_cols) * WSPACE_INCHES) + RIGHT_INCHES + LEFT_INCHES
+    ) * size_factor
+    FIGURE_HEIGHT = (
+        ((SUBPLOT_HEIGHT_INCHES + CT_HEIGHT_INCHES) * n_rows)
+        + (((n_rows - 1) / n_rows) * HSPACE_INCHES)
+        + TOP_INCHES
+        + BOTTOM_INCHES
+    ) * size_factor
 
     HSPACE = HSPACE_INCHES / FIGURE_HEIGHT
     WSPACE = WSPACE_INCHES / FIGURE_WIDTH
@@ -1158,18 +1562,26 @@ def classification_rule_umaps(
     gs = GridSpec(n_rows * 2, n_cols, figure=fig, height_ratios=[CT_HEIGHT, SUBPLOT_HEIGHT] * n_rows)
     i = -1
     for ct in celltypes:
-        i = i + 1
+        i += 1
         j = 0
 
         # prepare data
         a.obs[ct] = adata.obs[ct_key].astype(str)
-        a.obs.loc[a.obs[ct] != ct, ct] = 'other'
-        a.obs[ct] = a.obs[ct].astype('category')
+        a.obs.loc[a.obs[ct] != ct, ct] = "other"
+        a.obs[ct] = a.obs[ct].astype("category")
 
         # first subplot is the umap colored by celltype
         ax = fig.add_subplot(gs[2 * i + 1, j])
-        ax = sc.pl.embedding(adata=a, basis=basis, color=ct, show=False, ax=ax, title="", palette=["blue", "grey"],
-                             legend_fontweight="heavy")
+        ax = sc.pl.embedding(
+            adata=a,
+            basis=basis,
+            color=ct,
+            show=False,
+            ax=ax,
+            title="",
+            palette=["blue", "grey"],
+            legend_fontweight="heavy",
+        )
         ax.xaxis.label.set_fontsize(fontsize)
         ax.yaxis.label.set_fontsize(fontsize)
         ax.title.set_fontsize(fontsize)
@@ -1177,27 +1589,36 @@ def classification_rule_umaps(
 
         # add celltype header
         celltype_ax = fig.add_subplot(gs[2 * i, j])
-        celltype_ax.text(x=0,
-                         y=0,
-                         s=ct,
-                         weight="bold",
-                         verticalalignment="baseline",
-                         horizontalalignment="left",
-                         fontsize=CT_FONTSIZE)
+        celltype_ax.text(
+            x=0,
+            y=0,
+            s=ct,
+            weight="bold",
+            verticalalignment="baseline",
+            horizontalalignment="left",
+            fontsize=CT_FONTSIZE,
+        )
         celltype_ax.set_axis_off()
 
         # subplots for decision genes:
         for gene in subplots_decision[ct]:
 
-            j = j + 1
+            j += 1
             if j >= n_cols:
-                i = i + 1
+                i += 1
                 j = 0
 
             # set styling
             ax = fig.add_subplot(gs[2 * i + 1, j])
-            ax = sc.pl.embedding(adata=a, basis=basis, color=gene, show=False, ax=ax, title=df["decision_title"][gene],
-                                 cmap=df["decision_cmap"][gene])
+            ax = sc.pl.embedding(
+                adata=a,
+                basis=basis,
+                color=gene,
+                show=False,
+                ax=ax,
+                title=df["decision_title"][gene],
+                cmap=df["decision_cmap"][gene],
+            )
             ax.xaxis.label.set_fontsize(fontsize)
             ax.yaxis.label.set_fontsize(fontsize)
             ax.title.set_fontsize(fontsize)
@@ -1207,15 +1628,27 @@ def classification_rule_umaps(
         # subplots for marker genes
         for gene in subplots_marker[ct]:
 
-            j = j + 1
+            j += 1
             if j >= n_cols:
-                i = i + 1
+                i += 1
                 j = 0
 
             ax = fig.add_subplot(gs[2 * i + 1, j])
+<<<<<<< HEAD
             ax = sc.pl.embedding(adata=a, basis=basis, color=gene, show=False, ax=ax,
                                  title=df.loc[gene]["marker_title"],
                                  cmap=df["marker_cmap"][gene])
+=======
+            ax = sc.pl.embedding(
+                adata=a,
+                basis=basis,
+                color=gene,
+                show=False,
+                ax=ax,
+                title=df.loc[gene]["marker_title"],
+                cmap=df["marker_cmap"][gene],
+            )
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
             ax.xaxis.label.set_fontsize(fontsize)
             ax.yaxis.label.set_fontsize(fontsize)
             ax.title.set_fontsize(fontsize)
@@ -1231,6 +1664,7 @@ def classification_rule_umaps(
 
 
 def masked_dotplot(
+<<<<<<< HEAD
     adata: sc.AnnData,
     var_names: Union[_VarNames, Mapping[str, _VarNames]],
     groupby: Union[str, Sequence[str]],
@@ -1240,6 +1674,21 @@ def masked_dotplot(
     show: bool = True,
     save: Optional[str] = None,
     **kwargs
+=======
+    adata: sc.AnnData,  # TODO: adjust type hint
+    selector,
+    ct_key: str = "celltype",
+    imp_threshold: float = 0.05,
+    celltypes: Optional[List[str]] = None,
+    n_genes: Optional[int] = None,
+    comb_markers_only: bool = False,
+    markers_only: bool = False,
+    cmap: str = "Reds",
+    comb_marker_color: str = "darkblue",
+    marker_color: str = "blue",
+    non_adata_celltypes_color: str = "grey",
+    save: Union[bool, str] = False,
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 ):
     """Create dotplot with additional annotation masks.
 
@@ -1249,6 +1698,7 @@ def masked_dotplot(
 
     Args:
         adata:
+<<<<<<< HEAD
             AnnData with ``adata.obs[groupby]`` cell type annotations.
         var_names:
             ``var_names`` should be a valid subset of ``adata.var_names``. If ``var_names`` is a mapping, then the key
@@ -1281,6 +1731,64 @@ def masked_dotplot(
                     Color for celltypes that don't occur in the data set.
                 use_raw:
                     Use ``raw`` attribute of ``adata`` if present.
+=======
+            AnnData with cell type annotations in `adata.obs[ct_key]`.
+        selector:
+            `ProbesetSelector` object with selected `selector.probeset`.
+        ct_key:
+            Column of `adata.obs` with cell type annotation.
+        imp_threshold:
+            Annotate genes as "Spapros marker" only for those genes with importance > ``imp_threshold``.
+        celltypes:
+            Optional subset of celltypes (rows of dotplot).
+        n_genes:
+            Optionally plot top ``n_genes`` genes.
+        comb_markers_only:
+            Whether to plot only genes that are "Spapros markers" for the plotted cell types. (can be combined with
+            markers_only, in that case markers that are not Spapros markers are also shown)
+        markers_only:
+            Whether to plot only genes that are markers for the plotted cell types. (can be combined with
+            ``comb_markers_only``, in that case Spapros markers that are not markers are also shown)
+        cmap:
+            Colormap of mean expressions.
+        comb_marker_color:
+            Color for "Spapros markers".
+        marker_color:
+            Color for marker genes.
+        non_adata_celltypes_color:
+            Color for celltypes that don't occur in the data set.
+        save:
+            If `True` or a `str`, save the figure.
+
+
+    Example:
+
+        (Takes a few minutes to calculate)
+
+        .. code-block:: python
+
+            import spapros as sp
+            adata = sp.ut.get_processed_pbmc_data()
+            selector = sp.se.ProbesetSelector(adata, "celltype", n=30, verbosity=0)
+            selector.select_probeset()
+
+            sp.pl.masked_dotplot(adata,selector)
+
+        .. image:: ../../docs/plot_examples/masked_dotplot.png
+
+
+    """
+    from spapros.selection import ProbesetSelector
+
+    if isinstance(selector, str):
+        selector = ProbesetSelector(adata, ct_key, save_dir=selector)
+        # TODO: think the last steps of the ProbesetSelector are still not saved..., needs to be fixed.
+
+    # celltypes, possible origins:
+    # - adata.obs[ct_key] (could include cts not used for selection)
+    # - celltypes for selection (including markers, could include cts which are not in adata.obs[ct_key])
+    # --> pool all together... order?
+>>>>>>> e6601bf97df48d62bd4faedaf0265da0d8a21c02
 
     """
 

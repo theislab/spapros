@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "spapros"
 version = "0.1.0"  # <<COOKIETEMPLE_FORCE_BUMP>>
-description = "Fully automated spatial transcriptomics probe selection."
+description = "Probe set selection for targeted spatial transcriptomics."
 authors = ["Lukas Heumos <lukas.heumos@posteo.net>", "Louis Kümmerle <louis.kuemmerle@helmholtz-muenchen.de>"]
 license = "MIT"
 readme = "README.rst"
@@ -27,7 +27,7 @@ seaborn = "^0.11.1"
 matplotlib = "^3.4.1"
 leidenalg = "^0.8.7"
 questionary = "^1.10.0"
-xgboost = "^1.4.2"
+xgboost = "^1.6.1"
 pypi-latest = "^0.1.0"
 "ruamel.yaml" = "^0.17.10"
 jupyter-sphinx = "^0.3.2"

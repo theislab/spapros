@@ -35,12 +35,12 @@ Welcome to spapros's documentation!
 |logo|
 
 
-**Spapros** provides a pipeline for probe set selection and evaluation of spation transcriptomic data. It is build on top of scanpy and adata.
+**Spapros** provides a pipeline for probe set selection and evaluation for targeted spatial transcriptomics data.
 
 Key Features
 -------------
 
-* Select probe sets for spatial transcriptomics which capture data variability, distinguish cell types and incorporate prior knowledge
+* Select probe sets for spatial transcriptomics which identify cell types of interest, capture general transcriptomic variation, and incorporate prior knowledge
 * Evaluate probe sets with an extensive pipeline
 
 .. toctree::
@@ -51,9 +51,7 @@ Key Features
    installation
    usage
    api
-   cli
    tutorials
-   reference
    authors
    changelog
    code_of_conduct
