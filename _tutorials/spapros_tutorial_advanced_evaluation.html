@@ -393,10 +393,7 @@ div.rendered_html tbody tr:hover {
 <h1>Advanced evaluation<a class="headerlink" href="#Advanced-evaluation" title="Permalink to this heading"></a></h1>
 <section id="!-This-tutorial-will-be-updated-the-next-days-!">
 <h2>! This tutorial will be updated the next days !<a class="headerlink" href="#!-This-tutorial-will-be-updated-the-next-days-!" title="Permalink to this heading"></a></h2>
-<p>This tutorial explains the evaluation metrics that are used in the spapros evaluation pipeline and exemplifies how the results can be visualized.</p>
-<p>The used dataset contains 3k PBMCs from a healthy donor and is publicly available from <a class="reference external" href="https://support.10xgenomics.com/single-cell-gene-expression/datasets/1.1.0/pbmc3k">10x Genomics</a> <a class="reference external" href="http://cf.10xgenomics.com/samples/cell-exp/1.1.0/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz">here</a>.</p>
-<p>You can also derive it from scanpy <a class="reference external" href="https://scanpy.readthedocs.io/en/stable/generated/scanpy.datasets.pbmc3k.html#scanpy.datasets.pbmc3k">here</a>, like we will do in this tutorial.</p>
-<p>The preprocessed Anndata consists of log-normalized single cell RNAseq counts of 2638 cells for 1838 genes.</p>
+<p>In this tutorial we evaluate probesets in finer detail: besides the summary values for each metric (see basic evaluation tutorial) we can get e.g. per gene and per cell type information of each evaluation.</p>
 <p><strong>Content</strong></p>
 <ol class="arabic simple" start="0">
 <li><p><a class="reference external" href="#0.-Import-packages-and-setup">Import packages and setup</a></p></li>
@@ -486,20 +483,6 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </section>
 <section id="2.-Set-up-the-ProbesetEvaluator">
 <h2>2. Set up the ProbesetEvaluator<a class="headerlink" href="#2.-Set-up-the-ProbesetEvaluator" title="Permalink to this heading"></a></h2>
-<p>The quality of a selected probeset is not easy to describe. A useful probeset represents both the biological importance and the variability inherent in the total gene set. Spapros provides a set of evaluation metrics that measure the performance in these categories.</p>
-<p>By default, <code class="docutils literal notranslate"><span class="pre">metric_scheme=&quot;quick&quot;</span></code>, which means that only the faster metrics are calculated, which are:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>knn</p></li>
-<li><p>forest classification</p></li>
-<li><p>marker correlation (if marker list given: <code class="docutils literal notranslate"><span class="pre">marker_list=&quot;../path/to/marker_list.csv&quot;</span></code>)</p></li>
-<li><p>gene correlation</p></li>
-</ul>
-</div></blockquote>
-<p>Through setting scheme=“full”, additionally the following metric is calculated: &gt;- nmi</p>
-<p>Alternatively, you can specify <code class="docutils literal notranslate"><span class="pre">scheme=&quot;custom&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">metrics=custom_list</span></code> where <code class="docutils literal notranslate"><span class="pre">custom_list</span></code> is a list of the metrics of interest.</p>
-<p>Below, the metrics will be further explained.</p>
-<p>For each evaluation metric, several parameters can be customized. Therefor, the ProbesetEvaluator takes an dictionary containing the parameters as values as <code class="docutils literal notranslate"><span class="pre">metric_params</span></code> argument. Here, we stored a set of paramets in a yaml file:</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
@@ -547,7 +530,6 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </section>
 <section id="3.-Run-evaluation-methods">
 <h2>3. Run evaluation methods<a class="headerlink" href="#3.-Run-evaluation-methods" title="Permalink to this heading"></a></h2>
-<p>The principal method for evaluation is <code class="docutils literal notranslate"><span class="pre">ProbesetEvaluator.evaluate_probeset()</span></code>, which needs to be invoked once for each probe set. All results are stored as class variables. The <code class="docutils literal notranslate"><span class="pre">set_id</span></code> has to be specified in each iteration. Otherwise, the results will be overwritten.</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
@@ -796,12 +778,6 @@ spapros_selection
 <img alt="../_images/_tutorials_spapros_tutorial_advanced_evaluation_20_0.png" src="../_images/_tutorials_spapros_tutorial_advanced_evaluation_20_0.png" />
 </div>
 </div>
-<p>I this plot, each row summarizes the evaluation metrics of one probeset. The metrics evaluating the variability recovery are shown in the green columns (1-3). In the first column, you can see the NMI of coarse clusterings of the selected probe set and the full gene set. Here, for both gene sets clusters with between 5 and 20 clusters were created. The second column shows the NMI of clusterings from 21 to 60 clusters and thus represents the performance of finer variability recovery. As the
-clusterings should picture the heterogeinity of the expression data, a variability recovering subset would would cluster similarly. Both NMI values are highest for the pca based selection, which indicates that this method recovers the variability best.</p>
-<p>The third column reveals the graph overlap of the knn graphs of the full gene set and the respective probeset. If this value is high, it means that fine variations within the full gene set are captured by the probeset.</p>
-<p>The subsequent purple columns (4-8) indicate the performance of each selection method with respect to cell type identification. Column 4 contains the mean classification accuracy of a random forest prediction over cell types. This quantifies the overall classification success while column 5 provides an estimate for the percentage of reliably captured cell types, i.e. the average of a smoothed thresholding of classification performance around 0.8 for each cell type. The other 3 purple columns
-(6-8) derive from the comparison of the correlation within the selected probeset with the correlation within the marker list.</p>
-<p>The last two, blue columns (9, 10) evaluate the correlation within a selected probeset. If genes with highly correlated expression are selected, the information content could also be provided by just one of them.</p>
 <p>Next, we will have a closer look on single evaluation metrics with individual visualizations via the <code class="docutils literal notranslate"><span class="pre">ProbesetSelector.plot_evaluations</span></code> function.</p>
 <section id="Random-forest-classification">
 <h3>Random forest classification<a class="headerlink" href="#Random-forest-classification" title="Permalink to this heading"></a></h3>
