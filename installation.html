@@ -41,7 +41,7 @@
             <img src="_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.0
+                0.1.1
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -125,6 +125,12 @@
 <p>This is the preferred method to install spapros, as it will always install the most recent stable release.</p>
 <p>If you don’t have <a class="reference external" href="https://pip.pypa.io">pip</a> installed, this <a class="reference external" href="http://docs.python-guide.org/en/latest/starting/installation/">Python installation guide</a> can guide
 you through the process.</p>
+<p>Note! Currently the pip installation into an environment without <cite>leidenalg</cite> installed can lead to problems when running
+Spapros’ knn-based evaluation (see <a class="reference external" href="https://github.com/theislab/spapros/issues/234">issue #234</a>). To solve this, run
+Spapros in a conda environment and install leidenalg before installing spapros via:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>conda install -c conda-forge leidenalg
+</pre></div>
+</div>
 </section>
 <section id="from-sources">
 <h2>From sources<a class="headerlink" href="#from-sources" title="Permalink to this heading"></a></h2>
