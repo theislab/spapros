@@ -1003,7 +1003,8 @@ def xgboost_forest_classification(
                 num_class=n_classes,
                 n_estimators=250,
                 objective="multi:softmax" if n_classes > 2 else "binary:logistic",
-                eval_metric="mlogloss",  # set this to get rid of warning
+                early_stopping_rounds=5,
+                eval_metric="mlogloss",
                 learning_rate=lr,
                 colsample_bytree=colsample_bytree,
                 min_child_weight=min_child_weight,
@@ -1017,8 +1018,6 @@ def xgboost_forest_classification(
                 train_x,
                 train_y,
                 sample_weight=sample_weight_train,
-                early_stopping_rounds=5,
-                eval_metric="mlogloss",
                 eval_set=[(test_x, test_y)],
                 sample_weight_eval_set=[sample_weight_test],
                 verbose=verbosity > 2,
