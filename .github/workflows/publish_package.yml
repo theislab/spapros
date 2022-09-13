@@ -3,6 +3,7 @@ name: Publish spapros to PyPI
 on:
     release:
         types: [created]
+    workflow_dispatch:        
 
 jobs:
     release:
@@ -21,12 +22,12 @@ jobs:
 
             - name: Upgrade pip
               run: |
-                  pip install --constraint=.github/workflows/constraints.txt pip
+                  pip install pip
                   pip --version
 
             - name: Install Poetry
               run: |
-                  pip install --constraint=.github/workflows/constraints.txt poetry
+                  pip install poetry
                   poetry --version
 
             - name: Build package

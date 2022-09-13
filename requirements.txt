@@ -21,7 +21,7 @@ cycler==0.11.0
 decorator==5.1.1
 defusedxml==0.7.1
 distlib==0.3.5
-docutils==0.16
+docutils==0.17
 entrypoints==0.4
 fastjsonschema==2.16.1
 filelock==3.8.0

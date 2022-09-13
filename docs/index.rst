@@ -51,9 +51,7 @@ Key Features
    installation
    usage
    api
-   cli
    tutorials
-   reference
    authors
    changelog
    code_of_conduct

@@ -1488,7 +1488,7 @@ class ProbesetSelector:  # (object)
             if selection not in self.selection:  # or selection not in SELECTIONS:
                 raise ValueError(f"{selection} selection can't be plottet because no results were found.")
 
-            selections_dict[selection] = self.selection[selection]["selection"]
+            selections_dict[selection] = self.selection[selection]#["selection"]
 
             # plot without penalties:
             if selection not in penalty_keys:
