@@ -1,5 +1,8 @@
+.. include:: ../README.rst
+===========================
 Welcome to spapros's documentation!
-====================================
+==========================================================
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
@@ -8,8 +11,8 @@ Welcome to spapros's documentation!
    installation
    usage
    reference
+   contributing
    authors
-   changelog
    code_of_conduct
 
 Indices and tables

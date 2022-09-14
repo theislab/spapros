@@ -16,11 +16,11 @@ spapros
    :target: https://spapros.readthedocs.io/
    :alt: Read the documentation at https://spapros.readthedocs.io/
 .. |Build| image:: https://github.com/theislab/spapros/workflows/Build%20spapros%20Package/badge.svg
-   :target: https://github.com/theislab/spapros/workflows/Build%20spapros%20Package/badge.svg
-   :alt: Build package Status
-.. |Tests| image:: https://github.com/theislab/spapros/workflows/Tests/badge.svg
+   :target: https://github.com/theislab/spapros/actions?workflow=Package
+   :alt: Build Package Status
+.. |Tests| image:: https://github.com/theislab/spapros/workflows/Run%20spapros%20Tests/badge.svg
    :target: https://github.com/theislab/spapros/actions?workflow=Tests
-   :alt: Tests
+   :alt: Run Tests Status
 .. |Codecov| image:: https://codecov.io/gh/theislab/spapros/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/theislab/spapros
    :alt: Codecov
@@ -54,12 +54,6 @@ Usage
 Please see the `Command-line Reference <Usage_>`_ for details.
 
 
-Contributing
-------------
-
-Contributions are very welcome. To learn more, see the `Contributor Guide`_.
-
-
 Credits
 -------
 
@@ -67,9 +61,7 @@ This package was created with cookietemple_ using Cookiecutter_ based on Hypermo
 
 .. _cookietemple: https://cookietemple.com
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _MIT: http://opensource.org/licenses/MIT
 .. _PyPI: https://pypi.org/
 .. _Hypermodern_Python_Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 .. _pip: https://pip.pypa.io/
-.. _Contributor Guide: CONTRIBUTING.rst
 .. _Usage: https://spapros.readthedocs.io/en/latest/usage.html
