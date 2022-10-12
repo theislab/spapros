@@ -1,7 +1,7 @@
 import anndata
+import pytest
 import scanpy as sc
 from spapros import ev
-import pytest
 
 
 def test_selecor_init(raw_selector):

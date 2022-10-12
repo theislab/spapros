@@ -7,6 +7,11 @@ import os
 import time
 from datetime import datetime
 
+from src.datamodule import DataModule
+from src.probefilter import ProbeFilter
+from src.utils import get_config
+from src.utils import print_config
+
 timestamp = datetime.now()
 logging.basicConfig(
     filename="log_probe_design_{}-{}-{}-{}-{}.txt".format(
@@ -14,10 +19,6 @@ logging.basicConfig(
     ),
     level=logging.NOTSET,
 )
-
-from src.utils import get_config, print_config
-from src.datamodule import DataModule
-from src.probefilter import ProbeFilter
 
 
 ############################################

@@ -5,10 +5,10 @@ import pickle
 from pathlib import Path
 from typing import Any
 from typing import Callable
-from typing import Literal
 from typing import cast
 from typing import Dict
 from typing import List
+from typing import Literal
 from typing import Optional
 from typing import Tuple
 from typing import Union
@@ -16,13 +16,12 @@ from typing import Union
 import numpy as np
 import pandas as pd
 import scanpy as sc
-from scipy.sparse import issparse
-
 import spapros.evaluation.evaluation as ev
-from spapros.plotting import plot as pl
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
 from rich.console import RichCast
+from scipy.sparse import issparse
+from spapros.plotting import plot as pl
 from spapros.util.util import dict_to_table
 from spapros.util.util import filter_marker_dict_by_penalty
 from spapros.util.util import filter_marker_dict_by_shared_genes
@@ -1185,8 +1184,8 @@ class ProbesetSelector:  # (object)
         genes = []
         cts = []
         importances = []
-        for ct in self.forest_results["forest"][2].keys():
-            tmp = self.forest_results["forest"][2][ct]["0"]
+        for ct in self.forest_results["forest"][2].keys():  # type: ignore
+            tmp = self.forest_results["forest"][2][ct]["0"]  # type: ignore
             tmp = tmp.loc[tmp > 0].sort_values(ascending=False)
             genes += tmp.index.to_list()
             cts += [ct for _ in range(len(tmp))]
@@ -1694,12 +1693,10 @@ class ProbesetSelector:  # (object)
         if importance_th is None:
             importance_th = min(self.selection["forest"]["importance_score"])
         df = (
-            self.selection["forest"]
-            .loc[
+            self.selection["forest"].loc[
                 (self.selection["forest"]["rank"] <= till_rank)
                 & (self.selection["forest"]["importance_score"] > importance_th)
-            ]
-            .copy()
+            ].copy()
         )
         selected_genes = [g for g in df.index if g in self.probeset[self.probeset["selection"]].index]
         df = df.loc[selected_genes]
@@ -1709,19 +1706,19 @@ class ProbesetSelector:  # (object)
         # prepare df
         if celltypes is None:
             celltypes = [ct for ct in self.celltypes if ct in df.columns]
-        df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)
+        df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row is True].index), axis=1)
         if add_marker_genes and (self.selection["marker"] is not None):
             df["marker_celltypes"] = [self.selection["marker"]["celltype"][gene] for gene in df.index]
 
         # check if embedding, neighbors, pca already in adata
         redo_umap = (adata.obsm is None) or (basis not in adata.obsm)
-        ###try:
-        ###    # check params
-        ###    for param, value in adata.uns[basis]["params"].items():
-        ###        if value != umap_params[param]:
-        ###            redo_umap = True
-        ###except KeyError:
-        ###    redo_umap = True
+        # try:
+        #    # check params
+        #    for param, value in adata.uns[basis]["params"].items():
+        #        if value != umap_params[param]:
+        #            redo_umap = True
+        # except KeyError:
+        #    redo_umap = True
 
         if redo_umap:
             redo_neighbors = False
@@ -2006,7 +2003,6 @@ class ProbesetSelector:  # (object)
                 if "" in tmp:
                     tmp.remove("")
                 cts += [ct for ct in tmp if ct not in cts]
-            a = adata
 
         # Get selected genes that are also in adata
         selected_genes = [

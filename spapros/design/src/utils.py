@@ -51,7 +51,7 @@ def create_dir(dir, subdir):
     :rtype: str
     """
     dir = os.path.join(dir, subdir)
-    if os.path.isdir(dir) == False:
+    if not os.path.isdir(dir):
         os.mkdir(dir)
 
     return dir
@@ -78,9 +78,11 @@ def ftp_download(ftp_link, directory, file_name, dir_output):
 
     :param ftp_link: Link to ftp server, e.g. 'ftp.ncbi.nlm.nih.gov'.
     :type ftp_link: string
-    :param directory: Directory on ftp server, where the file is located, e.g. 'refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers'.
+    :param directory: Directory on ftp server, where the file is located, e.g.
+        'refseq/H_sapiens/annotation/GRCh38_latest/refseq_identifiers'.
     :type directory: string
-    :param file_name: Name of file that should be downloaded from ftp server, e.g. 'GCF_000001405.39_GRCh38.p13_genomic.fna'.
+    :param file_name: Name of file that should be downloaded from ftp server, e.g.
+        'GCF_000001405.39_GRCh38.p13_genomic.fna'.
     :type file_name: string
     :param dir_output: Path to directory for downloaded files.
     :type dir_output: string

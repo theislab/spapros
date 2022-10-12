@@ -14,6 +14,7 @@ from Bio import SeqIO
 from Bio.SeqUtils import GC
 from Bio.SeqUtils import MeltingTemp as mt
 
+
 ############################################
 # data preparation class
 ############################################
@@ -297,10 +298,13 @@ class DataModule:
     def load_transcriptome(self):
         """Create transcriptome from NCBI or ensemble gene annotation.
         Therefore, retreive all exons and all possible exon junctions from transcript annotation.
-        For reference transcriptome, define exon junction region larger than probe length (+5 bp) to allow bulges in alignments.
-        For probe transcriptome, define exon junction region as probe length - 1, to avoid duplicated probes from overlap with exon annotation.
+        For reference transcriptome, define exon junction region larger than probe length (+5 bp) to allow bulges in
+        alignments.
+        For probe transcriptome, define exon junction region as probe length - 1, to avoid duplicated probes from
+        overlap with exon annotation.
         Merge exon and exon junction annotations that define the exact same region into one annotation entry.
-        Save transcriptome annotation in bed12 format that allows split annotations, which are needed to get sequences for exon junctions.
+        Save transcriptome annotation in bed12 format that allows split annotations, which are needed to get sequences
+        for exon junctions.
         Save transcriptome sequence in fasta format.
         """
 
@@ -490,10 +494,11 @@ class DataModule:
             exon_annotation = self.gene_annotation.loc[self.gene_annotation["feature"] == "exon"]
             exon_annotation = exon_annotation.assign(source="unknown")
 
-            if not "exon_id" in exon_annotation.columns:
+            if "exon_id" not in exon_annotation.columns:
                 exon_annotation["exon_id"] = exon_annotation["transcript_id"] + "_exon" + exon_annotation["exon_number"]
 
-            # there are some exon annotations which have the same start and end coordinates and can't be saved as fasta from bedtools
+            # there are some exon annotations which have the same start and end coordinates and can't be saved as fasta
+            # from bedtools
             exon_annotation = exon_annotation[(exon_annotation.end - exon_annotation.start) > 0]
             exon_annotation.reset_index(inplace=True, drop=True)
 
@@ -555,7 +560,7 @@ class DataModule:
                 elif strand == "-":
                     exons = sorted(exons.items(), reverse=True)
 
-                for exon, attributes in exons:
+                for _exon, attributes in exons:
                     if exon_upstream == []:
                         exon_upstream = attributes
                     else:
@@ -625,8 +630,10 @@ class DataModule:
     def load_probes(self):
         """Get the fasta sequence of all possible probes with user-defined length for all input genes.
         Generated probes are filtered by undefined nucleotides ('N') in their sequence.
-        In addition, generated probes are filtered based on GC content and melting temperature for user-defined thresholds
-        This process can be executed in a parallele fashion on a user-defined number of threads (defined in config file).
+        In addition, generated probes are filtered based on GC content and melting temperature for user-defined
+        thresholds
+        This process can be executed in a parallele fashion on a user-defined number of threads (defined in config
+        file).
         """
 
         def _get_probes(batch_id, genes_batch):
@@ -660,7 +667,8 @@ class DataModule:
 
         def _get_transcriptome_fasta(genes_batch, file_transcriptome_bed_batch, file_transcriptome_fasta_batch):
             """Extract transcripts for the current batch and write transcript regions to bed file.
-            Get sequence for annotated transcript regions (bed file) from genome sequence (fasta file) and write transcriptome sequences to fasta file.
+            Get sequence for annotated transcript regions (bed file) from genome sequence (fasta file) and write
+            transcriptome sequences to fasta file.
 
             :param genes_batch: List of genes for which probes should be designed.
             :type genes_batch: list
@@ -741,7 +749,7 @@ class DataModule:
 
                 if len(sequence) > self.probe_length:
                     number_probes = len(sequence) - (self.probe_length - 1)
-                    probes_sequence = [sequence[i : i + self.probe_length] for i in range(number_probes)]
+                    probes_sequence = [sequence[i: i + self.probe_length] for i in range(number_probes)]
 
                     for i in range(number_probes):
                         total_probes += 1
@@ -789,8 +797,9 @@ class DataModule:
             """Save additional probe information in tsv file.
             Additionally, save all probe sequences of this batch in a seperate text file.
 
-            :param gene_probes: Mapping of probes to corresponding genes with additional information about each probe, i.e.
-                position (chromosome, start, end, strand), gene_id, transcript_id, exon_id, melting temp. and GC content
+            :param gene_probes: Mapping of probes to corresponding genes with additional information about each probe,
+                i.e. position (chromosome, start, end, strand), gene_id, transcript_id, exon_id, melting temp. and GC
+                content
             :type gene_probes: dict
             :param file_probe_info_batch: Path to probe info output file.
             :type file_probe_info_batch: string
@@ -799,13 +808,13 @@ class DataModule:
             """
             with open(file_probe_info_batch, "w") as handle_probeinfo:
                 handle_probeinfo.write(
-                    "gene_id\ttranscript_id\texon_id\tprobe_sequence\tchromosome\tstart\tend\tstrand\tGC_content\tmelting_temperature\n"
+                    "gene_id\ttranscript_id\texon_id\tprobe_sequence\tchromosome\tstart\tend\tstrand\tGC_content\t"
+                    "melting_temperature\n"
                 )
 
                 with open(file_probe_sequence_batch, "w") as handle_sequences:
                     for gene_id, probes in gene_probes.items():
                         for probe_sequence, probe_attributes in probes.items():
-
                             output1 = "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
                                 gene_id,
                                 ";".join(probe_attributes["transcript_id"]),
@@ -830,7 +839,7 @@ class DataModule:
         jobs = []
         for batch_id in range(self.number_batchs):
             genes_batch = self.genes[
-                (self.batch_size * batch_id) : (min(self.batch_size * (batch_id + 1), len(self.genes) + 1))
+                (self.batch_size * batch_id): (min(self.batch_size * (batch_id + 1), len(self.genes) + 1))
             ]
 
             proc = multiprocessing.Process(

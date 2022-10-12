@@ -138,5 +138,3 @@ def test_evaluation_plots(evaluator_4_sets, fun, tmp_path, kwargs, request):
     getattr(evaluator_4_sets, fun)(save=fig_name, show=False, **kwargs)
     # getattr(evaluator_4_sets, fun)(save=ref_name, show=False, **kwargs)
     assert compare_images(ref_name, fig_name, 0.001) is None
-
-

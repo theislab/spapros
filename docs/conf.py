@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # mypy: ignore-errors
+# flake8: noqa
 # spapros documentation build configuration file
 #
 # If extensions (or modules to document with autodoc) are in another

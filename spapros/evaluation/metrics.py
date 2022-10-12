@@ -1054,7 +1054,6 @@ def xgboost_forest_classification(
     if started and progress:
         progress.stop()
 
-
     # Pool confusion matrices
     confusions_merged = np.concatenate([np.expand_dims(mat, axis=-1) for mat in confusion_matrices], axis=-1)
     confusion_mean = pd.DataFrame(index=celltypes, columns=celltypes, data=np.mean(confusions_merged, axis=-1))

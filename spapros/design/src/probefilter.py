@@ -182,7 +182,8 @@ class ProbeFilter:
             job.join()
 
     def run_blast_search(self):
-        """Run BlastN alignment tool to find regions of local similarity between sequences, where sequences are probes and transcripts.
+        """Run BlastN alignment tool to find regions of local similarity between sequences, where sequences are probes
+        and transcripts.
         BlastN identifies the transcript regions where probes match with a certain coverage and similarity.
         """
 
@@ -232,7 +233,6 @@ class ProbeFilter:
             :param batch_id: Batch ID.
             :type batch_id: int
             """
-            import sys
 
             probes_info = _load_probes_info(batch_id)
             blast_results = _read_blast_output(batch_id)

@@ -1,5 +1,6 @@
 """Global fixtures for testing."""
 import random
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -87,17 +88,17 @@ def selector_with_penalties(tiny_adata, lower_th=1, upper_th=3.5):
     # design the penalty kernel
     penalty = util.plateau_penalty_kernel(var=var, x_min=np.array(lower_th), x_max=np.array(upper_th))
     # calcluate the expression penalties
-    tiny_adata.var['expression_penalty'] = penalty(tiny_adata.var[f'quantile_0.99'])
+    tiny_adata.var['expression_penalty'] = penalty(tiny_adata.var['quantile_0.99'])
 
     # upper
     util.get_expression_quantile(tiny_adata, q=0.99, log1p=False, zeros_to_nan=False, normalise=False)
     penalty = util.plateau_penalty_kernel(var=var, x_min=None, x_max=upper_th)
-    tiny_adata.var['expression_penalty_upper'] = penalty(tiny_adata.var[f'quantile_0.99'])
+    tiny_adata.var['expression_penalty_upper'] = penalty(tiny_adata.var['quantile_0.99'])
 
     # lower
     util.get_expression_quantile(tiny_adata, q=0.9, log1p=False, zeros_to_nan=True, normalise=False)
     penalty = util.plateau_penalty_kernel(var=var, x_min=lower_th, x_max=None)
-    tiny_adata.var['expression_penalty_lower'] = penalty(tiny_adata.var[f'quantile_0.9 expr > 0'])
+    tiny_adata.var['expression_penalty_lower'] = penalty(tiny_adata.var['quantile_0.9 expr > 0'])
 
     sc.pp.log1p(tiny_adata)
     selector = se.ProbesetSelector(

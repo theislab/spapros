@@ -47,7 +47,7 @@ def get_files(dirs_in):
 
 
 def _list_files_in_dir(dir, pattern):
-    for root, dirs, files, rootfd in os.fwalk(dir, follow_symlinks=True):
+    for root, _dirs, files, _rootfd in os.fwalk(dir, follow_symlinks=True):
         for basename in files:
             if fnmatch.fnmatch(basename, pattern):
                 filename = os.path.join(root, basename)

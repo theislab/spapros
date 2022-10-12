@@ -1,12 +1,12 @@
 """Plotting Module."""
 import itertools
-from typing import Dict, Mapping, Sequence
-from typing import Any
 from typing import Callable
 from typing import Dict
 from typing import List
 from typing import Literal
+from typing import Mapping
 from typing import Optional
+from typing import Sequence
 from typing import Tuple
 from typing import Union
 
@@ -20,11 +20,11 @@ import scipy.cluster.hierarchy as sch
 import seaborn as sns
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import interp1d
+from spapros.plotting._masked_dotplot import _VarNames
 from spapros.plotting._masked_dotplot import MaskedDotPlot
 from upsetplot import from_indicators
 from upsetplot import UpSet
 from venndata import venn
-from spapros.plotting._masked_dotplot import MaskedDotPlot, _VarNames
 
 
 #############################
@@ -342,7 +342,6 @@ def marker_correlation(
     # plot parameters
     width_per_gene = 0.25
     height_per_set = 0.3
-    pos_factor = 0.02
 
     # get positions for group brackets
     group_positions = []
@@ -950,7 +949,7 @@ def selection_histogram(
     adata: sc.AnnData,
     selections_dict: Dict[str, pd.DataFrame],
     x_axis_keys: Dict[str, str],
-    background_key: str = "highly_variable",
+    background_key: Union[str, bool, None] = "highly_variable",
     penalty_kernels: Dict[str, Dict[str, Callable]] = None,
     penalty_keys: Dict[str, List[str]] = None,
     penalty_labels: Dict[str, Dict[str, str]] = None,
@@ -1014,8 +1013,8 @@ def selection_histogram(
 
     """
 
-    x_values_dict: Dict[str, dict] = {}
-    y_values_dict: Dict[str, dict] = {}
+    x_values_dict: dict = {}
+    y_values_dict: dict = {}
 
     if penalty_labels is None:
         penalty_labels = {}
@@ -1028,7 +1027,7 @@ def selection_histogram(
             y_values_dict[selection_label] = {}
 
             if selection_label in penalty_kernels:
-                for i, penalty_key in enumerate(penalty_kernels[selection_label]):
+                for penalty_key in penalty_kernels[selection_label]:
 
                     penalty_kernel = penalty_kernels[selection_label][penalty_key]
 
@@ -1047,7 +1046,7 @@ def selection_histogram(
             y_values_dict[selection_label] = {}
 
             if selection_label in penalty_keys:
-                for i, penalty_key in enumerate(penalty_keys[selection_label]):
+                for penalty_key in penalty_keys[selection_label]:
 
                     if penalty_key not in adata.var:
                         raise ValueError(f"Can't plot {penalty_key} because it was not found in adata.var. ")
@@ -1339,7 +1338,8 @@ def clf_genes_umaps(
                 - `'decision_title'`: Subplot title.
                 - `'marker_title'`: Subplot title used if gene is marker. TODO: why decision_title AND marker_title?
                 - `'decision_cmap'`: Matplotlib colormap.
-                - `'marker_cmap'`: Matplotlib colormap used if gene is marker. TODO: why decision_cmap and marker_cmap (and why cmap at all...)
+                - `'marker_cmap'`: Matplotlib colormap used if gene is marker. TODO: why decision_cmap and marker_cmap
+                    (and why cmap at all...)
 
         basis:
             Name of the ``obsm`` embedding to use.
@@ -1398,7 +1398,7 @@ def clf_genes_umaps(
     rows_per_ct = [np.ceil(s / n_cols) for s in n_subplots]
     n_rows = int(sum(rows_per_ct))
     row_ceils = [int(np.ceil(s / r)) for s, r in zip(n_subplots, rows_per_ct)]
-    print("n_cols",  n_cols)
+    print("n_cols", n_cols)
     n_cols = max(row_ceils)  # if n_cols was set higher than necessary
     print(n_cols)
     print(n_rows)
@@ -1416,28 +1416,29 @@ def clf_genes_umaps(
     SUBPLOT_HEIGHT_INCHES = 3 * size_factor
     SUBPLOT_WIDTH_INCHES = 3 * size_factor
 
-    GS_HEIGHTS_INCHES = [[CT_HEIGHT_INCHES] + [SUBPLOT_HEIGHT_INCHES, HSPACE_INCHES] * int(n) for n in rows_per_ct]
-    GS_HEIGHTS_INCHES = [x for y in GS_HEIGHTS_INCHES for x in y]
+    GS_HEIGHTS_INCHES_nested = [[CT_HEIGHT_INCHES] + [SUBPLOT_HEIGHT_INCHES, HSPACE_INCHES] * int(n) for n in
+                                rows_per_ct]
+    GS_HEIGHTS_INCHES = [x for y in GS_HEIGHTS_INCHES_nested for x in y]
 
     FIGURE_WIDTH = (
-                       (SUBPLOT_WIDTH_INCHES * n_cols)
-                       + (WSPACE_INCHES * n_cols)
-                       + RIGHT_INCHES
-                       + LEFT_INCHES
-                   )
+        (SUBPLOT_WIDTH_INCHES * n_cols)
+        + (WSPACE_INCHES * n_cols)
+        + RIGHT_INCHES
+        + LEFT_INCHES
+    )
     FIGURE_HEIGHT = (
-                        sum(GS_HEIGHTS_INCHES)
-                        + TOP_INCHES
-                        + BOTTOM_INCHES
-                    )
+        sum(GS_HEIGHTS_INCHES)
+        + TOP_INCHES
+        + BOTTOM_INCHES
+    )
 
     fig = plt.figure(figsize=(FIGURE_WIDTH, FIGURE_HEIGHT))
 
     # note that legens, wspace and hspace are individual rows and columns
     gs = GridSpec(len(GS_HEIGHTS_INCHES), n_cols * 2,
                   figure=fig,
-                  height_ratios=[gs_height/FIGURE_HEIGHT for gs_height in GS_HEIGHTS_INCHES],
-                  width_ratios=[SUBPLOT_HEIGHT_INCHES/FIGURE_WIDTH, WSPACE_INCHES/FIGURE_WIDTH] * n_cols)
+                  height_ratios=[gs_height / FIGURE_HEIGHT for gs_height in GS_HEIGHTS_INCHES],
+                  width_ratios=[SUBPLOT_HEIGHT_INCHES / FIGURE_WIDTH, WSPACE_INCHES / FIGURE_WIDTH] * n_cols)
     i = -2
     for ct in celltypes:
         i += 2  # skip hspace row

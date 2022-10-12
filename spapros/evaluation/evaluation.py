@@ -668,9 +668,9 @@ class ProbesetEvaluator:
         pre_str = "_pre" if pre else ""
         if dir is None:
             assert self.dir is not None
-            return os.path.join(self.dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
+            return os.path.join(self.dir, f"{metric}", f"{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
         else:
-            return os.path.join(dir, f"{metric}/{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
+            return os.path.join(dir, f"{metric}", f"{metric}_{self.ref_name}_{set_id}{pre_str}.csv")
 
     def _default_reference_dir(
         self,
