@@ -1,6 +1,7 @@
 import anndata
 import scanpy as sc
 from spapros import ev
+import pytest
 
 
 def test_selecor_init(raw_selector):
@@ -30,3 +31,16 @@ def test_load_adata():
     adata.X = adata_raw.X
     sc.pp.log1p(adata)
     adata.obs["celltype"] = adata_tmp.obs["louvain"]
+
+
+def test_error_and_repeat(raw_selector):
+    raw_selector.verbosity = 2
+    # this line will lead to a TypeError
+    raw_selector.n_pca_genes = "string"
+    with pytest.raises(TypeError):
+        raw_selector.select_probeset()
+    # fixing the mistake
+    raw_selector.n_pca_genes = 100
+    # now check that restarting the evaluation works (earlier, the progress bars made trouble)
+    raw_selector.select_probeset()
+    # assert None

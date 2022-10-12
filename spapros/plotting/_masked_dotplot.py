@@ -224,7 +224,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
         self,
         adata: AnnData,
         var_names: Union[_VarNames, Mapping[str, _VarNames]],
-        groupby: Union[str, Sequence[str]],
+        groupby: Union[str, Sequence[str]] = "celltype",
         tree_genes: Optional[dict] = None,
         marker_genes: Optional[dict] = None,
         further_celltypes: Optional[Sequence[str]] = None,

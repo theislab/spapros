@@ -264,7 +264,11 @@ class ProbesetEvaluator:
         self.scheme = scheme
         self.marker_list = marker_list
         self.metrics_params = self._prepare_metrics_params(metrics_params)
-        self.metrics: List[str] = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
+        if scheme == "custom":
+            assert isinstance(metrics, list)
+            self.metrics: List[str] = metrics
+        else:
+            self.metrics = self._get_metrics_of_scheme()
         self.ref_name = reference_name
         self.ref_dir = reference_dir if (reference_dir is not None) else self._default_reference_dir()
         self.verbosity = verbosity
@@ -450,19 +454,19 @@ class ProbesetEvaluator:
                     if self.progress and self.verbosity > 1:
                         self.progress.advance(task_final_load)
 
-                if self.progress and self.verbosity > 0:
-                    self.progress.advance(task_final)
-
-                if update_summary:
-                    # self.summary_statistics(set_ids=[set_id])
-                    self.summary_statistics(set_ids=list(set(self._get_set_ids_with_results() + [set_id])))
-
             if self.progress and self.verbosity > 0:
-                self.progress.advance(evaluation_task)
-                self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
+                self.progress.advance(task_final)
 
-            if self.progress and self.started:
-                self.progress.stop()
+            if update_summary:
+                # self.summary_statistics(set_ids=[set_id])
+                self.summary_statistics(set_ids=list(set(self._get_set_ids_with_results() + [set_id])))
+
+        if self.progress and self.verbosity > 0:
+            self.progress.advance(evaluation_task)
+            self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
+
+        if self.progress and self.started:
+            self.progress.stop()
 
     def evaluate_probeset_pipeline(
         self, genes: List, set_id: str, shared_pre_results_path: List, step_specific_results: List

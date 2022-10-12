@@ -16,19 +16,19 @@ from spapros.util import util
 
 @pytest.fixture()
 def small_adata():
-    adata = sc.read_h5ad("tests/selection/test_data/small_data_raw_counts.h5ad")
+    small_adata = sc.read_h5ad("tests/selection/test_data/small_data_raw_counts.h5ad")
     # random.seed(0)
     # adata = adata[random.sample(range(adata.n_obs), 100), :]
-    return adata
+    return small_adata
 
 
 @pytest.fixture()
 def tiny_adata(small_adata):
     random.seed(0)
-    small_adata = small_adata[random.sample(range(small_adata.n_obs), 200), :]
-    sc.pp.filter_genes(small_adata, min_counts=3)
-    np.isnan(small_adata.X.toarray()).all(axis=1)
-    return small_adata
+    tiny_adata = small_adata[random.sample(range(small_adata.n_obs), 200), :]
+    sc.pp.filter_genes(tiny_adata, min_counts=3)
+    # np.isnan(small_adata.X.toarray()).all(axis=1)
+    return tiny_adata
 
 
 @pytest.fixture()
@@ -78,7 +78,7 @@ def selector_with_marker(tiny_adata):
 @pytest.fixture()
 def selector_with_penalties(tiny_adata, lower_th=1, upper_th=3.5):
 
-    # we don't set fixed expression thresholds. Instead we introduce smoothness factors (heuristic user choice)
+    # we don't set fixed expression thresholds. Instead, we introduce smoothness factors (heuristic user choice)
     factor = 1
     var = [factor * 0.1, factor * 0.5]
 
@@ -95,7 +95,7 @@ def selector_with_penalties(tiny_adata, lower_th=1, upper_th=3.5):
     tiny_adata.var['expression_penalty_upper'] = penalty(tiny_adata.var[f'quantile_0.99'])
 
     # lower
-    util.get_expression_quantile(tiny_adata, q=0.9, log1p=False, zeros_to_nan=True, normalise=False, )
+    util.get_expression_quantile(tiny_adata, q=0.9, log1p=False, zeros_to_nan=True, normalise=False)
     penalty = util.plateau_penalty_kernel(var=var, x_min=lower_th, x_max=None)
     tiny_adata.var['expression_penalty_lower'] = penalty(tiny_adata.var[f'quantile_0.9 expr > 0'])
 
@@ -127,7 +127,7 @@ def ref_probeset(
         seeds=seeds,
         verbosity=verbosity,
         save_dir=None if not save_dir else request.getfixturevalue(save_dir),
-        reference_selections=reference_selections,
+        methods=reference_selections,
     )
 
     return reference_probesets

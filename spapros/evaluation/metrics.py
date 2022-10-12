@@ -940,12 +940,13 @@ def xgboost_forest_classification(
         celltypes = adata.obs[ct_key].unique().tolist()
     # Filter out cell types with less cells than n_cells_min
     cell_counts = adata.obs[ct_key].value_counts().loc[celltypes]
-    if (cell_counts < n_cells_min).any() and (verbosity > 0):
-        print(
-            f"[bold yellow]The following cell types are not included in forest classifications since they have fewer "
-            f"than {n_cells_min} cells: {cell_counts.loc[cell_counts < n_cells_min].index.tolist()}"
-        )
+    if (cell_counts < n_cells_min).any():
         celltypes = [ct for ct in celltypes if (cell_counts.loc[ct] >= n_cells_min)]
+        if verbosity > 0:
+            print(
+                f"[bold yellow]The following cell types are not included in forest classifications since they have fewer "
+                f"than {n_cells_min} cells: {cell_counts.loc[cell_counts < n_cells_min].index.tolist()}"
+            )
 
     # Get data
     obs = adata.obs[ct_key].isin(celltypes)
@@ -997,7 +998,7 @@ def xgboost_forest_classification(
             sample_weight_train = compute_sample_weight("balanced", train_y)
             sample_weight_test = compute_sample_weight("balanced", test_y)
             # Fit the classifier
-            n_classes = len(np.unique(train_y))
+            # n_classes = len(np.unique(train_y))
             clf = XGBClassifier(
                 max_depth=max_depth,
                 num_class=n_classes,
@@ -1010,7 +1011,8 @@ def xgboost_forest_classification(
                 gamma=gamma,
                 booster="gbtree",  # TODO: compare with 'dart',rate_drop= 0.1
                 random_state=seed,
-                use_label_encoder=False,  # To get rid of deprecation warning we convert labels into ints
+                use_label_encoder=False,  # To get rid of deprecation warning we convert labels into ints  # without
+                # label encoding: exception n_classes <= max(labels)
                 n_jobs=n_jobs,
             )
             clf.fit(
@@ -1018,7 +1020,7 @@ def xgboost_forest_classification(
                 train_y,
                 sample_weight=sample_weight_train,
                 early_stopping_rounds=5,
-                eval_metric="mlogloss",
+                # eval_metric="mlogloss",  # now only in constructor
                 eval_set=[(test_x, test_y)],
                 sample_weight_eval_set=[sample_weight_test],
                 verbose=verbosity > 2,
@@ -1051,6 +1053,7 @@ def xgboost_forest_classification(
 
     if started and progress:
         progress.stop()
+
 
     # Pool confusion matrices
     confusions_merged = np.concatenate([np.expand_dims(mat, axis=-1) for mat in confusion_matrices], axis=-1)
