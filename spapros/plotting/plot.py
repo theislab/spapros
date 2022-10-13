@@ -1095,7 +1095,7 @@ def selection_histogram(
             assert isinstance(var_key, str)
 
             # get histogram data
-            selected_genes = selection_series.index[selection_series]  # selection_df.loc[selection_df[
+            selected_genes = selection_series.index[selection_series["selection"]]  # selection_df.loc[selection_df[
             # "selection"]].index
             mask = adata.var.index.isin(selected_genes)
             hist_data = adata[:, mask].var[var_key]
