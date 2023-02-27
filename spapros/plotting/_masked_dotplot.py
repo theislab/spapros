@@ -1,4 +1,3 @@
-from abc import ABC
 from typing import Literal
 from typing import Mapping
 from typing import Optional
@@ -21,7 +20,7 @@ _VarNames = Union[str, Sequence[str]]
 ColorLike = Union[str, Tuple[float, ...]]
 
 
-class _AxesSubplot(Axes, axes.SubplotBase, ABC):
+class _AxesSubplot(Axes, axes.SubplotBase):
     """Intersection between Axes and SubplotBase: Has methods of both"""
 
 
