@@ -50,7 +50,7 @@ def get_processed_pbmc_data(n_hvg: int = 1000):
     # Preprocess counts and get highly variable genes
     sc.pp.normalize_total(adata)
     sc.pp.log1p(adata)
-    sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=1000)
+    sc.pp.highly_variable_genes(adata, flavor="cell_ranger", n_top_genes=n_hvg)
 
     # TODO: with "quantiles" or "with_expr_penalty"  bool / Add note that these expression constraints might not fit
     #      real experiments
@@ -768,7 +768,6 @@ def marker_mean_difference(
 class NestedProgress(Progress):
     def get_renderables(self):
         for task in self.tasks:
-
             # extract those self devined fields
             level = task.fields.get("level") if task.fields.get("level") else 1
             only_text = task.fields.get("only_text") if task.fields.get("only_text") else False
