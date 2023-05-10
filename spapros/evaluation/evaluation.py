@@ -1,4 +1,5 @@
 import os
+import gc
 import pickle
 import warnings
 from enum import Enum
@@ -1912,6 +1913,11 @@ def single_forest_classifications(
             ct_trees[ct].append(ct_trees_i[ct])
         if progress and verbose:
             progress.advance(forest_task)
+        # garbage collection
+        del X_train
+        del y_train
+        del cts_train
+        gc.collect()
     # Get feature importances
     importances = {
         ct: pd.DataFrame(index=a.var.index, columns=[str(i) for i in range(n_trees)], dtype="float64")
@@ -1939,6 +1945,11 @@ def single_forest_classifications(
         cts_test=cts_test,
         masks=masks_test,
     )
+    #garbage collection
+    del X_test
+    del y_test
+    del cts_test
+    gc.collect()    
 
     # Sort results
     if sort_by_tree_performance:
