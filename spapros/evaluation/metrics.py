@@ -1000,18 +1000,17 @@ def xgboost_forest_classification(
             n_classes = len(np.unique(train_y))
             clf = XGBClassifier(
                 max_depth=max_depth,
-                num_class=n_classes,
+                num_class=n_classes if n_classes > 2 else None,
                 n_estimators=250,
                 objective="multi:softmax" if n_classes > 2 else "binary:logistic",
                 early_stopping_rounds=5,
-                eval_metric="mlogloss",
+                eval_metric="mlogloss" if n_classes > 2 else "logloss",
                 learning_rate=lr,
                 colsample_bytree=colsample_bytree,
                 min_child_weight=min_child_weight,
                 gamma=gamma,
                 booster="gbtree",  # TODO: compare with 'dart',rate_drop= 0.1
                 random_state=seed,
-                use_label_encoder=False,  # To get rid of deprecation warning we convert labels into ints
                 n_jobs=n_jobs,
             )
             clf.fit(
