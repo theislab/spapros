@@ -1957,6 +1957,7 @@ def select_reference_probesets(
     adata: sc.AnnData,
     n: int,
     genes_key: str = "highly_variable",
+    obs_key: str = "celltype",
     methods: Union[List[str], Dict[str, Dict]] = ["PCA", "DE", "HVG", "random"],
     seeds: List[int] = [0],
     verbosity: int = 2,
@@ -1971,6 +1972,8 @@ def select_reference_probesets(
             Number of selected genes.
         genes_key:
             adata.var key for subset of preselected genes to run the selections on (typically 'highly_variable_genes').
+        obs_key:
+            Only required for method 'DE'. Column name of `adata.obs` for which marker scores are calculated.
         methods:
             Methods used for selections. Supported methods and default are `['PCA', 'DE', 'HVG', 'random']`. To specify
             hyperparameters of the methods provide a dictionary, e.g.::
@@ -2024,6 +2027,10 @@ def select_reference_probesets(
                 selections.append(
                     {"method": method, "name": f"{method}{seed_str}", "params": dict(methods[method], **{"seed": seed})}
                 )
+        elif method == "DE":
+            selections.append(
+                {"method": method, "name": method, "params": dict(methods[method], **{"obs_key": obs_key})}
+            )
         else:
             selections.append({"method": method, "name": method, "params": methods[method]})
 
