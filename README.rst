@@ -50,14 +50,6 @@ You can install *spapros* via pip_ from PyPI_:
    $ pip install spapros
 
 
-Note! Currently the pip installation into an environment without `leidenalg` installed can lead to problems when running
-Spapros' knn-based evaluation (see `issue #234 <https://github.com/theislab/spapros/issues/234>`_). To solve this, run
-Spapros in a conda environment and install leidenalg before installing spapros via:
-
-.. code:: console
-
-    $ conda install -c conda-forge leidenalg
-
 
 Usage
 -----
