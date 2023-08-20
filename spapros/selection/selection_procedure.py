@@ -1424,11 +1424,12 @@ class ProbesetSelector:  # (object)
             else:
                 time_table = pd.DataFrame(columns=["step", "time (s)"])
 
-            # Add new measurement
-            time_table = time_table.append({"step": name, "time (s)": time_diff}, ignore_index=True)
+            if name not in time_table["step"].values:
+                # Add new measurement
+                time_table = time_table.append({"step": name, "time (s)": time_diff}, ignore_index=True)
                 
-            # Save table
-            time_table.to_csv(self.time_table_path)
+                # Save table
+                time_table.to_csv(self.time_table_path)
         
     
     # def _tqdm(self, iterator):
