@@ -1793,6 +1793,12 @@ class ProbesetSelector:  # (object)
 
         df = df.sort_values(by=["rank", "importance_score"], ascending=[True, False])
 
+        print(
+            "Note that the given feature importance scores are the maxima over cell types. In a future version we ",
+            "might plot cell type specific importance scores instead. For now please check ",
+            "selector.genes_of_primary_trees for cell type specific scores."
+        )
+
         pl.clf_genes_umaps(adata, df, **kwargs)
 
     # def plot_tree_performances(self) -> None:
