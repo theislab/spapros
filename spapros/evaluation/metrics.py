@@ -697,10 +697,19 @@ def knns(
     # Subset adata to gene set
     if isinstance(genes, str) and (genes == "all"):
         genes = adata.var_names
+        
     a = adata[:, genes].copy()
 
-    # Set n_pcs to 50 or number of genes if < 50
-    n_pcs = np.min([50, len(genes) - 1])
+    # Set n_pcs to 50 or number of genes if < 50. (Note that the neighbors graph is calculated on hvgs only if present)
+    if "highly_variable" in adata.var:
+        genes_hvg = a[:,a.var["highly_variable"]].var_names
+    else:
+        genes_hvg = genes
+    
+    n_pcs = np.min([50, len(genes_hvg) - 1])
+    
+    if n_pcs == 0:
+        print("There is no overlap of genes between the probeset and the reference dataset.")
 
     # Delete existing PCAs, neighbor graphs, etc. and calculate PCA for n_pcs
     uns = [key for key in a.uns]
@@ -715,30 +724,50 @@ def knns(
     obsp = [key for key in a.obsp]
     for o in obsp:
         del a.obsp[o]
-    sc.tl.pca(a, n_comps=n_pcs)  # use_highly_variable=False
+    
 
     # Get nearest neighbors for each k
-    df = pd.DataFrame(index=a.obs_names)
-    if progress:
-        task_knn = progress.add_task(description, level=level, total=len(ks))
-    for k in ks:
-        if "neighbors" in a.uns:
-            del a.uns["neighbors"]
-        if "connectivities" in a.obsp:
-            del a.obsp["connectivities"]
-        if "distances" in a.obsp:
-            del a.obsp["distances"]
-        sc.pp.neighbors(a, n_neighbors=k)
-        rows, cols = a.obsp["distances"].nonzero()
-        nns = []
-        for r in range(a.n_obs):
-            nns.append(cols[rows == r].tolist())
-        nn_df = pd.DataFrame(nns, index=a.obs_names)
-        nn_df.columns = [f"k{k}_{i}" for i in range(len(nn_df.columns))]
-        df = pd.concat([df, nn_df], axis=1)
-
+    if n_pcs > 0:
+        
+        df = pd.DataFrame(index=a.obs_names)
+        
         if progress:
-            progress.advance(task_knn)
+            task_knn = progress.add_task(description, level=level, total=len(ks))        
+        
+        sc.tl.pca(a, n_comps=n_pcs)  # use_highly_variable=False
+            
+        for k in ks:
+            if "neighbors" in a.uns:
+                del a.uns["neighbors"]
+            if "connectivities" in a.obsp:
+                del a.obsp["connectivities"]
+            if "distances" in a.obsp:
+                del a.obsp["distances"]
+            sc.pp.neighbors(a, n_neighbors=k)
+            rows, cols = a.obsp["distances"].nonzero()
+            nns = []
+            for r in range(a.n_obs):
+                nns.append(cols[rows == r].tolist())
+            nn_df = pd.DataFrame(nns, index=a.obs_names)
+            nn_df.columns = [f"k{k}_{i}" for i in range(len(nn_df.columns))]
+            df = pd.concat([df, nn_df], axis=1)
+    
+            if progress:
+                progress.advance(task_knn)
+    else:
+        
+        if progress:
+            task_knn = progress.add_task(description, level=level, total=1)                
+        
+        cols = [f"k{k}_{i}" for k in ks for i in range(k-1)]
+        df = pd.DataFrame(
+            index=a.obs_names,
+            columns=cols,
+            data=np.zeros((a.n_obs, len(cols)), dtype=int) - 1,
+        )
+        
+        if progress:
+            progress.advance(task_knn)        
 
     if progress and started:
         progress.stop()
