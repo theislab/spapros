@@ -1519,6 +1519,7 @@ def masked_dotplot(
     comb_marker_color: str = "darkblue",
     marker_color: str = "blue",
     non_adata_celltypes_color: str = "grey",
+    use_raw: bool = False,
     save: Union[bool, str] = False,
 ):
     """Create dotplot with additional annotation masks.
@@ -1550,6 +1551,8 @@ def masked_dotplot(
             Color for marker genes.
         non_adata_celltypes_color:
             Color for celltypes that don't occur in the data set.
+        use_raw:
+            Whether to use `adata.raw` for plotting.
         save:
             If `True` or a `str`, save the figure.
 
@@ -1652,6 +1655,7 @@ def masked_dotplot(
         tree_genes_color=comb_marker_color,
         marker_genes_color=marker_color,
         non_adata_celltypes_color=non_adata_celltypes_color,
+        use_raw=use_raw,
     )
     dp.make_figure()
     if save:
