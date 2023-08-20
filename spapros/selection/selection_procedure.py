@@ -559,9 +559,8 @@ class ProbesetSelector:  # (object)
                 self.progress.advance(selection_task)
                 self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
 
-            if self.save_dir:
+            if self.save_dir and (not os.path.exists(self.probeset_path)):
                 self.probeset.to_csv(self.probeset_path)
-            # TODO: we haven't included the checks to load the probeset if it already exists
 
     def _pca_selection(self) -> None:
         """Select genes based on pca loadings."""
@@ -1404,8 +1403,12 @@ class ProbesetSelector:  # (object)
                     )
                 self.loaded_attributes.append(f"forest_clfs_{f}")
 
-
-        #TODO: Add probeset table here!?
+        # probeset
+        if os.path.exists(self.probeset_path):
+            self.probeset = pd.read_csv(self.probeset_path, index_col=0)
+            if self.verbosity > 1:
+                print(f"\t Found and load {os.path.basename(self.probeset_path)} (probeset).")
+            self.loaded_attributes.append("probeset")
     
     def _save_time_measurement(self, name: str, start_time: float) -> None:
         """ Save time measurement to table if save_dir is given.
