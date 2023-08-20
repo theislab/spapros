@@ -1,6 +1,7 @@
 import json
 import os
 import pickle
+import time
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -521,24 +522,34 @@ class ProbesetSelector:  # (object)
                 )
 
             # PCA based pre selection
+            t = time.time()
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._pca_selection()
+            self._save_time_measurement("PCA_selection", t)
 
             # DE forests
+            t = time.time()
             self._forest_DE_baseline_selection()
+            self._save_time_measurement("DE_forest_selection", t)
 
             # PCA forests (including optimization based on DE forests), or just DE forests if no PCA genes were selected
+            t = time.time()
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._forest_selection()
             else:
                 self._set_DE_baseline_forest_to_final_forest()
+            self._save_time_measurement("PCA_forest_selection", t)
 
             # Add markers from curated list
+            t = time.time()
             if self.marker_list:
                 self._marker_selection()
+            self._save_time_measurement("marker_selection", t)
 
             # Compile probe set
+            t = time.time()
             self.probeset = self._compile_probeset_list()
+            self._save_time_measurement("compile_probeset", t)
             self.selection["final"] = self.probeset
 
             # Save attribute genes_of_primary_trees
@@ -1335,6 +1346,9 @@ class ProbesetSelector:  # (object)
 
         # Final probeset result
         self.probeset_path = os.path.join(self.save_dir, "probeset.csv")
+        
+        # Table for time measurements
+        self.time_table_path = os.path.join(self.save_dir, "time_measurements.csv")
 
     def _load_from_disk(self) -> None:
         """Load existing files into variables."""
@@ -1390,6 +1404,33 @@ class ProbesetSelector:  # (object)
                     )
                 self.loaded_attributes.append(f"forest_clfs_{f}")
 
+
+        #TODO: Add probeset table here!?
+    
+    def _save_time_measurement(self, name: str, start_time: float) -> None:
+        """ Save time measurement to table if save_dir is given.
+        
+        Args:
+            name: Name of the time measurement.
+            start_time: Time when the measurement started.
+        """
+        
+        time_diff = time.time() - start_time
+        
+        if self.save_dir:
+            # Load table if it exists
+            if os.path.exists(self.time_table_path):
+                time_table = pd.read_csv(self.time_table_path, index_col=0)
+            else:
+                time_table = pd.DataFrame(columns=["step", "time (s)"])
+
+            # Add new measurement
+            time_table = time_table.append({"step": name, "time (s)": time_diff}, ignore_index=True)
+                
+            # Save table
+            time_table.to_csv(self.time_table_path)
+        
+    
     # def _tqdm(self, iterator):
     #     """Wrapper for tqdm with verbose condition."""
     #     return tqdm(iterator) if self.verbosity >= 1 else iterator
