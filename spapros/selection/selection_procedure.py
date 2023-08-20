@@ -1426,7 +1426,10 @@ class ProbesetSelector:  # (object)
 
             if name not in time_table["step"].values:
                 # Add new measurement
-                time_table = time_table.append({"step": name, "time (s)": time_diff}, ignore_index=True)
+                time_table = pd.concat(
+                    [time_table, pd.DataFrame(data={"step": [name], "time (s)": [time_diff]})], 
+                    ignore_index=True
+                )
                 
                 # Save table
                 time_table.to_csv(self.time_table_path)
