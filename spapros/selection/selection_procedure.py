@@ -1406,6 +1406,9 @@ class ProbesetSelector:  # (object)
         # probeset
         if os.path.exists(self.probeset_path):
             self.probeset = pd.read_csv(self.probeset_path, index_col=0)
+            for key in self.probeset.columns:
+                if self.probeset.dtypes[key] == "object":
+                    self.probeset[key].fillna("", inplace=True)
             if self.verbosity > 1:
                 print(f"\t Found and load {os.path.basename(self.probeset_path)} (probeset).")
             self.loaded_attributes.append("probeset")
