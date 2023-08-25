@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html class="writer-html5" lang="en" >
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
-
+  <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>End to end selection &mdash; spapros docs</title>
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -22,8 +21,9 @@
         <script src="../_static/underscore.js"></script>
         <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
         <script src="../_static/doctools.js"></script>
+        <script src="../_static/sphinx_highlight.js"></script>
         <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
-        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@jupyter-widgets/html-manager@^1.0.1/dist/embed-amd.js"></script>
         <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
         <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
         <script src="../_static/dark_mode_js/default_light.js"></script>
@@ -115,7 +115,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="End-to-end-selection">
+  <div class="section" id="End-to-end-selection">
 <h1>End to end selection<a class="headerlink" href="#End-to-end-selection" title="Permalink to this heading"></a></h1>
 <p>In this tutorial we showcase how to design probesets and select a suitable gene set with the <code class="docutils literal notranslate"><span class="pre">spapros</span></code> package. For all genes we design probes that fulfill experiment specific requirements and select only genes for which we can design sufficient probes. Spapros then selects genes that can distinguish the cell types in the data set and capture transcriptomic varation beyond cell type labels. The final probe sequences are designed in a last step for all selected genes. The figure below gives and
 overview on the pipeline.</p>
@@ -127,29 +127,29 @@ overview on the pipeline.</p>
 <img alt="../_images/_tutorials_spapros_tutorial_end_to_end_selection_2_0.png" class="no-scaled-link" src="../_images/_tutorials_spapros_tutorial_end_to_end_selection_2_0.png" style="width: 900px;" />
 </div>
 </div>
-<section id="Import-Packages">
+<div class="section" id="Import-Packages">
 <h2>Import Packages<a class="headerlink" href="#Import-Packages" title="Permalink to this heading"></a></h2>
 <p>Besides <code class="docutils literal notranslate"><span class="pre">spapros</span></code> also install <code class="docutils literal notranslate"><span class="pre">oligo_designer_toolsuite</span></code> if not done already. First we need to install some dependencies:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda config --add channels bioconda
-conda config --add channels conda-forge
-conda update conda
-conda update --all
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>bioconda
+conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>conda-forge
+conda<span class="w"> </span>update<span class="w"> </span>conda
+conda<span class="w"> </span>update<span class="w"> </span>--all
 
-conda install <span class="s2">&quot;blast&gt;=2.12&quot;</span>
-conda install <span class="s2">&quot;bedtools&gt;=2.30&quot;</span>
-conda install <span class="s2">&quot;bowtie&gt;=1.3.1&quot;</span>
-conda install <span class="s2">&quot;bowtie2&gt;=2.5&quot;</span>
+conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;blast&gt;=2.12&quot;</span>
+conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;bedtools&gt;=2.30&quot;</span>
+conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;bowtie&gt;=1.3.1&quot;</span>
+conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;bowtie2&gt;=2.5&quot;</span>
 </pre></div>
 </div>
 <p>To run the code below we need to install the current dev version of the oligo designer:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/HelmholtzAI-Consultants-Munich/oligo-designer-toolsuite.git
-<span class="nb">cd</span> oligo-designer-toolsuite
-git switch pipelines
-pip install -e .
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/HelmholtzAI-Consultants-Munich/oligo-designer-toolsuite.git
+<span class="nb">cd</span><span class="w"> </span>oligo-designer-toolsuite
+git<span class="w"> </span>switch<span class="w"> </span>pipelines
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
 <p>Otherwise, if that didn’t work, try:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install oligo_designer_toolsuite
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>oligo_designer_toolsuite
 </pre></div>
 </div>
 <div class="nbinput docutils container">
@@ -176,8 +176,8 @@ scanpy==1.9.3 anndata==0.9.2 umap==0.5.3 numpy==1.24.4 scipy==1.11.1 pandas==1.5
 spapros==0.1.3
 </pre></div></div>
 </div>
-</section>
-<section id="Load-and-Preprocess-Data">
+</div>
+<div class="section" id="Load-and-Preprocess-Data">
 <h2>Load and Preprocess Data<a class="headerlink" href="#Load-and-Preprocess-Data" title="Permalink to this heading"></a></h2>
 <p>For this tutorial, we use a PBMC example scRNA-seq reference dataset. The count data should be log-normalised and genes should <strong>not</strong> be scaled to mean=0 and std=1. We can load the processed version of the data, including cell / gene filters, cell type annotations, and the umap embedding, directly with <code class="docutils literal notranslate"><span class="pre">sp.ut.get_processed_pbmc_data()</span></code> function. For a step by step processing of the PBMC dataset please refer to the <a class="reference internal" href="spapros_tutorial_basic_selection.html"><span class="doc">basic usage tutorial</span></a>. For sake
 of simplicity, we pre-select the top 1000 highly variable genes for the probe and geneset selection. In real world applications we typically go for top 8000 genes.</p>
@@ -199,8 +199,8 @@ of simplicity, we pre-select the top 1000 highly variable genes for the probe an
 Number of highly variable genes: 1000
 </pre></div></div>
 </div>
-</section>
-<section id="Probeset-Design">
+</div>
+<div class="section" id="Probeset-Design">
 <h2>Probeset Design<a class="headerlink" href="#Probeset-Design" title="Permalink to this heading"></a></h2>
 <p>Before choosing a gene panel, we design probesets for our given set of 1000 highly variable genes that fulfill certain experiment-specific criteria. Therefore, we first create an instance of a ProbeDesigner class, where we can choose from <code class="docutils literal notranslate"><span class="pre">ScrinshotProbeDesigner</span></code>, <code class="docutils literal notranslate"><span class="pre">MerfishProbeDesigner</span></code> an <code class="docutils literal notranslate"><span class="pre">SeqfishPlusProbeDesigner</span></code> (see our <a class="reference external" href="https://www.google.com/url?q=https://docs.google.com/spreadsheets/d/1NCDLscdmzn32U7_IKy6OKYHqfECn76x0pAD3KFhuJgQ/edit%23gid%3D0&amp;sa=D&amp;source=docs&amp;ust=1692975800552487&amp;usg=AOvVaw20CRwiObnVkWVS54CcqXMq">resource
 table</a> for an overview of differences between the technologies). For each of those classes, we need to define an output directory and set the parameters <code class="docutils literal notranslate"><span class="pre">write_removed_genes</span></code> (if true, save gene with insufficient probes in a file) and <code class="docutils literal notranslate"><span class="pre">write_intermediate_steps</span></code> (if true, save the probe
@@ -227,7 +227,7 @@ database after each processing step, such that the pipline can resume from a cer
 </div>
 <p>After instatiating a ProbeDesigner class, we need to load the annotation we are using. Our example dataset uses the NCBI gene annotation. Hence, we define <em>ncbi</em> as source and define the NCBI-specific parameters <em>taxon</em>, <em>species</em> and <em>annotation_release</em>. Apart from <em>NCBI</em> annotation, we can also choose an <em>Ensembl</em> annotation. If <code class="docutils literal notranslate"><span class="pre">source=&quot;ncbi&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">source=&quot;ensembl&quot;</span></code> is choosen, the annotation files are automatically downloaded from their servers. In addition, we can provide a custom
 annotation when specifying <code class="docutils literal notranslate"><span class="pre">source=&quot;custom&quot;</span></code>.</p>
-<section id="Parameters-for-annotation-loader">
+<div class="section" id="Parameters-for-annotation-loader">
 <h3>Parameters for annotation loader<a class="headerlink" href="#Parameters-for-annotation-loader" title="Permalink to this heading"></a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">source</span></code>: define annotation source -&gt; currently supported: ncbi, ensembl and custom</p></li>
@@ -283,8 +283,8 @@ most recent annotation release. Check out release numbers for NCBI at ftp.ncbi.n
 </pre></div></div>
 </div>
 <p>After downloading the annotations, we have to create the oligo database. Running the function below, will automatically create a transcriptome from the given annotation (therefore, the provided GTF file must contain transcript and exon information) and use this transcriptome to create all possible probes for each gene, that is provided in the <em>gene</em> list.</p>
-</section>
-<section id="Parameters-for-Probe-Sequences-Database">
+</div>
+<div class="section" id="Parameters-for-Probe-Sequences-Database">
 <h3>Parameters for Probe Sequences Database<a class="headerlink" href="#Parameters-for-Probe-Sequences-Database" title="Permalink to this heading"></a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">probe_length_min</span></code>: minimum length of probes</p></li>
@@ -326,8 +326,8 @@ most recent annotation release. Check out release numbers for NCBI at ftp.ncbi.n
 </pre></div></div>
 </div>
 <p>In order to create experiment-specific probes, we have to apply several filter to each probe, e.g. melting temperature or GC content filters.</p>
-</section>
-<section id="Parameters-for-Property-Filters">
+</div>
+<div class="section" id="Parameters-for-Property-Filters">
 <h3>Parameters for Property Filters<a class="headerlink" href="#Parameters-for-Property-Filters" title="Permalink to this heading"></a></h3>
 <p><em>Parameters for Probe Sequence:</em> - GC_content_min: minimum GC content of probes - GC_content_max: maximum GC content of probes - Tm_min: minimum melting temperature of probes - Tm_max: maximum melting temperature of probes</p>
 <p><em>Parameters for Padlock Arms:</em> - min_arm_length: minimum length of each arm - max_arm_Tm_dif: maximum melting temperature difference of both arms - arm_Tm_min: minimum melting temperature of each arm (difference shouldn’t be higher than 5! But range is not super important, the lower the better) - arm_Tm_max: maximum melting temperature of each arm</p>
@@ -378,8 +378,8 @@ most recent annotation release. Check out release numbers for NCBI at ftp.ncbi.n
 2023-05-26 21:18:45,849 [INFO] Step - Filter Probes by Sequence Property: the database contains 3732914 probes from 882 genes, while 32224282 probes and 5 genes have been deleted in this step.
 </pre></div></div>
 </div>
-</section>
-<section id="Parameters-for-Specificity-Filters">
+</div>
+<div class="section" id="Parameters-for-Specificity-Filters">
 <h3>Parameters for Specificity Filters<a class="headerlink" href="#Parameters-for-Specificity-Filters" title="Permalink to this heading"></a></h3>
 <p><em>BlastN Similarity Filter:</em> - blast_word_size: word size for the blastn seed (exact match to target) - blast_percent_identity: maximum similarity between oligos and target sequences, ranging from 0 to 100% (no missmatch) - blast_coverage: minimum coverage between oligos and target sequence, ranging from 0 to 100% (full coverage)</p>
 <p><em>Bowtie Ligation Region filter:</em> - ligation_region_size: size of the seed region around the ligation site for bowtie seed region filter</p>
@@ -433,8 +433,8 @@ most recent annotation release. Check out release numbers for NCBI at ftp.ncbi.n
 </pre></div></div>
 </div>
 <p>After applying different sets of filters to the probe database, we will create probesets for each gene, which are sets of probes that do not overlap and have a high efficiency score (calculated from melting temperature and GC content).</p>
-</section>
-<section id="Parameters-for-Oligo-Efficiency-Score">
+</div>
+<div class="section" id="Parameters-for-Oligo-Efficiency-Score">
 <h3>Parameters for Oligo Efficiency Score<a class="headerlink" href="#Parameters-for-Oligo-Efficiency-Score" title="Permalink to this heading"></a></h3>
 <ul class="simple">
 <li><p>Tm_min: minimum melting temperature of probes</p></li>
@@ -446,8 +446,8 @@ most recent annotation release. Check out release numbers for NCBI at ftp.ncbi.n
 <li><p>GC_content_opt: optimal GC content of probes</p></li>
 <li><p>GC_weight: weight of the GC content of the probe in the efficiency score</p></li>
 </ul>
-</section>
-<section id="Parameters-for-Oligosets-Generation">
+</div>
+<div class="section" id="Parameters-for-Oligosets-Generation">
 <h3>Parameters for Oligosets Generation<a class="headerlink" href="#Parameters-for-Oligosets-Generation" title="Permalink to this heading"></a></h3>
 <ul class="simple">
 <li><p>probeset_size_opt: ideal number of oligos per probeset</p></li>
@@ -583,8 +583,8 @@ The genes selected for those cell types potentially don&#39;t generalize well. F
 </pre></div>
 </div>
 <p>Once we have all selected genes, we create the final “read to order” probe sequences. Calling the fuction below will produce two files, *[padlock, merfish, seqfish]_probes* and *[padlock, merfish, seqfish]_probes_order*. The latter file contains the ready to order probe sequences for each gene.</p>
-</section>
-<section id="Parameters-for-Padlock-Final-Sequence-Design">
+</div>
+<div class="section" id="Parameters-for-Padlock-Final-Sequence-Design">
 <h3>Parameters for Padlock Final Sequence Design<a class="headerlink" href="#Parameters-for-Padlock-Final-Sequence-Design" title="Permalink to this heading"></a></h3>
 <ul class="simple">
 <li><p>detect_oligo_length_min: minimum length of detection oligo</p></li>
@@ -633,9 +633,9 @@ The genes selected for those cell types potentially don&#39;t generalize well. F
 2023-05-27 03:23:40,347 [INFO] Step - Design Final Padlock Sequences: padlock sequences are stored in &#39;./output/padlock_sequences/padlock_sequences&#39; directory.
 </pre></div></div>
 </div>
-</section>
-</section>
-</section>
+</div>
+</div>
+</div>
 
 
            </div>
