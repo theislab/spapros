@@ -8,6 +8,7 @@
       <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
       <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
       <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
       <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
       <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
@@ -47,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.2
+                0.1.4
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -68,17 +69,17 @@
 <li class="toctree-l3"><a class="reference internal" href="#Load-and-preprocess-data">Load and preprocess data</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#Run-selection">Run selection</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#Vizualize-and-investigate-the-results">Vizualize and investigate the results</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#What’s-next?">What’s next?</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#What's-next?">What’s next?</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_basic_evaluation.html">Evaluation of probe sets</a></li>
 <li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_advanced_selection.html">Advanced probeset selection</a></li>
 <li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_advanced_evaluation.html">Advanced evaluation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_end_to_end_selection_short.html">End to end selection (short version)</a></li>
 <li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_end_to_end_selection.html">End to end selection</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 </ul>
 
@@ -107,286 +108,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS for nbsphinx extension */
-
-/* remove conflicting styling from Sphinx themes */
-div.nbinput.container div.prompt *,
-div.nboutput.container div.prompt *,
-div.nbinput.container div.input_area pre,
-div.nboutput.container div.output_area pre,
-div.nbinput.container div.input_area .highlight,
-div.nboutput.container div.output_area .highlight {
-    border: none;
-    padding: 0;
-    margin: 0;
-    box-shadow: none;
-}
-
-div.nbinput.container > div[class*=highlight],
-div.nboutput.container > div[class*=highlight] {
-    margin: 0;
-}
-
-div.nbinput.container div.prompt *,
-div.nboutput.container div.prompt * {
-    background: none;
-}
-
-div.nboutput.container div.output_area .highlight,
-div.nboutput.container div.output_area pre {
-    background: unset;
-}
-
-div.nboutput.container div.output_area div.highlight {
-    color: unset;  /* override Pygments text color */
-}
-
-/* avoid gaps between output lines */
-div.nboutput.container div[class*=highlight] pre {
-    line-height: normal;
-}
-
-/* input/output containers */
-div.nbinput.container,
-div.nboutput.container {
-    display: -webkit-flex;
-    display: flex;
-    align-items: flex-start;
-    margin: 0;
-    width: 100%;
-}
-@media (max-width: 540px) {
-    div.nbinput.container,
-    div.nboutput.container {
-        flex-direction: column;
-    }
-}
-
-/* input container */
-div.nbinput.container {
-    padding-top: 5px;
-}
-
-/* last container */
-div.nblast.container {
-    padding-bottom: 5px;
-}
-
-/* input prompt */
-div.nbinput.container div.prompt pre {
-    color: #307FC1;
-}
-
-/* output prompt */
-div.nboutput.container div.prompt pre {
-    color: #BF5B3D;
-}
-
-/* all prompts */
-div.nbinput.container div.prompt,
-div.nboutput.container div.prompt {
-    width: 4.5ex;
-    padding-top: 5px;
-    position: relative;
-    user-select: none;
-}
-
-div.nbinput.container div.prompt > div,
-div.nboutput.container div.prompt > div {
-    position: absolute;
-    right: 0;
-    margin-right: 0.3ex;
-}
-
-@media (max-width: 540px) {
-    div.nbinput.container div.prompt,
-    div.nboutput.container div.prompt {
-        width: unset;
-        text-align: left;
-        padding: 0.4em;
-    }
-    div.nboutput.container div.prompt.empty {
-        padding: 0;
-    }
-
-    div.nbinput.container div.prompt > div,
-    div.nboutput.container div.prompt > div {
-        position: unset;
-    }
-}
-
-/* disable scrollbars and line breaks on prompts */
-div.nbinput.container div.prompt pre,
-div.nboutput.container div.prompt pre {
-    overflow: hidden;
-    white-space: pre;
-}
-
-/* input/output area */
-div.nbinput.container div.input_area,
-div.nboutput.container div.output_area {
-    -webkit-flex: 1;
-    flex: 1;
-    overflow: auto;
-}
-@media (max-width: 540px) {
-    div.nbinput.container div.input_area,
-    div.nboutput.container div.output_area {
-        width: 100%;
-    }
-}
-
-/* input area */
-div.nbinput.container div.input_area {
-    border: 1px solid #e0e0e0;
-    border-radius: 2px;
-    /*background: #f5f5f5;*/
-}
-
-/* override MathJax center alignment in output cells */
-div.nboutput.container div[class*=MathJax] {
-    text-align: left !important;
-}
-
-/* override sphinx.ext.imgmath center alignment in output cells */
-div.nboutput.container div.math p {
-    text-align: left;
-}
-
-/* standard error */
-div.nboutput.container div.output_area.stderr {
-    background: #fdd;
-}
-
-/* ANSI colors */
-.ansi-black-fg { color: #3E424D; }
-.ansi-black-bg { background-color: #3E424D; }
-.ansi-black-intense-fg { color: #282C36; }
-.ansi-black-intense-bg { background-color: #282C36; }
-.ansi-red-fg { color: #E75C58; }
-.ansi-red-bg { background-color: #E75C58; }
-.ansi-red-intense-fg { color: #B22B31; }
-.ansi-red-intense-bg { background-color: #B22B31; }
-.ansi-green-fg { color: #00A250; }
-.ansi-green-bg { background-color: #00A250; }
-.ansi-green-intense-fg { color: #007427; }
-.ansi-green-intense-bg { background-color: #007427; }
-.ansi-yellow-fg { color: #DDB62B; }
-.ansi-yellow-bg { background-color: #DDB62B; }
-.ansi-yellow-intense-fg { color: #B27D12; }
-.ansi-yellow-intense-bg { background-color: #B27D12; }
-.ansi-blue-fg { color: #208FFB; }
-.ansi-blue-bg { background-color: #208FFB; }
-.ansi-blue-intense-fg { color: #0065CA; }
-.ansi-blue-intense-bg { background-color: #0065CA; }
-.ansi-magenta-fg { color: #D160C4; }
-.ansi-magenta-bg { background-color: #D160C4; }
-.ansi-magenta-intense-fg { color: #A03196; }
-.ansi-magenta-intense-bg { background-color: #A03196; }
-.ansi-cyan-fg { color: #60C6C8; }
-.ansi-cyan-bg { background-color: #60C6C8; }
-.ansi-cyan-intense-fg { color: #258F8F; }
-.ansi-cyan-intense-bg { background-color: #258F8F; }
-.ansi-white-fg { color: #C5C1B4; }
-.ansi-white-bg { background-color: #C5C1B4; }
-.ansi-white-intense-fg { color: #A1A6B2; }
-.ansi-white-intense-bg { background-color: #A1A6B2; }
-
-.ansi-default-inverse-fg { color: #FFFFFF; }
-.ansi-default-inverse-bg { background-color: #000000; }
-
-.ansi-bold { font-weight: bold; }
-.ansi-underline { text-decoration: underline; }
-
-
-div.nbinput.container div.input_area div[class*=highlight] > pre,
-div.nboutput.container div.output_area div[class*=highlight] > pre,
-div.nboutput.container div.output_area div[class*=highlight].math,
-div.nboutput.container div.output_area.rendered_html,
-div.nboutput.container div.output_area > div.output_javascript,
-div.nboutput.container div.output_area:not(.rendered_html) > img{
-    padding: 5px;
-    margin: 0;
-}
-
-/* fix copybtn overflow problem in chromium (needed for 'sphinx_copybutton') */
-div.nbinput.container div.input_area > div[class^='highlight'],
-div.nboutput.container div.output_area > div[class^='highlight']{
-    overflow-y: hidden;
-}
-
-/* hide copybtn icon on prompts (needed for 'sphinx_copybutton') */
-.prompt .copybtn {
-    display: none;
-}
-
-/* Some additional styling taken form the Jupyter notebook CSS */
-.jp-RenderedHTMLCommon table,
-div.rendered_html table {
-  border: none;
-  border-collapse: collapse;
-  border-spacing: 0;
-  color: black;
-  font-size: 12px;
-  table-layout: fixed;
-}
-.jp-RenderedHTMLCommon thead,
-div.rendered_html thead {
-  border-bottom: 1px solid black;
-  vertical-align: bottom;
-}
-.jp-RenderedHTMLCommon tr,
-.jp-RenderedHTMLCommon th,
-.jp-RenderedHTMLCommon td,
-div.rendered_html tr,
-div.rendered_html th,
-div.rendered_html td {
-  text-align: right;
-  vertical-align: middle;
-  padding: 0.5em 0.5em;
-  line-height: normal;
-  white-space: normal;
-  max-width: none;
-  border: none;
-}
-.jp-RenderedHTMLCommon th,
-div.rendered_html th {
-  font-weight: bold;
-}
-.jp-RenderedHTMLCommon tbody tr:nth-child(odd),
-div.rendered_html tbody tr:nth-child(odd) {
-  background: #f5f5f5;
-}
-.jp-RenderedHTMLCommon tbody tr:hover,
-div.rendered_html tbody tr:hover {
-  background: rgba(66, 165, 245, 0.2);
-}
-
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="Probeset-selection-with-Spapros">
+  <section id="Probeset-selection-with-Spapros">
 <h1>Probeset selection with Spapros<a class="headerlink" href="#Probeset-selection-with-Spapros" title="Permalink to this heading"></a></h1>
 <p>In this tutorial we showcase how to select a gene set with Spapros.</p>
 <p>Based on a scRNA-seq reference dataset Spapros selects genes that can distinguish the cell types in that data set and capture transcriptomic varation beyond cell type labels.</p>
@@ -520,7 +242,7 @@ The genes selected for those cell types potentially don&#39;t generalize well. F
 </pre></div></div>
 </div>
 <p>We get a warning that the cell type clusters for dendritic cells and megakaroycytes are quite small and therefore the genes that are selected to identify these cell types potentially don’t generalize very well. The method won’t exclude these cell types automatically, it could be done manually though by setting the parameter <code class="docutils literal notranslate"><span class="pre">celltypes</span></code> to a subset of cell types instead of <code class="docutils literal notranslate"><span class="pre">celltypes=&quot;all&quot;</span></code>.</p>
-<p>Run the central method for probe set selection. (Takes ~5 min for the given example. Note that the progress bars should be properly displayed with jupyter notebook, however jupyter lab or e.g. vscode can lead to incomplete display)</p>
+<p>Run the central method for probe set selection. (Takes ~5 min for the given example. Note that the progress bars should be properly displayed with jupyter notebook, however jupyter lab or e.g. vscode can lead to incomplete display)</p>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
@@ -891,8 +613,8 @@ Index([&#39;PF4&#39;, &#39;HLA-DPB1&#39;, &#39;FCGR3A&#39;, &#39;GZMB&#39;, &#39
 <li><p>The first DE tests to train optimal classification trees are tests between each cell type and all other cell types as background (DE_1vsall). To further optimise the trees we run DE tests between cell type clusters that are more difficult to distinguish (DE_specific). We find 4 genes that originate from the specific tests that didn’t occur in the 1 vs all tests.</p></li>
 </ul>
 </section>
-<section id="What’s-next?">
-<h2>What’s next?<a class="headerlink" href="#What’s-next?" title="Permalink to this heading"></a></h2>
+<section id="What's-next?">
+<h2>What’s next?<a class="headerlink" href="#What's-next?" title="Permalink to this heading"></a></h2>
 <p>You can now evaluate the selected probeset. See our <a class="reference internal" href="spapros_tutorial_basic_evaluation.html"><span class="doc">basic evaluation tutorial</span></a>.</p>
 <p>If you want to customize and improve the probeset selection, have a look at the <a class="reference internal" href="spapros_tutorial_advanced_selection.html"><span class="doc">advanced selection tutorial</span></a>.</p>
 <p>Check out the <a class="reference internal" href="spapros_tutorial_end_to_end_selection.html"><span class="doc">end-to-end selection tutorial</span></a> for the full pipline that includes probe design and gene panel selection.</p>
@@ -912,7 +634,7 @@ Index([&#39;PF4&#39;, &#39;HLA-DPB1&#39;, &#39;FCGR3A&#39;, &#39;GZMB&#39;, &#39
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, Lukas Heumos.</p>
+    <p>&#169; Copyright 2022, Lukas Heumos.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

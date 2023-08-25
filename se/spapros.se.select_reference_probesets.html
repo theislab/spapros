@@ -45,7 +45,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.2
+                0.1.4
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -74,7 +74,6 @@
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../changelog.html">Changelog</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
 </ul>
 
@@ -103,35 +102,11 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  
-<style>
-/* CSS overrides for sphinx_rtd_theme */
-
-/* 24px margin */
-.nbinput.nblast.container,
-.nboutput.nblast.container {
-    margin-bottom: 19px;  /* padding has already 5px */
-}
-
-/* ... except between code cells! */
-.nblast.container + .nbinput.container {
-    margin-top: -19px;
-}
-
-.admonition > p:before {
-    margin-right: 4px;  /* make room for the exclamation icon */
-}
-
-/* Fix math alignment, see https://github.com/rtfd/sphinx_rtd_theme/pull/686 */
-.math {
-    text-align: unset;
-}
-</style>
-<section id="spapros-se-select-reference-probesets">
+  <section id="spapros-se-select-reference-probesets">
 <h1>spapros.se.select_reference_probesets<a class="headerlink" href="#spapros-se-select-reference-probesets" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.se.select_reference_probesets">
-<span class="sig-prename descclassname"><span class="pre">spapros.se.</span></span><span class="sig-name descname"><span class="pre">select_reference_probesets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'highly_variable'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">methods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['PCA',</span> <span class="pre">'DE',</span> <span class="pre">'HVG',</span> <span class="pre">'random']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.se.select_reference_probesets" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spapros.se.</span></span><span class="sig-name descname"><span class="pre">select_reference_probesets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'highly_variable'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'celltype'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">methods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['PCA',</span> <span class="pre">'DE',</span> <span class="pre">'HVG',</span> <span class="pre">'random']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.se.select_reference_probesets" title="Permalink to this definition"></a></dt>
 <dd><p>Select reference probesets with basic selection methods.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
@@ -139,6 +114,7 @@
 <li><p><strong>adata</strong> (<em>AnnData</em>) – Data with log normalised counts in adata.X.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – Number of selected genes.</p></li>
 <li><p><strong>genes_key</strong> (<em>str</em>) – adata.var key for subset of preselected genes to run the selections on (typically ‘highly_variable_genes’).</p></li>
+<li><p><strong>obs_key</strong> (<em>str</em>) – Only required for method ‘DE’. Column name of <cite>adata.obs</cite> for which marker scores are calculated.</p></li>
 <li><p><strong>methods</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>]</em><em>]</em>) – <p>Methods used for selections. Supported methods and default are <cite>[‘PCA’, ‘DE’, ‘HVG’, ‘random’]</cite>. To specify
 hyperparameters of the methods provide a dictionary, e.g.:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
@@ -179,7 +155,7 @@ the selected probeset. For some methods, additional information is provided in o
   <hr/>
 
   <div role="contentinfo">
-    <p>&#169; Copyright 2021, Lukas Heumos.</p>
+    <p>&#169; Copyright 2022, Lukas Heumos.</p>
   </div>
 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a

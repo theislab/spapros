@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.17: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>End to end selection (short version) &mdash; spapros docs</title>
+      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/nbsphinx-code-cells.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+    <link rel="shortcut icon" href="../_static/logo.png"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script crossorigin="anonymous" integrity="sha256-Ae2Vz/4ePdIu6ZyI/5ZGsYnb+m0JlOmKPjt6XZ9JJkA=" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+        <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+        <script>window.MathJax = {"tex": {"inlineMath": [["$", "$"], ["\\(", "\\)"]], "processEscapes": true}, "options": {"ignoreHtmlClass": "tex2jax_ignore|mathjax_ignore|document", "processHtmlClass": "tex2jax_process|mathjax_process|math|output_area"}}</script>
+        <script defer="defer" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+        <script src="../_static/dark_mode_js/default_light.js"></script>
+        <script src="../_static/dark_mode_js/theme_switcher.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="End to end selection" href="spapros_tutorial_end_to_end_selection.html" />
+    <link rel="prev" title="Advanced evaluation" href="spapros_tutorial_advanced_evaluation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            spapros
+              <img src="../_static/logo.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.1.4
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">CONTENTS:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_basic_selection.html">Probeset selection with Spapros</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_basic_evaluation.html">Evaluation of probe sets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_advanced_selection.html">Advanced probeset selection</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_advanced_evaluation.html">Advanced evaluation</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">End to end selection (short version)</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#Import-Packages">Import Packages</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Load-and-Preprocess-Data">Load and Preprocess Data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Probe-Design">Probe Design</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#Load-probe-design-filter-and-run-gene-panel-selection">Load probe design filter and run gene panel selection</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_end_to_end_selection.html">End to end selection</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../authors.html">Credits</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../code_of_conduct.html">Contributor Covenant Code of Conduct</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">spapros</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../tutorials.html">Tutorials</a></li>
+      <li class="breadcrumb-item active">End to end selection (short version)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/_tutorials/spapros_tutorial_end_to_end_selection_short.ipynb.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span><span class="p">,</span> <span class="n">display</span><span class="p">,</span> <span class="n">Image</span>
+
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="c1">#pd.set_option(&quot;max_columns&quot;, None) # show all cols</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s1">&#39;max_colwidth&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="c1"># show full width of showing cols</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;expand_frame_repr&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="c1"># print cols side by side as it&#39;s supposed to be</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_seq_items</span> <span class="o">=</span> <span class="mi">200000</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_rows</span> <span class="o">=</span> <span class="mi">400000</span>
+<br/></pre></div>
+</div>
+</div>
+<section id="End-to-end-selection-(short-version)">
+<h1>End to end selection (short version)<a class="headerlink" href="#End-to-end-selection-(short-version)" title="Permalink to this heading"></a></h1>
+<p>In this tutorial we showcase how to design probesets and select a suitable gene set with the <code class="docutils literal notranslate"><span class="pre">spapros</span></code> package. For all genes we design probes that fulfill experiment specific requirements and select only genes for which we can design sufficient probes. Spapros then selects genes that can distinguish the cell types in the data set and capture transcriptomic varation beyond cell type labels. The final probe sequences are designed in a last step for all selected genes. The figure below gives and
+overview on the pipeline.</p>
+<p>In this tutorial the full probe design is performed with one cli command. To understand the different steps in the pipeline we recommend to have a look at the <a class="reference internal" href="spapros_tutorial_end_to_end_selection.html"><span class="doc">long version</span></a> of this tutorial.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Image</span><span class="p">(</span><span class="s2">&quot;../_tutorials/abstract_figures/end_to_end.png&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">900</span><span class="p">,</span> <span class="n">embed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_tutorials_spapros_tutorial_end_to_end_selection_short_2_0.png" src="../_images/_tutorials_spapros_tutorial_end_to_end_selection_short_2_0.png" />
+</div>
+</div>
+<section id="Import-Packages">
+<h2>Import Packages<a class="headerlink" href="#Import-Packages" title="Permalink to this heading"></a></h2>
+<p>Besides <code class="docutils literal notranslate"><span class="pre">spapros</span></code> also install <code class="docutils literal notranslate"><span class="pre">oligo_designer_toolsuite</span></code> if not done already. First we need to install some dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda config --add channels bioconda
+conda config --add channels conda-forge
+conda update conda
+conda update --all
+
+conda install <span class="s2">&quot;blast&gt;=2.12&quot;</span>
+conda install <span class="s2">&quot;bedtools&gt;=2.30&quot;</span>
+conda install <span class="s2">&quot;bowtie&gt;=1.3.1&quot;</span>
+conda install <span class="s2">&quot;bowtie2&gt;=2.5&quot;</span>
+</pre></div>
+</div>
+<p>To run the code below we need to install the current dev version of the oligo designer:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git clone https://github.com/HelmholtzAI-Consultants-Munich/oligo-designer-toolsuite.git
+<span class="nb">cd</span> oligo-designer-toolsuite
+git switch pipelines
+pip install -e .
+</pre></div>
+</div>
+<p>Otherwise, if that didn’t work, try:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install oligo_designer_toolsuite
+</pre></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">yaml</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">print_header</span><span class="p">()</span>
+
+<span class="kn">import</span> <span class="nn">spapros</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;spapros==</span><span class="si">{</span><span class="n">sp</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+scanpy==1.9.3 anndata==0.9.2 umap==0.5.3 numpy==1.24.4 scipy==1.11.2 pandas==1.5.3 scikit-learn==1.3.0 statsmodels==0.14.0 python-igraph==0.9.11 pynndescent==0.5.10
+spapros==0.1.3
+</pre></div></div>
+</div>
+</section>
+<section id="Load-and-Preprocess-Data">
+<h2>Load and Preprocess Data<a class="headerlink" href="#Load-and-Preprocess-Data" title="Permalink to this heading"></a></h2>
+<p>For this tutorial, we use a PBMC example scRNA-seq reference dataset. The count data should be log-normalised and genes should <strong>not</strong> be scaled to mean=0 and std=1. We can load the processed version of the data, including cell / gene filters, cell type annotations, and the umap embedding, directly with <code class="docutils literal notranslate"><span class="pre">sp.ut.get_processed_pbmc_data()</span></code> function. For a step by step processing of the PBMC dataset please refer to the <a class="reference internal" href="spapros_tutorial_basic_selection.html"><span class="doc">basic usage tutorial</span></a>. For sake
+of simplicity, we pre-select the top 1000 highly variable genes for the probe and geneset selection. In real world applications we typically go for top 8000 genes.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">adata</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">get_processed_pbmc_data</span><span class="p">(</span><span class="n">n_hvg</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
+<span class="n">highly_variable_genes</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s1">&#39;highly_variable&#39;</span><span class="p">]]</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Number of highly variable genes: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">highly_variable_genes</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Number of highly variable genes: 1000
+</pre></div></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Save genes as a list in ./my_genes.txt</span>
+<span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">highly_variable_genes</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;./my_genes.txt&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</section>
+<section id="Probe-Design">
+<h2>Probe Design<a class="headerlink" href="#Probe-Design" title="Permalink to this heading"></a></h2>
+<p>To conduct the probe design, run the <code class="docutils literal notranslate"><span class="pre">&lt;technology&gt;_probe_designer</span></code> cli command of the oligo-designer-toolsuite from the terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scrinshot_probe_designer --file_genes ./my_genes.txt -o ./output --n_jobs <span class="m">2</span> --min_probes_per_gene <span class="m">3</span> --source ncbi --taxon vertebrate_mammalian --species Homo_sapiens --annotation_release <span class="m">110</span>
+</pre></div>
+</div>
+<p>Alternativ pipelines: <code class="docutils literal notranslate"><span class="pre">merfish_probe_designer</span></code>, <code class="docutils literal notranslate"><span class="pre">seqfish_probe_designer</span></code> (see our <a class="reference external" href="https://www.google.com/url?q=https://docs.google.com/spreadsheets/d/1NCDLscdmzn32U7_IKy6OKYHqfECn76x0pAD3KFhuJgQ/edit%23gid%3D0&amp;sa=D&amp;source=docs&amp;ust=1692975800552487&amp;usg=AOvVaw20CRwiObnVkWVS54CcqXMq">resource table</a> for an overview of differences between the technologies)</p>
+<p>More info can be obtained with</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scrinshot_probe_designer --help
+</pre></div>
+</div>
+<p>Also note that when running the pipeline, a file <code class="docutils literal notranslate"><span class="pre">./output/config_scrinshot_ncbi.yaml</span></code> is created. It contains all parameters that define the pipeline run. Except of the paramters that define the species and annotation release it makes sense to keep the default parameters. In the <a class="reference internal" href="spapros_tutorial_end_to_end_selection.html"><span class="doc">long version</span></a> of this tutorial the parameters for each pipeline step are described.</p>
+</section>
+<section id="Load-probe-design-filter-and-run-gene-panel-selection">
+<h2>Load probe design filter and run gene panel selection<a class="headerlink" href="#Load-probe-design-filter-and-run-gene-panel-selection" title="Permalink to this heading"></a></h2>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">##### Load probe design filter #####</span>
+<span class="n">genes_without_enough_probes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;./output/regions_with_insufficient_oligos.txt&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;has_enough_probes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">genes_without_enough_probes</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">var_names</span><span class="p">]</span>
+<span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;pass_constraints&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;has_enough_probes&quot;</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;highly_variable&quot;</span><span class="p">]</span>
+
+<span class="c1">##### Select genes for gene panel #####</span>
+<span class="n">selector</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">se</span><span class="o">.</span><span class="n">ProbesetSelector</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">genes_key</span><span class="o">=</span><span class="s2">&quot;pass_constraints&quot;</span><span class="p">,</span> <span class="n">celltype_key</span><span class="o">=</span><span class="s2">&quot;celltype&quot;</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<span class="n">selector</span><span class="o">.</span><span class="n">select_probeset</span><span class="p">()</span>
+<span class="n">selected_genes</span> <span class="o">=</span> <span class="n">selector</span><span class="o">.</span><span class="n">probeset</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">selector</span><span class="o">.</span><span class="n">probeset</span><span class="o">.</span><span class="n">selection</span><span class="p">]</span>
+
+<span class="c1">##### Get probes of genes #####</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;./output/padlock_sequences/padlock_probes_order.yml&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+    <span class="n">all_probes</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
+    <span class="n">probes</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">all_probes</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">selected_genes</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">probes</span><span class="p">[</span><span class="s2">&quot;AAGAB&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+{&#39;AAGAB_oligo1&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;ATCATCACCTCAGGTAACCTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTCACTCTATCGCAGACCAAG&#39;,
+  &#39;detection_probe_sequence&#39;: &#39;GCAGACCAAGATCAUCACCU[fluorophore]&#39;},
+ &#39;AAGAB_oligo2&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;GTGTGAGCCTTATTTCTTTCTGTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTGGTAGTGTCTGGAGGG&#39;,
+  &#39;detection_probe_sequence&#39;: &#39;[fluorophore]UCTGGAGGGGUGTGAGCC&#39;},
+ &#39;AAGAB_oligo3&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;GAGAGGGATTCAGTACTATCTGTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTACCACCCCGATGATCA&#39;,
+  &#39;detection_probe_sequence&#39;: &#39;CCGATGAUCAGAGAGGGATUC[fluorophore]&#39;},
+ &#39;AAGAB_oligo4&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;CTAGAAGAGGCCAATATCCCTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTGACCTTCATCCCATATGTCC&#39;,
+  &#39;detection_probe_sequence&#39;: &#39;[fluorophore]CCAUATGTCCCUAGAAGAGGC&#39;},
+ &#39;AAGAB_oligo5&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;ATCACAGTGAGGGCTAATGTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTCAGAGCCACAGCAGTAATG&#39;,
+  &#39;detection_probe_sequence&#39;: &#39;ACAGCAGTAATGAUCACAGUGAG[fluorophore]&#39;}}
+</pre></div></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="spapros_tutorial_advanced_evaluation.html" class="btn btn-neutral float-left" title="Advanced evaluation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="spapros_tutorial_end_to_end_selection.html" class="btn btn-neutral float-right" title="End to end selection" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Lukas Heumos.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
