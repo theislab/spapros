@@ -5,9 +5,10 @@ Credits
 Development Lead
 ----------------
 
+* Louis Kümmerle <louis.kummerle@helmholtz-munich.de>
 * Lukas Heumos <lukas.heumos@posteo.net>
 
 Contributors
 ------------
 
-None yet. Why not be the first?
+* Lena Straßer

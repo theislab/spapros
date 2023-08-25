@@ -1,5 +1,5 @@
 spapros
-===========================
+==========
 
 |PyPI| |Python Version| |License| |Read the Docs| |Build| |Tests| |Codecov| |pre-commit| |Black|
 
@@ -16,11 +16,11 @@ spapros
    :target: https://spapros.readthedocs.io/
    :alt: Read the documentation at https://spapros.readthedocs.io/
 .. |Build| image:: https://github.com/theislab/spapros/workflows/Build%20spapros%20Package/badge.svg
-   :target: https://github.com/theislab/spapros/actions?workflow=Package
-   :alt: Build Package Status
-.. |Tests| image:: https://github.com/theislab/spapros/workflows/Run%20spapros%20Tests/badge.svg
-   :target: https://github.com/theislab/spapros/actions?workflow=Tests
-   :alt: Run Tests Status
+   :target: https://github.com/theislab/spapros/workflows/Build%20spapros%20Package/badge.svg
+   :alt: Build package Status
+.. |Tests| image:: https://github.com/theislab/spapros/actions/workflows/run_tests.yml/badge.svg
+   :target: https://github.com/theislab/spapros/actions/workflows/run_tests.yml/badge.svg
+   :alt: Tests
 .. |Codecov| image:: https://codecov.io/gh/theislab/spapros/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/theislab/spapros
    :alt: Codecov
@@ -31,11 +31,13 @@ spapros
    :target: https://github.com/psf/black
    :alt: Black
 
+|logo|
 
 Features
 --------
 
-* TODO
+* Select probe sets for targeted spatial transcriptomics
+* Evaluate probe sets with an extensive pipeline
 
 
 Installation
@@ -48,10 +50,11 @@ You can install *spapros* via pip_ from PyPI_:
    $ pip install spapros
 
 
+
 Usage
 -----
 
-Please see the `Command-line Reference <Usage_>`_ for details.
+Visit our `documentation`_ for installation, tutorials, examples and more.
 
 
 Credits
@@ -59,9 +62,11 @@ Credits
 
 This package was created with cookietemple_ using Cookiecutter_ based on Hypermodern_Python_Cookiecutter_.
 
+.. |logo| image:: https://user-images.githubusercontent.com/21954664/111175015-409d9080-85a8-11eb-9055-f7452aed98b2.png
 .. _cookietemple: https://cookietemple.com
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
 .. _PyPI: https://pypi.org/
 .. _Hypermodern_Python_Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 .. _pip: https://pip.pypa.io/
 .. _Usage: https://spapros.readthedocs.io/en/latest/usage.html
+.. _documentation: https://spapros.readthedocs.io/en/latest/

@@ -79,5 +79,5 @@ release: dist ## package and upload a release
 dist: clean-build clean-pyc ## builds source and wheel package
 	poetry build
 
-install: clean-build clean-pyc ## install the package to the active Python's site-packages
+install: clean-pyc clean-build ## install the package to the active Python's site-packages
 	poetry install

@@ -136,3 +136,10 @@ dmypy.json
 
 # Coala
 *.orig
+
+# spapros specific
+results/
+*/dev_*
+*/dev.*
+dev_*
+dev.*
