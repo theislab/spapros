@@ -87,13 +87,13 @@ pypi-latest==0.1.2
 pyrsistent==0.19.3
 python-dateutil==2.8.2
 pytz==2023.3
-pywin32==306 ; (platform_system == "Windows" or sys_platform == "win32") and platform_python_implementation != "PyPy" a"3.7.1" and python_version < "3.10"
+pywin32==306
 pyyaml==5.4.1
 pyzmq==24.0.1
 questionary==1.10.0
 requests==2.31.0
 rich==13.5.2
-ruamel-yaml-clib==0.2.7 ; platform_python_implementation == "CPython" and python_version < "3.10" a
+ruamel-yaml-clib==0.2.7
 ruamel-yaml==0.17.32
 scanpy==1.9.3
 scikit-learn==1.0.2
