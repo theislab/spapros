@@ -12,16 +12,6 @@ jobs:
                 python: [3.8, 3.9]
 
         steps:
-<<<<<<< HEAD
-            - uses: actions/checkout@v3
-              name: Check out source-code repository
-
-            - name: Setup Python
-              uses: actions/setup-python@v3
-              with:
-                  python-version: ${{ matrix.python }}
-
-=======
             - uses: actions/checkout@v3.0.2
               name: Check out source-code repository
 
@@ -35,7 +25,6 @@ jobs:
                   pip install --upgrade pip
                   pip --version
 
->>>>>>> development
             - name: Install Poetry
               run: |
                   pip install poetry
