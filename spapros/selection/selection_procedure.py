@@ -1679,7 +1679,7 @@ class ProbesetSelector:  # (object)
 
     def plot_clf_genes(
         self,
-        basis: int = "X_umap",
+        basis: str = "X_umap",
         celltypes: Optional[List[str]] = None,
         till_rank: Optional[int] = 1,
         importance_th: Optional[float] = None,
