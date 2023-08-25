@@ -35,7 +35,7 @@ Welcome to spapros's documentation!
 |logo|
 
 
-**Spapros** provides a pipeline for probe set selection and evaluation for targeted spatial transcriptomics data.
+**Spapros** is a python package that provides a pipeline for probe set selection and evaluation for targeted spatial transcriptomics data.
 
 Key Features
 -------------
