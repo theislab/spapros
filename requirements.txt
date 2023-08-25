@@ -87,7 +87,6 @@ pypi-latest==0.1.2
 pyrsistent==0.19.3
 python-dateutil==2.8.2
 pytz==2023.3
-pywin32==306
 pyyaml==5.4.1
 pyzmq==24.0.1
 questionary==1.10.0
