@@ -140,3 +140,7 @@ p.sphx-glr-timing {
 div[class="rendered_html"] + br {
     display: none !important;
 }
+
+a:visited {
+    color: rgb(111, 188, 246);
+}
