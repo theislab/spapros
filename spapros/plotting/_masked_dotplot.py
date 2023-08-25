@@ -1,17 +1,12 @@
-from typing import Literal
-from typing import Mapping
-from typing import Optional
-from typing import Sequence
 from typing import Tuple  # Classes
-from typing import Union
+from typing import Literal, Mapping, Optional, Sequence, Union
 
 import anndata
 import numpy as np
 import pandas as pd
 import scanpy as sc
 from anndata import AnnData
-from matplotlib import axes
-from matplotlib import gridspec
+from matplotlib import axes, gridspec
 from matplotlib import pyplot as pl
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure  # SubplotParams as sppars,
@@ -457,7 +452,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
             # re-scale frac between 0 and 1
             frac = (frac - dot_min) / old_range
 
-        size = frac ** size_exponent
+        size = frac**size_exponent
         # rescale size to match smallest_dot and largest_dot
         size = size * (largest_dot - smallest_dot) + smallest_dot  # type: ignore
 

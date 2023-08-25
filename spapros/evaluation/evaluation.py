@@ -1,40 +1,31 @@
-import os
 import gc
+import os
 import pickle
 import warnings
 from enum import Enum
 from pathlib import Path
-from typing import Any
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Sequence
-from typing import Tuple
-from typing import Union
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
-import spapros.plotting as pl
 from rich.progress import Progress
 from sklearn import tree
 from sklearn.metrics import classification_report
-from spapros.evaluation.metrics import get_metric_default_parameters
-from spapros.evaluation.metrics import get_metric_names
-from spapros.evaluation.metrics import metric_computations
-from spapros.evaluation.metrics import metric_pre_computations
-from spapros.evaluation.metrics import metric_shared_computations
-from spapros.evaluation.metrics import metric_summary
-from spapros.util.mp_util import _get_n_cores
-from spapros.util.mp_util import parallelize
-from spapros.util.mp_util import Signal
-from spapros.util.mp_util import SigQueue
-from spapros.util.util import init_progress
-from spapros.util.util import NestedProgress
 
+import spapros.plotting as pl
+from spapros.evaluation.metrics import (
+    get_metric_default_parameters,
+    get_metric_names,
+    metric_computations,
+    metric_pre_computations,
+    metric_shared_computations,
+    metric_summary,
+)
+from spapros.util.mp_util import Signal, SigQueue, _get_n_cores, parallelize
+from spapros.util.util import NestedProgress, init_progress
 
 # helper for type checking:
 
@@ -761,7 +752,7 @@ class ProbesetEvaluator:
         """
 
         # Check if given steps are sound
-        supported_steps = set(["shared", "pre", "main", "summary"])
+        supported_steps = {"shared", "pre", "main", "summary"}
         assert set(steps) <= supported_steps, f"Unsupported results steps: {set(steps)-supported_steps}"
 
         # Set directories to list
@@ -791,7 +782,7 @@ class ProbesetEvaluator:
         # Check if any metric was found. If not: check if results exist for another self.ref_name
         if (len(metrics_with_ref_files) == 0) and (len(os.listdir(self.ref_dir)) > 0):
             # note that all metric names have an underscore (file name e.g.: <ref_name>_gene_corr.csv)
-            tmp_ref_names = list(set([file.rsplit("_", 2)[0] for file in os.listdir(self.ref_dir)]))
+            tmp_ref_names = list({file.rsplit("_", 2)[0] for file in os.listdir(self.ref_dir)})
             if len(tmp_ref_names) == 1:
                 self.ref_name = tmp_ref_names[0]
                 if verbosity > 0:
@@ -1945,11 +1936,11 @@ def single_forest_classifications(
         cts_test=cts_test,
         masks=masks_test,
     )
-    #garbage collection
+    # garbage collection
     del X_test
     del y_test
     del cts_test
-    gc.collect()    
+    gc.collect()
 
     # Sort results
     if sort_by_tree_performance:

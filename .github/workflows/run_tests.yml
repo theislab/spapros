@@ -32,6 +32,31 @@ jobs:
                           os: ubuntu-latest,
                           session: "tests",
                       }
+                    - {
+                          python-version: 3.8,
+                          os: windows-latest,
+                          session: "tests",
+                      }
+                    - {
+                          python-version: 3.8,
+                          os: macos-latest,
+                          session: "tests",
+                      }
+                    - {
+                          python-version: 3.8,
+                          os: ubuntu-latest,
+                          session: "typeguard",
+                      }
+                    - {
+                          python-version: 3.8,
+                          os: ubuntu-latest,
+                          session: "xdoctest",
+                      }
+                    - {
+                          python-version: 3.8,
+                          os: ubuntu-latest,
+                          session: "docs-build",
+                      }
 
         env:
             NOXSESSION: ${{ matrix.session }}
@@ -41,7 +66,7 @@ jobs:
               uses: actions/checkout@v3.0.2
 
             - name: Set up Python ${{ matrix.python-version }}
-              uses: actions/setup-python@v2.3.1
+              uses: actions/setup-python@v4.5.0
               with:
                   python-version: ${{ matrix.python-version }}
 
@@ -55,7 +80,7 @@ jobs:
                   pipx install poetry
                   poetry --version
 
-            - name: Install nox nox-poetry
+            - name: Install nox nox-poetry rich
               run: |
                   pipx install nox
                   pipx inject nox nox-poetry
@@ -87,8 +112,7 @@ jobs:
                       ${{ steps.pre-commit-cache.outputs.result }}-
 
             - name: Run Nox
-              run: |
-                  nox --force-color --python=${{ matrix.python-version }}
+              run: nox --force-color --python=${{ matrix.python-version }}
 
             - name: Upload coverage data
               if: always() && matrix.session == 'tests'
@@ -112,7 +136,7 @@ jobs:
               uses: actions/checkout@v3.0.2
 
             - name: Set up Python 3.9
-              uses: actions/setup-python@v2.3.1
+              uses: actions/setup-python@v4.5.0
               with:
                   python-version: 3.9
 
@@ -126,7 +150,7 @@ jobs:
                   pip install poetry
                   poetry --version
 
-            - name: Install Nox
+            - name: Install nox nox-poetry rich
               run: |
                   pipx install nox
                   pipx inject nox nox-poetry
@@ -134,17 +158,15 @@ jobs:
                   nox --version
 
             - name: Download coverage data
-              uses: actions/download-artifact@v2.1.0
+              uses: actions/download-artifact@v3.0.2
               with:
                   name: coverage-data
 
             - name: Combine coverage data and display human readable report
-              run: |
-                  nox --force-color --session=coverage
+              run: nox --force-color --session=coverage
 
             - name: Create coverage report
-              run: |
-                  nox --force-color --session=coverage -- xml
+              run: nox --force-color --session=coverage -- xml -i
 
             - name: Upload coverage report
               uses: codecov/codecov-action@v3.1.0

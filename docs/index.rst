@@ -53,7 +53,6 @@ Key Features
    api
    tutorials
    authors
-   changelog
    code_of_conduct
 
 

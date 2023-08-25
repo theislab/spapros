@@ -5,10 +5,10 @@ import sys
 
 import click
 import rich.logging
-import spapros
 from pypi_latest import PypiLatest
-from rich import print
-from rich import traceback
+from rich import print, traceback
+
+import spapros
 from spapros.evaluation.evaluation_pipeline import run_evaluation
 from spapros.selection.selection import run_selection
 

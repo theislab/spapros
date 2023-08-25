@@ -65,10 +65,8 @@ This package was created with cookietemple_ using Cookiecutter_ based on Hypermo
 .. |logo| image:: https://user-images.githubusercontent.com/21954664/111175015-409d9080-85a8-11eb-9055-f7452aed98b2.png
 .. _cookietemple: https://cookietemple.com
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _MIT: http://opensource.org/licenses/MIT
 .. _PyPI: https://pypi.org/
 .. _Hypermodern_Python_Cookiecutter: https://github.com/cjolowicz/cookiecutter-hypermodern-python
 .. _pip: https://pip.pypa.io/
-.. _Contributor Guide: CONTRIBUTING.rst
 .. _Usage: https://spapros.readthedocs.io/en/latest/usage.html
 .. _documentation: https://spapros.readthedocs.io/en/latest/

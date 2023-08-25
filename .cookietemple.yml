@@ -1,9 +1,9 @@
-cookietemple_version: '1.3.0 # <<COOKIETEMPLE_NO_BUMP>>'
+cookietemple_version: '1.4.1 # <<COOKIETEMPLE_NO_BUMP>>'
 domain: cli
 language: python
 project_slug: spapros
 project_slug_no_hyphen: spapros
-template_version: '2.0.0 # <<COOKIETEMPLE_NO_BUMP>>'
+template_version: '2.1.1 # <<COOKIETEMPLE_NO_BUMP>>'
 template_handle: cli-python
 github_username: theislab
 creator_github_username: zethson
@@ -15,5 +15,5 @@ full_name: Lukas Heumos
 email: lukas.heumos@posteo.net
 project_name: spapros
 project_short_description: Fully automated spatial transcriptomics probe selection.
-version: 0.1.3
+version: 0.1.4
 license: MIT

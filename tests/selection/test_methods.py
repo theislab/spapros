@@ -2,6 +2,7 @@ import random
 
 import pandas as pd
 import pytest
+
 from spapros import se
 
 
