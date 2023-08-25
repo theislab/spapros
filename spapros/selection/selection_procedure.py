@@ -1,6 +1,7 @@
 import json
 import os
 import pickle
+import time
 from pathlib import Path
 from typing import Any
 from typing import Callable
@@ -521,24 +522,34 @@ class ProbesetSelector:  # (object)
                 )
 
             # PCA based pre selection
+            t = time.time()
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._pca_selection()
+            self._save_time_measurement("PCA_selection", t)
 
             # DE forests
+            t = time.time()
             self._forest_DE_baseline_selection()
+            self._save_time_measurement("DE_forest_selection", t)
 
             # PCA forests (including optimization based on DE forests), or just DE forests if no PCA genes were selected
+            t = time.time()
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._forest_selection()
             else:
                 self._set_DE_baseline_forest_to_final_forest()
+            self._save_time_measurement("PCA_forest_selection", t)
 
             # Add markers from curated list
+            t = time.time()
             if self.marker_list:
                 self._marker_selection()
+            self._save_time_measurement("marker_selection", t)
 
             # Compile probe set
+            t = time.time()
             self.probeset = self._compile_probeset_list()
+            self._save_time_measurement("compile_probeset", t)
             self.selection["final"] = self.probeset
 
             # Save attribute genes_of_primary_trees
@@ -548,9 +559,8 @@ class ProbesetSelector:  # (object)
                 self.progress.advance(selection_task)
                 self.progress.add_task(description="FINISHED\n", footer=True, only_text=True, total=0)
 
-            if self.save_dir:
+            if self.save_dir and (not os.path.exists(self.probeset_path)):
                 self.probeset.to_csv(self.probeset_path)
-            # TODO: we haven't included the checks to load the probeset if it already exists
 
     def _pca_selection(self) -> None:
         """Select genes based on pca loadings."""
@@ -1335,6 +1345,9 @@ class ProbesetSelector:  # (object)
 
         # Final probeset result
         self.probeset_path = os.path.join(self.save_dir, "probeset.csv")
+        
+        # Table for time measurements
+        self.time_table_path = os.path.join(self.save_dir, "time_measurements.csv")
 
     def _load_from_disk(self) -> None:
         """Load existing files into variables."""
@@ -1390,6 +1403,44 @@ class ProbesetSelector:  # (object)
                     )
                 self.loaded_attributes.append(f"forest_clfs_{f}")
 
+        # probeset
+        if os.path.exists(self.probeset_path):
+            self.probeset = pd.read_csv(self.probeset_path, index_col=0)
+            for key in self.probeset.columns:
+                if self.probeset.dtypes[key] == "object":
+                    self.probeset[key].fillna("", inplace=True)
+            if self.verbosity > 1:
+                print(f"\t Found and load {os.path.basename(self.probeset_path)} (probeset).")
+            self.loaded_attributes.append("probeset")
+    
+    def _save_time_measurement(self, name: str, start_time: float) -> None:
+        """ Save time measurement to table if save_dir is given.
+        
+        Args:
+            name: Name of the time measurement.
+            start_time: Time when the measurement started.
+        """
+        
+        time_diff = time.time() - start_time
+        
+        if self.save_dir:
+            # Load table if it exists
+            if os.path.exists(self.time_table_path):
+                time_table = pd.read_csv(self.time_table_path, index_col=0)
+            else:
+                time_table = pd.DataFrame(columns=["step", "time (s)"])
+
+            if name not in time_table["step"].values:
+                # Add new measurement
+                time_table = pd.concat(
+                    [time_table, pd.DataFrame(data={"step": [name], "time (s)": [time_diff]})], 
+                    ignore_index=True
+                )
+                
+                # Save table
+                time_table.to_csv(self.time_table_path)
+        
+    
     # def _tqdm(self, iterator):
     #     """Wrapper for tqdm with verbose condition."""
     #     return tqdm(iterator) if self.verbosity >= 1 else iterator
@@ -1742,6 +1793,12 @@ class ProbesetSelector:  # (object)
 
         df = df.sort_values(by=["rank", "importance_score"], ascending=[True, False])
 
+        print(
+            "Note that the given feature importance scores are the maxima over cell types. In a future version we ",
+            "might plot cell type specific importance scores instead. For now please check ",
+            "selector.genes_of_primary_trees for cell type specific scores."
+        )
+
         pl.clf_genes_umaps(adata, df, **kwargs)
 
     # def plot_tree_performances(self) -> None:
@@ -1957,6 +2014,7 @@ def select_reference_probesets(
     adata: sc.AnnData,
     n: int,
     genes_key: str = "highly_variable",
+    obs_key: str = "celltype",
     methods: Union[List[str], Dict[str, Dict]] = ["PCA", "DE", "HVG", "random"],
     seeds: List[int] = [0],
     verbosity: int = 2,
@@ -1971,6 +2029,8 @@ def select_reference_probesets(
             Number of selected genes.
         genes_key:
             adata.var key for subset of preselected genes to run the selections on (typically 'highly_variable_genes').
+        obs_key:
+            Only required for method 'DE'. Column name of `adata.obs` for which marker scores are calculated.
         methods:
             Methods used for selections. Supported methods and default are `['PCA', 'DE', 'HVG', 'random']`. To specify
             hyperparameters of the methods provide a dictionary, e.g.::
@@ -2024,6 +2084,10 @@ def select_reference_probesets(
                 selections.append(
                     {"method": method, "name": f"{method}{seed_str}", "params": dict(methods[method], **{"seed": seed})}
                 )
+        elif method == "DE":
+            selections.append(
+                {"method": method, "name": method, "params": dict(methods[method], **{"obs_key": obs_key})}
+            )
         else:
             selections.append({"method": method, "name": method, "params": methods[method]})
 
