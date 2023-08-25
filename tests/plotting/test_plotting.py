@@ -2,8 +2,8 @@ import random
 
 import pytest
 from matplotlib.testing.compare import compare_images
-from spapros import pl
 
+from spapros import pl
 
 # Note: The figures depend somehow on the environment!
 # Tests might fail if compared figures derived from different envs eg development env and test env

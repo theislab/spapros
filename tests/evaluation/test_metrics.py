@@ -3,15 +3,18 @@ import numpy as np
 import pandas as pd
 import pytest
 import scanpy as sc
-from spapros.evaluation.metrics import clustering_nmis
-from spapros.evaluation.metrics import correlation_matrix
-from spapros.evaluation.metrics import knns
-from spapros.evaluation.metrics import leiden_clusterings
-from spapros.evaluation.metrics import marker_correlation_matrix
-from spapros.evaluation.metrics import max_marker_correlations
-from spapros.evaluation.metrics import mean_overlaps
-from spapros.evaluation.metrics import summary_nmi_AUCs
-from spapros.evaluation.metrics import xgboost_forest_classification
+
+from spapros.evaluation.metrics import (
+    clustering_nmis,
+    correlation_matrix,
+    knns,
+    leiden_clusterings,
+    marker_correlation_matrix,
+    max_marker_correlations,
+    mean_overlaps,
+    summary_nmi_AUCs,
+    xgboost_forest_classification,
+)
 
 ############################
 # test shared computations #

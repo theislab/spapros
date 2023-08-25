@@ -32,6 +32,31 @@ jobs:
                           os: ubuntu-latest,
                           session: "tests",
                       }
+                    - {
+                          python-version: 3.8,
+                          os: windows-latest,
+                          session: "tests",
+                      }
+                    - {
+                          python-version: 3.8,
+                          os: macos-latest,
+                          session: "tests",
+                      }
+                    - {
+                          python-version: 3.8,
+                          os: ubuntu-latest,
+                          session: "typeguard",
+                      }
+                    - {
+                          python-version: 3.8,
+                          os: ubuntu-latest,
+                          session: "xdoctest",
+                      }
+                    - {
+                          python-version: 3.8,
+                          os: ubuntu-latest,
+                          session: "docs-build",
+                      }
 
         env:
             NOXSESSION: ${{ matrix.session }}
@@ -55,7 +80,7 @@ jobs:
                   pipx install poetry
                   poetry --version
 
-            - name: Install nox nox-poetry
+            - name: Install nox nox-poetry rich
               run: |
                   pipx install nox
                   pipx inject nox nox-poetry
@@ -87,8 +112,7 @@ jobs:
                       ${{ steps.pre-commit-cache.outputs.result }}-
 
             - name: Run Nox
-              run: |
-                  nox --force-color --python=${{ matrix.python-version }}
+              run: nox --force-color --python=${{ matrix.python-version }}
 
             - name: Upload coverage data
               if: always() && matrix.session == 'tests'
@@ -126,7 +150,7 @@ jobs:
                   pip install poetry
                   poetry --version
 
-            - name: Install Nox
+            - name: Install nox nox-poetry rich
               run: |
                   pipx install nox
                   pipx inject nox nox-poetry
@@ -139,12 +163,10 @@ jobs:
                   name: coverage-data
 
             - name: Combine coverage data and display human readable report
-              run: |
-                  nox --force-color --session=coverage
+              run: nox --force-color --session=coverage
 
             - name: Create coverage report
-              run: |
-                  nox --force-color --session=coverage -- xml
+              run: nox --force-color --session=coverage -- xml -i
 
             - name: Upload coverage report
               uses: codecov/codecov-action@v3.1.0

@@ -4,9 +4,8 @@ import random
 import pandas as pd
 import pytest
 import scanpy as sc
-from spapros import ev
-from spapros import se
 
+from spapros import ev, se
 
 #############
 # selection #

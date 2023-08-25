@@ -2,20 +2,17 @@
 from __future__ import annotations
 
 from enum import Enum
-from multiprocessing import cpu_count
-from multiprocessing import Manager
+from multiprocessing import Manager, cpu_count
 from queue import Queue
 from threading import Thread
-from typing import Any
-from typing import Callable
-from typing import Hashable
-from typing import Iterable
-from typing import List
-from typing import Optional
-from typing import Sequence
-from typing import Set
-from typing import Tuple
-from typing import TYPE_CHECKING
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Hashable,
+    Iterable,
+    Sequence,
+)
 
 import joblib as jl
 import numpy as np
@@ -48,9 +45,9 @@ class SigQueue(Queue["Signal"] if TYPE_CHECKING else Queue):  # type: ignore[mis
     """Signalling queue."""
 
 
-def _unique_order_preserving(iterable: Iterable[Hashable]) -> Tuple[List[Hashable], Set[Hashable]]:
+def _unique_order_preserving(iterable: Iterable[Hashable]) -> tuple[list[Hashable], set[Hashable]]:
     """Remove items from an iterable while preserving the order."""
-    seen: Set[Hashable] = set()
+    seen: set[Hashable] = set()
     seen_add = seen.add
     return [i for i in iterable if not (i in seen or seen_add(i))], seen
 
@@ -68,12 +65,12 @@ def parallelize(
     callback: Callable[..., Any],
     collection: Sequence[Any],
     n_jobs: int = 1,
-    n_split: Optional[int] = None,
+    n_split: int | None = None,
     unit: str = "",
-    desc: Optional[str] = None,
+    desc: str | None = None,
     use_ixs: bool = False,
     backend: str = "loky",
-    extractor: Optional[Callable[[Sequence[Any]], Any]] = None,
+    extractor: Callable[[Sequence[Any]], Any] | None = None,
     show_progress_bar: bool = True,
     use_runner: bool = False,
     **_: Any,
@@ -119,8 +116,8 @@ def parallelize(
     else:
         tqdm = None
 
-    def runner(iterable: Iterable[Any], *args: Any, queue: Optional["SigQueue"] = None, **kwargs: Any) -> List[Any]:
-        result: List[Any] = []
+    def runner(iterable: Iterable[Any], *args: Any, queue: SigQueue | None = None, **kwargs: Any) -> list[Any]:
+        result: list[Any] = []
 
         for it in iterable:
             res = callback(it, *args, **kwargs)
@@ -134,7 +131,7 @@ def parallelize(
 
         return result
 
-    def update(pbar: "tqdm.std.tqdm", queue: "SigQueue", n_total: int) -> None:
+    def update(pbar: tqdm.std.tqdm, queue: SigQueue, n_total: int) -> None:
         n_finished = 0
         while n_finished < n_total:
             try:
@@ -201,7 +198,7 @@ def parallelize(
     return wrapper
 
 
-def _get_n_cores(n_cores: Optional[int]) -> int:
+def _get_n_cores(n_cores: int | None) -> int:
     """
     Make number of cores a positive integer.
     This is useful for especially logging.

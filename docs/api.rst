@@ -115,32 +115,32 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).
 
    * - :func:`pl.masked_dotplot`
      - see pl.masked_dotplot for now
-     - 
+     -
    * - :func:`pl.clf_genes_umaps`
      - :meth:`.ProbesetSelector.plot_clf_genes`
-     -     
+     -
    * - :func:`pl.selection_histogram`
      - :meth:`.ProbesetSelector.plot_histogram`
-     -          
+     -
    * - :func:`pl.gene_overlap`
      - :meth:`.ProbesetSelector.plot_gene_overlap`
-     - potentially added soon     
+     - potentially added soon
    * - :func:`pl.correlation_matrix`
      - :meth:`.ProbesetSelector.plot_coexpression`
-     - :meth:`.ProbesetEvaluator.plot_coexpression`     
+     - :meth:`.ProbesetEvaluator.plot_coexpression`
    * - :func:`pl.summary_table`
      -
-     - :meth:`.ProbesetEvaluator.plot_summary`     
+     - :meth:`.ProbesetEvaluator.plot_summary`
    * - :func:`pl.cluster_similarity`
      -
-     - :meth:`.ProbesetEvaluator.plot_cluster_similarity`  
+     - :meth:`.ProbesetEvaluator.plot_cluster_similarity`
    * - :func:`pl.knn_overlap`
      -
-     - :meth:`.ProbesetEvaluator.plot_knn_overlap`   
+     - :meth:`.ProbesetEvaluator.plot_knn_overlap`
    * - :func:`pl.confusion_matrix`
      -
-     - :meth:`.ProbesetEvaluator.plot_confusion_matrix`  
+     - :meth:`.ProbesetEvaluator.plot_confusion_matrix`
    * - :func:`pl.marker_correlation`
      -
-     - :meth:`.ProbesetEvaluator.plot_marker_corr`             
-     
+     - :meth:`.ProbesetEvaluator.plot_marker_corr`
+
