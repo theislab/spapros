@@ -102,7 +102,7 @@ scanpy==1.9.1
 scikit-learn==1.1.2
 scipy==1.7.3
 seaborn==0.11.2
-send2trash==1.8.0
+send2trash==1.8.2
 session-info==1.0.0
 setuptools-scm==6.4.2
 six==1.16.0
