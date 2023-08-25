@@ -1,8 +1,4 @@
-from typing import Any
-from typing import Dict
-from typing import List
-from typing import Tuple
-from typing import Union
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -13,12 +9,15 @@ from scipy.sparse import issparse
 from sklearn.metrics import confusion_matrix
 from sklearn.model_selection import StratifiedKFold
 from sklearn.utils.class_weight import compute_sample_weight
-from spapros.util.util import clean_adata
-from spapros.util.util import cluster_corr
-from spapros.util.util import dict_to_table
-from spapros.util.util import gene_means
-from spapros.util.util import init_progress
 from xgboost import XGBClassifier
+
+from spapros.util.util import (
+    clean_adata,
+    cluster_corr,
+    dict_to_table,
+    gene_means,
+    init_progress,
+)
 
 METRICS_PARAMETERS: Dict[str, Dict] = {
     "cluster_similarity": {
@@ -478,7 +477,7 @@ def leiden_clusterings(
 
     # Search missing n's between neighboring found n's
     found_space = True
-    while (not set(ns) <= set([res_n[1] for res_n in tried_res_n])) and (found_space):
+    while (not set(ns) <= {res_n[1] for res_n in tried_res_n}) and (found_space):
         tmp_res_n = tried_res_n
         found_space = False
         for i in range(len(tmp_res_n) - 1):
@@ -697,17 +696,17 @@ def knns(
     # Subset adata to gene set
     if isinstance(genes, str) and (genes == "all"):
         genes = adata.var_names
-        
+
     a = adata[:, genes].copy()
 
     # Set n_pcs to 50 or number of genes if < 50. (Note that the neighbors graph is calculated on hvgs only if present)
     if "highly_variable" in adata.var:
-        genes_hvg = a[:,a.var["highly_variable"]].var_names
+        genes_hvg = a[:, a.var["highly_variable"]].var_names
     else:
         genes_hvg = genes
-    
+
     n_pcs = np.min([50, len(genes_hvg) - 1])
-    
+
     if n_pcs == 0:
         print("There is no overlap of genes between the probeset and the reference dataset.")
 
@@ -724,18 +723,17 @@ def knns(
     obsp = [key for key in a.obsp]
     for o in obsp:
         del a.obsp[o]
-    
 
     # Get nearest neighbors for each k
     if n_pcs > 0:
-        
+
         df = pd.DataFrame(index=a.obs_names)
-        
+
         if progress:
-            task_knn = progress.add_task(description, level=level, total=len(ks))        
-        
+            task_knn = progress.add_task(description, level=level, total=len(ks))
+
         sc.tl.pca(a, n_comps=n_pcs)  # use_highly_variable=False
-            
+
         for k in ks:
             if "neighbors" in a.uns:
                 del a.uns["neighbors"]
@@ -751,23 +749,23 @@ def knns(
             nn_df = pd.DataFrame(nns, index=a.obs_names)
             nn_df.columns = [f"k{k}_{i}" for i in range(len(nn_df.columns))]
             df = pd.concat([df, nn_df], axis=1)
-    
+
             if progress:
                 progress.advance(task_knn)
     else:
-        
+
         if progress:
-            task_knn = progress.add_task(description, level=level, total=1)                
-        
-        cols = [f"k{k}_{i}" for k in ks for i in range(k-1)]
+            task_knn = progress.add_task(description, level=level, total=1)
+
+        cols = [f"k{k}_{i}" for k in ks for i in range(k - 1)]
         df = pd.DataFrame(
             index=a.obs_names,
             columns=cols,
             data=np.zeros((a.n_obs, len(cols)), dtype=int) - 1,
         )
-        
+
         if progress:
-            progress.advance(task_knn)        
+            progress.advance(task_knn)
 
     if progress and started:
         progress.stop()

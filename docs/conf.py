@@ -15,13 +15,13 @@ from nbconvert.preprocessors import TagRemovePreprocessor
 from sphinx.ext.napoleon.docstring import GoogleDocstring
 
 HERE = Path(__file__).parent
-#sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
+# sys.path[:0] = [str(HERE.parent), str(HERE / "_extensions")]
 sys.path.insert(0, os.path.abspath(".."))
 sys.path.append(os.path.abspath("../.."))
 sys.path.append(os.path.abspath("../spapros"))
-#sys.path.append(os.path.abspath("../spapros/evaluation"))
-#sys.path.append(os.path.abspath("../spapros/selection"))
-#sys.path.append(os.path.abspath("./_tutorials"))
+# sys.path.append(os.path.abspath("../spapros/evaluation"))
+# sys.path.append(os.path.abspath("../spapros/selection"))
+# sys.path.append(os.path.abspath("./_tutorials"))
 
 
 # -- General configuration ---------------------------------------------
@@ -45,7 +45,7 @@ extensions = [
     "sphinx_gallery.load_style",
     "nbsphinx_link",
     # "jupyter_sphinx.embed_widgets",
-    #*[p.stem for p in (HERE / "_extensions").glob("*.py")],
+    # *[p.stem for p in (HERE / "_extensions").glob("*.py")],
 ]
 
 
@@ -53,9 +53,9 @@ extensions = [
 
 # this doesn't work since we only use extension "sphinx_gallery.load_style" and not 'sphinx_gallery.gen_gallery'
 # --> instead we add a custom css files
-#sphinx_gallery_conf = { 
+# sphinx_gallery_conf = {
 #    "thumbnail_size": (250, 250),
-#}
+# }
 
 nbsphinx_timeout = -1
 
@@ -238,7 +238,7 @@ suppress_warnings = [
 ]
 
 
-#def setup(app):
+# def setup(app):
 #    app.add_css_file("custom_cookietemple.css")
 
 

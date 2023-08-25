@@ -1,21 +1,13 @@
 from datetime import datetime
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import Iterable
-from typing import List
-from typing import Literal
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Any, Callable, Dict, Iterable, List, Literal, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy
-from rich.progress import Progress
-from rich.progress import TaskID
+from rich.progress import Progress, TaskID
 from sklearn.decomposition import SparsePCA
+
 from spapros.evaluation.evaluation import forest_classifications, save_forest
 from spapros.util.util import clean_adata
 
@@ -1476,7 +1468,7 @@ def sort_alphas(alphas: list, n_features: list) -> Tuple[list, list]:
     zipped_lists = zip(alphas, n_features)
     sorted_pairs = sorted(zipped_lists)
     tuples = zip(*sorted_pairs)
-    alphas, n_features = [list(t) for t in tuples]
+    alphas, n_features = (list(t) for t in tuples)
     return alphas, n_features
 
 

@@ -1,12 +1,12 @@
 """Nox sessions."""
 import os
+import sys
 import shlex
 import shutil
 from pathlib import Path
 from textwrap import dedent
 
 import nox
-<<<<<<< HEAD
 from rich import print
 
 try:
@@ -18,25 +18,13 @@ except ImportError:
 
 package = "spapros"
 python_versions = ["3.8", "3.9"]
-=======
-from nox_poetry import Session
-from nox_poetry import session
-
-package = "spapros"
-python_versions = ["3.8"]
->>>>>>> development
 nox.options.sessions = (
     "pre-commit",
     "safety",
     "mypy",
     "tests",
-<<<<<<< HEAD
-    "xdoctest",
-    "docs-build",
-=======
     # "xdoctest",
     # "docs-build",
->>>>>>> development
 )
 
 
@@ -93,13 +81,9 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
         if hook.name.endswith(".sample") or not hook.is_file():
             continue
 
-<<<<<<< HEAD
-        if not hook.read_bytes().startswith(b"#!"):
-=======
         text = hook.read_text()
         bindir = repr(session.bin)[1:-1]  # strip quotes
         if not (Path("A") == Path("a") and bindir.lower() in text.lower() or bindir in text):
->>>>>>> development
             continue
 
         text = hook.read_text()
@@ -116,11 +100,7 @@ def activate_virtualenv_in_precommit_hooks(session: Session) -> None:
                 break
 
 
-<<<<<<< HEAD
 @session(name="pre-commit", python=python_versions)
-=======
-@session(name="pre-commit", python="3.8")
->>>>>>> development
 def precommit(session: Session) -> None:
     """Lint using pre-commit."""
     args = session.posargs or ["run", "--all-files"]
@@ -142,11 +122,7 @@ def precommit(session: Session) -> None:
         activate_virtualenv_in_precommit_hooks(session)
 
 
-<<<<<<< HEAD
 @session(python=python_versions)
-=======
-@session(python="3.8")
->>>>>>> development
 def safety(session: Session) -> None:
     """Scan dependencies for insecure packages."""
     requirements = session.poetry.export_requirements()
@@ -159,11 +135,7 @@ def mypy(session: Session) -> None:
     """Type-check using mypy."""
     args = session.posargs or ["spapros", "tests", "docs/conf.py"]
     session.install(".")
-<<<<<<< HEAD
-    session.install("mypy", "pytest", "types-pkg-resources", "types-requests", "types-attrs")
-=======
     session.install("mypy", "pytest", "types-pkg-resources", "types-requests", "types-attrs", "types-pyyaml")
->>>>>>> development
     session.run("mypy", *args)
 
 
@@ -183,15 +155,9 @@ def tests(session: Session) -> None:
 def coverage(session: Session) -> None:
     """Produce the coverage report."""
     # Do not use session.posargs unless this is the only session.
-<<<<<<< HEAD
     nsessions = len(session._runner.manifest)  # type: ignore[attr-defined]
     has_args = session.posargs and nsessions == 1
     args = session.posargs if has_args else ["report", "-i"]
-=======
-    nsessions = len(session._runner.manifest)
-    has_args = session.posargs and nsessions == 1
-    args = session.posargs if has_args else ["report"]
->>>>>>> development
 
     session.install("coverage[toml]")
 
@@ -218,18 +184,11 @@ def xdoctest(session: Session) -> None:
     session.run("python", "-m", "xdoctest", package, *args)
 
 
-<<<<<<< HEAD
 @session(name="docs-build", python=python_versions)
-=======
-@session(name="docs-build", python="3.8")
->>>>>>> development
 def docs_build(session: Session) -> None:
     """Build the documentation."""
     args = session.posargs or ["docs", "docs/_build"]
     session.install(".")
-<<<<<<< HEAD
-    session.install("sphinx", "sphinx-click", "sphinx-rtd-theme", "sphinx-rtd-dark-mode")
-=======
     session.install(
         "sphinx",
         "sphinx-click",
@@ -240,7 +199,6 @@ def docs_build(session: Session) -> None:
         "sphinx_gallery",
         "nbsphinx_link",
     )
->>>>>>> development
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():
@@ -249,18 +207,11 @@ def docs_build(session: Session) -> None:
     session.run("sphinx-build", *args)
 
 
-<<<<<<< HEAD
 @session(python=python_versions)
-=======
-@session(python="3.8")
->>>>>>> development
 def docs(session: Session) -> None:
     """Build and serve the documentation with live reloading on file changes."""
     args = session.posargs or ["--open-browser", "docs", "docs/_build"]
     session.install(".")
-<<<<<<< HEAD
-    session.install("sphinx", "sphinx-autobuild", "sphinx-click", "sphinx-rtd-theme", "sphinx-rtd-dark-mode")
-=======
     session.install(
         "sphinx",
         "sphinx-autobuild",
@@ -272,7 +223,6 @@ def docs(session: Session) -> None:
         "sphinx_gallery",
         "nbsphinx_link",
     )
->>>>>>> development
 
     build_dir = Path("docs", "_build")
     if build_dir.exists():

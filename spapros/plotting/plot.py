@@ -1,13 +1,6 @@
 """Plotting Module."""
 import itertools
-from typing import Any
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Literal
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
 import matplotlib
 import matplotlib.colors as colors
@@ -19,11 +12,10 @@ import scipy.cluster.hierarchy as sch
 import seaborn as sns
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import interp1d
-from spapros.plotting._masked_dotplot import MaskedDotPlot
-from upsetplot import from_indicators
-from upsetplot import UpSet
+from upsetplot import UpSet, from_indicators
 from venndata import venn
 
+from spapros.plotting._masked_dotplot import MaskedDotPlot
 
 #############################
 ## evaluation related plots ##
@@ -317,7 +309,6 @@ def marker_correlation(
     # plot parameters
     width_per_gene = 0.25
     height_per_set = 0.3
-    pos_factor = 0.02
 
     # get positions for group brackets
     group_positions = []
@@ -1002,7 +993,7 @@ def selection_histogram(
             y_values_dict[selection_label] = {}
 
             if selection_label in penalty_kernels:
-                for i, penalty_key in enumerate(penalty_kernels[selection_label]):
+                for _, penalty_key in enumerate(penalty_kernels[selection_label]):
 
                     penalty_kernel = penalty_kernels[selection_label][penalty_key]
 
@@ -1021,7 +1012,7 @@ def selection_histogram(
             y_values_dict[selection_label] = {}
 
             if selection_label in penalty_keys:
-                for i, penalty_key in enumerate(penalty_keys[selection_label]):
+                for _, penalty_key in enumerate(penalty_keys[selection_label]):
 
                     if penalty_key not in adata.var:
                         raise ValueError(f"Can't plot {penalty_key} because it was not found in adata.var. ")
@@ -1312,7 +1303,8 @@ def clf_genes_umaps(
                 - `'decision_title'`: Subplot title.
                 - `'marker_title'`: Subplot title used if gene is marker. TODO: why decision_title AND marker_title?
                 - `'decision_cmap'`: Matplotlib colormap.
-                - `'marker_cmap'`: Matplotlib colormap used if gene is marker. TODO: why decision_cmap and marker_cmap (and why cmap at all...)
+                - `'marker_cmap'`: Matplotlib colormap used if gene is marker. 
+                  TODO: why decision_cmap and marker_cmap (and why cmap at all...)
 
         basis:
             Name of the ``obsm`` embedding to use.
@@ -1336,7 +1328,7 @@ def clf_genes_umaps(
 
     # prepare data
     a = adata.copy()
-    celltypes = list(set([y for x in df["decision_celltypes"] for y in x]))
+    celltypes = list({y for x in df["decision_celltypes"] for y in x})
     subplots_decision = {ct: list(df.index[df["decision_celltypes"].apply(lambda x: ct in x)]) for ct in celltypes}
     subplots_marker = {ct: [] for ct in celltypes}
     if "marker_celltypes" in df:
@@ -1705,6 +1697,6 @@ def truncate_colormap(
             Number of colors.
     """
     new_cmap = colors.LinearSegmentedColormap.from_list(
-        "trunc({n},{a:.2f},{b:.2f})".format(n=cmap.name, a=minval, b=maxval), cmap(np.linspace(minval, maxval, n))
+        f"trunc({cmap.name},{minval:.2f},{maxval:.2f})", cmap(np.linspace(minval, maxval, n))
     )
     return new_cmap

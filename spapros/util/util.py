@@ -1,10 +1,4 @@
-from typing import Callable
-from typing import Dict
-from typing import List
-from typing import Literal
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
 import matplotlib.pyplot
 import matplotlib.pyplot as plt
@@ -14,13 +8,9 @@ import scanpy as sc
 import scipy
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
-from rich.progress import BarColumn
-from rich.progress import Progress
-from rich.progress import TextColumn
-from rich.progress import TimeElapsedColumn
+from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 from scipy.sparse import issparse
 from sklearn.utils import sparsefuncs
-
 
 ##############
 # Data Utils #

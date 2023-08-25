@@ -3,29 +3,23 @@ import os
 import pickle
 import time
 from pathlib import Path
-from typing import Any
-from typing import Callable
-from typing import cast
-from typing import Dict
-from typing import List
-from typing import Literal
-from typing import Optional
-from typing import Tuple
-from typing import Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
 import scanpy as sc
+from rich.console import RichCast
+from scipy.sparse import issparse
+
 import spapros.evaluation.evaluation as ev
 import spapros.selection.selection_methods as select
 import spapros.util.util as util
-from rich.console import RichCast
-from scipy.sparse import issparse
 from spapros.plotting import plot as pl
-from spapros.util.util import dict_to_table
-from spapros.util.util import filter_marker_dict_by_penalty
-from spapros.util.util import filter_marker_dict_by_shared_genes
-
+from spapros.util.util import (
+    dict_to_table,
+    filter_marker_dict_by_penalty,
+    filter_marker_dict_by_shared_genes,
+)
 
 # from tqdm.autonotebook import tqdm
 
@@ -1345,7 +1339,7 @@ class ProbesetSelector:  # (object)
 
         # Final probeset result
         self.probeset_path = os.path.join(self.save_dir, "probeset.csv")
-        
+
         # Table for time measurements
         self.time_table_path = os.path.join(self.save_dir, "time_measurements.csv")
 
@@ -1354,7 +1348,7 @@ class ProbesetSelector:  # (object)
 
         # marker list
         if os.path.exists(self.marker_list_path):
-            with open(self.marker_list_path, "r") as file:
+            with open(self.marker_list_path) as file:
                 self.marker_list, self.marker_list_filtered_out = json.load(file)
             if self.verbosity > 1:
                 print(f"\t Found and load {os.path.basename(self.marker_list_path)} (filtered marker list).")
@@ -1373,7 +1367,7 @@ class ProbesetSelector:  # (object)
         # selections
         for s in ["pre", "prior"]:
             if os.path.exists(self.selections_paths[s]):
-                with open(self.selections_paths[s], "r") as file:
+                with open(self.selections_paths[s]) as file:
                     self.selection[s] = json.load(file)
                 if self.verbosity > 1:
                     print(f"\t Found and load {os.path.basename(self.selections_paths[s])} (selection results).")
@@ -1412,17 +1406,17 @@ class ProbesetSelector:  # (object)
             if self.verbosity > 1:
                 print(f"\t Found and load {os.path.basename(self.probeset_path)} (probeset).")
             self.loaded_attributes.append("probeset")
-    
+
     def _save_time_measurement(self, name: str, start_time: float) -> None:
-        """ Save time measurement to table if save_dir is given.
-        
+        """Save time measurement to table if save_dir is given.
+
         Args:
             name: Name of the time measurement.
             start_time: Time when the measurement started.
         """
-        
+
         time_diff = time.time() - start_time
-        
+
         if self.save_dir:
             # Load table if it exists
             if os.path.exists(self.time_table_path):
@@ -1433,14 +1427,12 @@ class ProbesetSelector:  # (object)
             if name not in time_table["step"].values:
                 # Add new measurement
                 time_table = pd.concat(
-                    [time_table, pd.DataFrame(data={"step": [name], "time (s)": [time_diff]})], 
-                    ignore_index=True
+                    [time_table, pd.DataFrame(data={"step": [name], "time (s)": [time_diff]})], ignore_index=True
                 )
-                
+
                 # Save table
                 time_table.to_csv(self.time_table_path)
-        
-    
+
     # def _tqdm(self, iterator):
     #     """Wrapper for tqdm with verbose condition."""
     #     return tqdm(iterator) if self.verbosity >= 1 else iterator
@@ -1539,7 +1531,7 @@ class ProbesetSelector:  # (object)
             if selection not in self.selection:  # or selection not in SELECTIONS:
                 raise ValueError(f"{selection} selection can't be plottet because no results were found.")
 
-            selections_dict[selection] = self.selection[selection]#["selection"]
+            selections_dict[selection] = self.selection[selection]  # ["selection"]
 
             # plot without penalties:
             if selection not in penalty_keys:
@@ -1768,13 +1760,13 @@ class ProbesetSelector:  # (object)
 
         # check if embedding, neighbors, pca already in adata
         redo_umap = (adata.obsm is None) or (basis not in adata.obsm)
-        ###try:
-        ###    # check params
-        ###    for param, value in adata.uns[basis]["params"].items():
-        ###        if value != umap_params[param]:
-        ###            redo_umap = True
-        ###except KeyError:
-        ###    redo_umap = True
+        # try:
+        #     # check params
+        #     for param, value in adata.uns[basis]["params"].items():
+        #         if value != umap_params[param]:
+        #             redo_umap = True
+        # except KeyError:
+        #     redo_umap = True
 
         if redo_umap:
             redo_neighbors = False
@@ -1796,7 +1788,7 @@ class ProbesetSelector:  # (object)
         print(
             "Note that the given feature importance scores are the maxima over cell types. In a future version we ",
             "might plot cell type specific importance scores instead. For now please check ",
-            "selector.genes_of_primary_trees for cell type specific scores."
+            "selector.genes_of_primary_trees for cell type specific scores.",
         )
 
         pl.clf_genes_umaps(adata, df, **kwargs)
@@ -1972,7 +1964,7 @@ class ProbesetSelector:  # (object)
 
         a = []
         selections_tmp = []
-        for i, factor in enumerate(factors):
+        for i, _factor in enumerate(factors):
 
             if background_key not in self.adata.var:
                 raise ValueError(f"Can't plot background histogram because {background_key} was not found.")
