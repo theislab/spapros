@@ -16,7 +16,7 @@ import scipy
 from rich.progress import Progress
 from rich.progress import TaskID
 from sklearn.decomposition import SparsePCA
-from spapros.evaluation.evaluation import forest_classifications
+from spapros.evaluation.evaluation import forest_classifications, save_forest
 from spapros.util.util import clean_adata
 
 
@@ -847,6 +847,9 @@ def add_tree_genes_from_reference_trees(
 
         if progress and 2 * verbosity >= (level - 1) and final_forest_task:
             progress.advance(final_forest_task)  # retrain final tree is skipped
+
+        if save:
+            save_forest([initial_summary, initial_ct_spec_summary, im], save)
 
         if return_clfs:
             # raise ValueError("No classifiers were trained since no cell type needs a performance improvement. "\
