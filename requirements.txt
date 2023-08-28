@@ -44,7 +44,7 @@ jupyter-sphinx==0.3.2
 jupyterlab-pygments==0.2.2
 jupyterlab-widgets==3.0.8
 kiwisolver==1.4.5
-leidenalg==0.8.10
+leidenalg==0.10.1
 llvmlite==0.39.1
 lxml==4.9.3
 markdown-it-py==2.2.0
