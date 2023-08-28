@@ -1145,18 +1145,19 @@ files = [
 
 [[package]]
 name = "ipykernel"
-version = "5.4.3"
+version = "5.5.6"
 description = "IPython Kernel for Jupyter"
 optional = false
 python-versions = ">=3.5"
 files = [
-    {file = "ipykernel-5.4.3-py3-none-any.whl", hash = "sha256:4ed205700001a83b5832d4821c46a5733f1bf4b1c55744314ae3c756be6b6095"},
-    {file = "ipykernel-5.4.3.tar.gz", hash = "sha256:697103d218e9a8828025af7986e033c89e0b36e2b6eb84a5bda4739b9a27f3cb"},
+    {file = "ipykernel-5.5.6-py3-none-any.whl", hash = "sha256:66f824af1ef4650e1e2f6c42e1423074321440ef79ca3651a6cfd06a4e25e42f"},
+    {file = "ipykernel-5.5.6.tar.gz", hash = "sha256:4ea44b90ae1f7c38987ad58ea0809562a17c2695a0499644326f334aecd369ec"},
 ]
 
 [package.dependencies]
 appnope = {version = "*", markers = "platform_system == \"Darwin\""}
 ipython = ">=5.0.0"
+ipython-genutils = "*"
 jupyter-client = "*"
 tornado = ">=4.2"
 traitlets = ">=4.1.0"
@@ -4495,4 +4496,4 @@ testing = ["big-O", "flake8 (<5)", "jaraco.functools", "jaraco.itertools", "more
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.7.1,<3.10"
-content-hash = "0efb2d25cfa21751b5aea8ebddb6d790c0e6bafc1e4b76760c1fd8bdb6b55ee1"
+content-hash = "09c43fc079c076e879ecf92fd1924492103f88bd3723bc0c7dc184e98e70830d"
