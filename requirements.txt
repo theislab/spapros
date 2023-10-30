@@ -126,7 +126,7 @@ umap-learn==0.5.3
 upsetplot==0.6.1
 urllib3==2.0.4
 venndata==0.1.0
-virtualenv==20.21.1
+virtualenv==20.24.6
 wcwidth==0.2.6
 webencodings==0.5.1
 widgetsnbextension==4.0.8
