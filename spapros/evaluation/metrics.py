@@ -1135,7 +1135,7 @@ def linear_step(x: np.ndarray, low: float, high: float, descending: bool = True)
 
 def summary_metric_diagonal_confusion_percentage(
     conf_mat: pd.DataFrame, threshold: float = 0.9, tolerance: float = 0.05
-) -> np.ndarray:
+) -> np.floating[Any]:
     """Compute percentage of diagonal elements of confusion matrix above threshold.
 
     Note:

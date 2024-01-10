@@ -744,7 +744,7 @@ class ProbesetSelector:  # (object)
         # if self.verbosity > 1:
         #     print("\t Iteratively add genes from DE_baseline_forest...")
         if (not self.forest_results["forest"]) or (not self.forest_clfs["forest"]):
-            save_forest: Union[str, bool] = self.forest_results_paths["forest"] if self.save_dir else False
+            save_forest: Union[str, Literal[False]] = self.forest_results_paths["forest"] if self.save_dir else False
             assert isinstance(self.forest_results["pca_prior_forest"], list)
             assert isinstance(self.forest_results["DE_baseline_forest"], list)
             forest_results = select.add_tree_genes_from_reference_trees(
@@ -1190,8 +1190,8 @@ class ProbesetSelector:  # (object)
         genes = []
         cts = []
         importances = []
-        for ct in self.forest_results["forest"][2].keys():
-            tmp = self.forest_results["forest"][2][ct]["0"]
+        for ct in self.forest_results["forest"][2].keys():  # type: ignore
+            tmp = self.forest_results["forest"][2][ct]["0"]  # type: ignore
             tmp = tmp.loc[tmp > 0].sort_values(ascending=False)
             genes += tmp.index.to_list()
             cts += [ct for _ in range(len(tmp))]
@@ -1444,7 +1444,7 @@ class ProbesetSelector:  # (object)
     def plot_histogram(
         self,
         x_axis_keys: Dict[str, str] = None,
-        selections: List[Literal["pca", "DE", "marker"]] = None,
+        selections: Optional[List[str]] = None,
         penalty_keys: Dict = None,
         unapplied_penalty_keys: Dict = None,
         background_key: Union[bool, str] = True,
@@ -1754,7 +1754,7 @@ class ProbesetSelector:  # (object)
         # prepare df
         if celltypes is None:
             celltypes = self.celltypes
-        df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)
+        df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)  # noqa: E712
         if add_marker_genes and (self.selection["marker"] is not None):
             df["marker_celltypes"] = [self.selection["marker"]["celltype"][gene] for gene in df.index]
 

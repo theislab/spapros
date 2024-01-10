@@ -57,7 +57,7 @@ def confusion_matrix(
     conf_matrices: Dict[str, pd.DataFrame],
     ordered: Union[bool, list] = True,
     show: bool = True,
-    save: Union[bool, str] = False,
+    save: Union[Literal[False], str] = False,
     size_factor: float = 6,
     fontsize: int = 18,
     n_cols: int = 3,
@@ -164,7 +164,7 @@ def correlation_matrix(
     set_ids: List[str],
     cor_matrices: Dict[str, pd.DataFrame],
     show: bool = True,
-    save: Union[bool, str] = False,
+    save: Union[Literal[False], str] = False,
     size_factor: float = 5,
     fontsize: int = 28,
     n_cols: int = 3,
@@ -214,8 +214,8 @@ def correlation_matrix(
         plt.imshow(cor_matrices[set_id].values, cmap="seismic", vmin=-1, vmax=1)
         plt.title(set_id, fontsize=fontsize)
         ax = plt.gca()
-        ax.axes.get_xaxis().set_visible(False)
-        ax.axes.get_yaxis().set_visible(False)
+        ax.axes.get_xaxis().set_visible(False)  # type: ignore
+        ax.axes.get_yaxis().set_visible(False)  # type: ignore
 
     HSPACE = HSPACE_INCHES / FIGURE_HEIGHT
     WSPACE = WSPACE_INCHES / FIGURE_WIDTH
@@ -231,7 +231,7 @@ def correlation_matrix(
     plt.subplots_adjust(bottom=BOTTOM, top=TOP, left=LEFT, right=RIGHT, hspace=HSPACE, wspace=WSPACE)
 
     if colorbar:
-        cbar_ax = fig.add_axes([CBAR_LEFT, TOP - SUBPLOT_HEIGHT, CBAR_WIDTH, SUBPLOT_HEIGHT])
+        cbar_ax = fig.add_axes((CBAR_LEFT, TOP - SUBPLOT_HEIGHT, CBAR_WIDTH, SUBPLOT_HEIGHT))
         cbar = plt.colorbar(cax=cbar_ax)
         cbar.ax.tick_params(labelsize=fontsize)
 
@@ -351,8 +351,8 @@ def marker_correlation(
         ax = plt.subplot2grid((nrows, ncols), (0, group_positions[g_idx][0]), colspan=n_cols_group, rowspan=1)
 
         ax.axis("off")
-        ax.set_xlim([0, n_cols_group])
-        ax.set_ylim([0, 1])
+        ax.set_xlim((0.0, float(n_cols_group)))
+        ax.set_ylim((0.0, 1.0))
         x1, x2 = [0.2, n_cols_group - 0.2]
         y, h = [0, 0.6]  # [0,0.12]#[0,0.3]
         plt.plot([x1, x1, x2, x2], [y, y + h, y + h, y], lw=2.0 * size_factor, c="black")
@@ -437,7 +437,7 @@ def _lineplot(
 
     # load data from files if necessary
     if "path" in df:
-        for selection_id, path in zip(df.index, df["path"]):
+        for selection_id, path in zip(df.index, df["path"], strict=True):  # type: ignore
             data[selection_id] = pd.read_csv(path, index_col=0)
 
     if groupby and groupby not in df:
@@ -494,10 +494,12 @@ def _lineplot(
         )
 
     if title:
-        plt.title()
+        plt.title(title)
 
-    plt.xlabel(xlabel, fontsize=fontsize)
-    plt.ylabel(ylabel, fontsize=fontsize)
+    if xlabel:
+        plt.xlabel(xlabel, fontsize=fontsize)
+    if ylabel:
+        plt.ylabel(ylabel, fontsize=fontsize)
     plt.legend(loc="center left", bbox_to_anchor=(1, 0.5), frameon=False, fontsize=fontsize)
     plt.tick_params(axis="both", labelsize=fontsize)
 
@@ -641,7 +643,7 @@ def summary_table(
     nan_color: str = "lightgrey",
     threshold_ann: Dict = {},
     show: bool = True,
-    save: Union[bool, str] = False,
+    save: Union[Literal[False], str] = False,
 ) -> None:
     """Plot table of summary statistics
 
@@ -709,9 +711,9 @@ def summary_table(
         if summary in color_maps:
             cmaps[summary] = color_maps[summary]
         elif summary.split()[0] in default_cmaps:
-            cmaps[summary] = default_cmaps[summary.split()[0]]
+            cmaps[summary] = default_cmaps[summary.split()[0]]  # type: ignore
         else:
-            cmaps[summary] = default_cmaps["other"]
+            cmaps[summary] = default_cmaps["other"]  # type: ignore
 
     # Init final table for plotting
     df = table[summaries].copy()
@@ -916,10 +918,10 @@ def selection_histogram(
     adata: sc.AnnData,
     selections_dict: Dict[str, pd.DataFrame],
     x_axis_keys: Dict[str, str],
-    background_key: str = "highly_variable",
+    background_key: Union[str, Literal[False]] = "highly_variable",
     penalty_kernels: Dict[str, Dict[str, Callable]] = None,
     penalty_keys: Dict[str, List[str]] = None,
-    penalty_labels: Union[str, Dict[str, Dict[str, str]]] = "penalty",
+    penalty_labels: Optional[Dict[str, Dict[str, str]]] = None,
     upper_borders: Union[bool, Dict[str, Union[float, bool]]] = None,
     lower_borders: Union[bool, Dict[str, Union[float, bool]]] = None,
     size_factor: float = 4.5,
@@ -946,7 +948,7 @@ def selection_histogram(
                   ``selection_dict`` in this case.
 
         background_key:
-            Key of column in ``adata.var`` which is plottet as background histogram. If `None`, no background histogram
+            Key of column in ``adata.var`` which is plottet as background histogram. If `False`, no background histogram
             is plotted. If `'all'`, all genes are used as background.
         penalty_kernels:
             Dictionary of penalty kernels, which were used for each selection. The outer key is the selection name. The
@@ -956,8 +958,9 @@ def selection_histogram(
             Dictionary of a list of column keys of ``adata.var`` containing penalty scores for each selection.
             Additionally, ``penalty_kernels`` can be provided. If both are None, only the histograms are plottet.
         penalty_labels:
-            A legeng label for each selection and each penalty. The keys of the outer dictionary need to be the
-            selection names. As keys for the inner dictionary, use the penalty keys.
+            A legend label for each selection and each penalty. The keys of the outer dictionary need to be the
+            selection names. As keys for the inner dictionary, use the penalty keys. I.e.
+            penalty_labels[selection_label][penalty_key] = "some label".
         upper_borders:
             Dictionary with the lower borders above which the kernels are 1, which is indicated as a vertical line in
             the plot. Use the same dictionay keys as ``penalty_keys`` or ``penalty_kernels``. If None, it is
@@ -979,8 +982,8 @@ def selection_histogram(
 
     """
 
-    x_values_dict = {}
-    y_values_dict = {}
+    x_values_dict: Dict[str, Dict[str, np.ndarray]] = {}
+    y_values_dict: Dict[str, Dict[str, np.ndarray]] = {}
 
     if penalty_labels is None:
         penalty_labels = {}
@@ -1029,7 +1032,7 @@ def selection_histogram(
                     y_values_dict[selection_label][penalty_key] = penalty_interp(x_values)
 
     if (penalty_kernels is None) and (penalty_keys is None):
-        x_values_dict = {set_id: [] for set_id in selections_dict}
+        x_values_dict = {set_id: {} for set_id in selections_dict}
 
     n_rows = len(selections_dict)
     cols = [len(x_values_dict[x]) for x in x_values_dict]
@@ -1159,8 +1162,8 @@ def selection_histogram(
                 color="green",
             )
 
-            h1, l1 = ax1.get_legend_handles_labels()
-            h2, l2 = ax2.get_legend_handles_labels()
+            h1, l1 = ax1.get_legend_handles_labels()  # type: ignore
+            h2, l2 = ax2.get_legend_handles_labels()  # type: ignore
             plt.legend(
                 h1 + h2,
                 l1 + l2,
@@ -1303,7 +1306,7 @@ def clf_genes_umaps(
                 - `'decision_title'`: Subplot title.
                 - `'marker_title'`: Subplot title used if gene is marker. TODO: why decision_title AND marker_title?
                 - `'decision_cmap'`: Matplotlib colormap.
-                - `'marker_cmap'`: Matplotlib colormap used if gene is marker. 
+                - `'marker_cmap'`: Matplotlib colormap used if gene is marker.
                   TODO: why decision_cmap and marker_cmap (and why cmap at all...)
 
         basis:
@@ -1329,8 +1332,10 @@ def clf_genes_umaps(
     # prepare data
     a = adata.copy()
     celltypes = list({y for x in df["decision_celltypes"] for y in x})
-    subplots_decision = {ct: list(df.index[df["decision_celltypes"].apply(lambda x: ct in x)]) for ct in celltypes}
-    subplots_marker = {ct: [] for ct in celltypes}
+    subplots_decision = {
+        ct: list(df.index[df["decision_celltypes"].apply(lambda x, ct=ct: ct in x)]) for ct in celltypes
+    }
+    subplots_marker: Dict[str, list] = {ct: [] for ct in celltypes}
     if "marker_celltypes" in df:
         subplots_marker = {ct: list(df.index[df["marker_celltypes"] == ct]) for ct in celltypes}
 
@@ -1361,7 +1366,7 @@ def clf_genes_umaps(
         n_cols = max(n_subplots)
     rows_per_ct = [np.ceil(s / n_cols) for s in n_subplots]
     n_rows = int(sum(rows_per_ct))
-    row_ceils = [int(np.ceil(s / r)) for s, r in zip(n_subplots, rows_per_ct)]
+    row_ceils = [int(np.ceil(s / r)) for s, r in zip(n_subplots, rows_per_ct, strict=True)]  # type: ignore
     n_cols = max(row_ceils)
 
     CT_FONTSIZE = fontsize + 4
@@ -1464,7 +1469,7 @@ def clf_genes_umaps(
             ax.yaxis.label.set_fontsize(fontsize)
             ax.title.set_fontsize(fontsize)
             cbar = ax.collections[-1].colorbar
-            cbar.ax.tick_params(labelsize=fontsize)
+            cbar.ax.tick_params(labelsize=fontsize)  # type: ignore
 
         # subplots for marker genes
         for gene in subplots_marker[ct]:
@@ -1488,7 +1493,7 @@ def clf_genes_umaps(
             ax.yaxis.label.set_fontsize(fontsize)
             ax.title.set_fontsize(fontsize)
             cbar = ax.collections[-1].colorbar
-            cbar.ax.tick_params(labelsize=fontsize)
+            cbar.ax.tick_params(labelsize=fontsize)  # type: ignore
 
     plt.subplots_adjust(bottom=BOTTOM, top=TOP, left=LEFT, right=RIGHT, hspace=HSPACE, wspace=WSPACE)
     if show:
@@ -1512,7 +1517,7 @@ def masked_dotplot(
     marker_color: str = "blue",
     non_adata_celltypes_color: str = "grey",
     use_raw: bool = False,
-    save: Union[bool, str] = False,
+    save: Union[Literal[False], str] = False,
 ):
     """Create dotplot with additional annotation masks.
 
@@ -1675,7 +1680,7 @@ def format_time(time: float) -> str:
     mins = int(time // 60)
     secs = int(time // 1)
     unit = ["d", "h", "min", "sec"]
-    for t, u in zip([days, hours, mins, secs], unit):
+    for t, u in zip([days, hours, mins, secs], unit, strict=True):  # type: ignore
         if t > 0:
             return f"{t} {u}"
     return "0 sec"

@@ -145,13 +145,15 @@ def run_selection(adata_path: str, output_path: str) -> None:
         cartesian_product = list(
             itertools.product(*[param_list for _, param_list in general_params.items()])  # type: ignore
         )
-        general_configs = [{key: val for key, val in zip(general_params, val_list)} for val_list in cartesian_product]
+        general_configs = [
+            {key: val for key, val in zip(general_params, val_list, strict=True)} for val_list in cartesian_product  # type: ignore
+        ]
 
         method_configs = {}
         for method, params in method_params.items():
             cartesian_product = list(itertools.product(*[param_list for _, param_list in params.items()]))  # type: ignore
             method_configs[method] = [
-                {key: val for key, val in zip(params, val_list)} for val_list in cartesian_product  # type: ignore
+                {key: val for key, val in zip(params, val_list, strict=True)} for val_list in cartesian_product  # type: ignore
             ]
 
         Path(output_path).mkdir(parents=True, exist_ok=True)

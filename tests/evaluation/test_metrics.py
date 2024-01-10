@@ -80,7 +80,7 @@ def test_leiden_clustering_shared_comp_each_n(small_adata, ns, n_range):
 )
 def test_marker_correlation_matrix_shared_comp(small_adata, marker_list):
     df = marker_correlation_matrix(small_adata, marker_list)
-    if type(marker_list) == str:
+    if isinstance(marker_list, str):
         marker_list = pd.read_csv(marker_list)
         marker_list = {x: marker_list[x].to_list() for x in marker_list}
     first_markers = []

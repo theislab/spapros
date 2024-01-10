@@ -6,7 +6,7 @@ from spapros import ev
 
 def test_selecor_init(raw_selector):
     adata = raw_selector.adata
-    assert type(adata) == anndata.AnnData
+    assert isinstance(adata, anndata.AnnData)
     assert raw_selector.ct_key in adata.obs_keys()
     assert raw_selector.g_key in adata.var
 

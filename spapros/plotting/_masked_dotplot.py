@@ -106,14 +106,14 @@ def make_grid_spec(
     )
     if isinstance(ax_or_figsize, tuple):
         fig = pl.figure(figsize=ax_or_figsize)
-        return fig, gridspec.GridSpec(nrows, ncols, **kw)
+        return fig, gridspec.GridSpec(nrows, ncols, **kw)  # type: ignore
     else:
         ax = ax_or_figsize
         ax.axis("off")
         ax.set_frame_on(False)
         ax.set_xticks([])
         ax.set_yticks([])
-        return ax.figure, ax.get_subplotspec().subgridspec(nrows, ncols, **kw)
+        return ax.figure, ax.get_subplotspec().subgridspec(nrows, ncols, **kw)  # type: ignore
 
 
 def _get_basis(adata: anndata.AnnData, basis: str):
@@ -157,7 +157,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
         layer: Optional[str] = None,
         expression_cutoff: float = 0.0,
         mean_only_expressed: bool = False,
-        standard_scale: Literal["var", "group"] = "var",
+        standard_scale: Optional[Literal["var", "group"]] = "var",
         dot_color_df: Optional[pd.DataFrame] = None,
         dot_size_df: Optional[pd.DataFrame] = None,
         ax: Optional[_AxesSubplot] = None,
@@ -431,7 +431,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
             tree_genes_mask = tree_genes.values.flatten()
         if isinstance(marker_genes, pd.DataFrame):
             marker_genes_mask = marker_genes.values.flatten()
-        cmap = pl.get_cmap(kwds.get("cmap", cmap))
+        cmap = pl.get_cmap(kwds.get("cmap", cmap))  # type: ignore
         if "cmap" in kwds:
             del kwds["cmap"]
         if dot_max is None:

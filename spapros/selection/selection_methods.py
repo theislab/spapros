@@ -714,7 +714,7 @@ def add_tree_genes_from_reference_trees(
     importance_th: float = 0,
     verbosity: int = 1,
     max_step: int = 12,
-    save: Union[str, bool] = False,
+    save: Union[str, Literal[False]] = False,
     tree_clf_kwargs: dict = {},
     return_clfs: bool = False,
     final_forest_task: Optional[TaskID] = None,
@@ -1465,9 +1465,9 @@ def sort_alphas(alphas: list, n_features: list) -> Tuple[list, list]:
         list:
             List of n_pcs sorted according to :attr:`alphas`.
     """
-    zipped_lists = zip(alphas, n_features)
+    zipped_lists = zip(alphas, n_features, strict=True)  # type: ignore
     sorted_pairs = sorted(zipped_lists)
-    tuples = zip(*sorted_pairs)
+    tuples = zip(*sorted_pairs, strict=True)  # type: ignore
     alphas, n_features = (list(t) for t in tuples)
     return alphas, n_features
 
@@ -1574,7 +1574,7 @@ def spca_feature_selection(
     n_features_in_tolerance = False
     n_features_equals_n = False
     max_alphas = False
-    if (type(n_alphas_min) == int) and (n_alphas_min > 1):
+    if isinstance(n_alphas_min, int) and (n_alphas_min > 1):
         min_alphas = False
     else:
         min_alphas = True
@@ -1592,9 +1592,9 @@ def spca_feature_selection(
         n_features_equals_n = True
     if (n <= n_features[-1]) and (n_features[-1] <= (1 + tolerance) * n):
         n_features_in_tolerance = True
-    if (type(n_alphas_min) == int) and (len(alphas) >= n_alphas_min):
+    if isinstance(n_alphas_min, int) and (len(alphas) >= n_alphas_min):
         min_alphas = True
-    if (type(n_alphas_max) == int) and (len(alphas) == n_alphas_max):
+    if isinstance(n_alphas_max, int) and (len(alphas) == n_alphas_max):
         max_alphas = True
 
     while not (n_features_equals_n or (n_features_in_tolerance and min_alphas) or max_alphas):
@@ -1617,9 +1617,9 @@ def spca_feature_selection(
             n_features_equals_n = True
         if (n <= n_features[-1]) and (n_features[-1] <= (1 + tolerance) * n):
             n_features_in_tolerance = True
-        if (type(n_alphas_min) == int) and (len(alphas) >= n_alphas_min):
+        if isinstance(n_alphas_min, int) and (len(alphas) >= n_alphas_min):
             min_alphas = True
-        if (type(n_alphas_max) == int) and (len(alphas) == n_alphas_max):
+        if isinstance(n_alphas_max, int) and (len(alphas) == n_alphas_max):
             max_alphas = True
 
         if verbosity >= 2:

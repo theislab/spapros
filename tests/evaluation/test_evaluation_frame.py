@@ -4,7 +4,7 @@ import anndata
 
 def test_init(raw_evaluator):
     adata = raw_evaluator.adata
-    assert type(adata) == anndata.AnnData
+    assert isinstance(adata, anndata.AnnData)
     assert raw_evaluator.celltype_key in adata.obs_keys()
 
 
