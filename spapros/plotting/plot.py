@@ -1,4 +1,5 @@
 """Plotting Module."""
+
 import itertools
 from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
@@ -1620,7 +1621,7 @@ def masked_dotplot(
     for ct in cts:
         for gene in selector.probeset[selector.probeset["selection"]].index:
             if ct in selector.probeset.loc[gene, "celltypes_marker"].split(",") and (gene in adata.var_names):
-                marker_genes[ct].append(gene)
+                marker_genes[ct].append(gene)  # noqa: B909
         marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
 
     # Optionally subset genes:

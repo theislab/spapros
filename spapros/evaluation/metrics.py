@@ -858,6 +858,7 @@ def summary_knn_AUC(means_df: pd.DataFrame) -> float:
 # SHARED computations
 # None
 
+
 # PER PROBESET computations
 def xgboost_forest_classification(
     adata: sc.AnnData,
@@ -1160,6 +1161,7 @@ def summary_metric_diagonal_confusion_percentage(
 # marker_corr metric functions #
 ################################
 
+
 # SHARED computations
 def marker_correlation_matrix(
     adata: sc.AnnData,
@@ -1349,6 +1351,7 @@ def summary_marker_corr(cor_df: pd.DataFrame) -> Dict:
 ##############################
 # gene_corr metric functions #
 ##############################
+
 
 # SHARED computations
 def correlation_matrix(

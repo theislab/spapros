@@ -2064,7 +2064,6 @@ def select_reference_probesets(
     for method in methods:
         if method not in selection_fcts:
             print(f"Method {method} is not available. Supported methods are {[key for key in selection_fcts]}.")
-            del methods[method]
     methods = {m: methods[m] for m in methods if m in selection_fcts}
 
     # Create list of planed selections

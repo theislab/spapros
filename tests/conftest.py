@@ -1,4 +1,5 @@
 """Global fixtures for testing."""
+
 import random
 
 import pandas as pd
