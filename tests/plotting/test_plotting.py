@@ -8,6 +8,21 @@ from spapros import pl
 # Note: The figures depend somehow on the environment!
 # Tests might fail if compared figures derived from different envs eg development env and test env
 
+def _transform_string(s):
+    """Transforms a string by replacing ': ' with '-' and ', ' with '_',
+    and then removing problematic characters for Windows filenames.
+    
+    In the tests we use the kwargs of the functions as strings to name output files. To get a valid name for windows 
+    we need to replace certain characters.
+    """
+    # Initial replacements
+    transformed = s.replace(': ', '-').replace(', ', '_')
+    
+    # Additional removals
+    for char in [':', ',', '{', '}', "'", '[', ']']:
+        transformed = transformed.replace(char, '')
+    
+    return transformed
 
 #############
 # selection #
@@ -106,8 +121,8 @@ def test_masked_dotplot(small_adata, selector, tmp_path):
 # TODO maybe add "plot_confusion_matrix_difference", "plot_marker_correlation"
 # TODO add further kwargs for each fun
 def test_selection_plots(selector_with_marker, fun, tmp_path, kwargs):
-    ref_name = f"tests/plotting/test_data/selection_{fun}_{kwargs}.png"
-    fig_name = f"{tmp_path}/selection_{fun}_{kwargs}.png"
+    ref_name = _transform_string(f"tests/plotting/test_data/selection_{fun}_{kwargs}.png")
+    fig_name = _transform_string(f"{tmp_path}/selection_{fun}_{kwargs}.png")
     getattr(selector_with_marker, fun)(save=fig_name, show=False, **kwargs)
     # getattr(selector_with_marker, fun)(save=ref_name, show=False, **kwargs)
     assert compare_images(ref_name, fig_name, 0.001) is None
@@ -151,8 +166,8 @@ def test_plot_summary(evaluator, tmp_path):
 # TODO maybe add "plot_confusion matrix_difference", "plot_marker_correlation"
 # TODO add further kwargs for each fun
 def test_evaluation_plots(evaluator_4_sets, fun, tmp_path, kwargs, request):
-    ref_name = f"tests/plotting/test_data/evaluation_{fun}_{kwargs}.png"
-    fig_name = f"{tmp_path}/evaluation_{fun}_{kwargs}.png"
+    ref_name = _transform_string(f"tests/plotting/test_data/evaluation_{fun}_{kwargs}.png")
+    fig_name = _transform_string(f"{tmp_path}/evaluation_{fun}_{kwargs}.png")
     if "selections_info" in kwargs:
         if kwargs["selections_info"] is not None:
             kwargs["selections_info"] = request.getfixturevalue(kwargs["selections_info"])
