@@ -8,21 +8,23 @@ from spapros import pl
 # Note: The figures depend somehow on the environment!
 # Tests might fail if compared figures derived from different envs eg development env and test env
 
+
 def _transform_string(s):
     """Transforms a string by replacing ': ' with '-' and ', ' with '_',
     and then removing problematic characters for Windows filenames.
-    
-    In the tests we use the kwargs of the functions as strings to name output files. To get a valid name for windows 
+
+    In the tests we use the kwargs of the functions as strings to name output files. To get a valid name for windows
     we need to replace certain characters.
     """
     # Initial replacements
-    transformed = s.replace(': ', '-').replace(', ', '_')
-    
+    transformed = s.replace(": ", "-").replace(", ", "_")
+
     # Additional removals
-    for char in [':', ',', '{', '}', "'", '[', ']']:
-        transformed = transformed.replace(char, '')
-    
+    for char in [":", ",", "{", "}", "'", "[", "]"]:
+        transformed = transformed.replace(char, "")
+
     return transformed
+
 
 #############
 # selection #
