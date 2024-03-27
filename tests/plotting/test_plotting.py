@@ -1,10 +1,15 @@
 import random
 from pathlib import Path
 
+import matplotlib.pyplot as plt
 import pytest
 from matplotlib.testing.compare import compare_images
 
 from spapros import pl
+
+plt.rcParams["figure.dpi"] = 40
+plt.rcParams["savefig.dpi"] = 40
+
 
 # Note: The figures depend somehow on the environment!
 # Tests might fail if compared figures derived from different envs eg development env and test env
