@@ -9,6 +9,9 @@ docs/pl/
 docs/se/
 docs/ut/
 
+# tests
+tests/_out_dir/
+
 #
 *.DS_Store
 

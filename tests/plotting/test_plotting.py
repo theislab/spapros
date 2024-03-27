@@ -32,9 +32,10 @@ def _transform_string(s):
 #############
 
 
-def test_masked_dotplot(small_adata, selector, tmp_path):
+def test_masked_dotplot(small_adata, selector, out_dir):  # tmp_path):
     ref_name = Path("tests/plotting/test_data/masked_dotplot.png")
-    fig_name = Path(f"{tmp_path}/masked_dotplot.png")
+    # fig_name = Path(f"{tmp_path}/masked_dotplot.png")
+    fig_name = Path(f"{out_dir}/masked_dotplot.png")
     random.seed(0)
     small_adata = small_adata[random.sample(range(small_adata.n_obs), 100), :]
     pl.masked_dotplot(small_adata, selector, save=fig_name)
@@ -123,9 +124,10 @@ def test_masked_dotplot(small_adata, selector, tmp_path):
 )
 # TODO maybe add "plot_confusion_matrix_difference", "plot_marker_correlation"
 # TODO add further kwargs for each fun
-def test_selection_plots(selector_with_marker, fun, tmp_path, kwargs):
+def test_selection_plots(selector_with_marker, fun, out_dir, kwargs):  # tmp_path
     ref_name = Path(_transform_string(f"tests/plotting/test_data/selection_{fun}_{kwargs}.png"))
-    fig_name = Path(_transform_string(f"{tmp_path}/selection_{fun}_{kwargs}.png"))
+    # fig_name = Path(_transform_string(f"{tmp_path}/selection_{fun}_{kwargs}.png"))
+    fig_name = Path(_transform_string(f"{out_dir}/selection_{fun}_{kwargs}.png"))
     getattr(selector_with_marker, fun)(save=fig_name, show=False, **kwargs)
     # getattr(selector_with_marker, fun)(save=ref_name, show=False, **kwargs)
     assert compare_images(ref_name, fig_name, 0.001) is None
@@ -136,9 +138,9 @@ def test_selection_plots(selector_with_marker, fun, tmp_path, kwargs):
 ##############
 
 
-def test_plot_summary(evaluator, tmp_path):
+def test_plot_summary(evaluator, out_dir):
     ref_name = Path("tests/plotting/test_data/tmp_plot_summary.png")
-    fig_name = Path(f"{tmp_path}/tmp_plot_summary.png")
+    fig_name = Path(f"{out_dir}/tmp_plot_summary.png")
     evaluator.plot_summary(show=False, save=fig_name)
     # evaluator.plot_summary(show=False, save=ref_name)
     assert compare_images(ref_name, fig_name, 0.001) is None
@@ -168,9 +170,9 @@ def test_plot_summary(evaluator, tmp_path):
 )
 # TODO maybe add "plot_confusion matrix_difference", "plot_marker_correlation"
 # TODO add further kwargs for each fun
-def test_evaluation_plots(evaluator_4_sets, fun, tmp_path, kwargs, request):
+def test_evaluation_plots(evaluator_4_sets, fun, out_dir, kwargs, request):
     ref_name = Path(_transform_string(f"tests/plotting/test_data/evaluation_{fun}_{kwargs}.png"))
-    fig_name = Path(_transform_string(f"{tmp_path}/evaluation_{fun}_{kwargs}.png"))
+    fig_name = Path(_transform_string(f"{out_dir}/evaluation_{fun}_{kwargs}.png"))
     if "selections_info" in kwargs:
         if kwargs["selections_info"] is not None:
             kwargs["selections_info"] = request.getfixturevalue(kwargs["selections_info"])

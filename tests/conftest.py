@@ -1,6 +1,7 @@
 """Global fixtures for testing."""
 
 import random
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -11,6 +12,13 @@ from spapros import ev, se
 #############
 # selection #
 #############
+
+
+@pytest.fixture()
+def out_dir():
+    out_dir = "tests/_out_dir"
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    return out_dir
 
 
 @pytest.fixture()
