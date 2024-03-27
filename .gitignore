@@ -3,6 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# docs
+docs/ev/
+docs/pl/
+docs/se/
+docs/ut/
+
 #
 *.DS_Store
 
