@@ -127,6 +127,10 @@ def test_correlation_matrix_shared_comp_minimal():
 @pytest.mark.parametrize("ks", [[10, 20], [5, 9]])
 @pytest.mark.parametrize("genes", ["all", ["PPBP", "SPARC", "S100A8"], ["PPBP", "S100A9", "LYZ", "BLVRB"]])
 def test_knns_shared_comp(small_adata, ks, genes):
+    """
+    #TODO: test for same set of neighbors per row instead of asserting that the order is also the same. (Lead to
+    failures when there were some changes in the knn function.)
+    """
     df = knns(small_adata, genes=genes, ks=ks)
     # to create the reference dataframe
     # df.to_csv(f"tests/evaluation/test_data/knn_df_{ks}_{genes}.csv")
@@ -227,6 +231,7 @@ def test_xgboost_forest_classification(
         seed,
         n_seeds,
     )
+    # to create the reference dataframes
     # dfs[0].to_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv")
     # dfs[1].to_csv("tests/evaluation/test_data/xgboost_forest_classification_1.csv")
     df_0 = pd.read_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv", index_col=0)

@@ -1018,7 +1018,7 @@ def selection_histogram(
             if selection_label in penalty_keys:
                 for _, penalty_key in enumerate(penalty_keys[selection_label]):
 
-                    if penalty_key not in adata.var:
+                    if penalty_key not in adata.var.columns:
                         raise ValueError(f"Can't plot {penalty_key} because it was not found in adata.var. ")
 
                     if penalty_key not in x_axis_keys:

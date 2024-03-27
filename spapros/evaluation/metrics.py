@@ -968,11 +968,12 @@ def xgboost_forest_classification(
         celltypes = adata.obs[ct_key].unique().tolist()
     # Filter out cell types with less cells than n_cells_min
     cell_counts = adata.obs[ct_key].value_counts().loc[celltypes]
-    if (cell_counts < n_cells_min).any() and (verbosity > 0):
-        print(
-            f"[bold yellow]The following cell types are not included in forest classifications since they have fewer "
-            f"than {n_cells_min} cells: {cell_counts.loc[cell_counts < n_cells_min].index.tolist()}"
-        )
+    if (cell_counts < n_cells_min).any():
+        if verbosity > 0:
+            print(
+                f"[bold yellow]The following cell types are not included in forest classifications since they have "
+                f"fewer than {n_cells_min} cells: {cell_counts.loc[cell_counts < n_cells_min].index.tolist()}"
+            )
         celltypes = [ct for ct in celltypes if (cell_counts.loc[ct] >= n_cells_min)]
 
     # Get data
@@ -1025,7 +1026,7 @@ def xgboost_forest_classification(
             sample_weight_train = compute_sample_weight("balanced", train_y)
             sample_weight_test = compute_sample_weight("balanced", test_y)
             # Fit the classifier
-            n_classes = len(np.unique(train_y))
+            n_classes = max(len(np.unique(train_y)), len(np.unique(test_y)))
             clf = XGBClassifier(
                 max_depth=max_depth,
                 num_class=n_classes if n_classes > 2 else None,

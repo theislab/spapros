@@ -256,8 +256,7 @@ class ProbesetEvaluator:
         self.scheme = scheme
         self.marker_list = marker_list
         self.metrics_params = self._prepare_metrics_params(metrics_params)
-        assert metrics is not None, "metrics must be provided for custom scheme"
-        self.metrics: List[str] = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
+        self.metrics = self._get_metrics_of_scheme(metrics)
         self.ref_name = reference_name
         self.ref_dir = reference_dir if (reference_dir is not None) else self._default_reference_dir()
         self.verbosity = verbosity
@@ -598,10 +597,16 @@ class ProbesetEvaluator:
 
     def _get_metrics_of_scheme(
         self,
+        metrics,
     ) -> List[str]:
         """Get the metrics according to the chosen scheme."""
 
-        if self.scheme == "quick":
+        supported = ["quick", "full", "custom"]
+        assert self.scheme in supported, f"Invalid scheme {self.scheme}. Choose from 'quick', 'full', 'custom'."
+
+        if self.scheme == "custom":
+            assert metrics is not None, "metrics must be provided for custom scheme"
+        elif self.scheme == "quick":
             metrics = ["knn_overlap", "forest_clfs", "gene_corr"]
         elif self.scheme == "full":
             metrics = ["cluster_similarity", "knn_overlap", "forest_clfs", "gene_corr"]
