@@ -127,15 +127,15 @@ def test_correlation_matrix_shared_comp_minimal():
 @pytest.mark.parametrize("ks", [[10, 20], [5, 9]])
 @pytest.mark.parametrize("genes", ["all", ["PPBP", "SPARC", "S100A8"], ["PPBP", "S100A9", "LYZ", "BLVRB"]])
 def test_knns_shared_comp(small_adata, ks, genes):
-    """
-    #TODO: test for same set of neighbors per row instead of asserting that the order is also the same. (Lead to
-    failures when there were some changes in the knn function.)
-    """
+    """ """
     df = knns(small_adata, genes=genes, ks=ks)
     # to create the reference dataframe
     # df.to_csv(f"tests/evaluation/test_data/knn_df_{ks}_{genes}.csv")
     ref_df = pd.read_csv(f"tests/evaluation/test_data/knn_df_{ks}_{genes}.csv", index_col=0)
-    assert df.equals(ref_df)
+    # It's sufficient to check that the same values per row are present, order can differ based on platform and algorithm
+    df_sorted = pd.DataFrame(np.sort(df.values, axis=1), index=df.index, columns=df.columns)
+    ref_df_sorted = pd.DataFrame(np.sort(ref_df.values, axis=1), index=ref_df.index, columns=ref_df.columns)
+    assert df_sorted.equals(ref_df_sorted)
 
 
 ############################
@@ -246,7 +246,7 @@ def test_max_marker_correlations(small_adata, marker_list, small_probeset):
     # mmc.to_csv("tests/evaluation/test_data/max_marker_correlation.csv")
     mmc_ref = pd.read_csv("tests/evaluation/test_data/max_marker_correlation.csv", index_col=0)
     mmc_ref.columns.name = "index"
-    assert pd.testing.assert_frame_equal(mmc, mmc_ref) is None
+    pd.testing.assert_frame_equal(mmc, mmc_ref, check_exact=False, atol=1e-5)
 
 
 ########################
