@@ -1,11 +1,15 @@
 import random
 from pathlib import Path
 
+import matplotlib
 import matplotlib.pyplot as plt
 import pytest
 from matplotlib.testing.compare import compare_images
 
 from spapros import pl
+
+# Use universal non-interactive matplotlib backend such that saved images are the same on all systems
+matplotlib.use("Agg")
 
 plt.rcParams["figure.dpi"] = 40
 plt.rcParams["savefig.dpi"] = 40
