@@ -1306,9 +1306,13 @@ def max_marker_correlations(
 
     cor_df = marker_cor[["celltype", "mean"]].copy()
     cor_df["per marker"] = marker_cor[genes].max(axis=1)
+
+    tolerance = 0.0001  # Tolerance for floating-point comparison
+
     if per_celltype:
         cor_df["per celltype"] = cor_df["per marker"]
-        idxs = cor_df.groupby(["celltype"])["per celltype"].transform(max) == cor_df["per celltype"]
+        max_per_celltype = cor_df.groupby(["celltype"])["per celltype"].transform(max)
+        idxs = np.abs(max_per_celltype - cor_df["per celltype"]) <= tolerance
         cor_df.loc[~idxs, "per celltype"] = np.nan
 
     if (per_marker_min_mean is not None) and per_marker:
@@ -1321,7 +1325,8 @@ def max_marker_correlations(
         col = f"per celltype mean > {min_mean}"
         cor_df[col] = cor_df["per marker"]
         cor_df.loc[cor_df["mean"] <= min_mean, col] = np.nan
-        idxs = cor_df.groupby(["celltype"])[col].transform(max) == cor_df[col]
+        max_per_celltype_min_mean = cor_df.groupby(["celltype"])[col].transform(max)
+        idxs = np.abs(max_per_celltype_min_mean - cor_df[col]) <= tolerance
         cor_df.loc[~idxs, col] = np.nan
 
     if not per_marker:
