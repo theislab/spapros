@@ -858,6 +858,7 @@ def summary_knn_AUC(means_df: pd.DataFrame) -> float:
 # SHARED computations
 # None
 
+
 # PER PROBESET computations
 def xgboost_forest_classification(
     adata: sc.AnnData,
@@ -967,11 +968,12 @@ def xgboost_forest_classification(
         celltypes = adata.obs[ct_key].unique().tolist()
     # Filter out cell types with less cells than n_cells_min
     cell_counts = adata.obs[ct_key].value_counts().loc[celltypes]
-    if (cell_counts < n_cells_min).any() and (verbosity > 0):
-        print(
-            f"[bold yellow]The following cell types are not included in forest classifications since they have fewer "
-            f"than {n_cells_min} cells: {cell_counts.loc[cell_counts < n_cells_min].index.tolist()}"
-        )
+    if (cell_counts < n_cells_min).any():
+        if verbosity > 0:
+            print(
+                f"[bold yellow]The following cell types are not included in forest classifications since they have "
+                f"fewer than {n_cells_min} cells: {cell_counts.loc[cell_counts < n_cells_min].index.tolist()}"
+            )
         celltypes = [ct for ct in celltypes if (cell_counts.loc[ct] >= n_cells_min)]
 
     # Get data
@@ -1024,7 +1026,7 @@ def xgboost_forest_classification(
             sample_weight_train = compute_sample_weight("balanced", train_y)
             sample_weight_test = compute_sample_weight("balanced", test_y)
             # Fit the classifier
-            n_classes = len(np.unique(train_y))
+            n_classes = max(len(np.unique(train_y)), len(np.unique(test_y)))
             clf = XGBClassifier(
                 max_depth=max_depth,
                 num_class=n_classes if n_classes > 2 else None,
@@ -1135,7 +1137,7 @@ def linear_step(x: np.ndarray, low: float, high: float, descending: bool = True)
 
 def summary_metric_diagonal_confusion_percentage(
     conf_mat: pd.DataFrame, threshold: float = 0.9, tolerance: float = 0.05
-) -> np.ndarray:
+) -> np.floating[Any]:
     """Compute percentage of diagonal elements of confusion matrix above threshold.
 
     Note:
@@ -1159,6 +1161,7 @@ def summary_metric_diagonal_confusion_percentage(
 ################################
 # marker_corr metric functions #
 ################################
+
 
 # SHARED computations
 def marker_correlation_matrix(
@@ -1303,9 +1306,13 @@ def max_marker_correlations(
 
     cor_df = marker_cor[["celltype", "mean"]].copy()
     cor_df["per marker"] = marker_cor[genes].max(axis=1)
+
+    tolerance = 0.0001  # Tolerance for floating-point comparison
+
     if per_celltype:
         cor_df["per celltype"] = cor_df["per marker"]
-        idxs = cor_df.groupby(["celltype"])["per celltype"].transform(max) == cor_df["per celltype"]
+        max_per_celltype = cor_df.groupby(["celltype"])["per celltype"].transform(max)
+        idxs = np.abs(max_per_celltype - cor_df["per celltype"]) <= tolerance
         cor_df.loc[~idxs, "per celltype"] = np.nan
 
     if (per_marker_min_mean is not None) and per_marker:
@@ -1318,7 +1325,8 @@ def max_marker_correlations(
         col = f"per celltype mean > {min_mean}"
         cor_df[col] = cor_df["per marker"]
         cor_df.loc[cor_df["mean"] <= min_mean, col] = np.nan
-        idxs = cor_df.groupby(["celltype"])[col].transform(max) == cor_df[col]
+        max_per_celltype_min_mean = cor_df.groupby(["celltype"])[col].transform(max)
+        idxs = np.abs(max_per_celltype_min_mean - cor_df[col]) <= tolerance
         cor_df.loc[~idxs, col] = np.nan
 
     if not per_marker:
@@ -1349,6 +1357,7 @@ def summary_marker_corr(cor_df: pd.DataFrame) -> Dict:
 ##############################
 # gene_corr metric functions #
 ##############################
+
 
 # SHARED computations
 def correlation_matrix(

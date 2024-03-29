@@ -744,7 +744,7 @@ class ProbesetSelector:  # (object)
         # if self.verbosity > 1:
         #     print("\t Iteratively add genes from DE_baseline_forest...")
         if (not self.forest_results["forest"]) or (not self.forest_clfs["forest"]):
-            save_forest: Union[str, bool] = self.forest_results_paths["forest"] if self.save_dir else False
+            save_forest: Union[str, Literal[False]] = self.forest_results_paths["forest"] if self.save_dir else False
             assert isinstance(self.forest_results["pca_prior_forest"], list)
             assert isinstance(self.forest_results["DE_baseline_forest"], list)
             forest_results = select.add_tree_genes_from_reference_trees(
@@ -1190,8 +1190,8 @@ class ProbesetSelector:  # (object)
         genes = []
         cts = []
         importances = []
-        for ct in self.forest_results["forest"][2].keys():
-            tmp = self.forest_results["forest"][2][ct]["0"]
+        for ct in self.forest_results["forest"][2].keys():  # type: ignore
+            tmp = self.forest_results["forest"][2][ct]["0"]  # type: ignore
             tmp = tmp.loc[tmp > 0].sort_values(ascending=False)
             genes += tmp.index.to_list()
             cts += [ct for _ in range(len(tmp))]
@@ -1444,7 +1444,7 @@ class ProbesetSelector:  # (object)
     def plot_histogram(
         self,
         x_axis_keys: Dict[str, str] = None,
-        selections: List[Literal["pca", "DE", "marker"]] = None,
+        selections: Optional[List[str]] = None,
         penalty_keys: Dict = None,
         unapplied_penalty_keys: Dict = None,
         background_key: Union[bool, str] = True,
@@ -1652,6 +1652,11 @@ class ProbesetSelector:  # (object)
             probeset_mask = a.var_names.isin(probeset)
             a = a[:, probeset_mask & selection_mask]
 
+            genes = a.var_names.copy()
+            sc.pp.filter_genes(a, min_cells=1)
+            if len(genes) > a.n_vars:
+                print(f"Exclude genes since they are not expressed: {set(genes) - set(a.var_names)}")
+
             if a.shape[1] < 2:
                 print(f"No plot is drawn for {selection} because it contains less than 2 genes. ")
                 continue
@@ -1754,7 +1759,8 @@ class ProbesetSelector:  # (object)
         # prepare df
         if celltypes is None:
             celltypes = self.celltypes
-        df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)
+        celltypes = [c for c in celltypes if c in df.columns]
+        df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)  # noqa: E712
         if add_marker_genes and (self.selection["marker"] is not None):
             df["marker_celltypes"] = [self.selection["marker"]["celltype"][gene] for gene in df.index]
 
@@ -2005,7 +2011,7 @@ class ProbesetSelector:  # (object)
 def select_reference_probesets(
     adata: sc.AnnData,
     n: int,
-    genes_key: str = "highly_variable",
+    genes_key: Optional[str] = "highly_variable",
     obs_key: str = "celltype",
     methods: Union[List[str], Dict[str, Dict]] = ["PCA", "DE", "HVG", "random"],
     seeds: List[int] = [0],
@@ -2021,6 +2027,7 @@ def select_reference_probesets(
             Number of selected genes.
         genes_key:
             adata.var key for subset of preselected genes to run the selections on (typically 'highly_variable_genes').
+            Set to None to not subset genes.
         obs_key:
             Only required for method 'DE'. Column name of `adata.obs` for which marker scores are calculated.
         methods:
@@ -2058,13 +2065,14 @@ def select_reference_probesets(
     # Reshape methods to dict with empty hyperparams if given as a list
     if isinstance(methods, list):
         methods = {method: {} for method in methods}
+    elif not isinstance(methods, dict):
+        raise ValueError(f"methods must be a list or dict. Got {type(methods)} instead.")
     assert isinstance(methods, dict)
 
     # Filter unsupported methods
     for method in methods:
         if method not in selection_fcts:
             print(f"Method {method} is not available. Supported methods are {[key for key in selection_fcts]}.")
-            del methods[method]
     methods = {m: methods[m] for m in methods if m in selection_fcts}
 
     # Create list of planed selections
@@ -2095,9 +2103,12 @@ def select_reference_probesets(
             if verbosity > 1:
                 sel_task = progress.add_task(f"Selecting {s['name']} genes...", total=1, level=2)
 
-            probesets[s["name"]] = selection_fcts[s["method"]](
-                adata[:, adata.var[genes_key]], n, inplace=False, **s["params"]
-            )
+            if genes_key is None:
+                probesets[s["name"]] = selection_fcts[s["method"]](adata, n, inplace=False, **s["params"])
+            else:
+                probesets[s["name"]] = selection_fcts[s["method"]](
+                    adata[:, adata.var[genes_key]], n, inplace=False, **s["params"]
+                )
 
             if save_dir:
                 probesets[s["name"]].to_csv(os.path.join(save_dir, s["name"]))

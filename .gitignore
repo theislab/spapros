@@ -3,6 +3,18 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# docs
+docs/ev/
+docs/pl/
+docs/se/
+docs/ut/
+
+# tests
+tests/_out_dir/
+
+#
+*.DS_Store
+
 # C extensions
 *.so
 

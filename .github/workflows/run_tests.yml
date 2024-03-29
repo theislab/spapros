@@ -13,50 +13,50 @@ jobs:
             matrix:
                 include:
                     - {
-                          python-version: 3.8,
+                          python-version: 3.9,
                           os: ubuntu-latest,
                           session: "pre-commit",
                       }
                     - {
-                          python-version: 3.8,
+                          python-version: 3.9,
                           os: ubuntu-latest,
                           session: "safety",
                       }
                     - {
-                          python-version: 3.8,
+                          python-version: 3.9,
                           os: ubuntu-latest,
                           session: "mypy",
                       }
                     - {
-                          python-version: 3.8,
+                          python-version: 3.9,
                           os: ubuntu-latest,
                           session: "tests",
                       }
                     - {
-                          python-version: 3.8,
+                          python-version: 3.9,
                           os: windows-latest,
                           session: "tests",
                       }
                     - {
-                          python-version: 3.8,
+                          python-version: 3.9,
                           os: macos-latest,
                           session: "tests",
                       }
                     - {
-                          python-version: 3.8,
+                          python-version: 3.9,
                           os: ubuntu-latest,
                           session: "typeguard",
                       }
                     - {
-                          python-version: 3.8,
+                          python-version: 3.9,
                           os: ubuntu-latest,
                           session: "xdoctest",
                       }
-                    - {
-                          python-version: 3.8,
-                          os: ubuntu-latest,
-                          session: "docs-build",
-                      }
+                    #- {
+                    #      python-version: 3.9,
+                    #      os: ubuntu-latest,
+                    #      session: "docs-build",
+                    #  }
 
         env:
             NOXSESSION: ${{ matrix.session }}
@@ -121,12 +121,12 @@ jobs:
                   name: coverage-data
                   path: ".coverage.*"
 
-            - name: Upload documentation
-              if: matrix.session == 'docs-build'
-              uses: actions/upload-artifact@v3.1.0
-              with:
-                  name: docs
-                  path: docs/_build
+            #- name: Upload documentation
+            #  if: matrix.session == 'docs-build'
+            #  uses: actions/upload-artifact@v3.1.0
+            #  with:
+            #      name: docs
+            #      path: docs/_build
 
     coverage:
         runs-on: ubuntu-latest

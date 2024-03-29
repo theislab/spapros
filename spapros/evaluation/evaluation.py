@@ -4,7 +4,7 @@ import pickle
 import warnings
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, Iterable, List, Literal, Optional, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -256,7 +256,7 @@ class ProbesetEvaluator:
         self.scheme = scheme
         self.marker_list = marker_list
         self.metrics_params = self._prepare_metrics_params(metrics_params)
-        self.metrics: List[str] = metrics if (scheme == "custom") else self._get_metrics_of_scheme()
+        self.metrics = self._get_metrics_of_scheme(metrics)
         self.ref_name = reference_name
         self.ref_dir = reference_dir if (reference_dir is not None) else self._default_reference_dir()
         self.verbosity = verbosity
@@ -597,10 +597,16 @@ class ProbesetEvaluator:
 
     def _get_metrics_of_scheme(
         self,
+        metrics,
     ) -> List[str]:
         """Get the metrics according to the chosen scheme."""
 
-        if self.scheme == "quick":
+        supported = ["quick", "full", "custom"]
+        assert self.scheme in supported, f"Invalid scheme {self.scheme}. Choose from 'quick', 'full', 'custom'."
+
+        if self.scheme == "custom":
+            assert metrics is not None, "metrics must be provided for custom scheme"
+        elif self.scheme == "quick":
             metrics = ["knn_overlap", "forest_clfs", "gene_corr"]
         elif self.scheme == "full":
             metrics = ["cluster_similarity", "knn_overlap", "forest_clfs", "gene_corr"]
@@ -1202,7 +1208,7 @@ class ProbesetEvaluator:
         set_ids: Union[str, List[str]] = "all",
         metrics: Union[str, List[str]] = "all",
         show: bool = True,
-        save: Union[str, bool] = False,
+        save: Union[str, Literal[False]] = False,
         plt_kwargs={},
     ) -> None:
         """Plot detailed results plots for specified metrics.
@@ -1310,7 +1316,7 @@ def plot_nmis(
     labels: List[str] = None,
     legend: tuple = None,
     show: bool = True,
-    save: Union[bool, str] = False,
+    save: Union[Literal[False], str] = False,
 ) -> plt.Figure:
     """Plot the distribution of NMI values.
 
@@ -1557,7 +1563,7 @@ def load_forest(path: str) -> Any:
     return pickle.load(open(path, "rb"))
 
 
-def get_reference_masks(cts: list, ct_to_ref: Dict[str, list]) -> Dict[str, bool]:
+def get_reference_masks(cts: list, ct_to_ref: Dict[str, list]) -> Dict[str, np.ndarray[Any, np.dtype[np.bool_]]]:
     """Get celltype specific boolean masks over celltype annotation vector.
 
     Args:
@@ -1846,10 +1852,13 @@ def single_forest_classifications(
         if (ct in a.obs.loc[a.obs["train_set"], ct_key].values) and (ct in a.obs.loc[a.obs["test_set"], ct_key].values)
     ]
     for c in [c for c in celltypes if c not in celltypes_tmp]:
-        warnings.warn(f"Zero cells of celltype {c} in train or test set. No tree is calculated for celltype {c}.")
+        warnings.warn(
+            f"Zero cells of celltype {c} in train or test set. No tree is calculated for celltype {c}.", stacklevel=2
+        )
     for c in [c for c in ref_celltypes if c not in ref_celltypes_tmp]:
         warnings.warn(
-            f"Zero cells of celltype {c} in train or test set. Celltype {c} is not included as reference celltype."
+            f"Zero cells of celltype {c} in train or test set. Celltype {c} is not included as reference celltype.",
+            stacklevel=2,
         )
     celltypes = celltypes_tmp
     ref_celltypes = ref_celltypes_tmp
@@ -1857,7 +1866,8 @@ def single_forest_classifications(
     if cts_not_in_ref:
         warnings.warn(
             f"For celltypes {cts_not_in_ref} trees are computed, they are not listed in reference celltypes though. "
-            f"Added them..."
+            f"Added them...",
+            stacklevel=2,
         )
         ref_celltypes += cts_not_in_ref
 
@@ -1873,7 +1883,9 @@ def single_forest_classifications(
         a, ct_key, set_key="test_set", subsample=test_subsample, seed=seed, celltypes=ref_celltypes
     )
     if ct_spec_ref is not None:
-        masks_test: Union[Dict[str, bool], None] = get_reference_masks(cts_test, ct_spec_ref)
+        masks_test: Optional[Dict[str, np.ndarray[Any, np.dtype[np.bool_]]]] = get_reference_masks(
+            cts_test, ct_spec_ref
+        )
     else:
         masks_test = None
 
@@ -1889,7 +1901,9 @@ def single_forest_classifications(
             a, ct_key, set_key="train_set", subsample=subsample, seed=seeds[i], celltypes=ref_celltypes
         )
         if ct_spec_ref is not None:
-            masks: Union[Dict[str, bool], None] = get_reference_masks(cts_train, ct_spec_ref)
+            masks: Optional[Dict[str, np.ndarray[Any, np.dtype[np.bool_]]]] = get_reference_masks(
+                cts_train, ct_spec_ref
+            )
         else:
             masks = None
         ct_trees_i = parallelize(

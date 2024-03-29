@@ -1,8 +1,9 @@
 """Nox sessions."""
+
 import os
-import sys
 import shlex
 import shutil
+import sys
 from pathlib import Path
 from textwrap import dedent
 
@@ -17,7 +18,7 @@ except ImportError:
     sys.exit(1)
 
 package = "spapros"
-python_versions = ["3.8", "3.9"]
+python_versions = ["3.9", "3.10"]
 nox.options.sessions = (
     "pre-commit",
     "safety",

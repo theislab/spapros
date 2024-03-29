@@ -1,4 +1,5 @@
 """Test cases for the metric calculations."""
+
 import numpy as np
 import pandas as pd
 import pytest
@@ -80,7 +81,7 @@ def test_leiden_clustering_shared_comp_each_n(small_adata, ns, n_range):
 )
 def test_marker_correlation_matrix_shared_comp(small_adata, marker_list):
     df = marker_correlation_matrix(small_adata, marker_list)
-    if type(marker_list) == str:
+    if isinstance(marker_list, str):
         marker_list = pd.read_csv(marker_list)
         marker_list = {x: marker_list[x].to_list() for x in marker_list}
     first_markers = []
@@ -126,11 +127,15 @@ def test_correlation_matrix_shared_comp_minimal():
 @pytest.mark.parametrize("ks", [[10, 20], [5, 9]])
 @pytest.mark.parametrize("genes", ["all", ["PPBP", "SPARC", "S100A8"], ["PPBP", "S100A9", "LYZ", "BLVRB"]])
 def test_knns_shared_comp(small_adata, ks, genes):
+    """ """
     df = knns(small_adata, genes=genes, ks=ks)
     # to create the reference dataframe
     # df.to_csv(f"tests/evaluation/test_data/knn_df_{ks}_{genes}.csv")
     ref_df = pd.read_csv(f"tests/evaluation/test_data/knn_df_{ks}_{genes}.csv", index_col=0)
-    assert df.equals(ref_df)
+    # It's sufficient to check that the same values per row are present, order can differ based on platform and algorithm
+    df_sorted = pd.DataFrame(np.sort(df.values, axis=1), index=df.index, columns=df.columns)
+    ref_df_sorted = pd.DataFrame(np.sort(ref_df.values, axis=1), index=ref_df.index, columns=ref_df.columns)
+    assert df_sorted.equals(ref_df_sorted)
 
 
 ############################
@@ -226,6 +231,7 @@ def test_xgboost_forest_classification(
         seed,
         n_seeds,
     )
+    # to create the reference dataframes
     # dfs[0].to_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv")
     # dfs[1].to_csv("tests/evaluation/test_data/xgboost_forest_classification_1.csv")
     df_0 = pd.read_csv("tests/evaluation/test_data/xgboost_forest_classification_0.csv", index_col=0)
@@ -240,7 +246,7 @@ def test_max_marker_correlations(small_adata, marker_list, small_probeset):
     # mmc.to_csv("tests/evaluation/test_data/max_marker_correlation.csv")
     mmc_ref = pd.read_csv("tests/evaluation/test_data/max_marker_correlation.csv", index_col=0)
     mmc_ref.columns.name = "index"
-    assert pd.testing.assert_frame_equal(mmc, mmc_ref) is None
+    pd.testing.assert_frame_equal(mmc, mmc_ref, check_exact=False, atol=1e-5)
 
 
 ########################

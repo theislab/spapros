@@ -1,5 +1,7 @@
 """Global fixtures for testing."""
+
 import random
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -10,6 +12,13 @@ from spapros import ev, se
 #############
 # selection #
 #############
+
+
+@pytest.fixture()
+def out_dir():
+    out_dir = "tests/_out_dir"
+    Path(out_dir).mkdir(parents=True, exist_ok=True)
+    return out_dir
 
 
 @pytest.fixture()
@@ -46,7 +55,7 @@ def selector_with_marker(small_adata):
         forest_hparams={"n_trees": 10, "subsample": 200, "test_subsample": 400},
         verbosity=0,
         save_dir=None,
-        marker_list="/big/st/strasserl/spapros/tests/selection/test_data/small_data_marker_list.csv",
+        marker_list="tests/evaluation/test_data/small_data_marker_list.csv",
     )
     raw_selector.select_probeset()
     return raw_selector
@@ -142,9 +151,7 @@ def evaluator_4_sets(small_adata, marker_list):
         results_dir="tests/evaluation/test_data/evaluation_results_4_sets",
         marker_list=marker_list,
     )
-    four_probesets = pd.read_csv(
-        "/big/st/strasserl/spapros/tests/evaluation/test_data/4_probesets_of_20.csv", index_col=0
-    )
+    four_probesets = pd.read_csv("tests/evaluation/test_data/4_probesets_of_20.csv", index_col=0)
     for set_id in four_probesets:
         evaluator.evaluate_probeset(set_id=set_id, genes=list(four_probesets[set_id]))
     return evaluator

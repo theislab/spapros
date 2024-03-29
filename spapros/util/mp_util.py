@@ -1,18 +1,12 @@
 """FRom squidpy's general utility functions."""
+
 from __future__ import annotations
 
 from enum import Enum
 from multiprocessing import Manager, cpu_count
 from queue import Queue
 from threading import Thread
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Callable,
-    Hashable,
-    Iterable,
-    Sequence,
-)
+from typing import TYPE_CHECKING, Any, Callable, Hashable, Iterable, Sequence
 
 import joblib as jl
 import numpy as np

@@ -1,6 +1,5 @@
 from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
 
-import matplotlib.pyplot
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -303,7 +302,7 @@ def cluster_corr(corr_array: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFr
 def coexpression_plot(
     adata: sc.AnnData,
     figsize: Tuple[float, float] = (5, 5),
-    colorbar: Optional[matplotlib.pyplot.colorbar] = None,
+    colorbar: bool = False,
     return_mean_abs: bool = False,
 ) -> Optional[np.ndarray]:
     """Creates a coexpression plot.
@@ -495,7 +494,7 @@ def plateau_penalty_kernel(
 
     """
 
-    if type(var) == list:
+    if isinstance(var, list):
         var_l = var[0]
         var_r = var[1]
     else:
