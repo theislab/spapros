@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>spapros.se.ProbesetSelector.plot_histogram &mdash; spapros docs</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="../_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
@@ -45,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -113,7 +116,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="spapros-se-probesetselector-plot-histogram">
+  <section id="spapros-se-probesetselector-plot-histogram">
 <h1>spapros.se.ProbesetSelector.plot_histogram<a class="headerlink" href="#spapros-se-probesetselector-plot-histogram" title="Permalink to this heading"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="spapros.se.ProbesetSelector.plot_histogram">
@@ -127,11 +130,11 @@ This is an interactive plotting function to investigate if the constructed penal
 penalty function.</p>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>x_axis_keys</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Dictionary with the values from <code class="docutils literal notranslate"><span class="pre">penaly_keys</span></code> as keys and the column name of <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> that was
 used to calcuate the respective penalty factors.</p></li>
-<li><p><strong>selections</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Literal</em><em>[</em><em>'pca'</em><em>, </em><em>'DE'</em><em>, </em><em>'marker'</em><em>]</em><em>]</em><em>]</em>) – <p>Plot the histograms of selections based on</p>
+<li><p><strong>selections</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – <p>Plot the histograms of selections based on</p>
 <blockquote>
 <div><ul>
 <li><p><cite>’pca’</cite> : pca loadings based selection of prior genes</p></li>
@@ -160,17 +163,17 @@ are used as background.</p></li>
 <li><p><strong>kwargs</strong> – Further arguments for <a class="reference internal" href="../pl/spapros.pl.selection_histogram.html#spapros.pl.selection_histogram" title="spapros.pl.selection_histogram"><code class="xref py py-func docutils literal notranslate"><span class="pre">selection_histogram()</span></code></a>.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Figure can be showed (default <cite>True</cite>) and stored to path (default <cite>None</cite>).
 Change this with <cite>show</cite> and <cite>save</cite> in <code class="docutils literal notranslate"><span class="pre">kwargs</span></code>.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>

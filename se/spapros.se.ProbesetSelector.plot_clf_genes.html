@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>spapros.se.ProbesetSelector.plot_clf_genes &mdash; spapros docs</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="../_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
@@ -45,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -113,14 +116,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="spapros-se-probesetselector-plot-clf-genes">
+  <section id="spapros-se-probesetselector-plot-clf-genes">
 <h1>spapros.se.ProbesetSelector.plot_clf_genes<a class="headerlink" href="#spapros-se-probesetselector-plot-clf-genes" title="Permalink to this heading"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="spapros.se.ProbesetSelector.plot_clf_genes">
 <span class="sig-prename descclassname"><span class="pre">ProbesetSelector.</span></span><span class="sig-name descname"><span class="pre">plot_clf_genes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">basis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'X_umap'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">celltypes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">till_rank</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">importance_th</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">add_marker_genes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">neighbors_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">umap_params</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">{}</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.se.ProbesetSelector.plot_clf_genes" title="Permalink to this definition"></a></dt>
 <dd><p>Plot umaps of selected genes needed for cell type classification of each cell type.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>basis</strong> (<em>str</em>) – Name of the <code class="docutils literal notranslate"><span class="pre">obsm</span></code> embedding to use.</p></li>
 <li><p><strong>celltypes</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – Subset of cell types for which to plot decision genes. If <cite>None</cite>, <code class="xref py py-attr docutils literal notranslate"><span class="pre">celltypes</span></code> is used.</p></li>
@@ -150,7 +153,7 @@ TODO: do we rly need that parameter? Would be fine to always expect a pre calcul
 <p>TODO: this function and pl.clf_genes_umaps need to be tested on all argument combinations + can be optimized.</p>
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>

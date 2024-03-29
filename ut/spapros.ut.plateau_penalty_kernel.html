@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>spapros.ut.plateau_penalty_kernel &mdash; spapros docs</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="../_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
@@ -45,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -104,7 +107,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="spapros-ut-plateau-penalty-kernel">
+  <section id="spapros-ut-plateau-penalty-kernel">
 <h1>spapros.ut.plateau_penalty_kernel<a class="headerlink" href="#spapros-ut-plateau-penalty-kernel" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.ut.plateau_penalty_kernel">
@@ -114,17 +117,17 @@
 The kernel is 1 between <code class="xref py py-attr docutils literal notranslate"><span class="pre">x_min</span></code> and <code class="xref py py-attr docutils literal notranslate"><span class="pre">x_max</span></code>. If one-sided it’s 1 from <code class="xref py py-attr docutils literal notranslate"><span class="pre">x_min</span></code> or till
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">x_max</span></code>. Outside the defined range the kernal decays with a gaussian function with variance = <code class="docutils literal notranslate"><span class="pre">var</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>var</strong> (<em>Union</em><em>[</em><em>float</em><em>, </em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Outside the defined range, the kernel decays with a gaussian function with variance = <code class="docutils literal notranslate"><span class="pre">var</span></code>.</p></li>
 <li><p><strong>x_min</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – Lower border above which the kernel is 1.</p></li>
 <li><p><strong>x_max</strong> (<em>Optional</em><em>[</em><em>ndarray</em><em>]</em>) – Upper border below which the kernel is 1.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Penalty function.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Callable</em></p>
 </dd>
 </dl>
@@ -150,7 +153,7 @@ The kernel is 1 between <code class="xref py py-attr docutils literal notranslat
 <img alt="../_images/Utils_plateau_penalty_kernel.png" src="../_images/Utils_plateau_penalty_kernel.png" />
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>

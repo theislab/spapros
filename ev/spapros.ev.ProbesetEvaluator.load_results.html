@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>spapros.ev.ProbesetEvaluator.load_results &mdash; spapros docs</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="../_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
@@ -45,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -119,7 +122,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="spapros-ev-probesetevaluator-load-results">
+  <section id="spapros-ev-probesetevaluator-load-results">
 <h1>spapros.ev.ProbesetEvaluator.load_results<a class="headerlink" href="#spapros-ev-probesetevaluator-load-results" title="Permalink to this heading"></a></h1>
 <dl class="py method">
 <dt class="sig sig-object py" id="spapros.ev.ProbesetEvaluator.load_results">
@@ -128,7 +131,7 @@
 <p>In case of multiple directories we assume that the different evaluations were done with the same parameters. You
 can control which metrics are loaded by setting <code class="xref py py-attr docutils literal notranslate"><span class="pre">ProbesetEvaluator.metrics</span></code>.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>directories</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – Directory or list of directories of previous evaluations. If <cite>None</cite> is given it’s set to
 <code class="xref py py-attr docutils literal notranslate"><span class="pre">ProbesetEvaluator.dir</span></code>.</p></li>
@@ -147,7 +150,7 @@ can control which metrics are loaded by setting <code class="xref py py-attr doc
 <li><p><strong>verbosity</strong> (<em>int</em>) – Verbosity level.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><dl class="simple">
 <dt>pd.DataFrame</dt><dd><p>A boolean table that indicates which results were loaded for each set_id. Note that some metrics don’t
 have result files for certain steps.</p>
@@ -155,7 +158,7 @@ have result files for certain steps.</p>
 </dl>
 </p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>DataFrame</em></p>
 </dd>
 </dl>
@@ -201,7 +204,7 @@ have result files for certain steps.</p>
 </div>
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>

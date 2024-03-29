@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>spapros.pl.selection_histogram &mdash; spapros docs</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="../_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
@@ -45,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -111,14 +114,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="spapros-pl-selection-histogram">
+  <section id="spapros-pl-selection-histogram">
 <h1>spapros.pl.selection_histogram<a class="headerlink" href="#spapros-pl-selection-histogram" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.pl.selection_histogram">
-<span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">selection_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selections_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_axis_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'highly_variable'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_kernels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'penalty'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_borders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_borders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.selection_histogram" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">selection_histogram</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">selections_dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">x_axis_keys</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">background_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'highly_variable'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_kernels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_keys</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">penalty_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">upper_borders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lower_borders</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">legend_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.selection_histogram" title="Permalink to this definition"></a></dt>
 <dd><p>Plot histogram of quantiles for selected genes for different penalty kernels.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>adata</strong> (<em>AnnData</em>) – <code class="docutils literal notranslate"><span class="pre">sc.AnnData</span></code> object containing the data for plotting the histogram in <code class="docutils literal notranslate"><span class="pre">adata.var[x_axis_key]</span></code>.</p></li>
 <li><p><strong>selections_dict</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>DataFrame</em><em>]</em>) – Dictionary of dataframes with gene identifiers as index and a boolean column indicating the selection. The
@@ -135,15 +138,16 @@ applying the penalty kernel. Use the <code class="docutils literal notranslate">
 </ul>
 </div></blockquote>
 </p></li>
-<li><p><strong>background_key</strong> (<em>str</em>) – Key of column in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> which is plottet as background histogram. If <cite>None</cite>, no background histogram
+<li><p><strong>background_key</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Literal</em><em>[</em><em>False</em><em>]</em><em>]</em>) – Key of column in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> which is plottet as background histogram. If <cite>False</cite>, no background histogram
 is plotted. If <cite>‘all’</cite>, all genes are used as background.</p></li>
 <li><p><strong>penalty_kernels</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Callable</em><em>]</em><em>]</em><em>]</em>) – Dictionary of penalty kernels, which were used for each selection. The outer key is the selection name. The
 inner keys are used as subplot titles.
 Additionally, <code class="docutils literal notranslate"><span class="pre">penalty_keys</span></code> can be provided. If both are None, only the histograms are plottet.</p></li>
 <li><p><strong>penalty_keys</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em><em>]</em>) – Dictionary of a list of column keys of <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing penalty scores for each selection.
 Additionally, <code class="docutils literal notranslate"><span class="pre">penalty_kernels</span></code> can be provided. If both are None, only the histograms are plottet.</p></li>
-<li><p><strong>penalty_labels</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – A legeng label for each selection and each penalty. The keys of the outer dictionary need to be the
-selection names. As keys for the inner dictionary, use the penalty keys.</p></li>
+<li><p><strong>penalty_labels</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em><em>]</em>) – A legend label for each selection and each penalty. The keys of the outer dictionary need to be the
+selection names. As keys for the inner dictionary, use the penalty keys. I.e.
+penalty_labels[selection_label][penalty_key] = “some label”.</p></li>
 <li><p><strong>upper_borders</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>bool</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Union</em><em>[</em><em>float</em><em>, </em><em>bool</em><em>]</em><em>]</em><em>]</em><em>]</em>) – Dictionary with the lower borders above which the kernels are 1, which is indicated as a vertical line in
 the plot. Use the same dictionay keys as <code class="docutils literal notranslate"><span class="pre">penalty_keys</span></code> or <code class="docutils literal notranslate"><span class="pre">penalty_kernels</span></code>. If None, it is
 automatically infered. If False or not in the dictionary, no vertical line at the upper border is drawn.</p></li>
@@ -156,14 +160,14 @@ automatically infered. If False or not in the dictionary, no vertical line at th
 <li><p><strong>save</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Save the plot to path.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
 <p>Returns:</p>
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>

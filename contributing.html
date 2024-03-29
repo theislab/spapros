@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Contributor Guide &mdash; spapros docs</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
@@ -43,7 +46,7 @@
               <img src="_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -87,7 +90,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="contributor-guide">
+  <section id="contributor-guide">
 <h1>Contributor Guide<a class="headerlink" href="#contributor-guide" title="Permalink to this heading"></a></h1>
 <p>Thank you for your interest in improving this project.
 This project is open-source under the <a class="reference external" href="https://opensource.org/licenses/MIT">MIT license</a> and
@@ -99,15 +102,15 @@ highly welcomes contributions in the form of bug reports, feature requests, and 
 <li><p><a class="reference external" href="https://github.com/theislab/spapros/issues">Issue Tracker</a></p></li>
 <li><p><a class="reference external" href="CODE_OF_CONDUCT.rst">Code of Conduct</a></p></li>
 </ul>
-<div class="section" id="how-to-report-a-bug">
+<section id="how-to-report-a-bug">
 <h2>How to report a bug<a class="headerlink" href="#how-to-report-a-bug" title="Permalink to this heading"></a></h2>
 <p>Report bugs on the <a class="reference external" href="https://github.com/theislab/spapros/issues">Issue Tracker</a>.</p>
-</div>
-<div class="section" id="how-to-request-a-feature">
+</section>
+<section id="how-to-request-a-feature">
 <h2>How to request a feature<a class="headerlink" href="#how-to-request-a-feature" title="Permalink to this heading"></a></h2>
 <p>Request features on the <a class="reference external" href="https://github.com/theislab/spapros/issues">Issue Tracker</a>.</p>
-</div>
-<div class="section" id="how-to-set-up-your-development-environment">
+</section>
+<section id="how-to-set-up-your-development-environment">
 <h2>How to set up your development environment<a class="headerlink" href="#how-to-set-up-your-development-environment" title="Permalink to this heading"></a></h2>
 <p>You need Python 3.8+ and the following tools:</p>
 <ul class="simple">
@@ -129,8 +132,8 @@ or the command-line interface:</p>
 <span class="gp">$ </span>poetry<span class="w"> </span>run<span class="w"> </span>spapros
 </pre></div>
 </div>
-</div>
-<div class="section" id="how-to-test-the-project">
+</section>
+<section id="how-to-test-the-project">
 <h2>How to test the project<a class="headerlink" href="#how-to-test-the-project" title="Permalink to this heading"></a></h2>
 <p>Run the full test suite:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>nox
@@ -147,8 +150,8 @@ For example, invoke the unit test suite like this:</p>
 </div>
 <p>Unit tests are located in the <code class="docutils literal notranslate"><span class="pre">tests</span></code> directory,
 and are written using the <a class="reference external" href="https://pytest.readthedocs.io/">pytest</a> testing framework.</p>
-</div>
-<div class="section" id="how-to-build-and-view-the-documentation">
+</section>
+<section id="how-to-build-and-view-the-documentation">
 <h2>How to build and view the documentation<a class="headerlink" href="#how-to-build-and-view-the-documentation" title="Permalink to this heading"></a></h2>
 <p>This project uses <a class="reference external" href="https://www.sphinx-doc.org/en/master/">Sphinx</a> together with several extensions to build the documentation.
 It further requires <a class="reference external" href="https://pandoc.org/">Pandoc</a> to translate various formats.</p>
@@ -162,8 +165,8 @@ It further requires <a class="reference external" href="https://pandoc.org/">Pan
 </div>
 <p>from inside the docs folder. The generated static HTML files can be found in the <cite>_build/html</cite> folder.
 Simply open them with your favorite browser.</p>
-</div>
-<div class="section" id="how-to-submit-changes">
+</section>
+<section id="how-to-submit-changes">
 <h2>How to submit changes<a class="headerlink" href="#how-to-submit-changes" title="Permalink to this heading"></a></h2>
 <p>Open a <a class="reference external" href="https://github.com/theislab/spapros/pulls">pull request</a> to submit changes to this project against the <code class="docutils literal notranslate"><span class="pre">development</span></code> branch.</p>
 <p>Your pull request needs to meet the following guidelines for acceptance:</p>
@@ -178,8 +181,8 @@ Simply open them with your favorite browser.</p>
 </div>
 <p>It is recommended to open an issue before starting work on anything.
 This will allow a chance to talk it over with the owners and validate your approach.</p>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

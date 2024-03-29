@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>spapros.se.select_reference_probesets &mdash; spapros docs</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="../_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
@@ -45,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -105,18 +108,19 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="spapros-se-select-reference-probesets">
+  <section id="spapros-se-select-reference-probesets">
 <h1>spapros.se.select_reference_probesets<a class="headerlink" href="#spapros-se-select-reference-probesets" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.se.select_reference_probesets">
 <span class="sig-prename descclassname"><span class="pre">spapros.se.</span></span><span class="sig-name descname"><span class="pre">select_reference_probesets</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">adata</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">genes_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'highly_variable'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">obs_key</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'celltype'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">methods</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">['PCA',</span> <span class="pre">'DE',</span> <span class="pre">'HVG',</span> <span class="pre">'random']</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">seeds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">[0]</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbosity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.se.select_reference_probesets" title="Permalink to this definition"></a></dt>
 <dd><p>Select reference probesets with basic selection methods.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>adata</strong> (<em>AnnData</em>) – Data with log normalised counts in adata.X.</p></li>
 <li><p><strong>n</strong> (<em>int</em>) – Number of selected genes.</p></li>
-<li><p><strong>genes_key</strong> (<em>str</em>) – adata.var key for subset of preselected genes to run the selections on (typically ‘highly_variable_genes’).</p></li>
+<li><p><strong>genes_key</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – adata.var key for subset of preselected genes to run the selections on (typically ‘highly_variable_genes’).
+Set to None to not subset genes.</p></li>
 <li><p><strong>obs_key</strong> (<em>str</em>) – Only required for method ‘DE’. Column name of <cite>adata.obs</cite> for which marker scores are calculated.</p></li>
 <li><p><strong>methods</strong> (<em>Union</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>, </em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>Dict</em><em>]</em><em>]</em>) – <p>Methods used for selections. Supported methods and default are <cite>[‘PCA’, ‘DE’, ‘HVG’, ‘random’]</cite>. To specify
 hyperparameters of the methods provide a dictionary, e.g.:</p>
@@ -134,18 +138,18 @@ hyperparameters of the methods provide a dictionary, e.g.:</p>
 <li><p><strong>save_dir</strong> (<em>Optional</em><em>[</em><em>str</em><em>]</em>) – Directory path where all results are saved.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Returns</dt>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Dictionary with one entry for each method. The key is the selection method name and the value is
 a DataFrame with the same index as adata.var and at least one boolean column called ‘selection’ representing
 the selected probeset. For some methods, additional information is provided in other columns.</p>
 </dd>
-<dt class="field-odd">Return type</dt>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p><em>Dict</em>[str, <em>DataFrame</em>]</p>
 </dd>
 </dl>
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>

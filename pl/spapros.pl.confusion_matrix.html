@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>spapros.pl.confusion_matrix &mdash; spapros docs</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="../_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
@@ -45,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -111,14 +114,14 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="spapros-pl-confusion-matrix">
+  <section id="spapros-pl-confusion-matrix">
 <h1>spapros.pl.confusion_matrix<a class="headerlink" href="#spapros-pl-confusion-matrix" title="Permalink to this heading"></a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="spapros.pl.confusion_matrix">
 <span class="sig-prename descclassname"><span class="pre">spapros.pl.</span></span><span class="sig-name descname"><span class="pre">confusion_matrix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">set_ids</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conf_matrices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ordered</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">show</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">save</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">size_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fontsize</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">18</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_cols</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rotate_x_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#spapros.pl.confusion_matrix" title="Permalink to this definition"></a></dt>
 <dd><p>Plot heatmap of cell type classification confusion matrices.</p>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>set_ids</strong> (<em>List</em><em>[</em><em>str</em><em>]</em>) – List of probe set ids.</p></li>
 <li><p><strong>conf_matrices</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>DataFrame</em><em>]</em>) – Confusion matrix of each probe set given in <code class="docutils literal notranslate"><span class="pre">set_ids</span></code>.</p></li>
@@ -127,20 +130,20 @@ If set to True a linkage clustering is computed to order cell types together tha
 If multiple set_ids are provided the same order is applied to all of them.
 Alternatively provide a list with a custom order.</p></li>
 <li><p><strong>show</strong> (<em>bool</em>) – Show the figure.</p></li>
-<li><p><strong>save</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>str</em><em>]</em>) – If <cite>True</cite> or a <cite>str</cite>, save the figure.</p></li>
+<li><p><strong>save</strong> (<em>Union</em><em>[</em><em>Literal</em><em>[</em><em>False</em><em>]</em><em>, </em><em>str</em><em>]</em>) – If <cite>True</cite> or a <cite>str</cite>, save the figure.</p></li>
 <li><p><strong>size_factor</strong> (<em>float</em>) – Factor for scaling the figure size.</p></li>
 <li><p><strong>fontsize</strong> (<em>int</em>) – Matplotlib fontsize.</p></li>
 <li><p><strong>n_cols</strong> (<em>int</em>) – Number of subplot columns.</p></li>
 <li><p><strong>rotate_x_labels</strong> (<em>bool</em>) – Rotate the xticklabels by 45 degrees.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Return type</dt>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
 <dd class="field-even"><p>None</p>
 </dd>
 </dl>
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>

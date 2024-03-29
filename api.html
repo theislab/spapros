@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>API &mdash; spapros docs</title>
-      <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="_static/js/html5shiv.min.js"></script>
@@ -45,7 +48,7 @@
               <img src="_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
@@ -124,20 +127,16 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="api">
+  <section id="api">
 <h1>API<a class="headerlink" href="#api" title="Permalink to this heading"></a></h1>
 <p>Import the spapros API as follows:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">spapros</span> <span class="k">as</span> <span class="nn">sp</span>
 </pre></div>
 </div>
-<div class="section" id="module-spapros.se">
+<section id="module-spapros.se">
 <span id="selection"></span><h2>Selection<a class="headerlink" href="#module-spapros.se" title="Permalink to this heading"></a></h2>
 <p class="rubric">Main Class</p>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="se/spapros.se.ProbesetSelector.html#spapros.se.ProbesetSelector" title="spapros.se.ProbesetSelector"><code class="xref py py-obj docutils literal notranslate"><span class="pre">se.ProbesetSelector</span></code></a>(adata, celltype_key[, ...])</p></td>
 <td><p>General class for probeset selection.</p></td>
@@ -146,10 +145,6 @@
 </table>
 <p class="rubric">Other Functions</p>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="se/spapros.se.select_reference_probesets.html#spapros.se.select_reference_probesets" title="spapros.se.select_reference_probesets"><code class="xref py py-obj docutils literal notranslate"><span class="pre">se.select_reference_probesets</span></code></a>(adata, n[, ...])</p></td>
 <td><p>Select reference probesets with basic selection methods.</p></td>
@@ -162,15 +157,11 @@
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="module-spapros.ev">
+</section>
+<section id="module-spapros.ev">
 <span id="evaluation"></span><h2>Evaluation<a class="headerlink" href="#module-spapros.ev" title="Permalink to this heading"></a></h2>
 <p class="rubric">Main Class</p>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="ev/spapros.ev.ProbesetEvaluator.html#spapros.ev.ProbesetEvaluator" title="spapros.ev.ProbesetEvaluator"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ev.ProbesetEvaluator</span></code></a>(adata[, celltype_key, ...])</p></td>
 <td><p>General class for probe set evaluation, comparison, plotting.</p></td>
@@ -179,10 +170,6 @@
 </table>
 <p class="rubric">Other Functions</p>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="ev/spapros.ev.get_metric_default_parameters.html#spapros.ev.get_metric_default_parameters" title="spapros.ev.get_metric_default_parameters"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ev.get_metric_default_parameters</span></code></a>()</p></td>
 <td><p>Get the default metric parameters.</p></td>
@@ -195,15 +182,11 @@
 </tr>
 </tbody>
 </table>
-</div>
-<div class="section" id="module-spapros.ut">
+</section>
+<section id="module-spapros.ut">
 <span id="utility-functions"></span><h2>Utility functions<a class="headerlink" href="#module-spapros.ut" title="Permalink to this heading"></a></h2>
 <p class="rubric">Expression Constraints</p>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="ut/spapros.ut.get_expression_quantile.html#spapros.ut.get_expression_quantile" title="spapros.ut.get_expression_quantile"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ut.get_expression_quantile</span></code></a>(adata[, q, ...])</p></td>
 <td><p>Compute each genes q'th quantile on normalised (and log1p) data.</p></td>
@@ -218,23 +201,15 @@
 </table>
 <p class="rubric">Spatial Data Analysis</p>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 </tbody>
 </table>
-</div>
-<div class="section" id="plotting">
+</section>
+<section id="plotting">
 <h2>Plotting<a class="headerlink" href="#plotting" title="Permalink to this heading"></a></h2>
 <p>The sp.pl functions are used directly only in rare cases, instead always try to use the wrapper methods from the
 ProbesetEvaluator and ProbesetSelector (see 2nd table below).</p>
 <span class="target" id="module-spapros.pl"></span><table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="pl/spapros.pl.masked_dotplot.html#spapros.pl.masked_dotplot" title="spapros.pl.masked_dotplot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pl.masked_dotplot</span></code></a>(adata, selector[, ct_key, ...])</p></td>
 <td><p>Create dotplot with additional annotation masks.</p></td>
@@ -268,7 +243,7 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).</p>
 </tr>
 </tbody>
 </table>
-<table class="colwidths-given docutils align-left">
+<table class="docutils align-left">
 <colgroup>
 <col style="width: 33%" />
 <col style="width: 33%" />
@@ -326,8 +301,8 @@ ProbesetEvaluator and ProbesetSelector (see 2nd table below).</p>
 </tr>
 </tbody>
 </table>
-</div>
-</div>
+</section>
+</section>
 
 
            </div>

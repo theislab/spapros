@@ -1,15 +1,18 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en" >
+<html class="writer-html5" lang="en">
 <head>
-  <meta charset="utf-8" />
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>spapros.ev.ProbesetEvaluator &mdash; spapros docs</title>
-      <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/sg_gallery.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/custom_cookietemple.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/general.css" type="text/css" />
-      <link rel="stylesheet" href="../_static/dark_mode_css/dark.css" type="text/css" />
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/custom_cookietemple.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/general.css" />
+      <link rel="stylesheet" type="text/css" href="../_static/dark_mode_css/dark.css" />
+
+  
     <link rel="shortcut icon" href="../_static/logo.png"/>
   <!--[if lt IE 9]>
     <script src="../_static/js/html5shiv.min.js"></script>
@@ -45,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.4
+                0.1.5
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -118,7 +121,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="section" id="spapros-ev-probesetevaluator">
+  <section id="spapros-ev-probesetevaluator">
 <h1>spapros.ev.ProbesetEvaluator<a class="headerlink" href="#spapros-ev-probesetevaluator" title="Permalink to this heading"></a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="spapros.ev.ProbesetEvaluator">
@@ -234,7 +237,7 @@ old results.</p></li>
 </pre></div>
 </div>
 <dl class="field-list simple">
-<dt class="field-odd">Parameters</dt>
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>adata</strong> (<em>AnnData</em>) – An already preprocessed annotated data matrix. Typically we use log normalised data.</p></li>
 <li><p><strong>celltype_key</strong> (<em>Union</em><em>[</em><em>str</em><em>, </em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – The adata.obs key for cell type annotations. Provide a list of keys to calculate the according metrics on
@@ -280,7 +283,7 @@ Note if</p></li>
 <li><p><strong>n_jobs</strong> (<em>int</em>) – Number of CPUs for multi processing computations. Set to <cite>-1</cite> to use all available CPUs.</p></li>
 </ul>
 </dd>
-<dt class="field-even">Attributes</dt>
+<dt class="field-even">Attributes<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>adata</strong> – An already preprocessed annotated data matrix. Typically we use log normalised data.</p></li>
 <li><p><strong>celltype_key</strong> – The <code class="docutils literal notranslate"><span class="pre">adata.obs</span></code> key for cell type annotations or list of keys.</p></li>
@@ -303,10 +306,6 @@ Verbosity level.</p></li>
 </dl>
 <p class="rubric">Methods</p>
 <table class="autosummary longtable docutils align-default">
-<colgroup>
-<col style="width: 10%" />
-<col style="width: 90%" />
-</colgroup>
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="spapros.ev.ProbesetEvaluator.compute_or_load_shared_results.html#spapros.ev.ProbesetEvaluator.compute_or_load_shared_results" title="spapros.ev.ProbesetEvaluator.compute_or_load_shared_results"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_or_load_shared_results</span></code></a>()</p></td>
 <td><p>Compute results that are potentially reused for evaluations of different probesets.</p></td>
@@ -351,7 +350,7 @@ Verbosity level.</p></li>
 </table>
 </dd></dl>
 
-</div>
+</section>
 
 
            </div>
