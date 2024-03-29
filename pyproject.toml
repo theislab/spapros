@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "spapros"
-version = "0.1.4"  # <<COOKIETEMPLE_FORCE_BUMP>>
+version = "0.1.5"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Probe set selection for targeted spatial transcriptomics."
 authors = ["Lukas Heumos <lukas.heumos@posteo.net>", "Louis Kümmerle <louis.kummerle@helmholtz-munich.de>"]
 license = "MIT"
