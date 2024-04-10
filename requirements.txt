@@ -74,7 +74,7 @@ parso==0.8.3
 patsy==0.5.6
 pbr==6.0.0
 pexpect==4.9.0
-pillow==10.2.0
+pillow==10.3.0
 platformdirs==4.2.0
 plumbum==1.8.2
 ply==3.11
