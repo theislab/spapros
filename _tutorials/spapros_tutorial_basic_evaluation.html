@@ -69,7 +69,6 @@
 <li class="toctree-l1 current"><a class="reference internal" href="../tutorials.html">Tutorials</a><ul class="current">
 <li class="toctree-l2"><a class="reference internal" href="spapros_tutorial_basic_selection.html">Probeset selection with Spapros</a></li>
 <li class="toctree-l2 current"><a class="current reference internal" href="#">Evaluation of probe sets</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#!-This-tutorial-will-be-updated-the-next-days-!">! This tutorial will be updated the next days !</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#Import-packages-and-setup">Import packages and setup</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#Load-dataset">Load dataset</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#Get-probesets">Get probesets</a></li>
@@ -114,16 +113,14 @@
              
   <section id="Evaluation-of-probe-sets">
 <h1>Evaluation of probe sets<a class="headerlink" href="#Evaluation-of-probe-sets" title="Permalink to this heading"></a></h1>
-<section id="!-This-tutorial-will-be-updated-the-next-days-!">
-<h2>! This tutorial will be updated the next days !<a class="headerlink" href="#!-This-tutorial-will-be-updated-the-next-days-!" title="Permalink to this heading"></a></h2>
-<p>This tutorial shows how to to evaluate a probeset with the Spapros evaluation pipeline. We examplary evaluate the probeset of 20 genes that was selected in our <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_basic_selection.html">basic selection tutoral</a>.</p>
-</section>
+<p>Spapros provides metrics to evaluate the quality of a gene panel. For evaluation, we mainly focus on 2 metric categories: general variation recovery and cell type classification. Additionally as a 3rd category we measure gene redundancy based on correlation between gene pairs. In each category we further distinguish between metrics that measure different aspects: - Cell type identification metrics measure <em>cell type classification accuracy</em> and the <em>percentage of captured cell types</em> (and
+additionally - if a curated marker list is provided - how well the marker expressions of a literature derived list are captured, via <em>marker correlation</em> and <em>cell type balanced marker correlation</em>). - Variation recovery metrics measure how well cellular variation of the full transcriptome is recovered with only a subset of features. These comprise <em>coarse</em> and <em>fine clustering similarity</em>, which quantify how well the gene set recovers cluster structure at different levels of granularity, and
+<em>neighborhood similarity</em>, which measures how well the local cell neighborhoods are preserved. - The amount of redundant genes in the gene set is assessed via <em>gene correlation</em> and the <em>percentage of highly correlated genes</em></p>
+<p>The evaluation pipeline measures summary metrics for each category. We can also get more detailed information (e.g. classification accuracy of each individual cell type). These fine grained evaluations are showcased in the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/_tutorials/spapros_tutorial_advanced_evaluation.html">advanced evaluation tutorial</a>.</p>
+<p>In this tutorial we show how to compare different gene sets based on the calculation of summary metrics. We examplary evaluate the probeset of 20 genes that was selected in our <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_basic_selection.html">basic selection tutoral</a>.</p>
+<p>The following figure shows how the comparison of multiple selections can look like. As mentioned we’ll concentrate on the three categories: variation recovery (green), cell type classification (violet), and gene redundancy (blue).</p>
 <section id="Import-packages-and-setup">
 <h2>Import packages and setup<a class="headerlink" href="#Import-packages-and-setup" title="Permalink to this heading"></a></h2>
-<p>To run the notebook locally, create a conda environment using this <a class="reference external" href="../requirements_dev.yaml">yaml file</a>:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>conda create -f environment.yaml
-</pre></div>
-</div>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
@@ -148,8 +145,8 @@
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-scanpy==1.8.2 anndata==0.8.0 umap==0.5.2 numpy==1.21.5 scipy==1.7.3 pandas==1.3.5 scikit-learn==1.0.2 statsmodels==0.13.2 python-igraph==0.9.9 pynndescent==0.5.6
-spapros==0.1.0
+scanpy==1.10.0 anndata==0.10.6 umap==0.5.5 numpy==1.26.4 scipy==1.12.0 pandas==1.5.3 scikit-learn==1.4.1.post1 statsmodels==0.14.1 igraph==0.11.4 pynndescent==0.5.11
+spapros==0.1.5
 </pre></div></div>
 </div>
 </section>
@@ -197,15 +194,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">#probeset = [&#39;PPBP&#39;, &#39;HLA-DQA1&#39;, &#39;FCGR3A&#39;, &#39;GZMB&#39;, &#39;CD79A&#39;, &#39;NKG7&#39;, &#39;S100A8&#39;, &#39;CD2&#39;,</span>
-<span class="c1">#       &#39;HLA-DPB1&#39;, &#39;GZMK&#39;, &#39;LST1&#39;, &#39;TYROBP&#39;, &#39;MS4A1&#39;, &#39;GPX1&#39;, &#39;CCL5&#39;,</span>
-<span class="c1">#       &#39;HLA-DRB1&#39;, &#39;GNLY&#39;, &#39;FCN1&#39;, &#39;SDPR&#39;, &#39;AIF1&#39;, &#39;FCER1G&#39;, &#39;IGJ&#39;, &#39;CST3&#39;,</span>
-<span class="c1">#       &#39;LGALS2&#39;, &#39;GZMA&#39;, &#39;PRF1&#39;, &#39;HIST1H2AC&#39;, &#39;FCER1A&#39;, &#39;STK17A&#39;, &#39;HLA-DQB1&#39;,</span>
-<span class="c1">#       &#39;CST7&#39;, &#39;SNRPB&#39;, &#39;LINC00926&#39;, &#39;HLA-DPA1&#39;, &#39;MS4A6A&#39;, &#39;UBE2L6&#39;, &#39;ATP6V1F&#39;,</span>
-<span class="c1">#       &#39;SF3B5&#39;, &#39;FYB&#39;, &#39;C9orf142&#39;, &#39;APOBEC3A&#39;, &#39;IGLL5&#39;, &#39;NPC2&#39;, &#39;GRN&#39;, &#39;LYAR&#39;,</span>
-<span class="c1">#       &#39;PYCARD&#39;, &#39;LGALS1&#39;, &#39;PF4&#39;, &#39;PTCRA&#39;, &#39;IFITM3&#39;]</span>
-
-<span class="c1"># Probeset (selected with Spapros, see basic selection tutorial)</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Probeset (selected with Spapros, see basic selection tutorial)</span>
 <span class="n">probeset</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s1">&#39;PF4&#39;</span><span class="p">,</span> <span class="s1">&#39;HLA-DPB1&#39;</span><span class="p">,</span> <span class="s1">&#39;FCGR3A&#39;</span><span class="p">,</span> <span class="s1">&#39;GZMB&#39;</span><span class="p">,</span> <span class="s1">&#39;CCL5&#39;</span><span class="p">,</span> <span class="s1">&#39;S100A8&#39;</span><span class="p">,</span> <span class="s1">&#39;IL32&#39;</span><span class="p">,</span> <span class="s1">&#39;HLA-DQA1&#39;</span><span class="p">,</span> <span class="s1">&#39;NKG7&#39;</span><span class="p">,</span> <span class="s1">&#39;AIF1&#39;</span><span class="p">,</span> <span class="s1">&#39;CD79A&#39;</span><span class="p">,</span> <span class="s1">&#39;LTB&#39;</span><span class="p">,</span> <span class="s1">&#39;TYROBP&#39;</span><span class="p">,</span>
     <span class="s1">&#39;HLA-DMA&#39;</span><span class="p">,</span> <span class="s1">&#39;GZMK&#39;</span><span class="p">,</span> <span class="s1">&#39;HLA-DRB1&#39;</span><span class="p">,</span> <span class="s1">&#39;FCN1&#39;</span><span class="p">,</span> <span class="s1">&#39;S100A11&#39;</span><span class="p">,</span> <span class="s1">&#39;GNLY&#39;</span><span class="p">,</span> <span class="s1">&#39;GZMH&#39;</span>
@@ -213,15 +202,14 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 
 <span class="c1"># Reference probesets</span>
 <span class="n">reference_sets</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">se</span><span class="o">.</span><span class="n">select_reference_probesets</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
-<br/></pre></div>
+</pre></div>
 </div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
-<div class="output_area rendered_html docutils container">
-<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080; font-weight: bold">Reference probeset selection..............................</span> <span style="color: #3a3a3a; text-decoration-color: #3a3a3a">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 0/4</span> <span style="color: #808000; text-decoration-color: #808000">0:00:00</span>
-</pre></div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "22f703736c6d4eb7aea587c832d1c5d3", "version_major": 2, "version_minor": 0}</script></div>
 </div>
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
@@ -240,7 +228,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 <section id="Evaluate-sets">
 <h2>Evaluate sets<a class="headerlink" href="#Evaluate-sets" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">ev</span><span class="o">.</span><span class="n">ProbesetEvaluator</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">results_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -248,7 +236,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[13]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span><span class="o">.</span><span class="n">evaluate_probeset</span><span class="p">(</span><span class="n">probeset</span><span class="p">,</span> <span class="n">set_id</span><span class="o">=</span><span class="s2">&quot;Spapros&quot;</span><span class="p">)</span>
@@ -258,16 +246,23 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "23bb011cd78842269ea9cff58883975e", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+OMP: Info #276: omp_set_nested routine deprecated, please use omp_set_max_active_levels instead.
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
 <div class="output_area rendered_html docutils container">
-<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000000; text-decoration-color: #000000; font-weight: bold">SPAPROS PROBESET EVALUATION:                                                                </span>
-<span style="color: #000080; text-decoration-color: #000080; font-weight: bold">Shared metric computations................................</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 3/3</span> <span style="color: #808000; text-decoration-color: #808000">0:00:02</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing shared compuations for knn_overlap............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 6/6</span> <span style="color: #808000; text-decoration-color: #808000">0:00:01</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing shared compuations for gene_corr..............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080">100%</span> <span style="color: #808000; text-decoration-color: #808000">0:00:00</span>
-<span style="color: #000080; text-decoration-color: #000080; font-weight: bold">Probeset specific pre computations........................</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 3/3</span> <span style="color: #808000; text-decoration-color: #808000">0:00:02</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing pre compuations for knn_overlap...............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 6/6</span> <span style="color: #808000; text-decoration-color: #808000">0:00:02</span>
-<span style="color: #000080; text-decoration-color: #000080; font-weight: bold">Final probeset specific computations......................</span> <span style="color: #f92672; text-decoration-color: #f92672">━━━━━━╸</span><span style="color: #3a3a3a; text-decoration-color: #3a3a3a">━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 1/3</span> <span style="color: #808000; text-decoration-color: #808000">0:00:04</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing final compuations for knn_overlap.............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 6/6</span> <span style="color: #808000; text-decoration-color: #808000">0:00:00</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing final compuations for forest_clfs.............</span> <span style="color: #f92672; text-decoration-color: #f92672">━━━━━━━━━━━━╸</span><span style="color: #3a3a3a; text-decoration-color: #3a3a3a">━━━━━━━</span> <span style="color: #800080; text-decoration-color: #800080">16/25</span> <span style="color: #808000; text-decoration-color: #808000">0:00:03</span>
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">The following cell types are not included in forest classifications since they have fewer </span>
+<span style="color: #808000; text-decoration-color: #808000; font-weight: bold">than </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">40</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold"> cells: [</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Dendritic cells'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">, </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Megakaryocytes'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">]</span>
 </pre></div>
 </div>
 <div class="nboutput docutils container">
@@ -284,7 +279,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </pre></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[14]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">set_id</span><span class="p">,</span> <span class="n">df</span> <span class="ow">in</span> <span class="n">reference_sets</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
@@ -296,19 +291,96 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 <div class="nboutput docutils container">
 <div class="prompt empty docutils container">
 </div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "801918723d244a808eb962b8bbef0b99", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
 <div class="output_area rendered_html docutils container">
-<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000000; text-decoration-color: #000000; font-weight: bold">SPAPROS PROBESET EVALUATION:                                                                </span>
-<span style="color: #000080; text-decoration-color: #000080; font-weight: bold">Shared metric computations................................</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 3/3</span> <span style="color: #808000; text-decoration-color: #808000">0:00:02</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing shared compuations for knn_overlap............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 6/6</span> <span style="color: #808000; text-decoration-color: #808000">0:00:01</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing shared compuations for gene_corr..............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080">100%</span> <span style="color: #808000; text-decoration-color: #808000">0:00:00</span>
-<span style="color: #000080; text-decoration-color: #000080; font-weight: bold">Probeset specific pre computations........................</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 3/3</span> <span style="color: #808000; text-decoration-color: #808000">0:00:01</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing pre compuations for knn_overlap...............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 6/6</span> <span style="color: #808000; text-decoration-color: #808000">0:00:01</span>
-<span style="color: #000080; text-decoration-color: #000080; font-weight: bold">Final probeset specific computations......................</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 3/3</span> <span style="color: #808000; text-decoration-color: #808000">0:00:05</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing final compuations for knn_overlap.............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080"> 6/6</span> <span style="color: #808000; text-decoration-color: #808000">0:00:00</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing final compuations for forest_clfs.............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span> <span style="color: #800080; text-decoration-color: #800080">25/25</span> <span style="color: #808000; text-decoration-color: #808000">0:00:05</span>
-  <span style="color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold">Computing final compuations for gene_corr...............</span> <span style="color: #729c1f; text-decoration-color: #729c1f">━━━━━━━━━━━━━━━━━━━━</span>  <span style="color: #800080; text-decoration-color: #800080">100%</span> <span style="color: #808000; text-decoration-color: #808000">0:00:00</span>
-<span style="color: #000000; text-decoration-color: #000000; font-weight: bold">FINISHED</span>
-
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">The following cell types are not included in forest classifications since they have fewer </span>
+<span style="color: #808000; text-decoration-color: #808000; font-weight: bold">than </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">40</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold"> cells: [</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Dendritic cells'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">, </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Megakaryocytes'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">]</span>
+</pre></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
+</pre></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "1cdb66d68dc140f09dd6b2b6c1bd699f", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">The following cell types are not included in forest classifications since they have fewer </span>
+<span style="color: #808000; text-decoration-color: #808000; font-weight: bold">than </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">40</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold"> cells: [</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Dendritic cells'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">, </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Megakaryocytes'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">]</span>
+</pre></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
+</pre></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "a6dd2499ba51475d811274be4279f068", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">The following cell types are not included in forest classifications since they have fewer </span>
+<span style="color: #808000; text-decoration-color: #808000; font-weight: bold">than </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">40</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold"> cells: [</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Dendritic cells'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">, </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Megakaryocytes'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">]</span>
+</pre></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
+</pre></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "da9837617d6d44e784d3c9e6f3e0ee1a", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">The following cell types are not included in forest classifications since they have fewer </span>
+<span style="color: #808000; text-decoration-color: #808000; font-weight: bold">than </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">40</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold"> cells: [</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Dendritic cells'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">, </span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">'Megakaryocytes'</span><span style="color: #808000; text-decoration-color: #808000; font-weight: bold">]</span>
 </pre></div>
 </div>
 <div class="nboutput docutils container">
@@ -325,15 +397,15 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 </pre></div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span><span class="o">.</span><span class="n">summary_results</span><span class="c1">#.index.tolist()</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">evaluator</span><span class="o">.</span><span class="n">summary_results</span>
 <br/></pre></div>
 </div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="output_area rendered_html docutils container">
@@ -364,42 +436,42 @@ AnnData object with n_obs × n_vars = 2638 × 1838
   </thead>
   <tbody>
     <tr>
-      <th>Spapros</th>
-      <td>0.167580</td>
-      <td>0.924543</td>
-      <td>0.985218</td>
-      <td>0.772479</td>
-      <td>0.993647</td>
-    </tr>
-    <tr>
-      <th>PCA</th>
-      <td>0.293958</td>
-      <td>0.889088</td>
-      <td>0.902960</td>
-      <td>0.820372</td>
-      <td>1.000000</td>
-    </tr>
-    <tr>
       <th>DE</th>
-      <td>0.160032</td>
-      <td>0.919459</td>
-      <td>0.953571</td>
+      <td>0.160027</td>
+      <td>0.916620</td>
+      <td>0.955688</td>
       <td>0.757868</td>
       <td>0.792178</td>
     </tr>
     <tr>
       <th>random (seed=0)</th>
       <td>0.023879</td>
-      <td>0.575304</td>
-      <td>0.000000</td>
+      <td>0.575532</td>
+      <td>0.007778</td>
       <td>0.976067</td>
+      <td>1.000000</td>
+    </tr>
+    <tr>
+      <th>Spapros</th>
+      <td>0.167580</td>
+      <td>0.923499</td>
+      <td>0.987302</td>
+      <td>0.772479</td>
+      <td>0.993647</td>
+    </tr>
+    <tr>
+      <th>PCA</th>
+      <td>0.293958</td>
+      <td>0.887955</td>
+      <td>0.897735</td>
+      <td>0.820372</td>
       <td>1.000000</td>
     </tr>
     <tr>
       <th>HVG</th>
       <td>0.056358</td>
-      <td>0.818277</td>
-      <td>0.729101</td>
+      <td>0.819195</td>
+      <td>0.720651</td>
       <td>0.840755</td>
       <td>0.900000</td>
     </tr>
@@ -411,7 +483,7 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 <section id="Visualize-the-results">
 <h2>Visualize the results<a class="headerlink" href="#Visualize-the-results" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[12]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib</span> <span class="k">as</span> <span class="nn">mpl</span>
@@ -423,9 +495,11 @@ AnnData object with n_obs × n_vars = 2638 × 1838
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_tutorials_spapros_tutorial_basic_evaluation_19_0.png" src="../_images/_tutorials_spapros_tutorial_basic_evaluation_19_0.png" />
+<img alt="../_images/_tutorials_spapros_tutorial_basic_evaluation_18_0.png" src="../_images/_tutorials_spapros_tutorial_basic_evaluation_18_0.png" />
 </div>
 </div>
+<p>In the generated summary table we see that the selection based on PCA shows the highest (fine level) variation recovery and Spapros shows the highest cell type classification accuracy.</p>
+<p>Note that we didn’t measure all metrics in this tutorial since the <code class="docutils literal notranslate"><span class="pre">ProbesetEvaluator</span></code> sets as a default argument <code class="docutils literal notranslate"><span class="pre">scheme='quick'</span></code>. In the advanced evaluation tutorial we showcase how to adjust the evaluation and then go into more detailed comparisons.</p>
 <p><strong>Note</strong>: After running the spapros evaluation pipeline, the results are stored in a directory, that is by default called <code class="docutils literal notranslate"><span class="pre">probeset_evaluation</span></code>. If you run another evaluation after this tutorial, be careful that you either specify another dir or delete the previously created results directory because otherwise parts will be overwritten and parts will be falsely reused! If you do not want to save results, initialize the <code class="docutils literal notranslate"><span class="pre">ProbesetEvaluator</span></code> with <code class="docutils literal notranslate"><span class="pre">dir=None</span></code>, like in this tutorial.</p>
 <script type="application/vnd.jupyter.widget-state+json">
 {"state": {"1b8ec37e6b9d4a7e9819df0ec1a511be": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "1bf2d6e7372f4cd681ce0b58843bfd01": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "348c198a59ef4e8ab1851d5badacd1c4": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_ddca6b3a67d34f20b7508db74c7ef692", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Shared metric computations................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:05</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing shared compuations for knn_overlap............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:04</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing shared compuations for gene_corr..............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Probeset specific pre computations........................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:03</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing pre compuations for knn_overlap...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:03</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Final probeset specific computations......................</span> <span style=\"color: #f92672; text-decoration-color: #f92672\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span><span style=\"color: #3a3a3a; text-decoration-color: #3a3a3a\">\u257a\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 2/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:24</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for knn_overlap.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for forest_clfs.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">25/25</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:01:24</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for gene_corr...............</span> <span style=\"color: #3a3a3a; text-decoration-color: #3a3a3a\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">  0%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n</pre>\n", "text/plain": "\u001b[1;34mShared metric computations................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:05\u001b[0m\n  \u001b[1;2;36mComputing shared compuations for knn_overlap............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:04\u001b[0m\n  \u001b[1;2;36mComputing shared compuations for gene_corr..............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mProbeset specific pre computations........................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:03\u001b[0m\n  \u001b[1;2;36mComputing pre compuations for knn_overlap...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:03\u001b[0m\n\u001b[1;34mFinal probeset specific computations......................\u001b[0m \u001b[38;2;249;38;114m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m\u001b[38;5;237m\u257a\u001b[0m\u001b[38;5;237m\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 2/3\u001b[0m \u001b[33m0:01:24\u001b[0m\n  \u001b[1;2;36mComputing final compuations for knn_overlap.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mComputing final compuations for forest_clfs.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m25/25\u001b[0m \u001b[33m0:01:24\u001b[0m\n  \u001b[1;2;36mComputing final compuations for gene_corr...............\u001b[0m \u001b[38;5;237m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m  0%\u001b[0m \u001b[33m0:00:00\u001b[0m\n"}, "metadata": {}, "output_type": "display_data"}]}}, "6fbeab7a32b6453e817b6a2162f8d743": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "7e8bb5ffe8704612a98333e7c82b9140": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_6fbeab7a32b6453e817b6a2162f8d743", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">SPAPROS PROBESET EVALUATION:                                                                </span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Shared metric computations................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:01</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing shared compuations for knn_overlap............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:01</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing shared compuations for gene_corr..............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Probeset specific pre computations........................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:02</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing pre compuations for knn_overlap...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:02</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Final probeset specific computations......................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:10</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for knn_overlap.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for forest_clfs.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">25/25</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:09</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for gene_corr...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">FINISHED</span>  \n          \n</pre>\n", "text/plain": "\u001b[1;30mSPAPROS PROBESET EVALUATION:                                                                \u001b[0m \n\u001b[1;34mShared metric computations................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:01\u001b[0m\n  \u001b[1;2;36mComputing shared compuations for knn_overlap............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:01\u001b[0m\n  \u001b[1;2;36mComputing shared compuations for gene_corr..............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mProbeset specific pre computations........................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:02\u001b[0m\n  \u001b[1;2;36mComputing pre compuations for knn_overlap...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:02\u001b[0m\n\u001b[1;34mFinal probeset specific computations......................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:10\u001b[0m\n  \u001b[1;2;36mComputing final compuations for knn_overlap.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mComputing final compuations for forest_clfs.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m25/25\u001b[0m \u001b[33m0:00:09\u001b[0m\n  \u001b[1;2;36mComputing final compuations for gene_corr...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;30mFINISHED\u001b[0m  \n          \n"}, "metadata": {}, "output_type": "display_data"}]}}, "dbd251e1da5f4c559d96e72b4e21e4ba": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_1b8ec37e6b9d4a7e9819df0ec1a511be", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">SPAPROS PROBESET EVALUATION:                                                                </span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Shared metric computations................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:04</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing shared compuations for knn_overlap............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:03</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing shared compuations for gene_corr..............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Probeset specific pre computations........................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:02</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing pre compuations for knn_overlap...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:02</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Final probeset specific computations......................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:10</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for knn_overlap.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for forest_clfs.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">25/25</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:09</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for gene_corr...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">FINISHED</span>  \n          \n</pre>\n", "text/plain": "\u001b[1;30mSPAPROS PROBESET EVALUATION:                                                                \u001b[0m \n\u001b[1;34mShared metric computations................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:04\u001b[0m\n  \u001b[1;2;36mComputing shared compuations for knn_overlap............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:03\u001b[0m\n  \u001b[1;2;36mComputing shared compuations for gene_corr..............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mProbeset specific pre computations........................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:02\u001b[0m\n  \u001b[1;2;36mComputing pre compuations for knn_overlap...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:02\u001b[0m\n\u001b[1;34mFinal probeset specific computations......................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:10\u001b[0m\n  \u001b[1;2;36mComputing final compuations for knn_overlap.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mComputing final compuations for forest_clfs.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m25/25\u001b[0m \u001b[33m0:00:09\u001b[0m\n  \u001b[1;2;36mComputing final compuations for gene_corr...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;30mFINISHED\u001b[0m  \n          \n"}, "metadata": {}, "output_type": "display_data"}]}}, "ddca6b3a67d34f20b7508db74c7ef692": {"model_module": "@jupyter-widgets/base", "model_module_version": "1.2.0", "model_name": "LayoutModel", "state": {}}, "e37a63055fcf4550835eee7a84c61174": {"model_module": "@jupyter-widgets/output", "model_module_version": "1.0.0", "model_name": "OutputModel", "state": {"layout": "IPY_MODEL_1bf2d6e7372f4cd681ce0b58843bfd01", "outputs": [{"data": {"text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"><span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">SPAPROS PROBESET EVALUATION:                                                                </span> \n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Shared metric computations................................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:04</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing shared compuations for knn_overlap............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:03</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing shared compuations for gene_corr..............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Probeset specific pre computations........................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:02</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing pre compuations for knn_overlap...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:02</span>\n<span style=\"color: #000080; text-decoration-color: #000080; font-weight: bold\">Final probeset specific computations......................</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 3/3</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:09</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for knn_overlap.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\"> 6/6</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for forest_clfs.............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span> <span style=\"color: #800080; text-decoration-color: #800080\">25/25</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:09</span>\n  <span style=\"color: #7fbfbf; text-decoration-color: #7fbfbf; font-weight: bold\">Computing final compuations for gene_corr...............</span> <span style=\"color: #729c1f; text-decoration-color: #729c1f\">\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501</span>  <span style=\"color: #800080; text-decoration-color: #800080\">100%</span> <span style=\"color: #808000; text-decoration-color: #808000\">0:00:00</span>\n<span style=\"color: #000000; text-decoration-color: #000000; font-weight: bold\">FINISHED</span>  \n          \n</pre>\n", "text/plain": "\u001b[1;30mSPAPROS PROBESET EVALUATION:                                                                \u001b[0m \n\u001b[1;34mShared metric computations................................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:04\u001b[0m\n  \u001b[1;2;36mComputing shared compuations for knn_overlap............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:03\u001b[0m\n  \u001b[1;2;36mComputing shared compuations for gene_corr..............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;34mProbeset specific pre computations........................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:02\u001b[0m\n  \u001b[1;2;36mComputing pre compuations for knn_overlap...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:02\u001b[0m\n\u001b[1;34mFinal probeset specific computations......................\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 3/3\u001b[0m \u001b[33m0:00:09\u001b[0m\n  \u001b[1;2;36mComputing final compuations for knn_overlap.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m 6/6\u001b[0m \u001b[33m0:00:00\u001b[0m\n  \u001b[1;2;36mComputing final compuations for forest_clfs.............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m \u001b[35m25/25\u001b[0m \u001b[33m0:00:09\u001b[0m\n  \u001b[1;2;36mComputing final compuations for gene_corr...............\u001b[0m \u001b[38;2;114;156;31m\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u001b[0m  \u001b[35m100%\u001b[0m \u001b[33m0:00:00\u001b[0m\n\u001b[1;30mFINISHED\u001b[0m  \n          \n"}, "metadata": {}, "output_type": "display_data"}]}}}, "version_major": 2, "version_minor": 0}
