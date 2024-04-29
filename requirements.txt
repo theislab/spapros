@@ -76,7 +76,7 @@ pbr==6.0.0
 pexpect==4.9.0
 pillow==10.3.0
 platformdirs==4.2.0
-plumbum==1.8.2
+plumbum==1.8.3
 ply==3.11
 prompt-toolkit==3.0.43
 ptyprocess==0.7.0
