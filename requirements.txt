@@ -123,7 +123,7 @@ tomlkit==0.12.4
 tornado==6.4
 tqdm==4.66.2
 traitlets==5.14.3
-typing-extensions==4.10.0
+typing-extensions==4.11.0
 umap-learn==0.5.5
 upsetplot==0.9.0
 urllib3==2.2.1
