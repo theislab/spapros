@@ -12,7 +12,7 @@ jobs:
                 python: ["3.9", "3.10"]
 
         steps:
-            - uses: actions/checkout@v4.1.4
+            - uses: actions/checkout@v4.1.7
               name: Check out source-code repository
 
             - name: Setup Python
