@@ -3,11 +3,13 @@
 #######################
 
 ### General parameters
-n_jobs: 4 # number of cores used to run the pipeline
+### -----------------------------------------------
+n_jobs: 4 # number of cores used to run the pipeline and 2*n_jobs +1 of regions that should be stored in cache. If memory consumption of pipeline is too high reduce this number, if a lot of RAM is available increase this number to decrease runtime
 dir_output: output_scrinshot_probe_designer # name of the directory where the output files will be written
 write_intermediate_steps: true # if true, writes the oligo sequences after each step of the pipeline into a csv file
 
 ### Parameters for probe sequences generation
+### -----------------------------------------------
 file_regions: my_genes.txt # file with a list the genes used to generate the oligos sequences, leave empty if all the genes are used
 files_fasta_probe_database: # fasta file with sequences form which the oligos should be generated. Hint: use the genomic_region_generator pipeline to create fasta files of genomic regions of interest
   - output_genomic_region_generator_ncbi/annotation/exon_annotation_source-NCBI_species-Homo_sapiens_annotation_release-110_genome_assemly-GRCh38.p14.fna
@@ -16,7 +18,8 @@ probe_length_min: 40 #min length of oligos
 probe_length_max: 45 #max length of oligos
 
 ### Parameters for the property filers, i.e. properties that the sequences should fulfill
-# probe sequence
+### -----------------------------------------------
+## target probe sequence
 probe_GC_content_min: 40 # minimum GC content of oligos
 probe_GC_content_max: 60 # maximum GC content of oligos
 probe_Tm_min: 65 # minimum melting temperature of oligos
@@ -26,23 +29,25 @@ homopolymeric_base_n: # minimum number of nucleotides to consider it a homopolym
   T: 5
   C: 5
   G: 5
-# padlock arms
+## padlock arms
 arm_Tm_dif_max: 2 # maximum melting temperature difference of both arms (difference shouldn't be higher than 5! But range is not super important, the lower the better)
 arm_length_min: 10 # minimum length of each arm
 arm_Tm_min: 50 # minimum melting temperature of each arm 
 arm_Tm_max: 60 # maximum melting temperature of each arm
-# detection oligos
+## detection oligos
 min_thymines: 2 # minimal number of Thymines in detection oligo.
 detect_oligo_length_min: 15 # minimum length of detection probe
 detect_oligo_length_max: 40 # maximum length of detection probe
 
 ### Parameters for the specificity filters
+### -----------------------------------------------
 files_fasta_reference_database: # fasta file with sequences used as reference for the specificity filters. Hint: use the genomic_region_generator pipeline to create fasta files of genomic regions of interest
   - output_genomic_region_generator_ncbi/annotation/exon_annotation_source-NCBI_species-Homo_sapiens_annotation_release-110_genome_assemly-GRCh38.p14.fna
   - output_genomic_region_generator_ncbi/annotation/exon_exon_junction_annotation_source-NCBI_species-Homo_sapiens_annotation_release-110_genome_assemly-GRCh38.p14.fna
 ligation_region_size: 5 # size of the seed region around the ligation site for blast seed region filter; set to 0 if ligation region should not be considered for blast search
 
-### Parameters for the Oligo set selection
+### Parameters for set selection
+### -----------------------------------------------
 probe_isoform_weight: 2 # weight of the isoform consensus of the probe in the efficiency score
 probe_GC_content_opt: 50 # max and min values are defiend above
 probe_GC_weight: 1 # weight of the GC content of the probe in the efficiency score
@@ -54,7 +59,8 @@ probeset_size_opt: 5 # optimal size of probe sets
 distance_between_probes: 0 # how much overlap should be allowed between oligos, e.g. if oligos can overlpap x bases choose -x, if oligos can be next to one another choose 0, if oligos should be x bases apart choose x
 n_sets: 100 # maximum number of sets to generate
 
-### Parameters for creation of final probe sequence
+### Parameters for final sequence design
+### -----------------------------------------------
 U_distance: 5 # preferred minimal distance between U(racils)
 detect_oligo_Tm_opt: 56 # optimal melting temperature of detection probe
 top_n_sets: 3 #maximum number of sets to report in padlock_probes.yaml and "padlock_probes_order.yaml"
@@ -64,6 +70,7 @@ top_n_sets: 3 #maximum number of sets to report in padlock_probes.yaml and "padl
 ############################
 
 ### Parameters for the specificity filters
+### -----------------------------------------------
 # Specificity filter with BlastN
 specificity_blastn_search_parameters:
   perc_identity: 80
@@ -89,12 +96,15 @@ cross_hybridization_blastn_hit_parameters:
 
 
 ### Parameters for the Oligo set selection
+### -----------------------------------------------
 max_graph_size: 5000 # maximum number of oligos that are taken into consisderation in the last step (5000 -> ~5GB, 2500 -> ~1GB)
 
 
 ### Parameters for Melting Temperature
+### -----------------------------------------------
 # The melting temperature is used in 2 different stages (property filters and padlock detection probe design), where a few parameters are shared and the others differ.
 # parameters for melting temperature -> for more information on parameters, see: https://biopython.org/docs/1.75/api/Bio.SeqUtils.MeltingTemp.html#Bio.SeqUtils.MeltingTemp.Tm_NN
+## target probe
 Tm_parameters_probe:
     check: true #default
     strict: true #default
@@ -122,6 +132,9 @@ Tm_chem_correction_param_probe:
     fmdmethod: 1 #default
     GC: null #default
 
+Tm_salt_correction_param_probe: null # if salt correction desired, please add parameters below
+
+## detection oligo
 Tm_parameters_detection_oligo:
     check: true #default
     strict: true #default
@@ -148,3 +161,5 @@ Tm_chem_correction_param_detection_oligo:
     fmdfactor: 0.65 #default
     fmdmethod: 1 #default
     GC: null #default
+
+Tm_salt_correction_param_detection_oligo: null # if salt correction desired, please add parameters below
