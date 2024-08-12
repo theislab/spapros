@@ -50,7 +50,7 @@ kiwisolver==1.4.5
 legacy-api-wrap==1.4
 leidenalg==0.10.2
 llvmlite==0.42.0
-lxml==5.1.0
+lxml==5.3.0
 markdown-it-py==3.0.0
 markupsafe==2.1.5
 matplotlib-inline==0.1.6
