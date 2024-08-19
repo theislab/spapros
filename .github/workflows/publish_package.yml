@@ -35,7 +35,7 @@ jobs:
                   poetry build --ansi
 
             - name: Publish package on PyPI
-              uses: pypa/gh-action-pypi-publish@v1.8.14
+              uses: pypa/gh-action-pypi-publish@v1.9.0
               with:
                   # TODO COOKIETEMPLE: Configure your PyPI Token to enable automatic deployment to PyPi on releases
                   # https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
