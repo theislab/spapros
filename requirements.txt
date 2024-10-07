@@ -1,6 +1,6 @@
 alabaster==0.7.16
 anndata==0.10.6
-argcomplete==3.2.3
+argcomplete==3.5.1
 array-api-compat==1.6
 asttokens==2.4.1
 attrs==23.2.0
