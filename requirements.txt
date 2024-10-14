@@ -61,7 +61,7 @@ natsort==8.4.0
 nbclient==0.10.0
 nbconvert==7.16.4
 nbformat==5.10.4
-networkx==3.2.1
+networkx==3.4.1
 nox-poetry==1.0.3
 nox==2024.3.2
 numba==0.59.1
