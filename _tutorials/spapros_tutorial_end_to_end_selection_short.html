@@ -110,14 +110,20 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <div class="nbinput nblast docutils container">
+  <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[1]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">HTML</span><span class="p">,</span> <span class="n">display</span><span class="p">,</span> <span class="n">Image</span>
 
+<span class="kn">import</span> <span class="nn">yaml</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
-<span class="n">warnings</span><span class="o">.</span><span class="n">filterwarnings</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+<span class="n">warnings</span><span class="o">.</span><span class="n">simplefilter</span><span class="p">(</span><span class="s1">&#39;ignore&#39;</span><span class="p">)</span>
+
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">sc</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">print_header</span><span class="p">()</span>
 
 <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
 <span class="c1">#pd.set_option(&quot;max_columns&quot;, None) # show all cols</span>
@@ -125,19 +131,6 @@
 <span class="n">pd</span><span class="o">.</span><span class="n">set_option</span><span class="p">(</span><span class="s2">&quot;expand_frame_repr&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">)</span> <span class="c1"># print cols side by side as it&#39;s supposed to be</span>
 <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_seq_items</span> <span class="o">=</span> <span class="mi">200000</span>
 <span class="n">pd</span><span class="o">.</span><span class="n">options</span><span class="o">.</span><span class="n">display</span><span class="o">.</span><span class="n">max_rows</span> <span class="o">=</span> <span class="mi">400000</span>
-<br/></pre></div>
-</div>
-</div>
-<section id="End-to-end-selection-(short-version)">
-<h1>End to end selection (short version)<a class="headerlink" href="#End-to-end-selection-(short-version)" title="Permalink to this heading"></a></h1>
-<p>In this tutorial we showcase how to design probesets and select a suitable gene set with the <code class="docutils literal notranslate"><span class="pre">spapros</span></code> package. For all genes we design probes that fulfill experiment specific requirements and select only genes for which we can design sufficient probes. Spapros then selects genes that can distinguish the cell types in the data set and capture transcriptomic varation beyond cell type labels. The final probe sequences are designed in a last step for all selected genes. The figure below gives and
-overview on the pipeline.</p>
-<p>In this tutorial the full probe design is performed with one cli command. To understand the different steps in the pipeline we recommend to have a look at the <a class="reference internal" href="spapros_tutorial_end_to_end_selection.html"><span class="doc">long version</span></a> of this tutorial.</p>
-<div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[ ]:
-</pre></div>
-</div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Image</span><span class="p">(</span><span class="s2">&quot;../_tutorials/abstract_figures/end_to_end.png&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">900</span><span class="p">,</span> <span class="n">embed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -145,45 +138,61 @@ overview on the pipeline.</p>
 <div class="prompt empty docutils container">
 </div>
 <div class="output_area docutils container">
-<img alt="../_images/_tutorials_spapros_tutorial_end_to_end_selection_short_2_0.png" src="../_images/_tutorials_spapros_tutorial_end_to_end_selection_short_2_0.png" />
+<div class="highlight"><pre>
+scanpy==1.10.1 anndata==0.10.7 umap==0.5.6 numpy==1.26.4 scipy==1.13.1 pandas==1.5.3 scikit-learn==1.5.0 statsmodels==0.14.2 igraph==0.11.5 pynndescent==0.5.12
+</pre></div></div>
+</div>
+<section id="End-to-end-selection-(short-version)">
+<h1>End to end selection (short version)<a class="headerlink" href="#End-to-end-selection-(short-version)" title="Permalink to this heading"></a></h1>
+<p>In this tutorial we showcase how to design probesets and select a suitable gene set with the <code class="docutils literal notranslate"><span class="pre">spapros</span></code> package. For all genes we design probes that fulfill experiment specific requirements and select only genes for which we can design sufficient probes. Spapros then selects genes that can distinguish the cell types in the data set and capture transcriptomic varation beyond cell type labels. The final probe sequences are designed in a last step for all selected genes. The figure below gives and
+overview on the pipeline.</p>
+<p>In this tutorial the full probe design is performed with one cli command. To understand the different steps in the pipeline we recommend to have a look at the <a class="reference internal" href="spapros_tutorial_end_to_end_selection.html"><span class="doc">long version</span></a> of this tutorial.</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">Image</span><span class="p">(</span><span class="s2">&quot;../_tutorials/abstract_figures/end_to_end.png&quot;</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">900</span><span class="p">,</span> <span class="n">embed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+</pre></div>
+</div>
+<div class="output_area docutils container">
+<img alt="../_images/_tutorials_spapros_tutorial_end_to_end_selection_short_2_0.png" class="no-scaled-link" src="../_images/_tutorials_spapros_tutorial_end_to_end_selection_short_2_0.png" style="width: 900px;" />
 </div>
 </div>
 <section id="Import-Packages">
 <h2>Import Packages<a class="headerlink" href="#Import-Packages" title="Permalink to this heading"></a></h2>
-<p>Besides <code class="docutils literal notranslate"><span class="pre">spapros</span></code> also install <code class="docutils literal notranslate"><span class="pre">oligo_designer_toolsuite</span></code> if not done already. First we need to install some dependencies:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>bioconda
-conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>conda-forge
-conda<span class="w"> </span>update<span class="w"> </span>conda
+<p>Besides <code class="docutils literal notranslate"><span class="pre">spapros</span></code> also install <code class="docutils literal notranslate"><span class="pre">oligo_designer_toolsuite</span></code>. Therefore, first setup a conda environment (packages is tested for Python 3.9 - 3.10), e.g.:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>odt<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.10
+conda<span class="w"> </span>activate<span class="w"> </span>odt
+</pre></div>
+</div>
+<p>Then, install the required dependencies, i.e. <strong>Blast</strong> (2.15 or higher), <strong>BedTools</strong> (2.30 or higher), <strong>Bowtie</strong> (1.3 or higher) and <strong>Bowtie2</strong> (2.5 or higher), that need to be installed independently. To install those tools via conda, please activate the Bioconda and conda-forge channels in your conda environment with and update conda and all packages in your environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>conda-forge
+conda<span class="w"> </span>config<span class="w"> </span>--add<span class="w"> </span>channels<span class="w"> </span>bioconda
 conda<span class="w"> </span>update<span class="w"> </span>--all
 
-conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;blast&gt;=2.12&quot;</span>
+conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;blast&gt;=2.15.0&quot;</span>
 conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;bedtools&gt;=2.30&quot;</span>
 conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;bowtie&gt;=1.3.1&quot;</span>
 conda<span class="w"> </span>install<span class="w"> </span><span class="s2">&quot;bowtie2&gt;=2.5&quot;</span>
 </pre></div>
 </div>
-<p>To run the code below we need to install the current dev version of the oligo designer:</p>
+<p>All other required packages are automatically installed during the <code class="docutils literal notranslate"><span class="pre">pip</span></code> installation:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/HelmholtzAI-Consultants-Munich/oligo-designer-toolsuite.git
 <span class="nb">cd</span><span class="w"> </span>oligo-designer-toolsuite
 git<span class="w"> </span>switch<span class="w"> </span>pipelines
 pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
 </pre></div>
 </div>
-<p>Otherwise, if that didn’t work, try:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>oligo_designer_toolsuite
-</pre></div>
-</div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[2]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">yaml</span>
-<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
-<span class="kn">import</span> <span class="nn">scanpy</span> <span class="k">as</span> <span class="nn">sc</span>
-<span class="n">sc</span><span class="o">.</span><span class="n">settings</span><span class="o">.</span><span class="n">verbosity</span> <span class="o">=</span> <span class="mi">0</span>
-<span class="n">sc</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">print_header</span><span class="p">()</span>
-
-<span class="kn">import</span> <span class="nn">spapros</span> <span class="k">as</span> <span class="nn">sp</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">spapros</span> <span class="k">as</span> <span class="nn">sp</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;spapros==</span><span class="si">{</span><span class="n">sp</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -193,8 +202,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </s
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-scanpy==1.9.3 anndata==0.9.2 umap==0.5.3 numpy==1.24.4 scipy==1.11.2 pandas==1.5.3 scikit-learn==1.3.0 statsmodels==0.14.0 python-igraph==0.9.11 pynndescent==0.5.10
-spapros==0.1.3
+spapros==0.1.5
 </pre></div></div>
 </div>
 </section>
@@ -203,7 +211,7 @@ spapros==0.1.3
 <p>For this tutorial, we use a PBMC example scRNA-seq reference dataset. The count data should be log-normalised and genes should <strong>not</strong> be scaled to mean=0 and std=1. We can load the processed version of the data, including cell / gene filters, cell type annotations, and the umap embedding, directly with <code class="docutils literal notranslate"><span class="pre">sp.ut.get_processed_pbmc_data()</span></code> function. For a step by step processing of the PBMC dataset please refer to the <a class="reference internal" href="spapros_tutorial_basic_selection.html"><span class="doc">basic usage tutorial</span></a>. For sake
 of simplicity, we pre-select the top 1000 highly variable genes for the probe and geneset selection. In real world applications we typically go for top 8000 genes.</p>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[3]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[4]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">adata</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">ut</span><span class="o">.</span><span class="n">get_processed_pbmc_data</span><span class="p">(</span><span class="n">n_hvg</span><span class="o">=</span><span class="mi">1000</span><span class="p">)</span>
@@ -221,10 +229,10 @@ Number of highly variable genes: 1000
 </pre></div></div>
 </div>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[17]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[5]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Save genes as a list in ./my_genes.txt</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1"># Save genes as a list in ./my_genes.txt -&gt; if the file is renamed it needs to be changd in the config file as well</span>
 <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">highly_variable_genes</span><span class="p">)</span><span class="o">.</span><span class="n">to_csv</span><span class="p">(</span><span class="s1">&#39;./my_genes.txt&#39;</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -232,64 +240,277 @@ Number of highly variable genes: 1000
 </section>
 <section id="Probe-Design">
 <h2>Probe Design<a class="headerlink" href="#Probe-Design" title="Permalink to this heading"></a></h2>
-<p>To conduct the probe design, run the <code class="docutils literal notranslate"><span class="pre">&lt;technology&gt;_probe_designer</span></code> cli command of the oligo-designer-toolsuite from the terminal:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scrinshot_probe_designer<span class="w"> </span>--file_genes<span class="w"> </span>./my_genes.txt<span class="w"> </span>-o<span class="w"> </span>./output<span class="w"> </span>--n_jobs<span class="w"> </span><span class="m">2</span><span class="w"> </span>--min_probes_per_gene<span class="w"> </span><span class="m">3</span><span class="w"> </span>--source<span class="w"> </span>ncbi<span class="w"> </span>--taxon<span class="w"> </span>vertebrate_mammalian<span class="w"> </span>--species<span class="w"> </span>Homo_sapiens<span class="w"> </span>--annotation_release<span class="w"> </span><span class="m">110</span>
+<p>Before we start with the probe design we have to create genomic region fasta files from which the probe database is created and which are used as background database for the specificity filter. Therefore, run the <em>genomic_region_generator</em> cli command of the oligo-designer-toolsuite from the terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>genomic_region_generator<span class="w"> </span>-c<span class="w"> </span>genomic_region_generator_ncbi.yaml
 </pre></div>
 </div>
-<p>Alternativ pipelines: <code class="docutils literal notranslate"><span class="pre">merfish_probe_designer</span></code>, <code class="docutils literal notranslate"><span class="pre">seqfish_probe_designer</span></code> (see our <a class="reference external" href="https://www.google.com/url?q=https://docs.google.com/spreadsheets/d/1NCDLscdmzn32U7_IKy6OKYHqfECn76x0pAD3KFhuJgQ/edit%23gid%3D0&amp;sa=D&amp;source=docs&amp;ust=1692975800552487&amp;usg=AOvVaw20CRwiObnVkWVS54CcqXMq">resource table</a> for an overview of differences between the technologies)</p>
-<p>More info can be obtained with</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scrinshot_probe_designer<span class="w"> </span>--help
+<p>A default configuration file for the genomic region generator with NCBI annotations can be downloaded from <a class="reference external" href="https://github.com/HelmholtzAI-Consultants-Munich/oligo-designer-toolsuite/blob/pipelines/data/configs/genomic_region_generator_ncbi.yaml">here</a>.</p>
+<p><em>Note: if an error occurs for the unzipping of files, this might be due to a faulty download of files from the ftp server. In this case, try to download the files manually from the ftp server and use those files as input for the pipeline with custom input files. See ``spapros_tutorial_end_to_end_selection.ipynb`` tutorial for more information.</em></p>
+<p>To conduct the probe design, run the *&lt;technology&gt;_probe_designer* cli command of the oligo-designer-toolsuite from the terminal:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>scrinshot_probe_designer<span class="w"> </span>-c<span class="w"> </span>scrinshot_probe_designer.yaml
 </pre></div>
 </div>
-<p>Also note that when running the pipeline, a file <code class="docutils literal notranslate"><span class="pre">./output/config_scrinshot_ncbi.yaml</span></code> is created. It contains all parameters that define the pipeline run. Except of the paramters that define the species and annotation release it makes sense to keep the default parameters. In the <a class="reference internal" href="spapros_tutorial_end_to_end_selection.html"><span class="doc">long version</span></a> of this tutorial the parameters for each pipeline step are described.</p>
+<div class="line-block">
+<div class="line">A default configuration file for the scrinshot probe designer can be downloaded from <a class="reference external" href="https://github.com/HelmholtzAI-Consultants-Munich/oligo-designer-toolsuite/blob/pipelines/data/configs/scrinshot_probe_designer.yaml">here</a>.</div>
+<div class="line"><strong>Important:</strong> add the filename of the gene list and the file names of the fasta files to the configuration file of the pipeline. From the logging file of the previous step you can retrieve the names of the generated fasta files.</div>
+</div>
+<p>Alternativ pipelines: <em>merfish_probe_designer</em>, <em>seqfish_probe_designer</em> (see our <a class="reference external" href="https://www.google.com/url?q=https://docs.google.com/spreadsheets/d/1NCDLscdmzn32U7_IKy6OKYHqfECn76x0pAD3KFhuJgQ/edit%23gid%3D0&amp;sa=D&amp;source=docs&amp;ust=1692975800552487&amp;usg=AOvVaw20CRwiObnVkWVS54CcqXMq">resource table</a> for an overview of differences between the technologies)</p>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[6]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;genomic_region_generator -c data/genomic_region_generator_ncbi.yaml&quot;</span>
+<span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+2024-07-16 17:15:53,511 [INFO] Parameters Load Annotations:
+2024-07-16 17:15:53,511 [INFO] source = ncbi
+2024-07-16 17:15:53,511 [INFO] source_params = {&#39;taxon&#39;: &#39;vertebrate_mammalian&#39;, &#39;species&#39;: &#39;Homo_sapiens&#39;, &#39;annotation_release&#39;: 110}
+2024-07-16 17:23:33,702 [WARNING] /Users/lisa.barros/Desktop/oligo-designer-toolsuite/oligo_designer_toolsuite/utils/_sequence_parser.py:104: DtypeWarning: Columns (0) have mixed types. Specify dtype option on import or set low_memory=False.
+  csv_df = pd.read_csv(csv_file, sep=&#34;\t&#34;, names=self.GFF_HEADER, header=None)
+
+2024-07-16 17:24:16,761 [INFO] The following annotation files are used for GTF annotation of regions: /Users/lisa.barros/Desktop/spapros/docs/_tutorials/output_genomic_region_generator_ncbi/annotation/GCF_000001405.40_GRCh38.p14_genomic.gtf and for fasta sequence file: /Users/lisa.barros/Desktop/spapros/docs/_tutorials/output_genomic_region_generator_ncbi/annotation/GCF_000001405.40_GRCh38.p14_genomic.fna .
+2024-07-16 17:24:16,763 [INFO] The annotations are from NCBI source, for the species: Homo_sapiens, release number: 110 and genome assembly: GRCh38.p14
+2024-07-16 17:28:18,217 [INFO] The genomic region &#39;exon&#39; was stored in :/Users/lisa.barros/Desktop/spapros/docs/_tutorials/output_genomic_region_generator_ncbi/annotation/exon_annotation_source-NCBI_species-Homo_sapiens_annotation_release-110_genome_assemly-GRCh38.p14.fna.
+2024-07-16 17:40:49,655 [INFO] The genomic region &#39;exon_exon_junction&#39; was stored in :/Users/lisa.barros/Desktop/spapros/docs/_tutorials/output_genomic_region_generator_ncbi/annotation/exon_exon_junction_annotation_source-NCBI_species-Homo_sapiens_annotation_release-110_genome_assemly-GRCh38.p14.fna.
+</pre></div></div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[7]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;scrinshot_probe_designer -c data/scrinshot_probe_designer.yaml&quot;</span>
+<span class="n">process</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+  <span class="ansi-magenta-fg">100%</span> <span class="ansi-cyan-fg">Database Loading</span> <span class="ansi-black-intense-fg">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span> <span class="ansi-green-fg">887/887</span> <span class="ansi-yellow-fg">1:09:20</span> &lt; <span class="ansi-cyan-fg">0:00:00</span>&lt; <span class="ansi-cyan-fg">0:00:05</span>04:28
+  <span class="ansi-magenta-fg">100%</span> <span class="ansi-cyan-fg">Property Filter</span> <span class="ansi-black-intense-fg">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span> <span class="ansi-green-fg">887/887</span> <span class="ansi-yellow-fg">1:00:18</span> &lt; <span class="ansi-cyan-fg">0:00:00</span>&lt; <span class="ansi-cyan-fg">0:00:04</span>04:50
+  <span class="ansi-magenta-fg">100%</span> <span class="ansi-cyan-fg">Specificity Filter: Exact Match</span> <span class="ansi-black-intense-fg">━━━━━━━━━━━━━━━</span> <span class="ansi-green-fg">887/887</span> <span class="ansi-yellow-fg">0:04:31</span> &lt; <span class="ansi-cyan-fg">0:00:00</span>&lt; <span class="ansi-cyan-fg">0:00:01</span>00:26
+  <span class="ansi-magenta-fg">100%</span> <span class="ansi-cyan-fg">Specificity Filter: Blastn Specificity</span> <span class="ansi-black-intense-fg">━━━━━━━━</span> <span class="ansi-green-fg">887/887</span> <span class="ansi-yellow-fg">1:09:06</span> &lt; <span class="ansi-cyan-fg">0:00:00</span>&lt; <span class="ansi-cyan-fg">0:00:11</span>15:04
+  <span class="ansi-magenta-fg">100%</span> <span class="ansi-cyan-fg">Specificity Filter: Blastn Crosshybridization</span> <span class="ansi-black-intense-fg">━━━━━</span> <span class="ansi-green-fg">810/…</span> <span class="ansi-yellow-fg">0:02:…</span> &lt; <span class="ansi-cyan-fg">0:00:…</span> &lt; <span class="ansi-cyan-fg">0:00:…</span>:00:…
+  <span class="ansi-magenta-fg">100%</span> <span class="ansi-cyan-fg">Find Oligosets</span> <span class="ansi-black-intense-fg">━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━</span> <span class="ansi-green-fg">810/810</span> <span class="ansi-yellow-fg">2:44:14</span> &lt; <span class="ansi-cyan-fg">0:00:00</span>&lt; <span class="ansi-cyan-fg">0:00:04</span>01:51
+  <span class="ansi-magenta-fg">100%</span> <span class="ansi-cyan-fg">Design Final Padlock Sequence</span> <span class="ansi-black-intense-fg">━━━━━━━━━━━━━━━━━</span> <span class="ansi-green-fg">741/741</span> <span class="ansi-yellow-fg">0:11:25</span> &lt; <span class="ansi-cyan-fg">0:00:00</span>&lt; <span class="ansi-cyan-fg">0:00:01</span>00:49
+
+</pre></div></div>
+</div>
 </section>
 <section id="Load-probe-design-filter-and-run-gene-panel-selection">
 <h2>Load probe design filter and run gene panel selection<a class="headerlink" href="#Load-probe-design-filter-and-run-gene-panel-selection" title="Permalink to this heading"></a></h2>
 <div class="nbinput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[15]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
 </div>
 <div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">##### Load probe design filter #####</span>
-<span class="n">genes_without_enough_probes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;./output/regions_with_insufficient_oligos.txt&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">genes_without_enough_probes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="s1">&#39;output_scrinshot_probe_designer/db_probes/regions_with_insufficient_oligos_for_db_probes.txt&#39;</span><span class="p">,</span> <span class="n">index_col</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">sep</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">index</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
 <span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;has_enough_probes&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">genes_without_enough_probes</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">adata</span><span class="o">.</span><span class="n">var_names</span><span class="p">]</span>
 <span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;pass_constraints&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;has_enough_probes&quot;</span><span class="p">]</span> <span class="o">&amp;</span> <span class="n">adata</span><span class="o">.</span><span class="n">var</span><span class="p">[</span><span class="s2">&quot;highly_variable&quot;</span><span class="p">]</span>
-
-<span class="c1">##### Select genes for gene panel #####</span>
+</pre></div>
+</div>
+</div>
+<div class="nbinput docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[9]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">##### Select genes for gene panel #####</span>
 <span class="n">selector</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">se</span><span class="o">.</span><span class="n">ProbesetSelector</span><span class="p">(</span><span class="n">adata</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">genes_key</span><span class="o">=</span><span class="s2">&quot;pass_constraints&quot;</span><span class="p">,</span> <span class="n">celltype_key</span><span class="o">=</span><span class="s2">&quot;celltype&quot;</span><span class="p">,</span> <span class="n">verbosity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">save_dir</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 <span class="n">selector</span><span class="o">.</span><span class="n">select_probeset</span><span class="p">()</span>
 <span class="n">selected_genes</span> <span class="o">=</span> <span class="n">selector</span><span class="o">.</span><span class="n">probeset</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="n">selector</span><span class="o">.</span><span class="n">probeset</span><span class="o">.</span><span class="n">selection</span><span class="p">]</span>
+</pre></div>
+</div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<script type="application/vnd.jupyter.widget-view+json">{"model_id": "5b1ed0e8aaaa4bd2a046ec85e95e1562", "version_major": 2, "version_minor": 0}</script></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Note: The following celltypes&#39; test set sizes for forest training are below min_test_n (=20):
+         Dendritic cells : 9
+         Megakaryocytes  : 3
+The genes selected for those cell types potentially don&#39;t generalize well. Find the genes for each of those cell types in self.genes_of_primary_trees after running self.select_probeset().
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area stderr docutils container">
+<div class="highlight"><pre>
+/Users/lisa.barros/anaconda3/envs/odt_test/lib/python3.10/site-packages/threadpoolctl.py:1214: RuntimeWarning:
+Found Intel OpenMP (&#39;libiomp&#39;) and LLVM OpenMP (&#39;libomp&#39;) loaded at
+the same time. Both libraries are known to be incompatible and this
+can cause random crashes or deadlocks on Linux when loaded in the
+same Python program.
+Using threadpoolctl may cause crashes or deadlocks. For more
+information and possible workarounds, please see
+    https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
 
-<span class="c1">##### Get probes of genes #####</span>
-<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;./output/padlock_sequences/padlock_probes_order.yml&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+  warnings.warn(msg, RuntimeWarning)
+/Users/lisa.barros/anaconda3/envs/odt_test/lib/python3.10/site-packages/threadpoolctl.py:1214: RuntimeWarning:
+Found Intel OpenMP (&#39;libiomp&#39;) and LLVM OpenMP (&#39;libomp&#39;) loaded at
+the same time. Both libraries are known to be incompatible and this
+can cause random crashes or deadlocks on Linux when loaded in the
+same Python program.
+Using threadpoolctl may cause crashes or deadlocks. For more
+information and possible workarounds, please see
+    https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
+
+  warnings.warn(msg, RuntimeWarning)
+/Users/lisa.barros/anaconda3/envs/odt_test/lib/python3.10/site-packages/threadpoolctl.py:1214: RuntimeWarning:
+Found Intel OpenMP (&#39;libiomp&#39;) and LLVM OpenMP (&#39;libomp&#39;) loaded at
+the same time. Both libraries are known to be incompatible and this
+can cause random crashes or deadlocks on Linux when loaded in the
+same Python program.
+Using threadpoolctl may cause crashes or deadlocks. For more
+information and possible workarounds, please see
+    https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
+
+  warnings.warn(msg, RuntimeWarning)
+/Users/lisa.barros/anaconda3/envs/odt_test/lib/python3.10/site-packages/threadpoolctl.py:1214: RuntimeWarning:
+Found Intel OpenMP (&#39;libiomp&#39;) and LLVM OpenMP (&#39;libomp&#39;) loaded at
+the same time. Both libraries are known to be incompatible and this
+can cause random crashes or deadlocks on Linux when loaded in the
+same Python program.
+Using threadpoolctl may cause crashes or deadlocks. For more
+information and possible workarounds, please see
+    https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
+
+  warnings.warn(msg, RuntimeWarning)
+/Users/lisa.barros/anaconda3/envs/odt_test/lib/python3.10/site-packages/threadpoolctl.py:1214: RuntimeWarning:
+Found Intel OpenMP (&#39;libiomp&#39;) and LLVM OpenMP (&#39;libomp&#39;) loaded at
+the same time. Both libraries are known to be incompatible and this
+can cause random crashes or deadlocks on Linux when loaded in the
+same Python program.
+Using threadpoolctl may cause crashes or deadlocks. For more
+information and possible workarounds, please see
+    https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
+
+  warnings.warn(msg, RuntimeWarning)
+/Users/lisa.barros/anaconda3/envs/odt_test/lib/python3.10/site-packages/threadpoolctl.py:1214: RuntimeWarning:
+Found Intel OpenMP (&#39;libiomp&#39;) and LLVM OpenMP (&#39;libomp&#39;) loaded at
+the same time. Both libraries are known to be incompatible and this
+can cause random crashes or deadlocks on Linux when loaded in the
+same Python program.
+Using threadpoolctl may cause crashes or deadlocks. For more
+information and possible workarounds, please see
+    https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
+
+  warnings.warn(msg, RuntimeWarning)
+/Users/lisa.barros/anaconda3/envs/odt_test/lib/python3.10/site-packages/threadpoolctl.py:1214: RuntimeWarning:
+Found Intel OpenMP (&#39;libiomp&#39;) and LLVM OpenMP (&#39;libomp&#39;) loaded at
+the same time. Both libraries are known to be incompatible and this
+can cause random crashes or deadlocks on Linux when loaded in the
+same Python program.
+Using threadpoolctl may cause crashes or deadlocks. For more
+information and possible workarounds, please see
+    https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
+
+  warnings.warn(msg, RuntimeWarning)
+/Users/lisa.barros/anaconda3/envs/odt_test/lib/python3.10/site-packages/threadpoolctl.py:1214: RuntimeWarning:
+Found Intel OpenMP (&#39;libiomp&#39;) and LLVM OpenMP (&#39;libomp&#39;) loaded at
+the same time. Both libraries are known to be incompatible and this
+can cause random crashes or deadlocks on Linux when loaded in the
+same Python program.
+Using threadpoolctl may cause crashes or deadlocks. For more
+information and possible workarounds, please see
+    https://github.com/joblib/threadpoolctl/blob/master/multiple_openmp.md
+
+  warnings.warn(msg, RuntimeWarning)
+</pre></div></div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"></pre></div>
+</div>
+<div class="nboutput nblast docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area rendered_html docutils container">
+<pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
+</pre></div>
+</div>
+<div class="nbinput nblast docutils container">
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[10]:
+</pre></div>
+</div>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="c1">##### Get probes of genes #####</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;output_scrinshot_probe_designer/padlock_probes_order.yml&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
     <span class="n">all_probes</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">file</span><span class="p">)</span>
     <span class="n">probes</span> <span class="o">=</span> <span class="p">{</span><span class="n">g</span><span class="p">:</span> <span class="n">all_probes</span><span class="p">[</span><span class="n">g</span><span class="p">]</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">selected_genes</span><span class="p">}</span>
 </pre></div>
 </div>
 </div>
 <div class="nbinput docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
-<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">probes</span><span class="p">[</span><span class="s2">&quot;AAGAB&quot;</span><span class="p">]</span>
+<div class="input_area highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Selected genes: </span><span class="si">{</span><span class="nb">sorted</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">probes</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">probes</span><span class="p">[</span><span class="s2">&quot;CTSS&quot;</span><span class="p">]</span>
 </pre></div>
 </div>
+</div>
+<div class="nboutput docutils container">
+<div class="prompt empty docutils container">
+</div>
+<div class="output_area docutils container">
+<div class="highlight"><pre>
+Selected genes: [&#39;CD79A&#39;, &#39;CST3&#39;, &#39;CTSS&#39;, &#39;FCER1G&#39;, &#39;FCGR3A&#39;, &#39;FCN1&#39;, &#39;FGFBP2&#39;, &#39;GNLY&#39;, &#39;GPX1&#39;, &#39;GRN&#39;, &#39;GZMA&#39;, &#39;GZMH&#39;, &#39;GZMK&#39;, &#39;IL32&#39;, &#39;LYAR&#39;, &#39;MAL&#39;, &#39;MS4A1&#39;, &#39;PF4&#39;, &#39;PRF1&#39;, &#39;TYROBP&#39;]
+</pre></div></div>
 </div>
 <div class="nboutput nblast docutils container">
-<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[22]:
+<div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[11]:
 </pre></div>
 </div>
 <div class="output_area docutils container">
 <div class="highlight"><pre>
-{&#39;AAGAB_oligo1&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;ATCATCACCTCAGGTAACCTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTCACTCTATCGCAGACCAAG&#39;,
-  &#39;detection_probe_sequence&#39;: &#39;GCAGACCAAGATCAUCACCU[fluorophore]&#39;},
- &#39;AAGAB_oligo2&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;GTGTGAGCCTTATTTCTTTCTGTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTGGTAGTGTCTGGAGGG&#39;,
-  &#39;detection_probe_sequence&#39;: &#39;[fluorophore]UCTGGAGGGGUGTGAGCC&#39;},
- &#39;AAGAB_oligo3&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;GAGAGGGATTCAGTACTATCTGTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTACCACCCCGATGATCA&#39;,
-  &#39;detection_probe_sequence&#39;: &#39;CCGATGAUCAGAGAGGGATUC[fluorophore]&#39;},
- &#39;AAGAB_oligo4&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;CTAGAAGAGGCCAATATCCCTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTGACCTTCATCCCATATGTCC&#39;,
-  &#39;detection_probe_sequence&#39;: &#39;[fluorophore]CCAUATGTCCCUAGAAGAGGC&#39;},
- &#39;AAGAB_oligo5&#39;: {&#39;padlock_probe_full_sequence&#39;: &#39;ATCACAGTGAGGGCTAATGTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCAAACCTATCTTCTTTCAGAGCCACAGCAGTAATG&#39;,
-  &#39;detection_probe_sequence&#39;: &#39;ACAGCAGTAATGAUCACAGUGAG[fluorophore]&#39;}}
+{&#39;oligoset_1&#39;: {&#39;CTSS::21801&#39;: {&#39;sequence_padlock_probe&#39;: &#39;CAGCAGTTGCTCCCACAGTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTACCAGCCGTTTCATTGTGATAGAAC&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;CCGTTTCATTGTGATAGAACCAGCAGTTGCUCCCACAGU[fluorophore]&#39;},
+  &#39;CTSS::3064&#39;: {&#39;sequence_padlock_probe&#39;: &#39;GCCACAGCTTCTTTCAGGACATCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTCCAACAGACACTGGGCCTTTATTG&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;CAGACACTGGGCCTTTATTGGCCACAGCUTCTTUCAGGAC[fluorophore]&#39;},
+  &#39;CTSS::22579&#39;: {&#39;sequence_padlock_probe&#39;: &#39;GCGTCTGAGTCGATGCCCTTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTATCCATGGCTTTGTAGGGATAGGAA&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;TGGCTTTGTAGGGATAGGAAGCGTCTGAGTCGAUGCCCU[fluorophore]&#39;},
+  &#39;CTSS::979&#39;: {&#39;sequence_padlock_probe&#39;: &#39;TTCCCATTGAATGCTCCAGGTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTTGCCCAGATCGTATGAGTGCA&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;GCCCAGATCGTATGAGTGCATTCCCATUGAATGCUCCAGG[fluorophore]&#39;},
+  &#39;CTSS::22236&#39;: {&#39;sequence_padlock_probe&#39;: &#39;AGCACCACAAGAACCCATGTCTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTACAGCACTGAAAGCCCAGCA&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;ACAGCACUGAAAGCCCAGCAAGCACCACAAGAACCCATGU[fluorophore]&#39;}},
+ &#39;oligoset_2&#39;: {&#39;CTSS::21801&#39;: {&#39;sequence_padlock_probe&#39;: &#39;CAGCAGTTGCTCCCACAGTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTACCAGCCGTTTCATTGTGATAGAAC&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;CCGTTTCATTGTGATAGAACCAGCAGTTGCUCCCACAGU[fluorophore]&#39;},
+  &#39;CTSS::22579&#39;: {&#39;sequence_padlock_probe&#39;: &#39;GCGTCTGAGTCGATGCCCTTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTATCCATGGCTTTGTAGGGATAGGAA&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;TGGCTTTGTAGGGATAGGAAGCGTCTGAGTCGAUGCCCU[fluorophore]&#39;},
+  &#39;CTSS::979&#39;: {&#39;sequence_padlock_probe&#39;: &#39;TTCCCATTGAATGCTCCAGGTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTTGCCCAGATCGTATGAGTGCA&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;GCCCAGATCGTATGAGTGCATTCCCATUGAATGCUCCAGG[fluorophore]&#39;},
+  &#39;CTSS::2942&#39;: {&#39;sequence_padlock_probe&#39;: &#39;GGCCACAGCTTCTTTCAGGACTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTCCAACAGACACTGGGCCTTTATT&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;ACAGACACTGGGCCTTTATTGGCCACAGCUTCTTUCAGGA[fluorophore]&#39;},
+  &#39;CTSS::22236&#39;: {&#39;sequence_padlock_probe&#39;: &#39;AGCACCACAAGAACCCATGTCTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTACAGCACTGAAAGCCCAGCA&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;ACAGCACUGAAAGCCCAGCAAGCACCACAAGAACCCATGU[fluorophore]&#39;}},
+ &#39;oligoset_3&#39;: {&#39;CTSS::21801&#39;: {&#39;sequence_padlock_probe&#39;: &#39;CAGCAGTTGCTCCCACAGTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTACCAGCCGTTTCATTGTGATAGAAC&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;CCGTTTCATTGTGATAGAACCAGCAGTTGCUCCCACAGU[fluorophore]&#39;},
+  &#39;CTSS::2173&#39;: {&#39;sequence_padlock_probe&#39;: &#39;GTCTGAGTCGATGCCCTTGTTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTATGGCTTTGTAGGGATAGGAAGC&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;GCTTTGTAGGGATAGGAAGCGTCTGAGTCGAUGCCCTTGU[fluorophore]&#39;},
+  &#39;CTSS::979&#39;: {&#39;sequence_padlock_probe&#39;: &#39;TTCCCATTGAATGCTCCAGGTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTTGCCCAGATCGTATGAGTGCA&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;GCCCAGATCGTATGAGTGCATTCCCATUGAATGCUCCAGG[fluorophore]&#39;},
+  &#39;CTSS::2942&#39;: {&#39;sequence_padlock_probe&#39;: &#39;GGCCACAGCTTCTTTCAGGACTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTCCAACAGACACTGGGCCTTTATT&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;ACAGACACTGGGCCTTTATTGGCCACAGCUTCTTUCAGGA[fluorophore]&#39;},
+  &#39;CTSS::22236&#39;: {&#39;sequence_padlock_probe&#39;: &#39;AGCACCACAAGAACCCATGTCTTCCTCTATGATTACTGACTGCGTCTATTTAGTGGAGCCTTCTCCTATCTTCTTTACAGCACTGAAAGCCCAGCA&#39;,
+   &#39;sequence_detection_oligo&#39;: &#39;ACAGCACUGAAAGCCCAGCAAGCACCACAAGAACCCATGU[fluorophore]&#39;}}}
 </pre></div></div>
 </div>
 </section>
