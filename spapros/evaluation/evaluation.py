@@ -27,6 +27,8 @@ from spapros.evaluation.metrics import (
 from spapros.util.mp_util import Signal, SigQueue, _get_n_cores, parallelize
 from spapros.util.util import NestedProgress, init_progress
 
+
+from spapros.util.util import print_memory_usage, get_size
 # helper for type checking:
 
 
@@ -1169,6 +1171,7 @@ class ProbesetEvaluator:
                 Any keyword argument from :func:`.marker_correlation`.
 
 
+
         Example:
 
             .. code-block:: python
@@ -1605,6 +1608,10 @@ def train_ct_tree_helper(
 
     TODO: Write docstring
     """
+
+    pid = os.getpid()
+    print_memory_usage(f"Process {pid}: Starting training cell types")
+
     ct_trees = {}
     for ct in celltypes:
         ct_trees[ct] = tree.DecisionTreeClassifier(
@@ -1615,8 +1622,12 @@ def train_ct_tree_helper(
         elif np.sum(masks[ct]) > 0:
             ct_trees[ct] = ct_trees[ct].fit(X_train[masks[ct], :], y_train[ct][masks[ct]])
 
+        print_memory_usage(f"Process {pid}: After training cell type {ct}")
+
         if queue is not None:
             queue.put(Signal.UPDATE)
+
+    print_memory_usage(f"Process {pid}: After training all cell types")
 
     if queue is not None:
         queue.put(Signal.FINISH)
@@ -1816,6 +1827,8 @@ def single_forest_classifications(
     #  date)
     # TODO: Add progress bars to trees, and maybe change verbose to verbosity levels
 
+    print_memory_usage("Starting single_forest_classifications")
+
     # if verbose:
     #     try:
     #         from tqdm.notebook import tqdm
@@ -1892,6 +1905,11 @@ def single_forest_classifications(
     ct_trees: Dict[str, list] = {ct: [] for ct in celltypes}
     np.random.seed(seed=seed)
     seeds = np.random.choice(100000, n_trees, replace=False)
+
+
+    print_memory_usage("Before training trees")
+    tree_counter = 0
+
     # Compute trees (for each tree index we parallelize over celltypes)
     # for i in tqdm(range(n_trees), desc="Train trees") if tqdm else range(n_trees):
     if progress and verbose:
@@ -1900,6 +1918,11 @@ def single_forest_classifications(
         X_train, y_train, cts_train = uniform_samples(
             a, ct_key, set_key="train_set", subsample=subsample, seed=seeds[i], celltypes=ref_celltypes
         )
+
+        if verbose:
+            tree_counter += 1
+            print(f"Training tree iteration: {tree_counter}/{n_trees}")
+
         if ct_spec_ref is not None:
             masks: Optional[Dict[str, np.ndarray[Any, np.dtype[np.bool_]]]] = get_reference_masks(
                 cts_train, ct_spec_ref
@@ -1923,15 +1946,32 @@ def single_forest_classifications(
         del y_train
         del cts_train
         gc.collect()
+
+        print_memory_usage(f"After gc.collect() iteration {i}")
+
+    print_memory_usage("After training all trees")
+
+    print_memory_usage("Before calculating feature importances")
+    
     # Get feature importances
     importances = {
         ct: pd.DataFrame(index=a.var.index, columns=[str(i) for i in range(n_trees)], dtype="float64")
         for ct in celltypes
     }
     for i in range(n_trees):
+        if verbose:
+            print(f"Calculating feature importances for tree {i+1}/{n_trees}")
+            
         for ct in celltypes:
             if (masks_test is None) or (np.sum(masks_test[ct]) > 0):
                 importances[ct][str(i)] = ct_trees[ct][i].feature_importances_
+                
+        # Garbage collection after each tree iteration
+        gc.collect()
+        print_memory_usage(f"After feature importance calculation iteration {i}")
+
+    print_memory_usage("Before evaluating trees")
+    
     # Evaluate trees (we parallelize over tree indices)
     summary_metric, ct_specific_metric = parallelize(
         callback=eval_ct_tree_helper,
@@ -1939,7 +1979,7 @@ def single_forest_classifications(
         n_jobs=n_jobs,
         backend=backend,
         extractor=pool_eval_ct_tree_helper,
-        show_progress_bar=False,  # =verbose,
+        show_progress_bar=False,
         desc="Evaluate trees",
     )(
         celltypes=celltypes,
@@ -1950,11 +1990,13 @@ def single_forest_classifications(
         cts_test=cts_test,
         masks=masks_test,
     )
-    # garbage collection
+
+    # Aggressive garbage collection after evaluation
     del X_test
     del y_test
     del cts_test
     gc.collect()
+    print_memory_usage("After tree evaluation and garbage collection")
 
     # Sort results
     if sort_by_tree_performance:
@@ -2161,7 +2203,7 @@ def forest_classifications(
         adata:
             An already preprocessed annotated data matrix. Typically we use log normalised data.
         selection:
-            Trees are trained on genes of the list or genes defined in the bool column ``selection[‘selection’]``.
+            Trees are trained on genes of the list or genes defined in the bool column ``selection[['selection']``.
         max_n_forests:
             Number of best trees considered as a tree group. Including the primary tree.
         verbosity:

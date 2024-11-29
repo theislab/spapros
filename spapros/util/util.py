@@ -15,6 +15,41 @@ from sklearn.utils import sparsefuncs
 # Data Utils #
 ##############
 
+import psutil
+import os
+
+def print_memory_usage(message="", log_file="memory_usage.log"):
+    """Print and log memory usage of the current process.
+    
+    Args:
+        message: Optional message to prepend to the memory usage info
+        log_file: Path to the log file where memory usage will be recorded
+    """
+    process = psutil.Process(os.getpid())
+    mem = process.memory_info().rss / (1024 * 1024)  # Convert bytes to MB
+    output = f"{message} Memory usage: {mem:.2f} MB"
+    
+    ## Print to console
+    #print(output)
+    
+    # Append to log file
+    with open(log_file, 'a') as f:
+        # Add timestamp to log entry
+        timestamp = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')
+        f.write(f"[{timestamp}],{process.pid},{mem:.2f},{output}\n")
+
+import sys
+
+def get_size(obj, unit='MB'):
+    size_bytes = sys.getsizeof(obj)
+    if unit == 'MB':
+        return size_bytes / (1024 * 1024)
+    elif unit == 'KB':
+        return size_bytes / 1024
+    return size_bytes
+
+
+
 
 def get_processed_pbmc_data(n_hvg: int = 1000):
     """Get log normalised pbmc AnnData with selection and evaluation relevant quantities

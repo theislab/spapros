@@ -21,6 +21,8 @@ from spapros.util.util import (
     filter_marker_dict_by_shared_genes,
 )
 
+
+from spapros.util.util import print_memory_usage, get_size
 # from tqdm.autonotebook import tqdm
 
 
@@ -509,7 +511,7 @@ class ProbesetSelector:  # (object)
         """
         assert isinstance(self.progress, RichCast)
         with self.progress:
-
+            print_memory_usage("Starting probeset selection")
             if self.verbosity > 0:
                 selection_task = self.progress.add_task(
                     description="SPAPROS PROBESET SELECTION:", only_text=True, header=True, total=0
@@ -519,35 +521,42 @@ class ProbesetSelector:  # (object)
             t = time.time()
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._pca_selection()
+                print_memory_usage("After PCA selection")
             self._save_time_measurement("PCA_selection", t)
 
-            # DE forests
+            # DE forests  
             t = time.time()
             self._forest_DE_baseline_selection()
+            print_memory_usage("After DE forest baseline selection")
             self._save_time_measurement("DE_forest_selection", t)
 
             # PCA forests (including optimization based on DE forests), or just DE forests if no PCA genes were selected
             t = time.time()
             if self.n_pca_genes and (self.n_pca_genes > 0):
                 self._forest_selection()
+                print_memory_usage("After PCA forest selection")
             else:
                 self._set_DE_baseline_forest_to_final_forest()
+                print_memory_usage("After setting DE baseline forest as final")
             self._save_time_measurement("PCA_forest_selection", t)
 
             # Add markers from curated list
             t = time.time()
             if self.marker_list:
                 self._marker_selection()
+                print_memory_usage("After marker selection")
             self._save_time_measurement("marker_selection", t)
 
             # Compile probe set
             t = time.time()
             self.probeset = self._compile_probeset_list()
+            print_memory_usage("After compiling probeset")
             self._save_time_measurement("compile_probeset", t)
             self.selection["final"] = self.probeset
 
             # Save attribute genes_of_primary_trees
             self.genes_of_primary_trees = self._get_genes_of_primary_trees()
+            print_memory_usage("After getting primary tree genes")
 
             if self.verbosity > 0:
                 self.progress.advance(selection_task)
@@ -555,6 +564,7 @@ class ProbesetSelector:  # (object)
 
             if self.save_dir and (not os.path.exists(self.probeset_path)):
                 self.probeset.to_csv(self.probeset_path)
+                print_memory_usage("After saving probeset")
 
     def _pca_selection(self) -> None:
         """Select genes based on pca loadings."""
