@@ -515,7 +515,11 @@ def add_DE_genes_to_trees(
 
     # Specificities table (True negative rates) of best trees
     TN_rates = pd.DataFrame(index=all_celltypes, columns=all_celltypes, data=1)
-    new_TN_rates = pd.concat([d["0"] for ct, d in specificities.items()], axis=1)
+    if isinstance(specificities, dict):
+        new_TN_rates = pd.concat([d["0"] for ct, d in specificities.items()], axis=1)
+    else:
+        # Handle the case where specificities is not a dict
+        raise TypeError(f"Expected specificities to be a dict, got {type(specificities)}")
     celltypes = [ct for ct in specificities]
     new_TN_rates.columns = celltypes
     TN_rates[celltypes] = new_TN_rates
@@ -623,7 +627,11 @@ def add_DE_genes_to_trees(
         if verbosity > 2:
             print("\t Identify outliers with new trees...")
         # Calculate outliers of new trees, and kick out celltypes with outliers that repeated `n_terminal_repeats` times
-        new_TN_rates = pd.concat([d["0"] for ct, d in specificities.items()], axis=1)
+        if isinstance(specificities, dict):
+            new_TN_rates = pd.concat([d["0"] for ct, d in specificities.items()], axis=1)
+        else:
+            # Handle the case where specificities is not a dict
+            raise TypeError(f"Expected specificities to be a dict, got {type(specificities)}")
         new_TN_rates.columns = celltypes
         TN_rates[celltypes] = new_TN_rates
         TN_rates.columns = [ct for ct in all_celltypes]
@@ -925,7 +933,7 @@ def add_tree_genes_from_reference_trees(
         f1_diffs = f1_diffs.loc[f1_diffs > performance_th]
         if (verbosity > 1) and not np.all([(ct in importances.columns) for ct in f1_diffs.index]):
             print("\t There are no more new markers in the reference trees for celltypes:")
-            print(f"\t\t {[ct for ct in f1_diffs.index if not ct in importances.columns]}")
+            print(f"\t\t {[ct for ct in f1_diffs.index if ct not in importances.columns]}")
             print("\t\t even though the performance threshold was not reached")
             print("\t\t (statistical randomness, consider increasing n_trees or performance_th)")
 

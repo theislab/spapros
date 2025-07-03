@@ -987,7 +987,7 @@ def xgboost_forest_classification(
     # To have more robust results we use multiple seeds (especially important for cell types with low cell count)
     if n_seeds > 1:
         rng = np.random.default_rng(seed)
-        seeds = list(rng.integers(low=0, high=100000, size=n_seeds))
+        seeds = [int(x) for x in rng.integers(low=0, high=100000, size=n_seeds)]
     else:
         seeds = [seed]
 
@@ -1350,7 +1350,7 @@ def summary_marker_corr(cor_df: pd.DataFrame) -> Dict:
             different correlations are filtered out. See :attr:`max_marker_correlations` output for expected
             :attr:`cor_df`.
     """
-    summaries = cor_df[[col for col in cor_df.columns if (col != "mean")]].mean(axis=0)
+    summaries = cor_df[[col for col in cor_df.columns if (col not in ["mean", "celltype"])]].mean(axis=0)
     return {summary: val for summary, val in summaries.items()}
 
 

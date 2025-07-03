@@ -759,7 +759,7 @@ class ProbesetEvaluator:
 
         # Check if given steps are sound
         supported_steps = {"shared", "pre", "main", "summary"}
-        assert set(steps) <= supported_steps, f"Unsupported results steps: {set(steps)-supported_steps}"
+        assert set(steps) <= supported_steps, f"Unsupported results steps: {set(steps) - supported_steps}"
 
         # Set directories to list
         if directories is None:
@@ -2217,7 +2217,7 @@ def forest_classifications(
         if res is None:
             res = new_res
         else:
-            res = combine_tree_results(res, new_res, with_clfs=with_clfs)
+            res = combine_tree_results(res, new_res, with_clfs=with_clfs)  # type: ignore
         specs = res[0][1] if with_clfs else res[1]
         ct_spec_ref = get_outlier_reference_celltypes(specs, **outlier_kwargs)
         if progress and 2 * verbosity >= level:

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
+import numpy as np
 import pytest
 from matplotlib.testing.compare import compare_images
 
@@ -45,10 +46,19 @@ def test_masked_dotplot(small_adata, selector, out_dir):  # tmp_path):
     ref_name = Path("tests/plotting/test_data/masked_dotplot.png")
     # fig_name = Path(f"{tmp_path}/masked_dotplot.png")
     fig_name = Path(f"{out_dir}/masked_dotplot.png")
+
+    # Set all random seeds to ensure reproducibility
     random.seed(0)
+    np.random.seed(0)
+
     small_adata = small_adata[random.sample(range(small_adata.n_obs), 100), :]
-    pl.masked_dotplot(small_adata, selector, save=fig_name)
-    # pl.masked_dotplot(small_adata, selector, save=ref_name)
+
+    # Set resolution for both display and saving
+    plt.rcParams["figure.dpi"] = 400
+    plt.rcParams["savefig.dpi"] = 400
+
+    pl.masked_dotplot(small_adata, selector, save=fig_name, celltypes=small_adata.obs["celltype"].unique())
+    # pl.masked_dotplot(small_adata, selector, save=ref_name, celltypes=small_adata.obs["celltype"].unique())
     assert compare_images(ref_name, fig_name, 0.001) is None
 
 
@@ -134,6 +144,9 @@ def test_masked_dotplot(small_adata, selector, out_dir):  # tmp_path):
 # TODO maybe add "plot_confusion_matrix_difference", "plot_marker_correlation"
 # TODO add further kwargs for each fun
 def test_selection_plots(selector_with_marker, fun, out_dir, kwargs):  # tmp_path
+    # Set resolution for both display and saving
+    plt.rcParams["figure.dpi"] = 40
+    plt.rcParams["savefig.dpi"] = 40
     ref_name = Path(_transform_string(f"tests/plotting/test_data/selection_{fun}_{kwargs}.png"))
     # fig_name = Path(_transform_string(f"{tmp_path}/selection_{fun}_{kwargs}.png"))
     fig_name = Path(_transform_string(f"{out_dir}/selection_{fun}_{kwargs}.png"))

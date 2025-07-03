@@ -4,7 +4,7 @@ version = "0.1.5"  # <<COOKIETEMPLE_FORCE_BUMP>>
 description = "Probe set selection for targeted spatial transcriptomics."
 authors = ["Lukas Heumos <lukas.heumos@posteo.net>", "Louis Kümmerle <louis.kummerle@helmholtz-munich.de>"]
 license = "MIT"
-readme = "README.rst"
+readme = "README.md"
 homepage = "https://github.com/theislab/spapros"
 repository = "https://github.com/theislab/spapros"
 documentation = "https://spapros.readthedocs.io"
@@ -15,13 +15,13 @@ classifiers = [
 
 
 [tool.poetry.dependencies]
-python = ">=3.9,<3.11"
+python = ">=3.9,<3.14"
 click = ">=8.0.1"
 rich = ">=10.1.0"
 PyYAML = ">=6.0.1"
 Jinja2 = ">=3.0.1"
 numpy = ">=1.21.1"
-pandas = "^1.3.0"
+pandas = ">=2.3.0"
 scanpy = ">=1.9.8"
 seaborn = ">=0.11.1"
 matplotlib = ">=3.6.3"
@@ -62,15 +62,16 @@ UpSetPlot = ">=0.7.0"
 #Pillow = "^10.0.2"
 #UpSetPlot = ">=0.7.0"
 
-[tool.poetry.dev-dependencies]
+[tool.poetry.group.dev.dependencies]
 pytest = ">=7.4.4"
 coverage = {extras = ["toml"], version = ">=7.4"}
-safety = ">=2.3.5"
+safety = ">=3.0.0"
+marshmallow = ">=3.18.0,<4.0.0"
 mypy = ">=1.8.0"
 typeguard = ">=4.1.5"
 xdoctest = {extras = ["colors"], version = ">=1.1.2"}
-sphinx = "^5.3.0"
-sphinx-autobuild = "^2021.3.14"
+sphinx = ">=5.3.0"
+sphinx-autobuild = ">2021.3.14"
 pre-commit = ">=3.6.0"
 flake8 = ">=7.0.0"
 black = ">=22.3.0"
@@ -81,23 +82,25 @@ flake8-rst-docstrings = ">=0.3.0"
 pep8-naming = ">=0.13.3"
 reorder-python-imports = ">=3.12.0"
 pre-commit-hooks = ">=4.5.0"
-sphinx-rtd-theme = "^1.3.0"
-sphinx-rtd-dark-mode = "^1.2.3"
-Pygments = "^2.9.0"
-sphinx-click = "^3.0.0"
-types-pkg-resources = ">=0.1.3"
+sphinx-rtd-theme = ">=1.3.0"
+sphinx-rtd-dark-mode = ">=1.2.3"
+Pygments = ">=2.9.0"
+sphinx-click = ">=3.0.0"
+# Removed types-pkg-resources as it's yanked and deprecated
+# Use types-setuptools instead for setuptools typing support
+types-setuptools = ">=57.0.0"
 types-requests = ">=2.31.0"
 types-attrs = ">=19.1.0"
 zipp = ">=3.17.0"
 importlib-metadata = ">=7.0.1"
-panel = "^1.3.7"
-nbsphinx = "^0.8.8"
-sphinx-gallery = "^0.14.0"
-nbsphinx-link = "^1.3.0"
+panel = ">=1.3.7"
+nbsphinx = ">=0.8.8"
+sphinx-gallery = ">=0.14.0"
+nbsphinx-link = ">=1.3.0"
 jupyter = ">=1.0.0"
 ipython = ">=7.31.1"
 ipykernel = ">=6.28.0"
-nbconvert = "^6.4.2"
+nbconvert = ">=6.4.2"
 nox = ">=2023.04.22"
 nox-poetry = ">=1.0.3"
 
@@ -132,3 +135,6 @@ profile = "black"
 [build-system]
 requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.requires-plugins]
+poetry-plugin-export = ">=1.8"

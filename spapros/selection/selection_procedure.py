@@ -390,7 +390,19 @@ class ProbesetSelector:  # (object)
         self.n_pca_genes = n_pca_genes
         self.min_mean_difference = min_mean_difference
         self.n_min_markers = n_min_markers
-        self.celltypes = self.adata.obs[self.ct_key].unique().tolist() if (celltypes == "all") else celltypes
+
+        def _normalize_celltypes(celltypes: Union[str, List[str], Any]) -> List[str]:
+            """Normalize celltypes input to List[str]."""
+            if celltypes == "all":
+                return self.adata.obs[self.ct_key].unique().tolist()
+            elif isinstance(celltypes, str):
+                return [celltypes]  # Convert single string to list
+            elif isinstance(celltypes, list):
+                return celltypes
+            else:
+                raise ValueError(f"Invalid celltypes: {celltypes}. Expected 'all', str, or List[str]")
+
+        self.celltypes: List[str] = _normalize_celltypes(celltypes)
         # All celltypes in adata
         self.adata_celltypes = self.adata.obs[self.ct_key].unique().tolist()
         # To easily access obs on which we run most selections (all except of pca) define self.obs
