@@ -287,6 +287,10 @@ def cluster_corr(corr_array: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFr
         pandas.DataFrame or numpy.ndarray:
             A NxN correlation matrix with the columns and rows rearranged
     """
+    # check whether the correlation matrix contains nan columns (might be because the respective gene is not expressed)
+    if pd.isna(corr_array).all(axis=0).any():
+        raise ValueError("The correlation matrix contains nan columns. Check wheter you removed unexpressed genes.")
+
     pairwise_distances = sch.distance.pdist(corr_array)
     linkage = sch.linkage(pairwise_distances, method="complete")
     cluster_distance_threshold = pairwise_distances.max() / 2

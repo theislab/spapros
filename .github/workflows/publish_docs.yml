@@ -15,10 +15,6 @@ jobs:
               with:
                   python-version: 3.9
 
-            - name: Install pandoc
-              run: |
-                  sudo apt install pandoc
-
             - name: Install pip
               run: |
                   python -m pip install --upgrade pip

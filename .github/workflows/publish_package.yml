@@ -3,7 +3,6 @@ name: Publish spapros to PyPI
 on:
     release:
         types: [created]
-    workflow_dispatch:
 
 jobs:
     release:
@@ -22,12 +21,12 @@ jobs:
 
             - name: Upgrade pip
               run: |
-                  pip install pip
+                  pip install --constraint=.github/workflows/constraints.txt pip
                   pip --version
 
             - name: Install Poetry
               run: |
-                  pip install poetry
+                  pip install --constraint=.github/workflows/constraints.txt poetry
                   poetry --version
 
             - name: Build package
@@ -35,7 +34,7 @@ jobs:
                   poetry build --ansi
 
             - name: Publish package on PyPI
-              uses: pypa/gh-action-pypi-publish@v1.5.1
+              uses: pypa/gh-action-pypi-publish@v1.4.2
               with:
                   # TODO COOKIETEMPLE: Configure your PyPI Token to enable automatic deployment to PyPi on releases
                   # https://help.github.com/en/actions/configuring-and-managing-workflows/creating-and-storing-encrypted-secrets
@@ -43,7 +42,7 @@ jobs:
                   password: ${{ secrets.PYPI_TOKEN }}
 
             - name: Publish the release notes
-              uses: release-drafter/release-drafter@v5.20.0
+              uses: release-drafter/release-drafter@v5.15.0
               with:
                   publish: ${{ steps.check-version.outputs.tag != '' }}
                   tag: ${{ steps.check-version.outputs.tag }}

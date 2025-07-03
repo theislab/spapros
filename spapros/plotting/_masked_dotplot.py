@@ -25,7 +25,7 @@ class _AxesSubplot(Axes, axes.SubplotBase):
 # We build the MaskedDotPlot based on sc.pl.DotPlot. Compared to scanpy's dotplot
 # the only add-ons are identifiers around dots e.g. for tree genes and marker genes.
 # Unfortunately a lot of class methods needed to be copied and sligthly modified.
-# Maybe this could be done more efficiently. Also the legend add-ons for the identifiers
+# Maybe this could be done more efficiently. Also, the legend add-ons for the identifiers
 # have some positioning problems which need to be fixed.
 
 
@@ -61,11 +61,13 @@ class _AxesSubplot(Axes, axes.SubplotBase):
 
 
 def fix_kwds(kwds_dict: dict, **kwargs):
-    """
-    Given a dictionary of plot parameters (kwds_dict) and a dict of kwds,
-    merge the parameters into a single consolidated dictionary to avoid
-    argument duplication errors.
-    If kwds_dict an kwargs have the same key, only the value in kwds_dict is kept.
+    """Merge parameters from dictionary and kwargs.
+
+    Note:
+        Given a dictionary of plot parameters (kwds_dict) and a dict of kwds,
+        merge the parameters into a single consolidated dictionary to avoid
+        argument duplication errors.
+        If kwds_dict an kwargs have the same key, only the value in kwds_dict is kept.
 
     Args:
         kwds_dict:
@@ -75,11 +77,15 @@ def fix_kwds(kwds_dict: dict, **kwargs):
     Returns:
         kwds_dict merged with kwargs
 
-    Examples::
+    Example:
+        .. code-block:: python
 
-        >>> def _example(**kwds):
-             return fix_kwds(kwds, key1="value1", key2="value2")
-        >>> example(key1="value10", key3="value3")
+            def _example(**kwds):
+                return fix_kwds(kwds, key1="value1", key2="value2")
+            example(key1="value10", key3="value3")
+
+        ::
+
             {'key1': 'value10, 'key2': 'value2', 'key3': 'value3'}
 
     """
@@ -128,16 +134,91 @@ def _get_basis(adata: anndata.AnnData, basis: str):
 
 
 class MaskedDotPlot(sc.pl.DotPlot):
-    """Dotplot with additional annotation masks
+    """Dotplot with additional annotation masks.
 
-    TODO: Add full description here
-    """
+    Args:
+        adata:
+            AnnData with ``adata.obs[groupby]`` cell type annotations.
+        var_names:
+            ``var_names`` should be a valid subset of ``adata.var_names``. If ``var_names`` is a mapping, then the key
+            is used as label to group the values (see ``var_group_labels``). The mapping values should be sequences of
+            valid ``adata.var_names``. In this case either coloring or ‘brackets’ are used for the grouping of var names
+            depending on the plot. When ``var_names`` is a mapping, then the ``var_group_labels`` and
+            ``var_group_positions`` are set.
+        groupby:
+            The key of the observation grouping to consider.
+        tree_genes:
+            Dictionary with lists of forest selected genes.
+        marker_genes:
+            Dictionary with list of marker genes for each celltype.
+        further_celltypes:
+            Celltypes that are not in ``adata.obs[groupby]``.
+        tree_genes_color:
+            Color for ``tree_genes``.
+        marker_genes_color:
+            Color for ``marker_genes``.
+        non_adata_celltypes_color:
+            Color for celltypes that don't occur in ``adata``.
+        use_raw:
+            Use ``raw`` attribute of ``adata`` if present.
+        log:
+            Plot on logarithmic axis.
+        num_categories:
+            Only used if groupby observation is not categorical. This value determines the number of groups into which
+            the groupby observation should be subdivided.
+        categories_order:
+            Order in which to show the categories. Note: add_dendrogram or add_totals can change the categories order.
+        title:
+            Title for the figure
+        figsize:
+            Figure size when ``multi_panel=True``. Otherwise the ``rcParam['figure.figsize]`` value is used. Format is
+            `(width, height)`.
+        gene_symbols:
+            Column name in ``adata.var`` DataFrame that stores gene symbols. By default, ``var_names`` refer to the
+            index
+            column of the ``adata.var`` DataFrame. Setting this option allows alternative names to be used.
+        var_group_positions:
+            Use this parameter to highlight groups of ``var_names``. This will draw a ‘bracket’ or a color block between
+            the given start and end positions. If the parameter ``var_group_labels`` is set, the corresponding labels
+            are added on top/left. E.g. ``var_group_positions=[(4,10)]`` will add a bracket between the fourth
+            ``var_name`` and the tenth ``var_name``. By giving more positions, more brackets/color blocks are drawn.
+        var_group_labels:
+            Labels for each of the ``var_group_positions`` that want to be highlighted.
+        var_group_rotation:
+            Label rotation degrees. By default, labels larger than 4 characters are rotated 90 degrees.
+        layer:
+            Name of the AnnData object layer that wants to be plotted. By default, ``adata.raw.X`` is plotted. If
+            ``use_raw=False`` is set, then ``adata.X`` is plotted. If ``layer`` is set to a valid layer name, then the
+            layer is plotted. ``layer`` takes precedence over ``use_raw``.
+        expression_cutoff:
+            Expression cutoff that is used for binarizing the gene expression and determining the fraction of cells
+            expressing given genes. A gene is expressed only if the expression value is greater than this threshold.
+        mean_only_expressed:
+            If `True`, gene expression is averaged only over the cells expressing the given genes.
+        standard_scale:
+            Whether or not to standardize that dimension between 0 and 1, meaning for each variable or group, subtract
+            the minimum and divide each by its maximum.
+        dot_color_df:
+            Data frame containing the dot size.
+        dot_size_df:
+            Data frame containing the dot color, should have the same, shape, columns and indices as ``dot_size``.
+        ax:
+            Matplotlib axes.
+        grid:
+            Adds a grid to the plot.
+        grid_linewidth:
+            Matplotlib linewidth.
+        **kwds:
+            Are passed to :func:`matplotlib.pyplot.scatter`.
+"""
+
+    # TODO proofread docstring
 
     def __init__(
         self,
         adata: AnnData,
         var_names: Union[_VarNames, Mapping[str, _VarNames]],
-        groupby: Union[str, Sequence[str]],
+        groupby: Union[str, Sequence[str]] = "celltype",
         tree_genes: Optional[dict] = None,
         marker_genes: Optional[dict] = None,
         further_celltypes: Optional[Sequence[str]] = None,
@@ -199,7 +280,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
         )
         self.style(
             cmap="Reds",
-            color_on="on_dot",
+            color_on="dot",
             # 'square',
             # dot_max=None,
             # dot_min=None,
@@ -338,58 +419,59 @@ class MaskedDotPlot(sc.pl.DotPlot):
         The dots are plotted using :func:`matplotlib.pyplot.scatter`. Thus, additional
         arguments can be passed.
         Args:
-            dot_size: Data frame containing the dot_size.
-            dot_color: Data frame containing the dot_color, should have the same,
-                    shape, columns and indices as dot_size.
-            dot_ax: matplotlib axis
+            dot_size:
+                Data frame containing the dot size.
+            dot_color:
+                Data frame containing the dot color, should have the same, shape, columns and indices as ``dot_size``.
+            dot_ax:
+                Matplotlib axis.
             tree_genes_color
                 Color for tree genes.
             marker_genes_color
-                Color for marker genes
+                Color for marker genes.
             non_adata_celltypes_color
-                Color for celltypes that don't occur in adata
+                Color for celltypes that don't occur in ``adata``.
             cmap
                 String denoting matplotlib color map.
             color_on
-                Options are 'dot' or 'square'. Be default the colomap is applied to
-                the color of the dot. Optionally, the colormap can be applied to an
-                square behind the dot, in which case the dot is transparent and only
+                Options are 'dot' or 'square'. By default the colomap is applied to the color of the dot. Optionally,
+                the colormap can be applied to a square behind the dot, in which case the dot is transparent and only
                 the edge is shown.
-            y_label: String. Label for y axis
+            y_label:
+                Label for y-axis.
             dot_max
-                If none, the maximum dot size is set to the maximum fraction value found
-                (e.g. 0.6). If given, the value should be a number between 0 and 1.
-                All fractions larger than dot_max are clipped to this value.
+                If `None`, the maximum dot size is set to the maximum fraction value found (e.g. 0.6). If given, the
+                value should be a number between 0 and 1. All fractions larger than ``dot_max`` are clipped to this
+                value.
             dot_min
-                If none, the minimum dot size is set to 0. If given,
-                the value should be a number between 0 and 1.
-                All fractions smaller than dot_min are clipped to this value.
+                If `None`, the minimum dot size is set to 0. If given, the value should be a number between 0 and 1. All
+                fractions smaller than ``dot_min`` are clipped to this value.
             standard_scale
-                Whether or not to standardize that dimension between 0 and 1,
-                meaning for each variable or group,
+                Whether or not to standardize that dimension between 0 and 1, meaning for each variable or group,
                 subtract the minimum and divide each by its maximum.
             smallest_dot
-                If none, the smallest dot has size 0.
-                All expression levels with `dot_min` are plotted with this size.
+                If none, the smallest dot has size 0. All expression levels with ``dot_min`` are plotted with this size.
             edge_color
-                Dot edge color. When `color_on='dot'` the default is no edge. When
-                `color_on='square'`, edge color is white
+                Dot edge color. When ``color_on='dot'`` the default is no edge. When ``color_on='square'``, edge color
+                is white.
             edge_lw
-                Dot edge line width. When `color_on='dot'` the default is no edge. When
-                `color_on='square'`, line width = 1.5
+                Dot edge line width. When ``color_on='dot'`` the default is no edge. When ``color_on='square'``, line
+                width = 1.5
             grid
-                Adds a grid to the plot
+                Adds a grid to the plot.
             x_paddding
-                Space between the plot left/right borders and the dots center. A unit
-                is the distance between the x ticks. Only applied when color_on = dot
+                Space between the plot left/right borders and the dots center. A unit is the distance between the x
+                ticks. Only applied when ``color_on = 'dot'``.
             y_paddding
-                Space between the plot top/bottom borders and the dots center. A unit is
-                the distance between the y ticks. Only applied when color_on = dot
+                Space between the plot top/bottom borders and the dots center. A unit is the distance between the y
+                ticks. Only applied when ``color_on = 'dot'``.
             kwds
                 Are passed to :func:`matplotlib.pyplot.scatter`.
+
         Returns:
             matplotlib.colors.Normalize, dot_min, dot_max
         """
+
         assert dot_size.shape == dot_color.shape, (
             "please check that dot_size " "and dot_color dataframes have the same shape"
         )

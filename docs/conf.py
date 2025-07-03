@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # mypy: ignore-errors
+# flake8: noqa
 # spapros documentation build configuration file
 #
 # If extensions (or modules to document with autodoc) are in another
@@ -23,7 +24,6 @@ sys.path.append(os.path.abspath("../spapros"))
 # sys.path.append(os.path.abspath("../spapros/selection"))
 # sys.path.append(os.path.abspath("./_tutorials"))
 
-
 # -- General configuration ---------------------------------------------
 
 # If your documentation needs a minimal Sphinx version, state it here.
@@ -38,7 +38,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.autosummary",
     "sphinx.ext.viewcode",
-    "sphinx.ext.autodoc",
+    "sphinx.ext.intersphinx",
     "sphinx_click",
     "sphinx_rtd_dark_mode",
     "nbsphinx",
@@ -48,6 +48,9 @@ extensions = [
     # *[p.stem for p in (HERE / "_extensions").glob("*.py")],
 ]
 
+intersphinx_mapping = {
+  'project': ('https://scanpy.readthedocs.io/en/latest', None),
+  }
 
 # nbsphinx setup (for tutorial gallery)
 
@@ -78,8 +81,6 @@ napoleon_use_rtype = True
 napoleon_use_param = True
 napoleon_custom_sections = [("Params", "Parameters")]  # ('Returns', 'params_style')]
 # napoleon_use_ivar = True # Displays class attributes like class parameters. Even better solved with extra code below.
-
-todo_include_todos = False
 
 default_dark_mode = False
 
@@ -124,7 +125,6 @@ pygments_style = "sphinx"
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
 
-
 # -- Options for HTML output -------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
@@ -163,7 +163,6 @@ html_static_path = ["_static"]
 # Output file base name for HTML help builder.
 htmlhelp_basename = "spaprosdoc"
 
-
 # -- Options for LaTeX output ------------------------------------------
 
 latex_elements = {
@@ -194,7 +193,6 @@ latex_documents = [
     ),
 ]
 
-
 # -- Options for manual page output ------------------------------------
 
 # One entry per manual page. List of tuples
@@ -210,7 +208,6 @@ man_pages = [
 ]
 
 autodoc_typehints = "description"
-
 
 # -- Options for Texinfo output ----------------------------------------
 

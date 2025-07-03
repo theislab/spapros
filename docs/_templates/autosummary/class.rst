@@ -4,6 +4,19 @@
 
 .. autoclass:: {{ fullname }}
 
+   {% block attributes %}
+   {% if attributes %}
+   .. rubric:: Attributes
+
+   .. autosummary::
+      :toctree: .
+   {% for item in attributes %}
+      {% if has_attr(fullname, item) %}
+      ~{{ fullname }}.{{ item }}
+      {% endif %}
+   {%- endfor %}
+   {% endif %}
+   {% endblock %}
 
    {% block methods %}
    {% if methods %}
