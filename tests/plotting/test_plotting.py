@@ -1,13 +1,11 @@
-import random
 from pathlib import Path
 
 import matplotlib
 import matplotlib.pyplot as plt
-import numpy as np
 import pytest
 from matplotlib.testing.compare import compare_images
 
-from spapros import pl
+from spapros.selection.selection_procedure import ProbesetSelector
 
 # Use universal non-interactive matplotlib backend such that saved images are the same on all systems
 matplotlib.use("Agg")
@@ -41,92 +39,95 @@ def _transform_string(s):
 # selection #
 #############
 
+
 @pytest.mark.parametrize(
-    "fun, kwargs, fig_id", [
-
-        # plot_histogram -> selection_histogram:
-        ("plot_histogram", {
-            "x_axis_keys": None,
-            "selections": None,
-            "penalty_keys": None,
-            "unapplied_penalty_keys": None,
-            "background_key": None,
-        }, "default"),
-        ("plot_histogram", {
-            "x_axis_keys": {"expression_penalty_upper": "quantile_0.99",
-                            "expression_penalty_lower": "quantile_0.9 expr > 0",
-                            "marker": "quantile_0.99"},
-            "selections": ["marker"],
-            "penalty_keys": {"marker": []},
-            "unapplied_penalty_keys": {"marker": []},
-            "background_key": True
-        }, "marker_w_bg"),
-        ("plot_histogram", {
-            "x_axis_keys": {"expression_penalty_upper": "quantile_0.99",
-                            "expression_penalty_lower": "quantile_0.9 expr > 0",
-                            "marker": "quantile_0.99"},
-            "selections": ["marker"],
-            "penalty_keys": {"marker": None},
-            "unapplied_penalty_keys": {"marker": None},
-            "background_key": None
-        }, "marker_w_penal"),
-        ("plot_histogram", {
-            "x_axis_keys": {"expression_penalty_upper": "quantile_0.99",
-                            "expression_penalty_lower": "quantile_0.9 expr > 0",
-                            "marker": "quantile_0.99"},
-            "selections": ["marker"],
-            "penalty_keys": {"marker": []},
-            "unapplied_penalty_keys": {"marker": []},
-            "background_key": "all"
-        }, "marker_w_bg_all"),
-
-        # # plot_coexpression -> correlation_matrix
-        # ("plot_coexpression", {
-        #     "selections": None,
-        #     "n_cols": 3,
-        #     "scale": True
-        # }, "n_cols_3_scaled"),
-        # ("plot_coexpression", {
-        #     "selections": None,
-        #     "n_cols": 1,
-        #     "scale": False
-        # }, "n_cols_1_unscaled"),
-        # ("plot_coexpression", {
-        #     "selections": ["marker"],
-        #     "colorbar": False
-        # }, "marker_wo_cbar"),
-        #
-        # # plot_clf_genes -> clf_genes_umaps
-        # ("plot_clf_genes", {
-        #     "till_rank": 5,
-        #     "importance_th": 0.3,
-        #     "size_factor": 0.5,
-        #     "fontsize": 10,
-        # }, "till_rank_5_imp_th_03"),
-        #
-        # ("plot_clf_genes", {
-        #     "till_rank": 3,
-        #     "importance_th": 0.3,
-        #     "n_cols": 3,
-        # }, "till_rank_3_imp_th_03_n_cols_3"),
-        #
-        # # overlap:
-        # ("plot_gene_overlap", {"style": "venn"}, "venn"),
-        # ("plot_gene_overlap", {"style": "upset"}, "upset"),
-        #
-        # # dotplot:
-        # ("plot_masked_dotplot", {}, "default"),
-        # ("plot_masked_dotplot", {"comb_markers_only": True,
-        #                          "markers_only": True,
-        #                          "n_genes": 10}, "top10_markers"),
-    ]
+    "fun, kwargs",
+    [
+        # plot_histogram -> selection_histogram: #TODO: Add again at some point, this fct is a bit broken an complicated
+        (
+            "plot_histogram",
+            {
+                "x_axis_keys": None,
+                "selections": None,
+                "penalty_keys": None,
+                "unapplied_penalty_keys": None,
+                "background_key": None,
+            },
+        ),
+        (
+            "plot_histogram",
+            {
+                "x_axis_keys": {
+                    "expression_penalty_upper": "quantile_0.99",
+                    "expression_penalty_lower": "quantile_0.9 expr > 0",
+                    "marker": "quantile_0.99",
+                },
+                "selections": ["marker"],
+                "penalty_keys": {"marker": []},
+                "unapplied_penalty_keys": {"marker": []},
+                "background_key": True,
+            },
+        ),
+        (
+            "plot_histogram",
+            {
+                "x_axis_keys": {
+                    "expression_penalty_upper": "quantile_0.99",
+                    "expression_penalty_lower": "quantile_0.9 expr > 0",
+                    "marker": "quantile_0.99",
+                },
+                "selections": ["marker"],
+                "penalty_keys": {"marker": []},
+                "unapplied_penalty_keys": {"marker": []},
+                "background_key": None,
+            },
+        ),
+        (
+            "plot_histogram",
+            {
+                "x_axis_keys": {
+                    "expression_penalty_upper": "quantile_0.99",
+                    "expression_penalty_lower": "quantile_0.9 expr > 0",
+                    "marker": "quantile_0.99",
+                },
+                "selections": ["marker"],
+                "penalty_keys": {"marker": []},
+                "unapplied_penalty_keys": {"marker": []},
+                "background_key": "all",
+            },
+        ),
+        # plot_coexpression -> correlation_matrix
+        (
+            "plot_coexpression",
+            {
+                "selections": None,
+                "n_cols": 3,
+            },
+        ),
+        (
+            "plot_coexpression",
+            {
+                "selections": None,
+                "n_cols": 1,
+            },
+        ),
+        ("plot_coexpression", {"selections": ["marker"], "colorbar": False}),
+        # plot_clf_genes -> classification_rule_umaps #TODO: Fix - somehow not reproducible, mabye some seed issue?
+        # ("plot_clf_genes", {"till_rank": 2, "importance_th": 0.8}),
+        # overlap:
+        ("plot_gene_overlap", {"style": "venn"}),
+        ("plot_gene_overlap", {"style": "upset"}),
+        # dotplot:
+        ("plot_masked_dotplot", {}),
+        ("plot_masked_dotplot", {"comb_markers_only": True, "markers_only": True, "n_genes": 10}),
+    ],
 )
-def test_selection_plots(selector_with_penalties, fun, tmp_path, kwargs, fig_id):
-    ref_name = f"tests/plotting/test_data/selection_{fun}_{fig_id}.png"
-    fig_name = f"{tmp_path}/selection_{fun}_{fig_id}.png"
-    getattr(selector_with_penalties, fun)(save=fig_name, show=True, **kwargs)
+def test_selection_plots(selector_with_penalties: ProbesetSelector, fun, out_dir, kwargs):  # tmp_path
+    ref_name = Path(_transform_string(f"tests/plotting/test_data/selection_{fun}_{kwargs}.png"))
+    fig_name = Path(_transform_string(f"{out_dir}/selection_{fun}_{kwargs}.png"))
+    getattr(selector_with_penalties, fun)(save=fig_name, show=False, **kwargs)
     # getattr(selector_with_penalties, fun)(save=ref_name, show=False, **kwargs)
-    assert compare_images(ref_name, fig_name, 0.001) is None
+    assert compare_images(ref_name, fig_name, 0.001) is None  # type: ignore
 
 
 ##############
@@ -135,41 +136,32 @@ def test_selection_plots(selector_with_penalties, fun, tmp_path, kwargs, fig_id)
 
 
 def test_plot_summary(evaluator, out_dir):
-    ref_name = Path("tests/plotting/test_data/tmp_plot_summary.png")
-    fig_name = Path(f"{out_dir}/tmp_plot_summary.png")
+    ref_name = Path(_transform_string("tests/plotting/test_data/tmp_plot_summary.png"))
+    fig_name = Path(_transform_string(f"{out_dir}/tmp_plot_summary.png"))
     evaluator.plot_summary(show=False, save=fig_name)
     # evaluator.plot_summary(show=False, save=ref_name)
-    assert compare_images(ref_name, fig_name, 0.001) is None
+    assert compare_images(ref_name, fig_name, 0.001) is None  # type: ignore[arg-type]
 
 
 @pytest.mark.parametrize(
     "fun, kwargs",
     [
         ("plot_confusion_matrix", {}),
-        ("plot_coexpression", {}),
+        ("plot_coexpression", {}),  # ("plot_correlation_matrix", {}),
         ("plot_cluster_similarity", {}),
-
         # ev.plot_knn_overlap --> pl.knn_overlap
-        ("plot_knn_overlap", {
-            "set_ids": ["ref_DE", "ref_PCA", "spapros_selection"],
-            "selections_info": None
-        }),
-        ("plot_knn_overlap", {
-            "set_ids": None,
-            "selections_info": "selections_info_1"
-        }),
-        ("plot_knn_overlap", {
-            "set_ids": None,
-            "selections_info": "selections_info_2"
-        }),
+        ("plot_knn_overlap", {"set_ids": ["ref_DE", "ref_PCA", "spapros_selection"], "selections_info": None}),
+        ("plot_knn_overlap", {"set_ids": None, "selections_info": "selections_info_1"}),
+        ("plot_knn_overlap", {"set_ids": None, "selections_info": "selections_info_2"}),
     ],
 )
-def test_evaluation_plots(evaluator_4_sets, fun, tmp_path, kwargs, request):
-    ref_name = f"tests/plotting/test_data/evaluation_{fun}_{kwargs}.png"
-    fig_name = f"{tmp_path}/evaluations_{fun}_{kwargs}.png"
+# TODO maybe add "plot_marker_correlation"
+def test_evaluation_plots(evaluator_4_sets, fun, out_dir, kwargs, request):
+    ref_name = Path(_transform_string(f"tests/plotting/test_data/evaluation_{fun}_{kwargs}.png"))
+    fig_name = Path(_transform_string(f"{out_dir}/evaluation_{fun}_{kwargs}.png"))
     if "selections_info" in kwargs:
         if kwargs["selections_info"] is not None:
             kwargs["selections_info"] = request.getfixturevalue(kwargs["selections_info"])
     getattr(evaluator_4_sets, fun)(save=fig_name, show=False, **kwargs)
     # getattr(evaluator_4_sets, fun)(save=ref_name, show=False, **kwargs)
-    assert compare_images(ref_name, fig_name, 0.001) is None
+    assert compare_images(ref_name, fig_name, 0.001) is None  # type: ignore[arg-type]

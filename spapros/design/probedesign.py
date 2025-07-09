@@ -9,8 +9,7 @@ from datetime import datetime
 
 from src.datamodule import DataModule
 from src.probefilter import ProbeFilter
-from src.utils import get_config
-from src.utils import print_config
+from src.utils import get_config, print_config
 
 timestamp = datetime.now()
 logging.basicConfig(
@@ -48,7 +47,7 @@ def probe_pipeline(config, dir_output):
     :type dir_output: string
     """
     dir_output = os.path.join(dir_output, "")
-    logging.info("Results will be saved to: {}".format(dir_output))
+    logging.info(f"Results will be saved to: {dir_output}")
 
     datamodule = DataModule(config, logging, dir_output)
 
@@ -62,29 +61,29 @@ def probe_pipeline(config, dir_output):
     probefilter = ProbeFilter(config, logging, dir_output, datamodule.file_transcriptome_fasta, datamodule.genes)
     del datamodule  # free memory
 
-    logging.info("Time to load annotations, genes, transcriptome and probes: {} min".format(t))
-    print("Time to load annotations, genes, transcriptome and probes: {} min \n".format(t))
+    logging.info(f"Time to load annotations, genes, transcriptome and probes: {t} min")
+    print(f"Time to load annotations, genes, transcriptome and probes: {t} min \n")
 
     t = time.time()
     probefilter.filter_probes_by_exactmatch()
     t = (time.time() - t) / 60
 
-    logging.info("Time to filter with extact matches: {} min".format(t))
-    print("Time to filter with extact matches: {} min \n".format(t))
+    logging.info(f"Time to filter with extact matches: {t} min")
+    print(f"Time to filter with extact matches: {t} min \n")
 
     t = time.time()
     probefilter.run_blast_search()
     t = (time.time() - t) / 60
 
-    logging.info("Time to run Blast search: {} min".format(t))
-    print("Time to run Blast search: {} min \n".format(t))
+    logging.info(f"Time to run Blast search: {t} min")
+    print(f"Time to run Blast search: {t} min \n")
 
     t = time.time()
     probefilter.filter_probes_by_blast_results()
     t = (time.time() - t) / 60
 
-    logging.info("Time to filter with Blast results: {} min".format(t))
-    print("Time to filter with Blast results: {} min \n".format(t))
+    logging.info(f"Time to filter with Blast results: {t} min")
+    print(f"Time to filter with Blast results: {t} min \n")
 
     probefilter.log_statistics(rm_intermediate_files=True)
 
@@ -109,8 +108,8 @@ if __name__ == "__main__":
     probe_pipeline(config, dir_output)
     t_pipeline = (time.time() - t_pipeline) / 60
 
-    logging.info("Time Pipeline: {} min".format(t_pipeline))
+    logging.info(f"Time Pipeline: {t_pipeline} min")
     logging.info("#########End Pipeline#########")
 
-    print("Time Pipeline: {} min \n".format(t_pipeline))
+    print(f"Time Pipeline: {t_pipeline} min \n")
     print("#########End Pipeline#########")

@@ -14,7 +14,6 @@ from Bio import SeqIO
 from Bio.SeqUtils import GC
 from Bio.SeqUtils import MeltingTemp as mt
 
-
 ############################################
 # data preparation class
 ############################################
@@ -55,7 +54,7 @@ class DataModule:
             self.ftp_genome = config["ftp_genome_ncbi"]
             self.ftp_chr_mapping = config["ftp_chr_mapping_ncbi"]
         else:
-            raise ValueError('Error: unknown source "{}"'.format(self.source))
+            raise ValueError(f"Error: unknown source {self.source}")
 
         self.file_gene_gtf = config["file_gene_gtf"]
         self.file_genome_fasta = config["file_genome_fasta"]
@@ -171,7 +170,7 @@ class DataModule:
                             accession_number
                         ]
                     else:
-                        print("No mapping for accession number: {}".format(accession_number))
+                        print(f"No mapping for accession number: {accession_number}")
                         gene_annotation = gene_annotation[gene_annotation.seqname != accession_number]
 
                 gene_annotation.to_csv(handle_out, sep="\t", header=False, index=False)
@@ -220,7 +219,7 @@ class DataModule:
                         )
                         SeqIO.write(chromosome_sequnece, handle, "fasta")
                     else:
-                        print("No mapping for accession number: {}".format(accession_number))
+                        print(f"No mapping for accession number: {accession_number}")
 
             os.replace(file_tmp, file_genome_fasta)
 
@@ -234,7 +233,7 @@ class DataModule:
         if self.file_gene_gtf is None:
             self.file_gene_gtf = _download_gene_gtf(mapping)
             self.logging.info(
-                "Downloaded gene annotation from {} and save as gene gtf: {}".format(self.source, self.file_gene_gtf)
+                f"Downloaded gene annotation from {self.source} and save as gene gtf: {self.file_gene_gtf}"
             )
 
         if self.file_genome_fasta is None:
@@ -281,10 +280,10 @@ class DataModule:
         # load list of genes from given file or annotation
         if self.file_genes is None:
             self.genes = _get_gene_list_from_annotation()
-            self.logging.info("Loaded gene list from {} annotation.".format(self.source))
+            self.logging.info(f"Loaded gene list from {self.source} annotation.")
         else:
             self.genes = _get_gene_list_from_file()
-            self.logging.info("Loaded gene list from {}.".format(self.file_genes))
+            self.logging.info(f"Loaded gene list from {self.file_genes}.")
 
         self.batch_size = int(len(self.genes) / self.number_batchs) + (len(self.genes) % self.number_batchs > 0)
         self.logging.info(
@@ -570,10 +569,10 @@ class DataModule:
 
                         exon_junction_list.append(
                             [
-                                "{}_{}_{}_{}".format(seqname, start_up, end_down, strand),
+                                f"{seqname}_{start_up}_{end_down}_{strand}",
                                 gene_id,
                                 transcript,
-                                "{}_{}".format(exon_upstream[0], exon_downstream[0]),
+                                f"{exon_upstream[0]}_{exon_downstream[0]}",
                                 seqname,
                                 start_up,
                                 end_down,
@@ -583,8 +582,8 @@ class DataModule:
                                 end_down,
                                 0,
                                 2,
-                                "{},{}".format(blockSize, blockSize),
-                                "{},{}".format(0, exon_downstream[1] - start_up),
+                                f"{blockSize},{blockSize}",
+                                f"{0},{exon_downstream[1] - start_up}",
                             ]
                         )
                         exon_upstream = attributes
@@ -593,14 +592,14 @@ class DataModule:
 
         # get annotation of exons and merge exon annotations for the same region
         unique_exons = _load_unique_exons()
-        print("{} unique exons loaded.".format(len(unique_exons.index)))
+        print(f"{len(unique_exons.index)} unique exons loaded.")
 
         # get exon junction annotation for probes --> length os probe_length - 1 to continue where exons annotation ends
         exon_junctions_probes = _load_exon_junctions(self.probe_length - 1)
         self.transcriptome_annotation = unique_exons.append(exon_junctions_probes)
         self.transcriptome_annotation = self.transcriptome_annotation.sort_values(by=["gene_id"])
         self.transcriptome_annotation.reset_index(inplace=True, drop=True)
-        print("{} exon junctions loaded.".format(len(exon_junctions_probes.index)))
+        print(f"{len(exon_junctions_probes.index)} exon junctions loaded.")
 
         # get exon junction annotation for reference --> longer than probe length to cover bulges in alignments
         exon_junctions_reference = _load_exon_junctions(self.probe_length + 5)  # to allow bulges in the alignment
@@ -645,18 +644,16 @@ class DataModule:
             :type genes_batch: list
             """
             file_transcriptome_bed_batch = os.path.join(
-                self.dir_output_annotations, "transcriptome_batch{}.bed".format(batch_id)
+                self.dir_output_annotations, f"transcriptome_batch{batch_id}.bed"
             )
             file_transcriptome_fasta_batch = os.path.join(
-                self.dir_output_annotations, "transcriptome_batch{}.fna".format(batch_id)
+                self.dir_output_annotations, f"transcriptome_batch{batch_id}.fna"
             )
-            file_probe_info_batch = os.path.join(
-                self.dir_output_annotations, "probes_info_batch{}.txt".format(batch_id)
-            )
+            file_probe_info_batch = os.path.join(self.dir_output_annotations, f"probes_info_batch{batch_id}.txt")
             file_probe_sequence_batch = os.path.join(
-                self.dir_output_annotations, "probes_sequence_batch{}.txt".format(batch_id)
+                self.dir_output_annotations, f"probes_sequence_batch{batch_id}.txt"
             )
-            batch_logger = os.path.join(self.dir_output_annotations, "logger_batch{}.txt".format(batch_id))
+            batch_logger = os.path.join(self.dir_output_annotations, f"logger_batch{batch_id}.txt")
 
             _get_transcriptome_fasta(genes_batch, file_transcriptome_bed_batch, file_transcriptome_fasta_batch)
             gene_probes = _get_probes_info(genes_batch, file_transcriptome_fasta_batch, batch_logger)
@@ -749,7 +746,7 @@ class DataModule:
 
                 if len(sequence) > self.probe_length:
                     number_probes = len(sequence) - (self.probe_length - 1)
-                    probes_sequence = [sequence[i: i + self.probe_length] for i in range(number_probes)]
+                    probes_sequence = [sequence[i : i + self.probe_length] for i in range(number_probes)]
 
                     for i in range(number_probes):
                         total_probes += 1
@@ -788,8 +785,8 @@ class DataModule:
                                     gene_probes[gene_id] = tmp
 
             with open(batch_logger, "w") as handle:
-                handle.write("{}\n".format(total_probes))
-                handle.write("{}\n".format(loaded_probes))
+                handle.write(f"{total_probes}\n")
+                handle.write(f"{loaded_probes}\n")
 
             return gene_probes
 
@@ -829,7 +826,7 @@ class DataModule:
                             )
                             handle_probeinfo.write(output1)
 
-                            output2 = "{}\n".format(probe_sequence)
+                            output2 = f"{probe_sequence}\n"
                             handle_sequences.write(output2)
 
         # create index file
@@ -839,7 +836,7 @@ class DataModule:
         jobs = []
         for batch_id in range(self.number_batchs):
             genes_batch = self.genes[
-                (self.batch_size * batch_id): (min(self.batch_size * (batch_id + 1), len(self.genes) + 1))
+                (self.batch_size * batch_id) : (min(self.batch_size * (batch_id + 1), len(self.genes) + 1))
             ]
 
             proc = multiprocessing.Process(
@@ -852,11 +849,11 @@ class DataModule:
             jobs.append(proc)
             proc.start()
 
-        print("\n {} \n".format(jobs))
+        print(f"\n {jobs} \n")
 
         for job in jobs:
             job.join()
 
         # remove index file
-        os.remove("{}.fai".format(self.file_genome_fasta))
+        os.remove(f"{self.file_genome_fasta}.fai")
         print("All probes created.")

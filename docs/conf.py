@@ -49,8 +49,8 @@ extensions = [
 ]
 
 intersphinx_mapping = {
-  'project': ('https://scanpy.readthedocs.io/en/latest', None),
-  }
+    "project": ("https://scanpy.readthedocs.io/en/latest", None),
+}
 
 # nbsphinx setup (for tutorial gallery)
 

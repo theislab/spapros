@@ -210,7 +210,7 @@ class MaskedDotPlot(sc.pl.DotPlot):
             Matplotlib linewidth.
         **kwds:
             Are passed to :func:`matplotlib.pyplot.scatter`.
-"""
+    """
 
     # TODO proofread docstring
 

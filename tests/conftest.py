@@ -7,11 +7,9 @@ import numpy as np
 import pandas as pd
 import pytest
 import scanpy as sc
-from spapros import ev
-from spapros import se
-from spapros.util import util
 
 from spapros import ev, se
+from spapros.util import util
 
 #############
 # selection #
@@ -80,7 +78,7 @@ def selector_with_marker(tiny_adata):
         forest_hparams={"n_trees": 10, "subsample": 200, "test_subsample": 400},
         verbosity=0,
         save_dir=None,
-        marker_list="tests/selection/test_data/small_data_marker_list.csv"
+        marker_list="tests/selection/test_data/small_data_marker_list.csv",
     )
     selector.select_probeset()
     return selector
@@ -98,17 +96,17 @@ def selector_with_penalties(tiny_adata, lower_th=1, upper_th=3.5):
     # design the penalty kernel
     penalty = util.plateau_penalty_kernel(var=var, x_min=np.array(lower_th), x_max=np.array(upper_th))
     # calcluate the expression penalties
-    tiny_adata.var['expression_penalty'] = penalty(tiny_adata.var['quantile_0.99'])
+    tiny_adata.var["expression_penalty"] = penalty(tiny_adata.var["quantile_0.99"])
 
     # upper
     util.get_expression_quantile(tiny_adata, q=0.99, log1p=False, zeros_to_nan=False, normalise=False)
     penalty = util.plateau_penalty_kernel(var=var, x_min=None, x_max=upper_th)
-    tiny_adata.var['expression_penalty_upper'] = penalty(tiny_adata.var['quantile_0.99'])
+    tiny_adata.var["expression_penalty_upper"] = penalty(tiny_adata.var["quantile_0.99"])
 
     # lower
     util.get_expression_quantile(tiny_adata, q=0.9, log1p=False, zeros_to_nan=True, normalise=False)
     penalty = util.plateau_penalty_kernel(var=var, x_min=lower_th, x_max=None)
-    tiny_adata.var['expression_penalty_lower'] = penalty(tiny_adata.var['quantile_0.9 expr > 0'])
+    tiny_adata.var["expression_penalty_lower"] = penalty(tiny_adata.var["quantile_0.9 expr > 0"])
 
     sc.pp.log1p(tiny_adata)
     selector = se.ProbesetSelector(
@@ -121,16 +119,14 @@ def selector_with_penalties(tiny_adata, lower_th=1, upper_th=3.5):
         # save_dir=None,
         marker_list="tests/selection/test_data/small_data_marker_list.csv",
         pca_penalties=["expression_penalty_upper", "expression_penalty_lower"],
-        DE_penalties=["expression_penalty_upper", "expression_penalty_lower"]
+        DE_penalties=["expression_penalty_upper", "expression_penalty_lower"],
     )
     selector.select_probeset()
     return selector
 
 
 @pytest.fixture()
-def ref_probeset(
-    adata, n, genes_key, seeds, verbosity, save_dir, request, reference_selections
-):
+def ref_probeset(adata, n, genes_key, seeds, verbosity, save_dir, request, reference_selections):
     reference_probesets = se.select_reference_probesets(
         adata,
         n=n,
@@ -142,6 +138,7 @@ def ref_probeset(
     )
 
     return reference_probesets
+
 
 ##############
 # evaluation #

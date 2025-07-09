@@ -33,7 +33,7 @@ def get_files(dirs_in):
         files.append(
             pd.DataFrame(
                 [[file.split("probes_")[1].split(".")[0], file] for file in _list_files_in_dir(dir, r"probes_*")],
-                columns=["gene", "file_dir{}".format(number_dirs)],
+                columns=["gene", f"file_dir{number_dirs}"],
             )
         )
         number_dirs += 1
@@ -69,7 +69,7 @@ def get_overlap_matrix(files, dir_out):
             elif not pd.isna(value):
                 probes.append(pd.read_csv(value, sep="\t"))
         probes = pd.concat(probes, axis=0, ignore_index=True)
-        probes.to_csv(os.path.join(dir_out, "probes_{}.txt".format(gene)), sep="\t", index=False)
+        probes.to_csv(os.path.join(dir_out, f"probes_{gene}.txt"), sep="\t", index=False)
 
         proc = multiprocessing.Process(
             target=_compute_overlap_matrix,
@@ -90,18 +90,18 @@ def get_overlap_matrix(files, dir_out):
 
 
 def _compute_overlap_matrix(gene, probes, dir_out):
-    probes["pid"] = ["{}_{}".format(probes.start[i], probes.end[i]) for i in probes.index]
+    probes["pid"] = [f"{probes.start[i]}_{probes.end[i]}" for i in probes.index]
     matrix = pd.DataFrame(0, columns=probes.pid, index=probes.pid)
     for i in probes.index:
         probe1_start = int(probes.loc[i, "start"])
         probe1_end = int(probes.loc[i, "end"])
         probe1_interval = [probe1_start, probe1_end]
-        pid1 = "{}_{}".format(probe1_start, probe1_end)
+        pid1 = f"{probe1_start}_{probe1_end}"
         for j in probes.index:
             probe2_start = int(probes.loc[j, "start"])
             probe2_end = int(probes.loc[j, "end"])
             probe2_interval = [probe2_start, probe2_end]
-            pid2 = "{}_{}".format(probe2_start, probe2_end)
+            pid2 = f"{probe2_start}_{probe2_end}"
             if _get_overlap(probe1_interval, probe2_interval):
                 matrix.loc[pid1, pid2] = 1
                 matrix.loc[pid2, pid1] = 1
@@ -110,7 +110,7 @@ def _compute_overlap_matrix(gene, probes, dir_out):
                 matrix.loc[pid2, pid1] = 0
             if j > i:
                 break
-    matrix.to_csv(os.path.join(dir_out, "overlap_matrix_{}.txt".format(gene)), sep="\t")
+    matrix.to_csv(os.path.join(dir_out, f"overlap_matrix_{gene}.txt"), sep="\t")
 
 
 ############################################

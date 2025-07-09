@@ -1,7 +1,17 @@
 """Plotting Module."""
 
 import itertools
-from typing import Callable, Dict, List, Literal, Optional, Tuple, Union
+from typing import (
+    Callable,
+    Dict,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Sequence,
+    Tuple,
+    Union,
+)
 
 import matplotlib
 import matplotlib.colors as colors
@@ -12,14 +22,12 @@ import scanpy as sc
 import scipy.cluster.hierarchy as sch
 import seaborn as sns
 from matplotlib.gridspec import GridSpec
+from matplotlib.transforms import Bbox
 from scipy.interpolate import interp1d
 from upsetplot import UpSet, from_indicators
-from spapros.plotting._masked_dotplot import MaskedDotPlot
-from upsetplot import from_indicators
-from upsetplot import UpSet
 from venndata import venn
 
-from spapros.plotting._masked_dotplot import MaskedDotPlot
+from spapros.plotting._masked_dotplot import MaskedDotPlot, _VarNames
 
 #############################
 ## evaluation related plots ##
@@ -218,20 +226,15 @@ def correlation_matrix(
     SUBPLOT_WIDTH = size_factor / FIGURE_WIDTH
     fig = plt.figure(figsize=(FIGURE_WIDTH, FIGURE_HEIGHT))
 
-    for i, set_id in enumerate(set_ids):
-        plt.subplot(n_rows, n_cols, i + 1)
-        plt.imshow(cor_matrices[set_id].values, cmap="seismic", vmin=-1, vmax=1)
-        plt.title(set_id, fontsize=fontsize)
-        ax = plt.gca()
-        ax.axes.get_xaxis().set_visible(False)  # type: ignore
-        ax.axes.get_yaxis().set_visible(False)  # type: ignore
-
     HSPACE = HSPACE_INCHES / FIGURE_HEIGHT
     WSPACE = WSPACE_INCHES / FIGURE_WIDTH
     TOP = 1 - (TOP_INCHES / FIGURE_HEIGHT)
     BOTTOM = BOTTOM_INCHES / FIGURE_HEIGHT
     RIGHT = 1 - (RIGHT_INCHES / FIGURE_WIDTH)
     LEFT = LEFT_INCHES / FIGURE_WIDTH
+    CBAR_WIDTH = CBAR_WIDTH_INCHES / FIGURE_WIDTH
+    CBAR_RIGHT = 1 - (CBAR_RIGHT_INCHES / FIGURE_WIDTH)
+    CBAR_LEFT = CBAR_RIGHT - (CBAR_LEFT_INCHES / FIGURE_WIDTH)
     plt.subplots_adjust(bottom=BOTTOM, top=TOP, left=LEFT, right=RIGHT, hspace=HSPACE, wspace=WSPACE)
 
     # draw subplots
@@ -243,16 +246,20 @@ def correlation_matrix(
         ax.margins(0)
         plt.imshow(cor_matrices[set_id].values, cmap="seismic", vmin=-1, vmax=1)
         plt.title(set_id, fontsize=fontsize, loc="left")
-        ax.axes.get_xaxis().set_visible(False)
-        ax.axes.get_yaxis().set_visible(False)
+        ax = plt.gca()
+        if ax.axes is not None:
+            ax.axes.get_xaxis().set_visible(False)  # type: ignore
+            ax.axes.get_yaxis().set_visible(False)  # type: ignore
         axes.append(ax)
 
         # scale subplot
         if scale:
             bb = ax.get_position()
             SCALED_SUBPLOT_WIDTH = SUBPLOT_WIDTH * (n_genes[i] / max_genes)
-            bb.x1 = bb.x1 + SCALED_SUBPLOT_WIDTH - SUBPLOT_WIDTH
-            ax.set_position(bb)
+            x0, y0, x1, y1 = bb.extents
+            x1_new = x1 + SCALED_SUBPLOT_WIDTH - SUBPLOT_WIDTH
+            bb_new = Bbox.from_extents(x0, y0, x1_new, y1)
+            ax.set_position(bb_new)
 
     # colorbar
     if colorbar:
@@ -1136,7 +1143,7 @@ def selection_histogram(
             # draw vertical lines at lower and upper border
             ax2 = ax1.twinx()
             if lower_borders is None:
-                lower = None
+                lower: None | float | bool = None
             else:
                 if lower_borders is False:
                     lower = False
@@ -1148,7 +1155,11 @@ def selection_histogram(
             if lower is None:
                 # infer lower border from penanalty values
                 idx_of_first_one = np.where(y_values_dict[selection_label][penalty_key] >= 0.999)[0][0]
-                lower = x_values_dict[selection_label][penalty_key][idx_of_first_one] if idx_of_first_one > 0 else False
+                lower = (
+                    float(x_values_dict[selection_label][penalty_key][idx_of_first_one])
+                    if idx_of_first_one > 0
+                    else False
+                )
             if lower is not False:
                 assert isinstance(lower, float)
                 plt.axvline(x=lower, lw=0.5, ls="--", color="black")
@@ -1391,7 +1402,7 @@ def clf_genes_umaps(
     if n_cols is None:
         n_cols = max(n_subplots)
     rows_per_ct = [np.ceil(s / n_cols) for s in n_subplots]
-    n_rows = int(sum(rows_per_ct))
+    # n_rows = int(sum(rows_per_ct))
     row_ceils = [int(np.ceil(s / r)) for s, r in zip(n_subplots, rows_per_ct, strict=True)]  # type: ignore
     n_cols = max(row_ceils)
 
@@ -1408,29 +1419,24 @@ def clf_genes_umaps(
     SUBPLOT_HEIGHT_INCHES = 3 * size_factor
     SUBPLOT_WIDTH_INCHES = 3 * size_factor
 
-    GS_HEIGHTS_INCHES_nested = [[CT_HEIGHT_INCHES] + [SUBPLOT_HEIGHT_INCHES, HSPACE_INCHES] * int(n) for n in
-                                rows_per_ct]
+    GS_HEIGHTS_INCHES_nested = [
+        [CT_HEIGHT_INCHES] + [SUBPLOT_HEIGHT_INCHES, HSPACE_INCHES] * int(n) for n in rows_per_ct
+    ]
     GS_HEIGHTS_INCHES = [x for y in GS_HEIGHTS_INCHES_nested for x in y]
 
-    FIGURE_WIDTH = (
-        (SUBPLOT_WIDTH_INCHES * n_cols)
-        + (WSPACE_INCHES * n_cols)
-        + RIGHT_INCHES
-        + LEFT_INCHES
-    )
-    FIGURE_HEIGHT = (
-        sum(GS_HEIGHTS_INCHES)
-        + TOP_INCHES
-        + BOTTOM_INCHES
-    )
+    FIGURE_WIDTH = (SUBPLOT_WIDTH_INCHES * n_cols) + (WSPACE_INCHES * n_cols) + RIGHT_INCHES + LEFT_INCHES
+    FIGURE_HEIGHT = sum(GS_HEIGHTS_INCHES) + TOP_INCHES + BOTTOM_INCHES
 
     fig = plt.figure(figsize=(FIGURE_WIDTH, FIGURE_HEIGHT))
 
     # note that legens, wspace and hspace are individual rows and columns
-    gs = GridSpec(len(GS_HEIGHTS_INCHES), n_cols * 2,
-                  figure=fig,
-                  height_ratios=[gs_height / FIGURE_HEIGHT for gs_height in GS_HEIGHTS_INCHES],
-                  width_ratios=[SUBPLOT_HEIGHT_INCHES / FIGURE_WIDTH, WSPACE_INCHES / FIGURE_WIDTH] * n_cols)
+    gs = GridSpec(
+        len(GS_HEIGHTS_INCHES),
+        n_cols * 2,
+        figure=fig,
+        height_ratios=[gs_height / FIGURE_HEIGHT for gs_height in GS_HEIGHTS_INCHES],
+        width_ratios=[SUBPLOT_HEIGHT_INCHES / FIGURE_WIDTH, WSPACE_INCHES / FIGURE_WIDTH] * n_cols,
+    )
     i = -2
     for ct in celltypes:
         i += 2  # skip hspace row
@@ -1549,19 +1555,14 @@ def clf_genes_umaps(
 
 def masked_dotplot(
     adata: sc.AnnData,  # TODO: adjust type hint
-    selector,
-    ct_key: str = "celltype",
-    imp_threshold: float = 0.05,
-    celltypes: Optional[List[str]] = None,
-    n_genes: Optional[int] = None,
-    comb_markers_only: bool = False,
-    markers_only: bool = False,
-    cmap: str = "Reds",
-    comb_marker_color: str = "darkblue",
-    marker_color: str = "blue",
-    non_adata_celltypes_color: str = "grey",
-    use_raw: bool = False,
-    save: Union[Literal[False], str] = False,
+    var_names: Union[_VarNames, Mapping[str, _VarNames]],
+    groupby: Union[str, Sequence[str]],
+    tree_genes: Optional[dict] = None,
+    marker_genes: Optional[dict] = None,
+    further_celltypes: Optional[Sequence[str]] = None,
+    show: bool = True,
+    save: Optional[str] = None,
+    **kwargs,
 ):
     """Create dotplot with additional annotation masks.
 
@@ -1571,33 +1572,23 @@ def masked_dotplot(
 
     Args:
         adata:
-            AnnData with cell type annotations in `adata.obs[ct_key]`.
-        selector:
-            `ProbesetSelector` object with selected `selector.probeset`.
-        ct_key:
-            Column of `adata.obs` with cell type annotation.
-        imp_threshold:
-            Annotate genes as "Spapros marker" only for those genes with importance > ``imp_threshold``.
-        celltypes:
-            Optional subset of celltypes (rows of dotplot).
-        n_genes:
-            Optionally plot top ``n_genes`` genes.
-        comb_markers_only:
-            Whether to plot only genes that are "Spapros markers" for the plotted cell types. (can be combined with
-            markers_only, in that case markers that are not Spapros markers are also shown)
-        markers_only:
-            Whether to plot only genes that are markers for the plotted cell types. (can be combined with
-            ``comb_markers_only``, in that case Spapros markers that are not markers are also shown)
-        cmap:
-            Colormap of mean expressions.
-        comb_marker_color:
-            Color for "Spapros markers".
-        marker_color:
-            Color for marker genes.
-        non_adata_celltypes_color:
-            Color for celltypes that don't occur in the data set.
-        use_raw:
-            Whether to use `adata.raw` for plotting.
+            AnnData with ``adata.obs[groupby]`` cell type annotations.
+        var_names:
+            ``var_names`` should be a valid subset of ``adata.var_names``. If ``var_names`` is a mapping, then the key
+            is used as label to group the values (see ``var_group_labels``). The mapping values should be sequences of
+            valid ``adata.var_names``. In this case either coloring or ‘brackets’ are used for the grouping of var names
+            depending on the plot. When ``var_names`` is a mapping, then the ``var_group_labels`` and
+            ``var_group_positions`` are set.
+        groupby:
+            The key of the observation grouping to consider.
+        tree_genes:
+            Dictionary with lists of forest selected genes.
+        marker_genes:
+            Dictionary with list of marker genes for each celltype.
+        further_celltypes:
+            Celltypes that are not in ``adata.obs[groupby]``.
+        show:
+            Whether to display the plot.
         save:
             Save the plot to path.
         kwargs:
@@ -1639,64 +1630,8 @@ def masked_dotplot(
     # - celltypes for selection (including markers, could include cts which are not in adata.obs[ct_key])
     # --> pool all together... order?
 
-    if celltypes is not None:
-        cts = celltypes
-        a = adata[adata.obs[ct_key].isin(celltypes)].copy()
-        # a.obs[ct_key] = a.obs[ct_key].astype(str).astype("category")
-    else:
-        # Cell types from adata
-        cts = adata.obs[ct_key].unique().tolist()
-        # Cell types from marker list only
-        if "celltypes_marker" in selector.probeset:
-            tmp = []
-            for markers_celltypes in selector.probeset["celltypes_marker"].str.split(","):
-                tmp += markers_celltypes
-            tmp = np.unique(tmp).tolist()
-            if "" in tmp:
-                tmp.remove("")
-            cts += [ct for ct in tmp if ct not in cts]
-        a = adata
-
-    # Get selected genes that are also in adata
-    selected_genes = [
-        g for g in selector.probeset[selector.probeset["selection"]].index.tolist() if g in adata.var_names
-    ]
-
-    # Get tree genes
-    tree_genes = {}
-    assert isinstance(selector.forest_results["forest"], list)
-    assert len(selector.forest_results["forest"]) == 3
-    assert isinstance(selector.forest_results["forest"][2], dict)
-    for ct, importance_tab in selector.forest_results["forest"][2].items():
-        if ct in cts:
-            tree_genes[ct] = importance_tab["0"].loc[importance_tab["0"] > imp_threshold].index.tolist()
-            tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
-
-    # Get markers
-    marker_genes: Dict[str, list] = {ct: [] for ct in (cts)}
-    for ct in cts:
-        for gene in selector.probeset[selector.probeset["selection"]].index:
-            if ct in selector.probeset.loc[gene, "celltypes_marker"].split(",") and (gene in adata.var_names):
-                marker_genes[ct].append(gene)  # noqa: B909
-        marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
-
-    # Optionally subset genes:
-    # Subset to combinatorial markers of shown celltypes only
-    if comb_markers_only or markers_only:
-        allowed_genes = []
-        if comb_markers_only:
-            allowed_genes += list(itertools.chain(*[tree_genes[ct] for ct in tree_genes.keys()]))
-        if markers_only:
-            allowed_genes += list(itertools.chain(*[marker_genes[ct] for ct in marker_genes.keys()]))
-        selected_genes = [g for g in selected_genes if g in allowed_genes]
-    # Subset to show top n_genes only
-    if n_genes:
-        selected_genes = selected_genes[: min(n_genes, len(selected_genes))]
-    # Filter (combinatorial) markers by genes that are not in the selected genes
-    for ct in cts:
-        marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
-    for ct in tree_genes.keys():
-        tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
+    # TODO
+    # proofread docstring
 
     dp = MaskedDotPlot(
         adata,
@@ -1704,12 +1639,8 @@ def masked_dotplot(
         groupby=groupby,
         tree_genes=tree_genes,
         marker_genes=marker_genes,
-        further_celltypes=[ct for ct in cts if ct not in adata.obs[ct_key].unique()],
-        cmap=cmap,
-        tree_genes_color=comb_marker_color,
-        marker_genes_color=marker_color,
-        non_adata_celltypes_color=non_adata_celltypes_color,
-        use_raw=use_raw,
+        further_celltypes=further_celltypes,
+        **kwargs,
     )
     dp.make_figure()
     if show:

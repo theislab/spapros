@@ -155,9 +155,7 @@ def test_selection_stable(adata_pbmc3k):
         (100, "highly_variable", [], 2, "tmp_path", ["PCA", "DE", "HVG", "random"]),
     ],
 )
-def test_select_reference_probesets(
-    adata_pbmc3k, n, genes_key, seeds, verbosity, save_dir, request, methods
-):
+def test_select_reference_probesets(adata_pbmc3k, n, genes_key, seeds, verbosity, save_dir, request, methods):
     se.select_reference_probesets(
         adata_pbmc3k,
         n=n,

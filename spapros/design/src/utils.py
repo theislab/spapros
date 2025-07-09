@@ -23,7 +23,7 @@ def get_config(config):
     :return: User-defined parameters, where keys are the parameter names and values are the paremeter values.
     :rtype: dict
     """
-    with open(config, "r") as ymlfile:
+    with open(config) as ymlfile:
         return yaml.safe_load(ymlfile)
 
 
@@ -37,7 +37,7 @@ def print_config(config, logger):
     """
     logger.info("#########Parameter settings#########")
     for item, value in config.items():
-        logger.info("{}: {}".format(item, value))
+        logger.info(f"{item}: {value}")
 
 
 def create_dir(dir, subdir):

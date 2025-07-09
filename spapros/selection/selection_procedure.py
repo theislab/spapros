@@ -1393,7 +1393,7 @@ class ProbesetSelector:  # (object)
         # forest
         for f in ["DE_prior_forest", "DE_baseline_forest", "pca_prior_forest", "forest"]:
             if os.path.exists(self.forest_results_paths[f]):
-                self.forest_results[f] = pickle.load(open(self.forest_results_paths[f], "rb"))
+                self.forest_results[f] = pd.read_pickle(open(self.forest_results_paths[f], "rb"))
                 if self.verbosity > 1:
                     print(
                         f"\t Found and load {os.path.basename(self.forest_results_paths[f])} (forest training results)."
@@ -1401,7 +1401,7 @@ class ProbesetSelector:  # (object)
                 self.loaded_attributes.append(f"forest_results_{f}")
         for f in ["DE_baseline_forest", "forest"]:
             if os.path.exists(self.forest_clfs_paths[f]):
-                self.forest_clfs[f] = pickle.load(open(self.forest_clfs_paths[f], "rb"))
+                self.forest_clfs[f] = pd.read_pickle(open(self.forest_clfs_paths[f], "rb"))
                 if self.verbosity > 1:
                     print(
                         f"\t Found and load {os.path.basename(self.forest_clfs_paths[f])} (forest classifier objects)."
@@ -1458,7 +1458,7 @@ class ProbesetSelector:  # (object)
         selections: Optional[List[str]] = None,
         penalty_keys: Dict = None,
         unapplied_penalty_keys: Dict = None,
-        background_key: Union[bool, str, None] = True,
+        background_key: Union[bool, str] = True,
         **kwargs,
     ) -> None:
         """Plot histograms of (basic) selections under given penalties.
@@ -1496,7 +1496,7 @@ class ProbesetSelector:  # (object)
                 Same as ``penalty_keys`` but for penalties that were not applied to the selection.
             background_key:
                 Key in ``adata.var`` for preselected genes (typically `'highly_variable_genes'`) to plot as background
-                histogram . If `True` (default), :attr:`g_key` is used. If `None` no background is plottet. If `'all'`,
+                histogram . If `True` (default), :attr:`g_key` is used. If `False` no background is plottet. If `'all'`,
                 all genes are used as background.
             kwargs:
                 Further arguments for :func:`.selection_histogram`.
@@ -1511,14 +1511,18 @@ class ProbesetSelector:  # (object)
         #    histograms - a little boring but better than nothing)
 
         SELECTIONS = ["pca", "DE", "marker"]
-        PENALTY_KEYS = {"pca": self.pca_penalties,
-                        "DE": self.DE_penalties,
-                        "marker": self.m_penalties_adata_celltypes + self.m_penalties_list_celltypes}
+        PENALTY_KEYS = {
+            "pca": self.pca_penalties,
+            "DE": self.DE_penalties,
+            "marker": self.m_penalties_adata_celltypes + self.m_penalties_list_celltypes,
+        }
         UNAPPLIED_PENALTY_KEYS = {p_key: ["expression_penalty"] for p_key in PENALTY_KEYS}
-        X_AXIS_KEYS = {"expression_penalty": "quantile_0.99",
-                       "expression_penalty_upper": "quantile_0.99",
-                       "expression_penalty_lower": "quantile_0.9 expr > 0",
-                       "marker": "quantile_0.99"}
+        X_AXIS_KEYS = {
+            "expression_penalty": "quantile_0.99",
+            "expression_penalty_upper": "quantile_0.99",
+            "expression_penalty_lower": "quantile_0.9 expr > 0",
+            "marker": "quantile_0.99",
+        }
 
         if selections is None:
             selections = SELECTIONS
@@ -1560,10 +1564,13 @@ class ProbesetSelector:  # (object)
                 for penalty_key in unapplied_penalty_keys[selection]:
                     x_axis_keys[penalty_key] = X_AXIS_KEYS[penalty_key]
 
-            penalty_labels[selection] = {**{p_name: "partially applied" if selection == "marker" else "penalty" for
-                                            p_name in penalty_keys[selection]},
-                                         **{p_name: "unapplied\npenal." for p_name in
-                                            unapplied_penalty_keys[selection]}}
+            penalty_labels[selection] = {
+                **{
+                    p_name: "partially applied" if selection == "marker" else "penalty"
+                    for p_name in penalty_keys[selection]
+                },
+                **{p_name: "unapplied\npenal." for p_name in unapplied_penalty_keys[selection]},
+            }
 
             # plot with penalties:
             penalty_keys[selection] = penalty_keys[selection] + unapplied_penalty_keys[selection]
@@ -1576,14 +1583,15 @@ class ProbesetSelector:  # (object)
                 if x_axis_key not in self.adata.var:
                     raise ValueError(f"Can't plot histogram because {x_axis_key} was not found.")
 
-        pl.selection_histogram(adata=self.adata,
-                               selections_dict=selections_dict,
-                               background_key=self.g_key if background_key is True else background_key,
-                               penalty_keys=penalty_keys,
-                               penalty_labels=penalty_labels,
-                               x_axis_keys=x_axis_keys,
-                               **kwargs
-                               )
+        pl.selection_histogram(
+            adata=self.adata,
+            selections_dict=selections_dict,
+            background_key=self.g_key if background_key is True else background_key,
+            penalty_keys=penalty_keys,
+            penalty_labels=penalty_labels,
+            x_axis_keys=x_axis_keys,
+            **kwargs,
+        )
 
     def plot_coexpression(
         self,
@@ -1673,8 +1681,9 @@ class ProbesetSelector:  # (object)
 
             # Create correlation matrix
             if issparse(a.X):
-                cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index,
-                                       data=np.corrcoef(a.X.toarray(), rowvar=False))
+                cor_mat = pd.DataFrame(
+                    index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X.toarray(), rowvar=False)
+                )
             else:
                 cor_mat = pd.DataFrame(index=a.var.index, columns=a.var.index, data=np.corrcoef(a.X, rowvar=False))
 
@@ -1753,10 +1762,12 @@ class ProbesetSelector:  # (object)
         if importance_th is None:
             importance_th = min(self.selection["forest"]["importance_score"])
         df = (
-            self.selection["forest"].loc[
+            self.selection["forest"]
+            .loc[
                 (self.selection["forest"]["rank"] <= till_rank)
                 & (self.selection["forest"]["importance_score"] > importance_th)
-            ].copy()
+            ]
+            .copy()
         )
         selected_genes = [g for g in df.index if g in self.probeset[self.probeset["selection"]].index]
         df = df.loc[selected_genes]
@@ -1820,9 +1831,9 @@ class ProbesetSelector:  # (object)
     def plot_gene_overlap(
         self,
         origins: List[
-            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]] =
-        None,
-        **kwargs
+            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+        ] = None,
+        **kwargs,
     ) -> None:
         """Plot the overlap of origins for the selected genes
 
@@ -1860,15 +1871,17 @@ class ProbesetSelector:  # (object)
 
         """
         ORIGINS: List[
-            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]] = \
-            ["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+            Literal["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
+        ] = ["pre_selected", "prior_selected", "pca", "DE", "DE_1vsall", "DE_specific", "marker_list"]
 
-        ORIGIN_TO_PROBESET_COLNAME = {"pre_selected": "pre_selected",
-                                      "prior_selected": "prior_selected",
-                                      "pca": "pca_selected",
-                                      "DE": "celltypes_DE",
-                                      "DE_1vsall": "celltypes_DE_1vsall",
-                                      "DE_specific": "celltypes_DE_specific"}
+        ORIGIN_TO_PROBESET_COLNAME = {
+            "pre_selected": "pre_selected",
+            "prior_selected": "prior_selected",
+            "pca": "pca_selected",
+            "DE": "celltypes_DE",
+            "DE_1vsall": "celltypes_DE_1vsall",
+            "DE_specific": "celltypes_DE_specific",
+        }
 
         if not origins:
             origins = ORIGINS
@@ -2029,6 +2042,18 @@ class ProbesetSelector:  # (object)
                 Whether to plot only genes that are markers for the plotted cell types. (can be combined with
                 ``comb_markers_only``, in that case comb markers that are not markers are also shown)
             **kwargs:
+                Further arguments for :class:`spapros.plotting._masked_dotplot.MaskedDotPlot`, e.g.:
+
+                cmap:
+                    Colormap of mean expressions.
+                comb_marker_color:
+                    Color for combinatorial markers.
+                marker_color:
+                    Color for marker genes.
+                non_adata_celltypes_color:
+                    Color for celltypes that don't occur in the data set.
+                use_raw:
+                    Use ``raw`` attribute of ``adata`` if present.
 
         Returns:
             Figure can be shown (default `True`) and stored to path (default `None`).
@@ -2072,9 +2097,7 @@ class ProbesetSelector:  # (object)
                 cts += [ct for ct in tmp if ct not in cts]
 
         # Get selected genes that are also in adata
-        selected_genes = [
-            g for g in self.probeset[self.probeset["selection"]].index.tolist() if g in adata.var_names
-        ]
+        selected_genes = [g for g in self.probeset[self.probeset["selection"]].index.tolist() if g in adata.var_names]
 
         # Get tree genes
         tree_genes = {}
@@ -2086,13 +2109,20 @@ class ProbesetSelector:  # (object)
                 tree_genes[ct] = importance_tab["0"].loc[importance_tab["0"] > imp_threshold].index.tolist()
                 tree_genes[ct] = [g for g in tree_genes[ct] if g in selected_genes]
 
-        # Get markers
-        marker_genes: Dict[str, list] = {ct: [] for ct in cts}
+        # Pre-filter selected genes from probeset
+        selected_df = self.probeset[self.probeset["selection"]]
+        selected_gene_indices = selected_df.index.intersection(adata.var_names)
+
+        # Build marker dictionary
+        marker_genes: Dict[str, list] = {}
         for ct in cts:
-            for gene in self.probeset[self.probeset["selection"]].index:
-                if ct in self.probeset.loc[gene, "celltypes_marker"].split(",") and (gene in adata.var_names):
-                    marker_genes[ct].append(gene)
-            marker_genes[ct] = [g for g in marker_genes[ct] if g in selected_genes]
+            genes = [
+                gene
+                for gene in selected_gene_indices
+                if ct in [x.strip() for x in selected_df.loc[gene, "celltypes_marker"].split(",")]
+                and gene in selected_genes
+            ]
+            marker_genes[ct] = genes
 
         # Optionally subset genes:
         # Subset to combinatorial markers of shown celltypes only
@@ -2121,7 +2151,8 @@ class ProbesetSelector:  # (object)
             tree_genes=tree_genes,
             marker_genes=marker_genes,
             further_celltypes=further_celltypes,
-            **kwargs)
+            **kwargs,
+        )
 
     def info(self) -> None:
         """Print info."""

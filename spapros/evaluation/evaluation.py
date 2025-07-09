@@ -364,9 +364,7 @@ class ProbesetEvaluator:
         # Probeset specific pre computation (shared results are not needed for these)
 
         if self.progress and self.verbosity > 0:
-            task_pre = self.progress.add_task(
-                "Probeset specific pre computations...", total=len(self.metrics), level=1
-            )
+            task_pre = self.progress.add_task("Probeset specific pre computations...", total=len(self.metrics), level=1)
 
         for metric in self.metrics:
             if self.dir:
@@ -385,9 +383,7 @@ class ProbesetEvaluator:
                     verbosity=self.verbosity,
                 )
                 if self.dir and (self.pre_results[metric][set_id] is not None):
-                    Path(os.path.dirname(self._res_file(metric, set_id, pre=True))).mkdir(
-                        parents=True, exist_ok=True
-                    )
+                    Path(os.path.dirname(self._res_file(metric, set_id, pre=True))).mkdir(parents=True, exist_ok=True)
                     self.pre_results[metric][set_id].to_csv(self._res_file(metric, set_id, pre=True))
             elif os.path.isfile(self._res_file(metric, set_id, pre=True)):
 
@@ -396,9 +392,7 @@ class ProbesetEvaluator:
                         "Loading pre computations for " + metric + "...", total=1, level=2
                     )
 
-                self.pre_results[metric][set_id] = pd.read_csv(
-                    self._res_file(metric, set_id, pre=True), index_col=0
-                )
+                self.pre_results[metric][set_id] = pd.read_csv(self._res_file(metric, set_id, pre=True), index_col=0)
 
                 if self.progress and self.verbosity > 1:
                     self.progress.advance(task_pre_load)
@@ -439,9 +433,7 @@ class ProbesetEvaluator:
                             "Loading final computations for " + metric + "...", total=1, level=2
                         )
 
-                    self.results[metric][set_id] = pd.read_csv(
-                        self._res_file(metric, set_id, pre=False), index_col=0
-                    )
+                    self.results[metric][set_id] = pd.read_csv(self._res_file(metric, set_id, pre=False), index_col=0)
 
                     if self.progress and self.verbosity > 1:
                         self.progress.advance(task_final_load)
@@ -601,7 +593,7 @@ class ProbesetEvaluator:
 
     def _get_metrics_of_scheme(
         self,
-        metrics,
+        metrics: Optional[List[str]] = None,
     ) -> List[str]:
         """Get the metrics according to the chosen scheme."""
 
@@ -614,6 +606,8 @@ class ProbesetEvaluator:
             metrics = ["knn_overlap", "forest_clfs", "gene_corr"]
         elif self.scheme == "full":
             metrics = ["cluster_similarity", "knn_overlap", "forest_clfs", "gene_corr"]
+        else:
+            raise ValueError(f"Invalid scheme {self.scheme}. Choose from 'quick', 'full', 'custom'.")
 
         # Add marker correlation metric if a marker list is provided
         if ("marker_corr" in self.metrics_params) and ("marker_list" in self.metrics_params["marker_corr"]):
@@ -1564,7 +1558,7 @@ def load_forest(path: str) -> Any:
         path:
             Path to file.
     """
-    return pickle.load(open(path, "rb"))
+    return pd.read_pickle(open(path, "rb"))
 
 
 def get_reference_masks(cts: list, ct_to_ref: Dict[str, list]) -> Dict[str, np.ndarray[Any, np.dtype[np.bool_]]]:
