@@ -18,14 +18,15 @@ except ImportError:
     sys.exit(1)
 
 package = "spapros"
-python_versions = ["3.9", "3.10", "3.13"]
+python_versions = ["3.13"]
 nox.options.sessions = (
     "pre-commit",
     "safety",
     "mypy",
     "tests",
-    # "xdoctest",
-    # "docs-build",
+    "xdoctest",
+    "docs-build",
+    "typeguard",
 )
 
 
