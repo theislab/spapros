@@ -593,6 +593,8 @@ class ProbesetEvaluator:
             params["marker_corr"]["marker_list"] = self.marker_list
         if self.celltype_key is not None:
             params["forest_clfs"]["ct_key"] = self.celltype_key
+            params["marker_corr"]["ct_key"] = self.celltype_key
+            
         return params
 
     def _get_metrics_of_scheme(
