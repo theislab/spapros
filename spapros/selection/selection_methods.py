@@ -623,6 +623,7 @@ def add_DE_genes_to_trees(
         if verbosity > 2:
             print("\t Identify outliers with new trees...")
         # Calculate outliers of new trees, and kick out celltypes with outliers that repeated `n_terminal_repeats` times
+        assert isinstance(specificities, dict), "specificities should be a dict"
         new_TN_rates = pd.concat([d["0"] for ct, d in specificities.items()], axis=1)
         new_TN_rates.columns = celltypes
         TN_rates[celltypes] = new_TN_rates
@@ -925,7 +926,7 @@ def add_tree_genes_from_reference_trees(
         f1_diffs = f1_diffs.loc[f1_diffs > performance_th]
         if (verbosity > 1) and not np.all([(ct in importances.columns) for ct in f1_diffs.index]):
             print("\t There are no more new markers in the reference trees for celltypes:")
-            print(f"\t\t {[ct for ct in f1_diffs.index if not ct in importances.columns]}")
+            print(f"\t\t {[ct for ct in f1_diffs.index if ct not in importances.columns]}")
             print("\t\t even though the performance threshold was not reached")
             print("\t\t (statistical randomness, consider increasing n_trees or performance_th)")
 

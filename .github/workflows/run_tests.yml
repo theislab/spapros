@@ -63,10 +63,10 @@ jobs:
 
         steps:
             - name: Check out the repository
-              uses: actions/checkout@v3.0.2
+              uses: actions/checkout@v4
 
             - name: Set up Python ${{ matrix.python-version }}
-              uses: actions/setup-python@v4.5.0
+              uses: actions/setup-python@v5
               with:
                   python-version: ${{ matrix.python-version }}
 
@@ -94,16 +94,18 @@ jobs:
               run: |
                   import hashlib
                   import sys
+                  import os
 
                   python = "py{}.{}".format(*sys.version_info[:2])
                   payload = sys.version.encode() + sys.executable.encode()
                   digest = hashlib.sha256(payload).hexdigest()
                   result = "${{ runner.os }}-{}-{}-pre-commit".format(python, digest[:8])
 
-                  print("::set-output name=result::{}".format(result))
+                  with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+                      f.write(f"result={result}\n")
 
             - name: Restore pre-commit cache
-              uses: actions/cache@v3.3.1
+              uses: actions/cache@v4
               if: matrix.session == 'pre-commit'
               with:
                   path: ~/.cache/pre-commit
@@ -133,10 +135,10 @@ jobs:
         needs: tests
         steps:
             - name: Check out the repository
-              uses: actions/checkout@v3.0.2
+              uses: actions/checkout@v4
 
             - name: Set up Python 3.13
-              uses: actions/setup-python@v4.5.0
+              uses: actions/setup-python@v5
               with:
                   python-version: 3.13
 
@@ -169,4 +171,4 @@ jobs:
               run: nox --force-color --session=coverage -- xml -i
 
             - name: Upload coverage report
-              uses: codecov/codecov-action@v3.1.0
+              uses: codecov/codecov-action@v4

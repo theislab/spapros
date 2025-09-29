@@ -339,8 +339,9 @@ def metric_summary(results: pd.DataFrame = None, metric: str = None, parameters:
     elif metric == "marker_corr":
         cor_df = results
         ct_key = parameters.get("ct_key", None)
-        for s, val in summary_marker_corr(cor_df, ct_key).items():
-            summary["marker_corr " + s] = val
+        if ct_key is not None:
+            for s, val in summary_marker_corr(cor_df, ct_key).items():
+                summary["marker_corr " + s] = val
     elif metric == "gene_corr":
         cor_mat = results
         summary["gene_corr 1 - mean"] = summary_metric_correlation_mean(cor_mat)
@@ -1251,6 +1252,7 @@ def marker_correlation_matrix(
 def max_marker_correlations(
     genes: List[str],
     marker_cor: pd.DataFrame,
+    ct_key: str = "celltype",
     per_celltype: bool = True,
     per_marker: float = True,
     per_marker_min_mean: float = None,
@@ -1268,6 +1270,8 @@ def max_marker_correlations(
         marker_cor:
             Marker correlation matrix plus cell type annotations and mean expression (see output of
             :attr:`marker_correlation_matrix`).
+        ct_key:
+            Column name of cell type annotations in :attr:`marker_cor`.
         per_celltype:
             Wether to return columns with per cell type max correlations.
         per_marker:
@@ -1306,14 +1310,14 @@ def max_marker_correlations(
     if progress:
         task_max_corr = progress.add_task(description, level=level, total=1)
 
-    cor_df = marker_cor[["celltype", "mean"]].copy()
+    cor_df = marker_cor[[ct_key, "mean"]].copy()
     cor_df["per marker"] = marker_cor[genes].max(axis=1)
 
     tolerance = 0.0001  # Tolerance for floating-point comparison
 
     if per_celltype:
         cor_df["per celltype"] = cor_df["per marker"]
-        max_per_celltype = cor_df.groupby(["celltype"])["per celltype"].transform(max)
+        max_per_celltype = cor_df.groupby([ct_key])["per celltype"].transform(max)
         idxs = np.abs(max_per_celltype - cor_df["per celltype"]) <= tolerance
         cor_df.loc[~idxs, "per celltype"] = np.nan
 

@@ -594,7 +594,7 @@ class ProbesetEvaluator:
         if self.celltype_key is not None:
             params["forest_clfs"]["ct_key"] = self.celltype_key
             params["marker_corr"]["ct_key"] = self.celltype_key
-            
+
         return params
 
     def _get_metrics_of_scheme(
@@ -761,7 +761,7 @@ class ProbesetEvaluator:
 
         # Check if given steps are sound
         supported_steps = {"shared", "pre", "main", "summary"}
-        assert set(steps) <= supported_steps, f"Unsupported results steps: {set(steps)-supported_steps}"
+        assert set(steps) <= supported_steps, f"Unsupported results steps: {set(steps) - supported_steps}"
 
         # Set directories to list
         if directories is None:
@@ -1840,9 +1840,9 @@ def single_forest_classifications(
     # celltypes
     split_train_test_sets(a, split=4, seed=2020, verbose=False, obs_key=ct_key)
     if celltypes == "all":
-        celltypes = np.unique(a.obs[ct_key].values)
+        celltypes = list(np.unique(a.obs[ct_key].values))
     if ref_celltypes == "all":
-        ref_celltypes = np.unique(a.obs[ct_key].values)
+        ref_celltypes = list(np.unique(a.obs[ct_key].values))
     celltypes_tmp = [
         ct
         for ct in celltypes
@@ -2219,7 +2219,9 @@ def forest_classifications(
         if res is None:
             res = new_res
         else:
-            res = combine_tree_results(res, new_res, with_clfs=with_clfs)
+            # Type assertion to help mypy understand the types
+            assert isinstance(res, tuple) | isinstance(res, list)
+            res = combine_tree_results(res, new_res, with_clfs=with_clfs)  # type: ignore[assignment,arg-type]
         specs = res[0][1] if with_clfs else res[1]
         ct_spec_ref = get_outlier_reference_celltypes(specs, **outlier_kwargs)
         if progress and 2 * verbosity >= level:

@@ -1758,7 +1758,8 @@ class ProbesetSelector:  # (object)
 
         # prepare df
         if celltypes is None:
-            celltypes = self.celltypes
+            celltypes = self.celltypes  # type: ignore[assignment]
+        assert isinstance(celltypes, list), "celltypes should be a list"
         celltypes = [c for c in celltypes if c in df.columns]
         df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)  # noqa: E712
         if add_marker_genes and (self.selection["marker"] is not None):
