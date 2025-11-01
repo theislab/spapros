@@ -118,7 +118,7 @@ jobs:
             - name: Install Poetry
               run: |
                   pipx install poetry
-                  pipx install poetry-plugin-export
+                  pip install poetry-plugin-export
                   poetry --version
 
             - name: Install nox nox-poetry rich
