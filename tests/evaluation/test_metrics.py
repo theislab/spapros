@@ -35,8 +35,8 @@ def test_leiden_clustering_shared_comp_equals_ref(small_adata):
 
 
 def test_leiden_clustering_shared_comp_minimal():
-    # with the update of scanpy to 1.11, the leiden clustering results changed. 
-    # The final clustering was the same, but with a different resolution. So we changed the initial resolution param. 
+    # with the update of scanpy to 1.11, the leiden clustering results changed.
+    # The final clustering was the same, but with a different resolution. So we changed the initial resolution param.
     minimal_adata = sc.AnnData(X=np.array([[1, 0, 0], [2, 0, 0], [0, 1, 0], [0, 2, 0]]))
     annotations = leiden_clusterings(minimal_adata, ns=[2, 2], start_res=1.5)
     # with the initial resolution, immediately a clustering with 2 clusters is found
@@ -171,7 +171,8 @@ def test_clustering_nmis(small_adata, small_probeset):
     # small_adata.obs['leiden_refn2_old'] = pd.Categorical(annotations_ref_old.loc[2].iloc[1:].values.astype(int))
     # small_adata.obs['leiden_refn3_old'] = pd.Categorical(annotations_ref_old.loc[3].iloc[1:].values.astype(int))
 
-    # sc.pl.umap(small_adata, color=["leiden_refn2", "leiden_refn3", "leiden_refn2_old", "leiden_refn3_old"], show=True, save=False, ncols=2)
+    # sc.pl.umap(small_adata, color=["leiden_refn2", "leiden_refn3", "leiden_refn2_old", "leiden_refn3_old"], 
+    # show=True, save=False, ncols=2)
 
     # # same for annotations (not ref
     # small_adata.obs['leiden_n2'] = annotations.loc[2].iloc[1:].values
