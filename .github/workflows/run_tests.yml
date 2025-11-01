@@ -12,81 +12,23 @@ jobs:
             fail-fast: false
             matrix:
                 include:
-                    - {
-                          python-version: 3.12,
-                          os: ubuntu-latest,
-                          session: "pre-commit",
-                      }
-                    - {
-                          python-version: 3.12,
-                          os: ubuntu-latest,
-                          session: "mypy",
-                      }
-                    - {
-                          python-version: 3.12,
-                          os: ubuntu-latest,
-                          session: "tests",
-                      }
-                    - {
-                          python-version: 3.12,
-                          os: windows-latest,
-                          session: "tests",
-                      }
-                    - {
-                          python-version: 3.12,
-                          os: macos-latest,
-                          session: "tests",
-                      }
-                    - {
-                          python-version: 3.12,
-                          os: ubuntu-latest,
-                          session: "typeguard",
-                      }
-                    - {
-                          python-version: 3.12,
-                          os: ubuntu-latest,
-                          session: "xdoctest",
-                      }
-                    - {
-                          python-version: 3.13,
-                          os: ubuntu-latest,
-                          session: "pre-commit",
-                      }
-                    - {
-                          python-version: 3.13,
-                          os: ubuntu-latest,
-                          session: "mypy",
-                      }
-                    - {
-                          python-version: 3.13,
-                          os: ubuntu-latest,
-                          session: "tests",
-                      }
-                    - {
-                          python-version: 3.13,
-                          os: windows-latest,
-                          session: "tests",
-                      }
-                    - {
-                          python-version: 3.13,
-                          os: macos-latest,
-                          session: "tests",
-                      }
-                    - {
-                          python-version: 3.13,
-                          os: ubuntu-latest,
-                          session: "typeguard",
-                      }
-                    - {
-                          python-version: 3.13,
-                          os: ubuntu-latest,
-                          session: "xdoctest",
-                      }
-                    #- {
-                    #      python-version: 3.9,
-                    #      os: ubuntu-latest,
-                    #      session: "docs-build",
-                    #  }
+                    # ----- Static / lint / docs etc. -----
+                    - { python-version: 3.13, os: ubuntu-latest,  session: "pre-commit" }
+                    - { python-version: 3.13, os: ubuntu-latest,  session: "mypy" }
+                    - { python-version: 3.13, os: ubuntu-latest,  session: "typeguard" }
+                    - { python-version: 3.13, os: ubuntu-latest,  session: "xdoctest" }
+                    # - { python-version: 3.13, os: ubuntu-latest, session: "docs-build" }
+              
+                    # ----- Tests on primary Python across all OSes -----
+                    - { python-version: 3.13, os: ubuntu-latest,  session: "tests" }
+                    - { python-version: 3.13, os: windows-latest, session: "tests" }
+                    - { python-version: 3.13, os: macos-latest,   session: "tests" }
+              
+                    # ----- Tests on secondary Python, Linux only -----
+                    - { python-version: 3.12, os: ubuntu-latest,  session: "tests" }
+                    #- { python-version: 3.12, os: windows-latest, session: "tests" }
+                    #- { python-version: 3.12, os: macos-latest,   session: "tests" }
+
 
         env:
             NOXSESSION: ${{ matrix.session }}
@@ -108,7 +50,7 @@ jobs:
             - name: Install Poetry
               run: |
                   pipx install poetry
-                  pip install poetry-plugin-export
+                  pipx inject poetry poetry-plugin-export
                   poetry --version
 
             - name: Install nox nox-poetry rich
@@ -117,6 +59,12 @@ jobs:
                   pipx inject nox nox-poetry
                   pipx inject nox rich
                   nox --version
+
+            - name: Optionally install libomp (needed for xgboost on macOS)
+              if: matrix.os == 'macos-latest'
+              run: |
+                  brew update
+                  brew install libomp
 
             - name: Compute pre-commit cache key
               if: matrix.session == 'pre-commit'
