@@ -9,12 +9,13 @@ homepage = "https://github.com/theislab/spapros"
 repository = "https://github.com/theislab/spapros"
 documentation = "https://spapros.readthedocs.io"
 classifiers = [
+    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.12,<3.14"
+python = ">=3.11,<3.14"
 click = ">=8.0.1"
 rich = ">=10.1.0"
 PyYAML = ">=6.0.1"
