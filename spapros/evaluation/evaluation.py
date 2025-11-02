@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
+from scipy.sparse import csr_matrix, issparse
 from rich.progress import Progress
 from sklearn import tree
 from sklearn.metrics import classification_report
@@ -1527,7 +1528,11 @@ def uniform_samples(
             obs = np.random.choice(n_obs, subsample, replace=True)
             all_obs += list(df.iloc[obs].index.values)
 
-    X = a[all_obs, :].X.copy()
+    # Make sure that X is a sparse matrix
+    if not issparse(a.X):
+        X = csr_matrix(a[all_obs, :].X)
+    else:
+        X = a[all_obs, :].X.copy()
     y = {}
     for ct in celltypes:
         y[ct] = np.where(a[all_obs, :].obs[ct_key] == ct, ct, "other")
