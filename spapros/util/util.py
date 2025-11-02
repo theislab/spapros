@@ -94,15 +94,15 @@ def clean_adata(
         a = adata
     else:
         a = adata.copy()
-    for obs in [o for o in a.obs_keys() if o not in obs_keys]:
+    for obs in [o for o in a.obs if o not in obs_keys]:
         del a.obs[obs]
-    for var in [v for v in a.var_keys() if v not in var_keys]:
+    for var in [v for v in a.var if v not in var_keys]:
         del a.var[var]
-    for uns in [u for u in a.uns_keys() if u not in uns_keys]:
+    for uns in [u for u in a.uns if u not in uns_keys]:
         del a.uns[uns]
-    for obsm in [om for om in a.obsm_keys() if om not in obsm_keys]:
+    for obsm in [om for om in a.obsm if om not in obsm_keys]:
         del a.obsm[obsm]
-    for varm in [vm for vm in a.varm_keys() if vm not in varm_keys]:
+    for varm in [vm for vm in a.varm if vm not in varm_keys]:
         del a.varm[varm]
     # for obsp in [op for op in a.obsp_keys() if not op in obsp_keys]:
     # 	del a.obsp[obsp]

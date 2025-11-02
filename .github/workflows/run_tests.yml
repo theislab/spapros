@@ -13,25 +13,48 @@ jobs:
             matrix:
                 include:
                     # ----- Static / lint / docs etc. -----
-                    - { python-version: 3.13, os: ubuntu-latest,  session: "pre-commit" }
-                    - { python-version: 3.13, os: ubuntu-latest,  session: "mypy" }
-                    - { python-version: 3.13, os: ubuntu-latest,  session: "typeguard" }
-                    - { python-version: 3.13, os: ubuntu-latest,  session: "xdoctest" }
+                    - {
+                          python-version: 3.13,
+                          os: ubuntu-latest,
+                          session: "pre-commit",
+                      }
+                    - {
+                          python-version: 3.13,
+                          os: ubuntu-latest,
+                          session: "mypy",
+                      }
+                    - {
+                          python-version: 3.13,
+                          os: ubuntu-latest,
+                          session: "typeguard",
+                      }
+                    - {
+                          python-version: 3.13,
+                          os: ubuntu-latest,
+                          session: "xdoctest",
+                      }
                     # - { python-version: 3.13, os: ubuntu-latest, session: "docs-build" }
-              
+
                     # ----- Tests on primary Python -----
                     #- { python-version: 3.13, os: ubuntu-latest,  session: "tests" }
                     #- { python-version: 3.13, os: windows-latest, session: "tests" }
-                    - { python-version: 3.13, os: macos-latest,   session: "tests" }
-              
+                    - {
+                          python-version: 3.13,
+                          os: macos-latest,
+                          session: "tests",
+                      }
+
                     # ----- Tests on secondary Python -----
                     #- { python-version: 3.12, os: ubuntu-latest,  session: "tests" }
                     #- { python-version: 3.12, os: windows-latest, session: "tests" }
-                    - { python-version: 3.12, os: macos-latest,   session: "tests" }
-                    
-                    # NOTE: the neighbors graph calculation is not reproducible, as we develop on 
-                    # macOS we keep the tests on macOS only.
+                    - {
+                          python-version: 3.12,
+                          os: macos-latest,
+                          session: "tests",
+                      }
 
+                    # NOTE: the neighbors graph calculation is not reproducible, as we develop on
+                    # macOS we keep the tests on macOS only.
 
         env:
             NOXSESSION: ${{ matrix.session }}

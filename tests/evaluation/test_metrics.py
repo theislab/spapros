@@ -171,7 +171,7 @@ def test_clustering_nmis(small_adata, small_probeset):
     # small_adata.obs['leiden_refn2_old'] = pd.Categorical(annotations_ref_old.loc[2].iloc[1:].values.astype(int))
     # small_adata.obs['leiden_refn3_old'] = pd.Categorical(annotations_ref_old.loc[3].iloc[1:].values.astype(int))
 
-    # sc.pl.umap(small_adata, color=["leiden_refn2", "leiden_refn3", "leiden_refn2_old", "leiden_refn3_old"], 
+    # sc.pl.umap(small_adata, color=["leiden_refn2", "leiden_refn3", "leiden_refn2_old", "leiden_refn3_old"],
     # show=True, save=False, ncols=2)
 
     # # same for annotations (not ref
