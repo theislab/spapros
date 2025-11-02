@@ -25,7 +25,7 @@ jobs:
                       }
                     - {
                           python-version: 3.13,
-                          os: ubuntu-latest,
+                          os: macos-latest,
                           session: "typeguard",
                       }
                     - {

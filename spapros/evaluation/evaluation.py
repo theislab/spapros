@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
-from scipy.sparse import csr_matrix, issparse
 from rich.progress import Progress
+from scipy.sparse import csr_matrix, issparse
 from sklearn import tree
 from sklearn.metrics import classification_report
 
