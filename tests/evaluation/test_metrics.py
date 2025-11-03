@@ -35,8 +35,8 @@ def test_leiden_clustering_shared_comp_equals_ref(small_adata):
 
 
 def test_leiden_clustering_shared_comp_minimal():
-    # with the update of scanpy to 1.11, the leiden clustering results changed. 
-    # The final clustering was the same, but with a different resolution. So we changed the initial resolution param. 
+    # with the update of scanpy to 1.11, the leiden clustering results changed.
+    # The final clustering was the same, but with a different resolution. So we changed the initial resolution param.
     minimal_adata = sc.AnnData(X=np.array([[1, 0, 0], [2, 0, 0], [0, 1, 0], [0, 2, 0]]))
     annotations = leiden_clusterings(minimal_adata, ns=[2, 2], start_res=1.5)
     # with the initial resolution, immediately a clustering with 2 clusters is found
@@ -149,9 +149,9 @@ def test_knns_shared_comp(small_adata, ks, genes):
 def test_clustering_nmis(small_adata, small_probeset):
     ns = [2, 3]
     method = "arithmetic"
-    # annotations_ref = leiden_clusterings(small_adata, ns, start_res=1.0)
-    # annotations = leiden_clusterings(small_adata[:, small_probeset], ns, start_res=1.0)
-    # annotations_perm = leiden_clusterings(small_adata[:, small_probeset[::-1]], ns, start_res=1.0)
+    annotations_ref = leiden_clusterings(small_adata, ns, start_res=1.0)
+    annotations = leiden_clusterings(small_adata[:, small_probeset], ns, start_res=1.0)
+    annotations_perm = leiden_clusterings(small_adata[:, small_probeset[::-1]], ns, start_res=1.0)
     # # # write annotations to file
     # annotations.to_csv("tests/evaluation/test_data/cluster_annotations.csv")
     # annotations_ref.to_csv("tests/evaluation/test_data/cluster_annotations_ref.csv")
@@ -171,7 +171,8 @@ def test_clustering_nmis(small_adata, small_probeset):
     # small_adata.obs['leiden_refn2_old'] = pd.Categorical(annotations_ref_old.loc[2].iloc[1:].values.astype(int))
     # small_adata.obs['leiden_refn3_old'] = pd.Categorical(annotations_ref_old.loc[3].iloc[1:].values.astype(int))
 
-    # sc.pl.umap(small_adata, color=["leiden_refn2", "leiden_refn3", "leiden_refn2_old", "leiden_refn3_old"], show=True, save=False, ncols=2)
+    # sc.pl.umap(small_adata, color=["leiden_refn2", "leiden_refn3", "leiden_refn2_old", "leiden_refn3_old"],
+    # show=True, save=False, ncols=2)
 
     # # same for annotations (not ref
     # small_adata.obs['leiden_n2'] = annotations.loc[2].iloc[1:].values
@@ -183,14 +184,15 @@ def test_clustering_nmis(small_adata, small_probeset):
     # # read annotations from file (changed between version 3.13 and 3.10 !)
     # # cluster_annotations*.csv: created with python 3.13
     # # cluster_annotations_old*.csv: created with python 3.10
-    annotations = pd.read_csv("tests/evaluation/test_data/cluster_annotations_old.csv", index_col=0)
-    annotations_ref = pd.read_csv("tests/evaluation/test_data/cluster_annotations_ref_old.csv", index_col=0)
-    annotations_perm = pd.read_csv("tests/evaluation/test_data/cluster_annotations_perm_old.csv", index_col=0)
+    # annotations = pd.read_csv("tests/evaluation/test_data/cluster_annotations_old.csv", index_col=0)
+    # annotations_ref = pd.read_csv("tests/evaluation/test_data/cluster_annotations_ref_old.csv", index_col=0)
+    # annotations_perm = pd.read_csv("tests/evaluation/test_data/cluster_annotations_perm_old.csv", index_col=0)
 
     nmis = clustering_nmis(annotations, annotations_ref, ns, method)
     nmis_sym = clustering_nmis(annotations_ref, annotations, ns, method)
     nmis_perm = clustering_nmis(annotations_perm, annotations_ref, ns, method)
-    ref = pd.DataFrame({"nmi": [0.940299, 0.946526]}, index=[2, 3])
+    # ref = pd.DataFrame({"nmi": [0.940299, 0.946526]}, index=[2, 3])
+    ref = pd.DataFrame({"nmi": [0.2586872574142429, 0.9695629451493684]}, index=[2, 3])
     # assert equals ref
     assert pd.testing.assert_frame_equal(nmis, ref, check_exact=False) is None
     # assert symmety
