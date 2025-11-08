@@ -51,7 +51,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.5
+                0.1.6
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -113,9 +113,12 @@
              
   <section id="Evaluation-of-probe-sets">
 <h1>Evaluation of probe sets<a class="headerlink" href="#Evaluation-of-probe-sets" title="Permalink to this heading"></a></h1>
-<p>Spapros provides metrics to evaluate the quality of a gene panel. For evaluation, we mainly focus on 2 metric categories: general variation recovery and cell type classification. Additionally as a 3rd category we measure gene redundancy based on correlation between gene pairs. In each category we further distinguish between metrics that measure different aspects: - Cell type identification metrics measure <em>cell type classification accuracy</em> and the <em>percentage of captured cell types</em> (and
-additionally - if a curated marker list is provided - how well the marker expressions of a literature derived list are captured, via <em>marker correlation</em> and <em>cell type balanced marker correlation</em>). - Variation recovery metrics measure how well cellular variation of the full transcriptome is recovered with only a subset of features. These comprise <em>coarse</em> and <em>fine clustering similarity</em>, which quantify how well the gene set recovers cluster structure at different levels of granularity, and
-<em>neighborhood similarity</em>, which measures how well the local cell neighborhoods are preserved. - The amount of redundant genes in the gene set is assessed via <em>gene correlation</em> and the <em>percentage of highly correlated genes</em></p>
+<p>Spapros provides metrics to evaluate the quality of a gene panel. For evaluation, we mainly focus on 2 metric categories: general variation recovery and cell type classification. Additionally as a 3rd category we measure gene redundancy based on correlation between gene pairs. In each category we further distinguish between metrics that measure different aspects:</p>
+<ul class="simple">
+<li><p>Cell type identification metrics measure <em>cell type classification accuracy</em> and the <em>percentage of captured cell types</em> (and additionally - if a curated marker list is provided - how well the marker expressions of a literature derived list are captured, via <em>marker correlation</em> and <em>cell type balanced marker correlation</em>).</p></li>
+<li><p>Variation recovery metrics measure how well cellular variation of the full transcriptome is recovered with only a subset of features. These comprise <em>coarse</em> and <em>fine clustering similarity</em>, which quantify how well the gene set recovers cluster structure at different levels of granularity, and <em>neighborhood similarity</em>, which measures how well the local cell neighborhoods are preserved.</p></li>
+<li><p>The amount of redundant genes in the gene set is assessed via <em>gene correlation</em> and the <em>percentage of highly correlated genes</em></p></li>
+</ul>
 <p>The evaluation pipeline measures summary metrics for each category. We can also get more detailed information (e.g. classification accuracy of each individual cell type). These fine grained evaluations are showcased in the <a class="reference external" href="https://spapros.readthedocs.io/en/latest/_tutorials/spapros_tutorial_advanced_evaluation.html">advanced evaluation tutorial</a>.</p>
 <p>In this tutorial we show how to compare different gene sets based on the calculation of summary metrics. We examplary evaluate the probeset of 20 genes that was selected in our <a class="reference external" href="https://spapros.readthedocs.io/en/latest/tutorials/spapros_tutorial_basic_selection.html">basic selection tutoral</a>.</p>
 <p>The following figure shows how the comparison of multiple selections can look like. As mentioned we’ll concentrate on the three categories: variation recovery (green), cell type classification (violet), and gene redundancy (blue).</p>

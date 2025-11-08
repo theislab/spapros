@@ -51,7 +51,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.5
+                0.1.6
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -309,7 +309,11 @@ The genes selected for those cell types potentially don&#39;t generalize well. F
 <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
 </pre></div>
 </div>
-<p>Now we can investigate the selected gene set. The annotations in the table describe where genes originate from: - the first 40 genes are annotated with <code class="docutils literal notranslate"><span class="pre">pre_selected=True</span></code> - the added genes from 41 till 50 are annotated with <code class="docutils literal notranslate"><span class="pre">selection=True</span></code> and <code class="docutils literal notranslate"><span class="pre">pre_selected=False</span></code></p>
+<p>Now we can investigate the selected gene set. The annotations in the table describe where genes originate from:</p>
+<ul class="simple">
+<li><p>the first 40 genes are annotated with <code class="docutils literal notranslate"><span class="pre">pre_selected=True</span></code></p></li>
+<li><p>the added genes from 41 till 50 are annotated with <code class="docutils literal notranslate"><span class="pre">selection=True</span></code> and <code class="docutils literal notranslate"><span class="pre">pre_selected=False</span></code></p></li>
+</ul>
 <div class="nbinput docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[8]:
 </pre></div>
@@ -702,7 +706,11 @@ The genes selected for those cell types potentially don&#39;t generalize well. F
 </section>
 <section id="ii.-Cell-type-classification-only">
 <h3>ii. Cell type classification only<a class="headerlink" href="#ii.-Cell-type-classification-only" title="Permalink to this heading"></a></h3>
-<p>Spapros optimizes for two objectives: 1. cell type identification 2. recovery of transcriptomic variation</p>
+<p>Spapros optimizes for two objectives:</p>
+<ol class="arabic simple">
+<li><p>cell type identification</p></li>
+<li><p>recovery of transcriptomic variation</p></li>
+</ol>
 <p>The procedure prioritzes the 1st objective over the 2nd. The variation recovery also leads to the selection of genes that show gradients in multiple cell types (see the example of FOS in our <a class="reference external" href="TODO:%20add%20link%20to%20preprint">preprint</a>, Fig. 3). In classical gene panel selection approaches the focus lies on marker genes, ideally markers that are specific to single cell types. In the downstream analysis of spatial data genes like FOS are not useful for identifying the major cell types, these
 genes should even be excluded from the clustering to get better separated cell type clusters. If you don’t want to select genes like FOS and only focus on the first objective you can skip the PCA-based selection by setting <code class="docutils literal notranslate"><span class="pre">n_pca_genes=0</span></code>. In that case only trees on DE genes are trained, the PCA related steps are neglected.</p>
 <div class="nbinput docutils container">

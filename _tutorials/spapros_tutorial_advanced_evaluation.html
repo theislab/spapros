@@ -51,7 +51,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.5
+                0.1.6
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -433,8 +433,13 @@ OMP: Info #276: omp_set_nested routine deprecated, please use omp_set_max_active
 <pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
 </pre></div>
 </div>
-<p>There are maximally four steps to calculate for each metric: 1. shared computations: this step is only needed once for all probe sets (e.g. clusterings on the reference data that includes all genes) 2. pre computations: this step is run for each probe set, but it’s independent of the shared results of step 1 3. main computations: this step is run for each probe set and depends on the shared results of step 1 (if there was a step 1 for a given metric) and potentially the pre results of step 2 4.
-summary computations: extract the final metric value as a summary statistic</p>
+<p>There are maximally four steps to calculate for each metric:</p>
+<ol class="arabic simple">
+<li><p>shared computations: this step is only needed once for all probe sets (e.g. clusterings on the reference data that includes all genes)</p></li>
+<li><p>pre computations: this step is run for each probe set, but it’s independent of the shared results of step 1</p></li>
+<li><p>main computations: this step is run for each probe set and depends on the shared results of step 1 (if there was a step 1 for a given metric) and potentially the pre results of step 2</p></li>
+<li><p>summary computations: extract the final metric value as a summary statistic</p></li>
+</ol>
 <p>In the above progress bars you can see that the shared computations take longer for the first probe set. For the following probe sets, the shared computations are reused.</p>
 <p>Not all metrics include all 4 steps. E.g. forest classification simply has a main computation step, as it doesn’t require any shared computations.</p>
 <div class="nbinput docutils container">
@@ -551,13 +556,24 @@ summary computations: extract the final metric value as a summary statistic</p>
 </div></div>
 </div>
 <p>Explanations of the metrics:</p>
-<p><strong>Variation recovery metrics</strong>: - <em>cluster_similarity nmi_5_20</em>: Assess the similarity of clustering the dataset on all genes vs just the selected gene set. Clusterings are calculated with different leiden resolutions to genertate clusterings of n = 5 to 20 clusters. The NMI is calculated between the clusterings of the full dataset and the gene set. Finally the average NMI over the different n’s is calculated. This metric measures how well the clustering structure of the dataset is recovered
-with a gene subset. As n is chosen to be between 5 and 20 this metric assess clustering structure on a coarse level. - <em>cluster_similarity nmi_21_60</em>: Same as above but with n = 21 to 60 clusters. This metric assesses clustering structure on a finer level. - <em>knn_overlap mean_overlap_AUC</em>: Similar to cluster_similarity this metric assesses how well the dataset’s structure is recovered with a gene subset. It looks at even finer variation recovery than cluster_similarity nmi_21_60 as it assesses
-the overlap of each cell’s k nearest neighbors of the full dataset knn graph and the gene set knn graph.</p>
-<p><strong>Cell type classification metrics</strong>: - <em>forest_clfs accuracy</em>: This metric assesses how well a random forest classifier can predict cell types based on the gene set. The metric is the mean accuracy of the classifier over all cell types. - <em>forest_clfs perct acc &gt; 0.8</em>: This metric assesses how many cell types can be predicted with an accuracy of at least 0.8. More specifically the transformation function is not a sharp step function at 0.8 but instead at step function with a linear increase
-from 0 to 1 between 0.75 and 0.85 (i.e. smoothed thresholding). The metric gives an idea about how many cell types can be identified with high confidence with the given gene set.</p>
-<p><strong>Gene redundancy metrics</strong>: - <em>gene_corr 1 - mean</em>: Mean over maximum correlations of each gene with all other genes. This metric assesses how redundant the gene set is. Note that the actual value is 1 - the mean correlations which means the higher the value the less redundant the gene set is. - <em>gene_corr perct max &lt; 0.8</em>: Percentage of genes that have a maximum correlation of less than 0.8 with all other genes. This metric gives an idea about how many genes show unique expression profiles in
-the gene set. The reasoning behind introducing this metric with the 0.8 threshold is that genes that are only “somewhat correlated” (e.g. r=0.5) could still encode for different information and thus be useful in a gene set, while genes that are highly correlated (e.g. r=0.9) are likely redundant. Note however, that redundancy is not necessarily bad, as it can be used to increase robustness of the gene set.</p>
+<p><strong>Variation recovery metrics</strong>:</p>
+<ul class="simple">
+<li><p><em>cluster_similarity nmi_5_20</em>: Assess the similarity of clustering the dataset on all genes vs just the selected gene set. Clusterings are calculated with different leiden resolutions to genertate clusterings of n = 5 to 20 clusters. The NMI is calculated between the clusterings of the full dataset and the gene set. Finally the average NMI over the different n’s is calculated. This metric measures how well the clustering structure of the dataset is recovered with a gene subset. As n is chosen
+to be between 5 and 20 this metric assess clustering structure on a coarse level.</p></li>
+<li><p><em>cluster_similarity nmi_21_60</em>: Same as above but with n = 21 to 60 clusters. This metric assesses clustering structure on a finer level.</p></li>
+<li><p><em>knn_overlap mean_overlap_AUC</em>: Similar to cluster_similarity this metric assesses how well the dataset’s structure is recovered with a gene subset. It looks at even finer variation recovery than cluster_similarity nmi_21_60 as it assesses the overlap of each cell’s k nearest neighbors of the full dataset knn graph and the gene set knn graph.</p></li>
+</ul>
+<p><strong>Cell type classification metrics</strong>:</p>
+<ul class="simple">
+<li><p><em>forest_clfs accuracy</em>: This metric assesses how well a random forest classifier can predict cell types based on the gene set. The metric is the mean accuracy of the classifier over all cell types.</p></li>
+<li><p><em>forest_clfs perct acc &gt; 0.8</em>: This metric assesses how many cell types can be predicted with an accuracy of at least 0.8. More specifically the transformation function is not a sharp step function at 0.8 but instead at step function with a linear increase from 0 to 1 between 0.75 and 0.85 (i.e. smoothed thresholding). The metric gives an idea about how many cell types can be identified with high confidence with the given gene set.</p></li>
+</ul>
+<p><strong>Gene redundancy metrics</strong>:</p>
+<ul class="simple">
+<li><p><em>gene_corr 1 - mean</em>: Mean over maximum correlations of each gene with all other genes. This metric assesses how redundant the gene set is. Note that the actual value is 1 - the mean correlations which means the higher the value the less redundant the gene set is.</p></li>
+<li><p><em>gene_corr perct max &lt; 0.8</em>: Percentage of genes that have a maximum correlation of less than 0.8 with all other genes. This metric gives an idea about how many genes show unique expression profiles in the gene set. The reasoning behind introducing this metric with the 0.8 threshold is that genes that are only “somewhat correlated” (e.g. r=0.5) could still encode for different information and thus be useful in a gene set, while genes that are highly correlated (e.g. r=0.9) are likely
+redundant. Note however, that redundancy is not necessarily bad, as it can be used to increase robustness of the gene set.</p></li>
+</ul>
 </section>
 <section id="4.-Visualize-the-evaluation-results">
 <h2>4. Visualize the evaluation results<a class="headerlink" href="#4.-Visualize-the-evaluation-results" title="Permalink to this heading"></a></h2>

@@ -48,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.5
+                0.1.6
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -132,7 +132,7 @@ penalty function.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>x_axis_keys</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em><em>]</em>) – Dictionary with the values from <code class="docutils literal notranslate"><span class="pre">penaly_keys</span></code> as keys and the column name of <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> that was
+<li><p><strong>x_axis_keys</strong> (<em>Dict</em><em>[</em><em>str</em><em>, </em><em>str</em><em>]</em>) – Dictionary with the values from <code class="docutils literal notranslate"><span class="pre">penaly_keys</span></code> as keys and the column name of <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> that was
 used to calcuate the respective penalty factors.</p></li>
 <li><p><strong>selections</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>str</em><em>]</em><em>]</em>) – <p>Plot the histograms of selections based on</p>
 <blockquote>
@@ -144,7 +144,7 @@ used to calcuate the respective penalty factors.</p></li>
 </ul>
 </div></blockquote>
 </p></li>
-<li><p><strong>penalty_keys</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – <p>Dictionary with the selection method name as key and the name of the column for <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing
+<li><p><strong>penalty_keys</strong> (<em>Dict</em>) – <p>Dictionary with the selection method name as key and the name of the column for <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing
 the penalty factors to plot. Selections that are not in <code class="docutils literal notranslate"><span class="pre">penalty_keys</span></code> are plottet without penalty.
 If <cite>None</cite> (default), we use the columns defined in the selector for each selection. The respective
 attributes of the selector are:</p>
@@ -156,7 +156,7 @@ attributes of the selector are:</p>
 </ul>
 </div></blockquote>
 </p></li>
-<li><p><strong>unapplied_penalty_keys</strong> (<em>Optional</em><em>[</em><em>Dict</em><em>]</em>) – Same as <code class="docutils literal notranslate"><span class="pre">penalty_keys</span></code> but for penalties that were not applied to the selection.</p></li>
+<li><p><strong>unapplied_penalty_keys</strong> (<em>Dict</em>) – Same as <code class="docutils literal notranslate"><span class="pre">penalty_keys</span></code> but for penalties that were not applied to the selection.</p></li>
 <li><p><strong>background_key</strong> (<em>Union</em><em>[</em><em>bool</em><em>, </em><em>str</em><em>]</em>) – Key in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> for preselected genes (typically <cite>‘highly_variable_genes’</cite>) to plot as background
 histogram . If <cite>True</cite> (default), <code class="xref py py-attr docutils literal notranslate"><span class="pre">g_key</span></code> is used. If <cite>None</cite> no background is plottet. If <cite>‘all’</cite>, all genes
 are used as background.</p></li>

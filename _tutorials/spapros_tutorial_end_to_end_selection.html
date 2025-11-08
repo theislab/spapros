@@ -51,7 +51,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.5
+                0.1.6
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -234,18 +234,39 @@ which we need to set the parameters:</p>
 <section id="Generate-Genomic-Region-Files">
 <h3>Generate Genomic Region Files<a class="headerlink" href="#Generate-Genomic-Region-Files" title="Permalink to this heading"></a></h3>
 <p>Our example dataset uses a custom annotation and we create input fasta files for the transcriptome, consisting of exons and exon-exon junctions. Hence, we define <em>custom</em> as source and define the custom-specific parameters listed below. Apart from <em>custom</em> annotation, we can also choose an <em>NCBI</em> or <em>Ensembl</em> annotation. If <em>source=”ncbi”</em> or <em>source=”ensembl”</em> is choosen, the annotation files are automatically downloaded from their servers.</p>
-<div class="line-block">
-<div class="line"><strong>Parameters for annotation loader</strong></div>
-<div class="line">- <code class="docutils literal notranslate"><span class="pre">source</span></code>: define annotation source -&gt; currently supported: ncbi, ensembl and custom</div>
-</div>
-<p><em>Custom annnotation parameters:</em> - <code class="docutils literal notranslate"><span class="pre">source_params</span></code>: - <code class="docutils literal notranslate"><span class="pre">file_annotation</span></code>: required: GTF file with gene annotation - <code class="docutils literal notranslate"><span class="pre">file_sequence</span></code>: required: FASTA file with genome sequence - <code class="docutils literal notranslate"><span class="pre">files_source</span></code>: optional: original source of the genomic files - <code class="docutils literal notranslate"><span class="pre">species</span></code>: optional: species of provided annotation, leave empty if unknown - <code class="docutils literal notranslate"><span class="pre">annotation_release</span></code>: optional: release number of provided annotation, leave empty if unknown - <code class="docutils literal notranslate"><span class="pre">genome_assembly</span></code>: optional: genome assembly of provided annotation,
-leave empty if unknown</p>
+<p><strong>Parameters for annotation loader</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">source</span></code>: define annotation source -&gt; currently supported: ncbi, ensembl and custom</p></li>
+</ul>
+<p><em>Custom annnotation parameters:</em></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">source_params</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">file_annotation</span></code>: required: GTF file with gene annotation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">file_sequence</span></code>: required: FASTA file with genome sequence</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">files_source</span></code>: optional: original source of the genomic files</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">species</span></code>: optional: species of provided annotation, leave empty if unknown</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">annotation_release</span></code>: optional: release number of provided annotation, leave empty if unknown</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">genome_assembly</span></code>: optional: genome assembly of provided annotation, leave empty if unknown</p></li>
+</ul>
+</li>
+</ul>
 <p><em>For NCBI or Ensembl parameters, see examples in the code below</em></p>
 <div class="line-block">
 <div class="line"><strong>Parameters for sequences generation</strong></div>
-<div class="line">Set the genomic regions that should be generated to True. For each region one fasta file is generated. - <code class="docutils literal notranslate"><span class="pre">genomic_regions</span></code>: - <code class="docutils literal notranslate"><span class="pre">gene</span></code>: create fasta file from gene regions in GFF annotation - <code class="docutils literal notranslate"><span class="pre">exon</span></code>: create fasta file from exon regions in GFF annotation and merge same exons coming from different transcripts into one sequence entry while preserving the transcript information - <code class="docutils literal notranslate"><span class="pre">exon_exon_junction</span></code>: create fasta file from exon exon junctions in GFF annotation and merge same junctions
-coming from different transcripts into one sequence entry while preserving the transcript information - <code class="docutils literal notranslate"><span class="pre">cds</span></code>: create fasta file from cds regions in GFF annotation and merge same cds coming from different transcripts into one sequence entry while preserving the transcript information - <code class="docutils literal notranslate"><span class="pre">intron</span></code>: create fasta file from regions between exons</div>
+<div class="line">Set the genomic regions that should be generated to True. For each region one fasta file is generated.</div>
 </div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">genomic_regions</span></code>:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">gene</span></code>: create fasta file from gene regions in GFF annotation</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exon</span></code>: create fasta file from exon regions in GFF annotation and merge same exons coming from different transcripts into one sequence entry while preserving the transcript information</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">exon_exon_junction</span></code>: create fasta file from exon exon junctions in GFF annotation and merge same junctions coming from different transcripts into one sequence entry while preserving the transcript information</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cds</span></code>: create fasta file from cds regions in GFF annotation and merge same cds coming from different transcripts into one sequence entry while preserving the transcript information</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">intron</span></code>: create fasta file from regions between exons</p></li>
+</ul>
+</li>
+</ul>
 <p><code class="docutils literal notranslate"><span class="pre">exon_exon_junction_block_size</span></code>: If exon_exon_junction is set to true, specify the block size, i.e. +/- “block_size” bp around the junction. Hint: it does not make sense to set the block size larger than the maximum probe length</p>
 <p><em>Note: if an error occurs for the unzipping of files, this might be due to a faulty download of files from the ftp server. In this case, try to download the files manually from the ftp server and use those files as input for the pipeline with custom input files.</em></p>
 <div class="nbinput nblast docutils container">
@@ -362,7 +383,13 @@ overview of differences between the technologies). For each of those classes, we
 </div>
 </div>
 <p>After instatiating our ScrinshotProbeDesigner class, we have to create the oligo database. Running the function below, will automatically create all possible probes from the input fasta files for each gene that is provided in the <em>file_regions</em> file.</p>
-<p><strong>Parameters for Probe Database</strong> - <code class="docutils literal notranslate"><span class="pre">probe_length_min</span></code>: minimum length of probes - <code class="docutils literal notranslate"><span class="pre">probe_length_max</span></code>: maximum length of probes - <code class="docutils literal notranslate"><span class="pre">probes_per_gene_min</span></code>: minimum number of probes that a gene must have before it gets deleted - <code class="docutils literal notranslate"><span class="pre">files_fasta_oligo_database</span></code>: fasta file with sequences form which the oligos should be generated. Hint: use the GenomicRegionGenerator class to create fasta files of genomic regions of interest</p>
+<p><strong>Parameters for Probe Database</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_length_min</span></code>: minimum length of probes</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_length_max</span></code>: maximum length of probes</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probes_per_gene_min</span></code>: minimum number of probes that a gene must have before it gets deleted</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">files_fasta_oligo_database</span></code>: fasta file with sequences form which the oligos should be generated. Hint: use the GenomicRegionGenerator class to create fasta files of genomic regions of interest</p></li>
+</ul>
 <div class="line-block">
 <div class="line"><em>Note: Instead of creating a new probe database, we can also load an existing databases.</em></div>
 <div class="line">Loading a database can be useful when starting the pipeline from a certain step, e.g. load a database which was already filtered by probe properties and continue immediately with the specificity filter step. We can load an existing database by calling <code class="docutils literal notranslate"><span class="pre">load_database()</span></code>. See example code in the cells below (commented).</div>
@@ -439,11 +466,28 @@ overview of differences between the technologies). For each of those classes, we
 <section id="Refine-Database-with-Property-Filters">
 <h3>Refine Database with Property Filters<a class="headerlink" href="#Refine-Database-with-Property-Filters" title="Permalink to this heading"></a></h3>
 <p>In order to create experiment-specific probes, we have to apply several filter to each probe, e.g. melting temperature or GC content filters.</p>
-<p><strong>Parameters for Probe Sequences:</strong> - <code class="docutils literal notranslate"><span class="pre">probe_GC_content_min</span></code>: minimum GC content of oligos - <code class="docutils literal notranslate"><span class="pre">probe_GC_content_max</span></code>: maximum GC content of oligos - <code class="docutils literal notranslate"><span class="pre">probe_Tm_min</span></code>: minimum melting temperature of oligos - <code class="docutils literal notranslate"><span class="pre">probe_Tm_max</span></code>: maximum melting temperature of oligos - <code class="docutils literal notranslate"><span class="pre">homopolymeric_base_n</span></code>: minimum number of nucleotides to consider it a homopolymeric run per base and all probes with such a homopolymeric run are filtered out, e.g. if A: 5 is set then the sequence “CTGGTAAAAACTGGA” is filtered
-out, but the sequence “CTGGTAAAACTGGA” is kept</p>
-<p><strong>Parameters for Padlock Arms:</strong> - <code class="docutils literal notranslate"><span class="pre">arm_Tm_dif_max</span></code>: maximum melting temperature difference of both arms (difference shouldn’t be higher than 5! But range is not super important, the lower the better) - <code class="docutils literal notranslate"><span class="pre">arm_length_min</span></code>: minimum length of each arm - <code class="docutils literal notranslate"><span class="pre">arm_Tm_min</span></code>: minimum melting temperature of each arm - <code class="docutils literal notranslate"><span class="pre">arm_Tm_max</span></code>: maximum melting temperature of each arm</p>
-<p><strong>Parameters for Detection Oligos:</strong> - <code class="docutils literal notranslate"><span class="pre">min_thymines</span></code>: minimal number of Thymines in detection oligo. - <code class="docutils literal notranslate"><span class="pre">detect_oligo_length_min</span></code>: minimum length of detection probe - <code class="docutils literal notranslate"><span class="pre">detect_oligo_length_max</span></code>: maximum length of detection probe</p>
-<p><em>Note: The melting temperature is used in 2 different stages (probe and detection oligo design), where a few parameters are shared and the others differ. Parameters for melting temperature -&gt; for more information on parameters, see:</em><a class="reference external" href="https://biopython.org/docs/1.75/api/Bio.SeqUtils.MeltingTemp.html#Bio.SeqUtils.MeltingTemp.Tm_NN">here</a></p>
+<p><strong>Parameters for Probe Sequences:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_GC_content_min</span></code>: minimum GC content of oligos</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_GC_content_max</span></code>: maximum GC content of oligos</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_Tm_min</span></code>: minimum melting temperature of oligos</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_Tm_max</span></code>: maximum melting temperature of oligos</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">homopolymeric_base_n</span></code>: minimum number of nucleotides to consider it a homopolymeric run per base and all probes with such a homopolymeric run are filtered out, e.g. if A: 5 is set then the sequence “CTGGTAAAAACTGGA” is filtered out, but the sequence “CTGGTAAAACTGGA” is kept</p></li>
+</ul>
+<p><strong>Parameters for Padlock Arms:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">arm_Tm_dif_max</span></code>: maximum melting temperature difference of both arms (difference shouldn’t be higher than 5! But range is not super important, the lower the better)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arm_length_min</span></code>: minimum length of each arm</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arm_Tm_min</span></code>: minimum melting temperature of each arm</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">arm_Tm_max</span></code>: maximum melting temperature of each arm</p></li>
+</ul>
+<p><strong>Parameters for Detection Oligos:</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">min_thymines</span></code>: minimal number of Thymines in detection oligo.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">detect_oligo_length_min</span></code>: minimum length of detection probe</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">detect_oligo_length_max</span></code>: maximum length of detection probe</p></li>
+</ul>
+<p><em>Note: The melting temperature is used in 2 different stages (probe and detection oligo design), where a few parameters are shared and the others differ. Parameters for melting temperature -&gt; for more information on parameters, see:</em> <a class="reference external" href="https://biopython.org/docs/1.75/api/Bio.SeqUtils.MeltingTemp.html#Bio.SeqUtils.MeltingTemp.Tm_NN">here</a></p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[16]:
 </pre></div>
@@ -593,13 +637,22 @@ out, but the sequence “CTGGTAAAACTGGA” is kept</p>
 <p>In order to create target specific probes, we have to apply several filter to each probe to lower the probability of off-target effects and cross-hybridization.</p>
 <div class="line-block">
 <div class="line"><strong>Parameters for BlastN Crosshybridization filter</strong></div>
-<div class="line">In this filter, the probes are aligned against the probe database, to detect possible cross-hybridization events. As filter policy, we remove the probe coming from the region with more probes, to avoid deleting too many probes in this step. - <code class="docutils literal notranslate"><span class="pre">cross_hybridization_blastn_search_parameters</span></code>: parameters for the BlastN search - <code class="docutils literal notranslate"><span class="pre">cross_hybridization_blastn_hit_parameters</span></code>: parameters for the evaluation of BlastN hits</div>
+<div class="line">In this filter, the probes are aligned against the probe database, to detect possible cross-hybridization events. As filter policy, we remove the probe coming from the region with more probes, to avoid deleting too many probes in this step.</div>
 </div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">cross_hybridization_blastn_search_parameters</span></code>: parameters for the BlastN search</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">cross_hybridization_blastn_hit_parameters</span></code>: parameters for the evaluation of BlastN hits</p></li>
+</ul>
 <div class="line-block">
 <div class="line"><strong>Parameters for BlastN Specificity filter</strong></div>
-<div class="line">In this filter, the probes are aligned against a reference fasta file, to detect possible off-target events. In our case, we use the transcriptome that we generated before with the Genomic Region Generator, but this can be chaned upon needs. - <code class="docutils literal notranslate"><span class="pre">files_fasta_reference_database</span></code>: fasta file with sequences used as reference for the specificity filters. Multiple fasta files can be used as reference. Hint: use the genomic_region_generator pipeline to create fasta files of genomic regions of
-interest - <code class="docutils literal notranslate"><span class="pre">ligation_region_size</span></code>: size of the seed region around the ligation site for blast seed region filter; set to 0 if ligation region should not be considered for blast search - <code class="docutils literal notranslate"><span class="pre">specificity_blastn_search_parameters</span></code>: parameters for the BlastN search - <code class="docutils literal notranslate"><span class="pre">specificity_blastn_hit_parameters</span></code>: parameters for the evaluation of BlastN hits</div>
+<div class="line">In this filter, the probes are aligned against a reference fasta file, to detect possible off-target events. In our case, we use the transcriptome that we generated before with the Genomic Region Generator, but this can be chaned upon needs.</div>
 </div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">files_fasta_reference_database</span></code>: fasta file with sequences used as reference for the specificity filters. Multiple fasta files can be used as reference. Hint: use the genomic_region_generator pipeline to create fasta files of genomic regions of interest</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ligation_region_size</span></code>: size of the seed region around the ligation site for blast seed region filter; set to 0 if ligation region should not be considered for blast search</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">specificity_blastn_search_parameters</span></code>: parameters for the BlastN search</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">specificity_blastn_hit_parameters</span></code>: parameters for the evaluation of BlastN hits</p></li>
+</ul>
 <p><em>Note: Depending on the number of genes, this step might be time and memory consuming. For high number of genes, you might want to run this step on a bigger machine!</em></p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[18]:
@@ -763,9 +816,19 @@ interest - <code class="docutils literal notranslate"><span class="pre">ligation
 <section id="Create-Probe-Sets-of-Non-Overlapping-Probes">
 <h3>Create Probe Sets of Non-Overlapping Probes<a class="headerlink" href="#Create-Probe-Sets-of-Non-Overlapping-Probes" title="Permalink to this heading"></a></h3>
 <p>After applying different sets of filters to the probe database, we will create probesets for each gene, which are sets of probes that do not overlap and have a high efficiency score (calculated from melting temperature, GC content and isoform consensus).</p>
-<p><strong>Parameters for the Oligo Set Selection</strong> - <code class="docutils literal notranslate"><span class="pre">probe_isoform_weight</span></code>: weight of the isoform consensus of the probe in the efficiency score - <code class="docutils literal notranslate"><span class="pre">probe_GC_content_opt</span></code>: max and min values are defiend above - <code class="docutils literal notranslate"><span class="pre">probe_GC_weight</span></code>: weight of the GC content of the probe in the efficiency score - <code class="docutils literal notranslate"><span class="pre">probe_Tm_opt</span></code>: max and min values are defiend above - <code class="docutils literal notranslate"><span class="pre">probe_Tm_weight</span></code>: weight of the Tm of the probe in the efficiency score - <code class="docutils literal notranslate"><span class="pre">probeset_size_min</span></code>: minimum size of probe sets (in case there exist no
-set of the optimal size) -&gt; genes with less oligos will be filtered out and stored in regions_with_insufficient_oligos_for_db_probes - <code class="docutils literal notranslate"><span class="pre">probeset_size_opt</span></code>: optimal size of probe sets - <code class="docutils literal notranslate"><span class="pre">distance_between_probes</span></code>: how much overlap should be allowed between oligos, e.g. if oligos can overlpap x bases choose -x, if oligos can be next to one another choose 0, if oligos should be x bases apart choose x - <code class="docutils literal notranslate"><span class="pre">n_sets</span></code>: maximum number of sets to generate - <code class="docutils literal notranslate"><span class="pre">max_graph_size</span></code>: maximum number of oligos
-that are taken into consisderation in the last step (5000 -&gt; ~5GB, 2500 -&gt; ~1GB)</p>
+<p><strong>Parameters for the Oligo Set Selection</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_isoform_weight</span></code>: weight of the isoform consensus of the probe in the efficiency score</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_GC_content_opt</span></code>: max and min values are defiend above</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_GC_weight</span></code>: weight of the GC content of the probe in the efficiency score</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_Tm_opt</span></code>: max and min values are defiend above</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probe_Tm_weight</span></code>: weight of the Tm of the probe in the efficiency score</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probeset_size_min</span></code>: minimum size of probe sets (in case there exist no set of the optimal size) -&gt; genes with less oligos will be filtered out and stored in regions_with_insufficient_oligos_for_db_probes</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">probeset_size_opt</span></code>: optimal size of probe sets</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">distance_between_probes</span></code>: how much overlap should be allowed between oligos, e.g. if oligos can overlpap x bases choose -x, if oligos can be next to one another choose 0, if oligos should be x bases apart choose x</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_sets</span></code>: maximum number of sets to generate</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">max_graph_size</span></code>: maximum number of oligos that are taken into consisderation in the last step (5000 -&gt; ~5GB, 2500 -&gt; ~1GB)</p></li>
+</ul>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[21]:
 </pre></div>
@@ -1048,8 +1111,13 @@ information and possible workarounds, please see
 <section id="Get-Final-Padlock-Probe-Sequences">
 <h2>Get Final Padlock Probe Sequences<a class="headerlink" href="#Get-Final-Padlock-Probe-Sequences" title="Permalink to this heading"></a></h2>
 <p>Once we have all selected genes, we create the final “ready to order” probe sequences. Calling the fuction below will produce two files, *[padlock, merfish, seqfish]_probes.yaml* and *[padlock, merfish, seqfish]_probes_order.yaml*. The latter file contains the ready to order probe sequences for each gene.</p>
-<p><strong>Parameters for Padlock Sequence Design</strong> - <code class="docutils literal notranslate"><span class="pre">U_distance</span></code>: preferred minimal distance between U(racils) - <code class="docutils literal notranslate"><span class="pre">detect_oligo_Tm_opt</span></code>: optimal melting temperature of detection probe - <code class="docutils literal notranslate"><span class="pre">top_n_sets</span></code>: maximum number of sets to report in *[padlock, merfish, seqfish]_probes.yaml* and *[padlock, merfish, seqfish]_probes_order.yaml*</p>
-<p><em>Note: The melting temperature is used in 2 different stages (probe and detection oligo design), where a few parameters are shared and the others differ. Parameters for melting temperature -&gt; for more information on parameters, see:</em><a class="reference external" href="https://biopython.org/docs/1.75/api/Bio.SeqUtils.MeltingTemp.html#Bio.SeqUtils.MeltingTemp.Tm_NN">here</a></p>
+<p><strong>Parameters for Padlock Sequence Design</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">U_distance</span></code>: preferred minimal distance between U(racils)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">detect_oligo_Tm_opt</span></code>: optimal melting temperature of detection probe</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">top_n_sets</span></code>: maximum number of sets to report in *[padlock, merfish, seqfish]_probes.yaml* and *[padlock, merfish, seqfish]_probes_order.yaml*</p></li>
+</ul>
+<p><em>Note: The melting temperature is used in 2 different stages (probe and detection oligo design), where a few parameters are shared and the others differ. Parameters for melting temperature -&gt; for more information on parameters, see:</em> <a class="reference external" href="https://biopython.org/docs/1.75/api/Bio.SeqUtils.MeltingTemp.html#Bio.SeqUtils.MeltingTemp.Tm_NN">here</a></p>
 <div class="nbinput nblast docutils container">
 <div class="prompt highlight-none notranslate"><div class="highlight"><pre><span></span>[30]:
 </pre></div>

@@ -48,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.5
+                0.1.6
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -134,13 +134,13 @@
 </ul>
 </div></blockquote>
 </p></li>
-<li><p><strong>selection_params</strong> (<em>Optional</em><em>[</em><em>dict</em><em>]</em>) – Hyperparameter for the respective gene selection.</p></li>
+<li><p><strong>selection_params</strong> (<em>dict</em>) – Hyperparameter for the respective gene selection.</p></li>
 <li><p><strong>background_key</strong> (<em>str</em>) – Key of column in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing the values to be plottet as background.</p></li>
 <li><p><strong>x_axis_key</strong> (<em>str</em>) – Key of column in <code class="docutils literal notranslate"><span class="pre">adata.var</span></code> containing the values to be plottet.</p></li>
-<li><p><strong>penalty_kernels</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>Callable</em><em>]</em><em>]</em>) – Any penalty kernel. If None, <a class="reference internal" href="../ut/spapros.ut.plateau_penalty_kernel.html#spapros.ut.plateau_penalty_kernel" title="spapros.ut.plateau_penalty_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">plateau_penalty_kernel()</span></code></a> is used to create three gaussian
+<li><p><strong>penalty_kernels</strong> (<em>List</em><em>[</em><em>Callable</em><em>]</em>) – Any penalty kernel. If None, <a class="reference internal" href="../ut/spapros.ut.plateau_penalty_kernel.html#spapros.ut.plateau_penalty_kernel" title="spapros.ut.plateau_penalty_kernel"><code class="xref py py-func docutils literal notranslate"><span class="pre">plateau_penalty_kernel()</span></code></a> is used to create three gaussian
 plateau penalty kernels with different variances. Only then, <code class="docutils literal notranslate"><span class="pre">factors,</span></code>, <code class="docutils literal notranslate"><span class="pre">lower</span></code> and <code class="docutils literal notranslate"><span class="pre">upper</span></code> are
 used.</p></li>
-<li><p><strong>factors</strong> (<em>Optional</em><em>[</em><em>List</em><em>[</em><em>float</em><em>]</em><em>]</em>) – Factors for the variance for creating a gaussian penalty kernel.</p></li>
+<li><p><strong>factors</strong> (<em>List</em><em>[</em><em>float</em><em>]</em>) – Factors for the variance for creating a gaussian penalty kernel.</p></li>
 <li><p><strong>lower</strong> (<em>float</em>) – Lower border above which the kernel is 1.</p></li>
 <li><p><strong>upper</strong> (<em>float</em>) – Upper boder below which the kernel is 1.</p></li>
 <li><p><strong>**kwargs</strong> – Further arguments for <code class="xref py py-func docutils literal notranslate"><span class="pre">explore_constraint()</span></code>.</p></li>

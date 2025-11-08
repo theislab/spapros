@@ -48,7 +48,7 @@
               <img src="../_static/logo.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.1.5
+                0.1.6
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -124,7 +124,7 @@ If False loadings are defined as eigenvector_component.</p></li>
 <li><p><strong>absolute</strong> (<em>bool</em>) – Take absolute value of loadings.</p></li>
 <li><p><strong>n_pcs</strong> (<em>int</em>) – Number of PCs used to calculate loadings sums.</p></li>
 <li><p><strong>penalty_keys</strong> (<em>list</em>) – List of keys for columns in adata.var that are multiplied with the scores.</p></li>
-<li><p><strong>corr_penalty</strong> (<em>Optional</em><em>[</em><em>Callable</em><em>]</em>) – Function that maps values from [0,1] to [0,1]. It describes an iterative penalty function
+<li><p><strong>corr_penalty</strong> (<em>Callable</em>) – Function that maps values from [0,1] to [0,1]. It describes an iterative penalty function
 that is applied on pca selected genes. The highest correlation with already selected genes
 to the next selected genes are penalized according the given function. (max correlation is
 recomputed after each selected gene).</p></li>
