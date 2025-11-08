@@ -10,8 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import scanpy as sc
-import scipy
 from rich.progress import Progress
+from scipy.sparse import csr_matrix, issparse
 from sklearn import tree
 from sklearn.metrics import classification_report
 
@@ -593,6 +593,8 @@ class ProbesetEvaluator:
             params["marker_corr"]["marker_list"] = self.marker_list
         if self.celltype_key is not None:
             params["forest_clfs"]["ct_key"] = self.celltype_key
+            params["marker_corr"]["ct_key"] = self.celltype_key
+
         return params
 
     def _get_metrics_of_scheme(
@@ -759,7 +761,7 @@ class ProbesetEvaluator:
 
         # Check if given steps are sound
         supported_steps = {"shared", "pre", "main", "summary"}
-        assert set(steps) <= supported_steps, f"Unsupported results steps: {set(steps)-supported_steps}"
+        assert set(steps) <= supported_steps, f"Unsupported results steps: {set(steps) - supported_steps}"
 
         # Set directories to list
         if directories is None:
@@ -1526,8 +1528,9 @@ def uniform_samples(
             obs = np.random.choice(n_obs, subsample, replace=True)
             all_obs += list(df.iloc[obs].index.values)
 
-    if scipy.sparse.issparse(a.X):
-        X = a[all_obs, :].X.toarray()
+    # Make sure that X is a sparse matrix
+    if not issparse(a.X):
+        X = csr_matrix(a[all_obs, :].X)
     else:
         X = a[all_obs, :].X.copy()
     y = {}
@@ -1838,9 +1841,9 @@ def single_forest_classifications(
     # celltypes
     split_train_test_sets(a, split=4, seed=2020, verbose=False, obs_key=ct_key)
     if celltypes == "all":
-        celltypes = np.unique(a.obs[ct_key].values)
+        celltypes = list(np.unique(a.obs[ct_key].values))
     if ref_celltypes == "all":
-        ref_celltypes = np.unique(a.obs[ct_key].values)
+        ref_celltypes = list(np.unique(a.obs[ct_key].values))
     celltypes_tmp = [
         ct
         for ct in celltypes
@@ -2217,7 +2220,9 @@ def forest_classifications(
         if res is None:
             res = new_res
         else:
-            res = combine_tree_results(res, new_res, with_clfs=with_clfs)
+            # Type assertion to help mypy understand the types
+            assert isinstance(res, tuple) | isinstance(res, list)
+            res = combine_tree_results(res, new_res, with_clfs=with_clfs)  # type: ignore[assignment,arg-type]
         specs = res[0][1] if with_clfs else res[1]
         ct_spec_ref = get_outlier_reference_celltypes(specs, **outlier_kwargs)
         if progress and 2 * verbosity >= level:
@@ -2279,6 +2284,8 @@ def forest_rank_table(
     worst_rank = max([len(im[ct].columns) + 1 for ct in im])
     for ct in im:
         im[ct] = im[ct].reindex(columns=im[ct].columns.tolist() + ["tree", "rank", "importance_score"])
+        # Explicitly set dtype for importance_score to avoid dtype incompatibility warnings
+        im[ct]["importance_score"] = im[ct]["importance_score"].astype("float64")
         rank = 1
         for tree_idx, col in enumerate(im[ct].columns):
             filt = im[ct]["rank"].isnull() & (im[ct][col] > 0)
@@ -2287,7 +2294,7 @@ def forest_rank_table(
                 im[ct].loc[filt, "importance_score"] = im[ct].loc[filt, col]
                 rank += 1
         filt = im[ct]["rank"].isnull()
-        im[ct].loc[filt, ["rank", "importance_score"]] = [worst_rank, 0]
+        im[ct].loc[filt, ["rank", "importance_score"]] = [worst_rank, 0.0]
 
     # Save celltype specific rankings in current form if later returned
     if return_ct_specific_rankings:
@@ -2298,7 +2305,7 @@ def forest_rank_table(
         im[ct].columns = [f"{ct}_{col}" for col in im[ct]]
     tab = pd.concat([df for _, df in im.items()], axis=1)
     tab["rank"] = tab[[f"{ct}_rank" for ct in im]].min(axis=1)
-    tab["importance_score"] = 0
+    tab["importance_score"] = 0.0
     tab = tab.reindex(columns=tab.columns.tolist() + [ct for ct in im])
     tab[[ct for ct in im]] = False
     for gene in tab.index:
@@ -2308,7 +2315,7 @@ def forest_rank_table(
             for ct in im
             if (tab.loc[gene, f"{ct}_rank"] == tab.loc[gene, "rank"])
         ]
-        tab.loc[gene, "importance_score"] = max(tmp_scores) if tmp_scores else 0
+        tab.loc[gene, "importance_score"] = max(tmp_scores) if tmp_scores else 0.0
         if tab.loc[gene, "rank"] != worst_rank:
             tab.loc[gene, tmp_cts] = True
 

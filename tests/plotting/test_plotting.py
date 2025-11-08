@@ -47,7 +47,12 @@ def test_masked_dotplot(small_adata, selector, out_dir):  # tmp_path):
     fig_name = Path(f"{out_dir}/masked_dotplot.png")
     random.seed(0)
     small_adata = small_adata[random.sample(range(small_adata.n_obs), 100), :]
-    pl.masked_dotplot(small_adata, selector, save=fig_name)
+    pl.masked_dotplot(
+        small_adata,
+        selector,
+        save=fig_name,
+        celltypes=["celltype_7", "celltype_1", "celltype_5", "celltype_2", "celltype_3", "celltype_6"],
+    )
     # pl.masked_dotplot(small_adata, selector, save=ref_name)
     assert compare_images(ref_name, fig_name, 0.001) is None
 

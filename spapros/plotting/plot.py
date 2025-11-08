@@ -1590,6 +1590,7 @@ def masked_dotplot(
     else:
         # Cell types from adata
         cts = adata.obs[ct_key].unique().tolist()
+        cts.sort()
         # Cell types from marker list only
         if "celltypes_marker" in selector.probeset:
             tmp = []
@@ -1654,6 +1655,7 @@ def masked_dotplot(
         marker_genes_color=marker_color,
         non_adata_celltypes_color=non_adata_celltypes_color,
         use_raw=use_raw,
+        categories_order=cts,
     )
     dp.make_figure()
     if save:

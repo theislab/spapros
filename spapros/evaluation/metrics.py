@@ -37,6 +37,7 @@ METRICS_PARAMETERS: Dict[str, Dict] = {
         "per_marker": True,
         "per_celltype_min_mean": None,
         "per_marker_min_mean": 0.025,
+        "ct_key": "celltype",
     },
     "gene_corr": {"threshold": 0.8},
 }
@@ -337,8 +338,10 @@ def metric_summary(results: pd.DataFrame = None, metric: str = None, parameters:
             )
     elif metric == "marker_corr":
         cor_df = results
-        for s, val in summary_marker_corr(cor_df).items():
-            summary["marker_corr " + s] = val
+        ct_key = parameters.get("ct_key", None)
+        if ct_key is not None:
+            for s, val in summary_marker_corr(cor_df, ct_key).items():
+                summary["marker_corr " + s] = val
     elif metric == "gene_corr":
         cor_mat = results
         summary["gene_corr 1 - mean"] = summary_metric_correlation_mean(cor_mat)
@@ -380,7 +383,7 @@ def compute_clustering_and_update(
         found_ns:
             The numbers of clusters resulting from previous clusters with the resolutions saved in :attr:`tried_res_n`.
     """
-    sc.tl.leiden(adata, resolution=resolution, key_added="tmp")
+    sc.tl.leiden(adata, resolution=resolution, key_added="tmp", flavor="igraph", n_iterations=2)
     n = len(set(adata.obs["tmp"]))
     if n not in found_ns:
         annotations.loc[n, adata.obs_names] = list(adata.obs["tmp"])
@@ -1249,6 +1252,7 @@ def marker_correlation_matrix(
 def max_marker_correlations(
     genes: List[str],
     marker_cor: pd.DataFrame,
+    ct_key: str = "celltype",
     per_celltype: bool = True,
     per_marker: float = True,
     per_marker_min_mean: float = None,
@@ -1266,6 +1270,8 @@ def max_marker_correlations(
         marker_cor:
             Marker correlation matrix plus cell type annotations and mean expression (see output of
             :attr:`marker_correlation_matrix`).
+        ct_key:
+            Column name of cell type annotations in :attr:`marker_cor`.
         per_celltype:
             Wether to return columns with per cell type max correlations.
         per_marker:
@@ -1304,14 +1310,14 @@ def max_marker_correlations(
     if progress:
         task_max_corr = progress.add_task(description, level=level, total=1)
 
-    cor_df = marker_cor[["celltype", "mean"]].copy()
+    cor_df = marker_cor[[ct_key, "mean"]].copy()
     cor_df["per marker"] = marker_cor[genes].max(axis=1)
 
     tolerance = 0.0001  # Tolerance for floating-point comparison
 
     if per_celltype:
         cor_df["per celltype"] = cor_df["per marker"]
-        max_per_celltype = cor_df.groupby(["celltype"])["per celltype"].transform(max)
+        max_per_celltype = cor_df.groupby([ct_key])["per celltype"].transform(max)
         idxs = np.abs(max_per_celltype - cor_df["per celltype"]) <= tolerance
         cor_df.loc[~idxs, "per celltype"] = np.nan
 
@@ -1341,7 +1347,7 @@ def max_marker_correlations(
 
 
 # SUMMARY metrics
-def summary_marker_corr(cor_df: pd.DataFrame) -> Dict:
+def summary_marker_corr(cor_df: pd.DataFrame, ct_key: str) -> Dict:
     """Means of maximal correlations with marker genes:
 
     Args:
@@ -1349,8 +1355,10 @@ def summary_marker_corr(cor_df: pd.DataFrame) -> Dict:
             Table with maximal correlations with marker genes. :attr:`cor_df` typically has multiple columns where
             different correlations are filtered out. See :attr:`max_marker_correlations` output for expected
             :attr:`cor_df`.
+        ct_key:
+            Column name of cell type annotations in :attr:`cor_df`.
     """
-    summaries = cor_df[[col for col in cor_df.columns if (col != "mean")]].mean(axis=0)
+    summaries = cor_df[[col for col in cor_df.columns if (col not in ["mean", ct_key])]].mean(axis=0)
     return {summary: val for summary, val in summaries.items()}
 
 

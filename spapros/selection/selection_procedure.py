@@ -9,7 +9,7 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 from rich.console import RichCast
-from scipy.sparse import issparse
+from scipy.sparse import csr_matrix, issparse
 
 import spapros.evaluation.evaluation as ev
 import spapros.selection.selection_methods as select
@@ -359,6 +359,10 @@ class ProbesetSelector:  # (object)
         #    Priorities: best tree genes (pca included), fill up n_min_markers (from 2nd trees), fill up from further trees
         #    without n_min_markers condiseration.
         #    I still think it would be nice to have a better marker criteria, but idk what
+
+        # Make sure that adata.X is a sparse matrix
+        if not issparse(adata.X):
+            adata.X = csr_matrix(adata.X)
 
         self.adata = adata.copy()
         self.ct_key = celltype_key
@@ -1001,7 +1005,7 @@ class ProbesetSelector:  # (object)
         probeset.loc[self.selection["prior"], "prior_selected"] = True
         # Indicator if gene was in the prior selected pca set and all genes' pca scores
         probeset["pca_selected"] = False
-        probeset["pca_score"] = 0
+        probeset["pca_score"] = 0.0
         if self.n_pca_genes and (self.n_pca_genes > 0):
             probeset.loc[self.selection["pca"][self.selection["pca"]["selection"]].index, "pca_selected"] = True
             probeset.loc[self.selection["pca"].index, "pca_score"] = self.selection["pca"]["selection_score"]
@@ -1758,7 +1762,8 @@ class ProbesetSelector:  # (object)
 
         # prepare df
         if celltypes is None:
-            celltypes = self.celltypes
+            celltypes = self.celltypes  # type: ignore[assignment]
+        assert isinstance(celltypes, list), "celltypes should be a list"
         celltypes = [c for c in celltypes if c in df.columns]
         df["decision_celltypes"] = df[celltypes].apply(lambda row: list(row[row == True].index), axis=1)  # noqa: E712
         if add_marker_genes and (self.selection["marker"] is not None):
