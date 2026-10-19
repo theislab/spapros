@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 """Command-line interface."""
+
 import logging
 import sys
 
@@ -20,16 +21,14 @@ def main() -> None:
     traceback.install()
 
     """Main entry point for spapros."""
-    print(
-        """[bold blue]
+    print("""[bold blue]
 ███████ ██████   █████  ██████  ██████   ██████  ███████ 
 ██      ██   ██ ██   ██ ██   ██ ██   ██ ██    ██ ██      
 ███████ ██████  ███████ ██████  ██████  ██    ██ ███████ 
      ██ ██      ██   ██ ██      ██   ██ ██    ██      ██ 
 ███████ ██      ██   ██ ██      ██   ██  ██████  ███████ 
                                                          
-"""
-    )
+""")
     print("[bold blue]Run [green]spapros --help [blue]for an overview of all commands\n")
 
     # Is the latest spapros version installed? Upgrade if not!

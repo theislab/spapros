@@ -720,7 +720,7 @@ def correlation_matrix(
     if absolute:
         cor_mat = np.abs(cor_mat)
     if diag_zero:
-        cor_mat = cor_mat.mask(np.eye(*cor_mat.shape, dtype=bool), 0)
+        cor_mat = cor_mat.mask(np.eye(*cor_mat.shape, dtype=np.bool_), 0)
     if unknown_genes_to_zero and unknown:
         for g in unknown:
             cor_mat.loc[g] = 0.0

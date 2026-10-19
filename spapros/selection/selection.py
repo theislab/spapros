@@ -160,7 +160,7 @@ def run_selection(adata_path: str, output_path: str) -> None:
 
         param_keys = list(
             np.unique(
-                [k for k in general_params] + [k for _, m_params in method_params.items() for k in m_params]  # type: ignore
+                [*general_params] + [k for _, m_params in method_params.items() for k in m_params]  # type: ignore
             )
         )
         param_keys.remove("process_adata")

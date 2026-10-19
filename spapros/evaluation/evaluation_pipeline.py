@@ -128,7 +128,7 @@ def run_evaluation(
         evaluation_task = progress.add_task("[bold blue]Performing evaluation...", total=8)
 
         shared_tasks = progress.add_task(
-            "[bold blue]Computations shared for each probeset", total=len([key for key in metric_configs]) - 1
+            "[bold blue]Computations shared for each probeset", total=len([*metric_configs]) - 1
         )
         clust_sim_pre_task = progress.add_task("[bold blue]Clustering similarity step 1", total=len(probesets))
         knn_pre_task = progress.add_task("[bold blue]KNN Graph Overlap step 1", total=len(probesets))

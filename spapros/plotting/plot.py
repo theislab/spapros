@@ -10,10 +10,10 @@ import numpy as np
 import pandas as pd
 import scanpy as sc
 import scipy.cluster.hierarchy as sch
-from scipy.spatial.distance import pdist
 import seaborn as sns
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import interp1d
+from scipy.spatial.distance import pdist
 from upsetplot import UpSet, from_indicators
 from venndata import venn
 
@@ -32,7 +32,7 @@ class _UpSet(UpSet):
 
         def _scatter(*args, facecolors, edgecolors, linewidths, linestyles, **kwargs):
             facecolors = [self._facecolor if _na(c) else c for c in facecolors]
-            edgecolors = [f if _na(e) else e for f, e in zip(facecolors, edgecolors)]
+            edgecolors = [f if _na(e) else e for f, e in zip(facecolors, edgecolors, strict=True)]
             linewidths = [1 if _na(w) else w for w in linewidths]
             linestyles = ["solid" if _na(s) else s for s in linestyles]
             return scatter(
@@ -945,7 +945,7 @@ def explore_constraint(
         x_values = np.linspace(0, np.max(a[i].var[x_axis_key]), 240)
         plt.plot(x_values, 1 * penalty_kernels[i](x_values), label="penal.", color="green")
         plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
-        plt.ylim([0, 2])
+        plt.ylim(0, 2)
         for label in ax2.get_yticklabels():
             label.set_color("green")
 
@@ -1216,7 +1216,7 @@ def selection_histogram(
                 frameon=False,
             )
 
-            plt.ylim([0, 2])
+            plt.ylim(0, 2)
             for label in ax2.get_yticklabels():
                 label.set_color("green")
 

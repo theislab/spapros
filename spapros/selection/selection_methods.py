@@ -516,7 +516,7 @@ def add_DE_genes_to_trees(
     # Specificities table (True negative rates) of best trees
     TN_rates = pd.DataFrame(index=all_celltypes, columns=all_celltypes, data=1)
     new_TN_rates = pd.concat([d["0"] for ct, d in specificities.items()], axis=1)
-    celltypes = [ct for ct in specificities]
+    celltypes = [*specificities]
     new_TN_rates.columns = celltypes
     TN_rates[celltypes] = new_TN_rates
     # TN_rates = pd.concat([d['0'] for ct,d in specificities.items()],axis=1)
@@ -547,7 +547,7 @@ def add_DE_genes_to_trees(
         # if verbosity > 1:
         #     print(f"  Iteration step {step}:")
         # Get mapping of each celltype to its test reference group
-        reference = outliers.mask(np.eye(*outliers.shape, dtype=bool), True)
+        reference = outliers.mask(np.eye(*outliers.shape, dtype=np.bool_), True)
         ct_to_reference = {
             ct: reference[ct].loc[reference[ct]].index.tolist() for ct in reference.columns if (reference[ct].sum() > 1)
         }
@@ -626,7 +626,7 @@ def add_DE_genes_to_trees(
         new_TN_rates = pd.concat([d["0"] for ct, d in specificities.items()], axis=1)
         new_TN_rates.columns = celltypes
         TN_rates[celltypes] = new_TN_rates
-        TN_rates.columns = [ct for ct in all_celltypes]
+        TN_rates.columns = [*all_celltypes]
         new_outliers = outlier_mask(TN_rates, n_stds, min_outlier_dif, min_score)
         for ct in celltypes:
             if (new_outliers[ct] == outliers[ct]).all():
@@ -854,7 +854,7 @@ def add_tree_genes_from_reference_trees(
 
     # Get reference importance table of the celltypes' best trees
     importances = pd.concat([im_ref[ct]["0"] for ct in im_ref], axis=1)
-    importances.columns = [ct for ct in im_ref]
+    importances.columns = [*im_ref]
     # Set reference importances to nan if below threshold
     importances = importances[importances > importance_th]
     # Drop rows with only nan
@@ -1076,7 +1076,7 @@ def get_markers_and_correlated_genes(
     if (len(add_markers) >= n_min) or (markers == []):
         return add_markers[: min(len(add_markers), n_min)], correlated_genes
 
-    genes = [g for g in (markers + selected_genes)]
+    genes = [*(markers + selected_genes)]
     cm = cor_mat.loc[genes, genes]
     n_genes = len(add_markers)
 
@@ -1186,7 +1186,7 @@ def select_features_pca_loadings(
         loadings = abs(loadings)
 
     if method == "sum":
-        scores = np.sum(loadings, axis=1)
+        scores: Any = np.sum(loadings, axis=1)
         unique_scores = np.unique(scores)
         unique_scores[::-1].sort()
         feature_idxs = []
@@ -1200,8 +1200,7 @@ def select_features_pca_loadings(
             if count == n:
                 break
         # scores = scores[feature_idxs]
-        a.var["selection"] = False
-        a.var["selection"].iloc[feature_idxs] = True
+        a.var["selection"] = np.isin(np.arange(a.n_vars), feature_idxs)
         a.var["selection_score"] = scores
     elif method == "max":
         scores = []
@@ -1224,8 +1223,7 @@ def select_features_pca_loadings(
                     break
             if count == n:
                 break
-        a.var["selection"] = False
-        a.var["selection"].iloc[feature_idxs] = True
+        a.var["selection"] = np.isin(np.arange(a.n_vars), feature_idxs)
     elif method == "max_PC":
         scores = []
         unique_loadings = np.unique(loadings)
@@ -1247,12 +1245,11 @@ def select_features_pca_loadings(
                     break
             if count == n:
                 break
-        a.var["selection"] = False
-        a.var["selection"].iloc[feature_idxs] = True
+        a.var["selection"] = np.isin(np.arange(a.n_vars), feature_idxs)
     elif method == "max_PC_order":
         scores = []
         feature_idxs = []
-        pc_idxs = [i for i in range(n)]
+        pc_idxs = [*range(n)]
         for pc_idx in pc_idxs:
             found_feature = False
             pc_loadings = loadings[:, pc_idx]
@@ -1264,8 +1261,7 @@ def select_features_pca_loadings(
                     found_feature = True
                 else:
                     pc_loadings[feature_idx] = np.nan
-        a.var["selection"] = False
-        a.var["selection"].iloc[feature_idxs] = True
+        a.var["selection"] = np.isin(np.arange(a.n_vars), feature_idxs)
 
     if inplace:
         adata.var["selection"] = a.var["selection"].copy()
@@ -1344,8 +1340,7 @@ def random_selection(adata: sc.AnnData, n: int, seed: int = 0, inplace: bool = T
     np.random.seed(seed=seed)
     f_idxs = np.random.choice(adata.n_vars, n, replace=False)
     df = pd.DataFrame(index=adata.var.index, columns=["selection"])
-    df["selection"] = False
-    df["selection"].iloc[f_idxs] = True
+    df["selection"] = np.isin(np.arange(adata.n_vars), f_idxs)
     if inplace:
         adata.var["selection"] = df["selection"].copy()
     else:
