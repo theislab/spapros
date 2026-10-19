@@ -44,6 +44,12 @@ jobs:
                           session: "tests",
                       }
 
+                    - {
+                          python-version: 3.14,
+                          os: macos-latest,
+                          session: "tests",
+                      }
+
                     # ----- Tests on secondary Python -----
                     #- { python-version: 3.12, os: ubuntu-latest,  session: "tests" }
                     #- { python-version: 3.12, os: windows-latest, session: "tests" }

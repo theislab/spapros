@@ -1580,7 +1580,7 @@ def get_reference_masks(cts: list, ct_to_ref: Dict[str, list]) -> Dict[str, np.n
     """
     masks = {}
     for ct, ref in ct_to_ref.items():
-        masks[ct] = np.in1d(cts, ref)
+        masks[ct] = np.isin(cts, ref)
     return masks
 
 

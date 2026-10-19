@@ -1476,10 +1476,9 @@ def summary_metric_correlation_mean(cor_matrix: pd.DataFrame) -> float:
         float:
             1 - mean correlation
     """
-    cor_mat = cor_matrix.copy()
-    cor_mat = np.abs(cor_mat)
-    np.fill_diagonal(cor_mat.values, 0)
-    cor_mat.values[~(np.arange(cor_mat.shape[0])[:, None] > np.arange(cor_mat.shape[1]))] = np.nan
+    cor_mat = np.abs(cor_matrix.to_numpy(dtype=float))
+    np.fill_diagonal(cor_mat, 0)
+    cor_mat[~(np.arange(cor_mat.shape[0])[:, None] > np.arange(cor_mat.shape[1]))] = np.nan
     return 1 - np.nanmean(cor_mat)
 
 
@@ -1503,9 +1502,8 @@ def summary_metric_correlation_percentage(
         float:
             percentage of genes with max(abs(correlations)) < threshold
     """
-    cor_mat = cor_matrix.copy()
-    cor_mat = np.abs(cor_mat)
-    np.fill_diagonal(cor_mat.values, 0)
+    cor_mat = np.abs(cor_matrix)
+    cor_mat = cor_mat.mask(np.eye(*cor_mat.shape, dtype=bool), 0)
     if tolerance:
         return np.mean(
             linear_step(np.max(cor_mat, axis=0).values, threshold - tolerance, threshold + tolerance, descending=True)

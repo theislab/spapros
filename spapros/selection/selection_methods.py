@@ -547,8 +547,7 @@ def add_DE_genes_to_trees(
         # if verbosity > 1:
         #     print(f"  Iteration step {step}:")
         # Get mapping of each celltype to its test reference group
-        reference = outliers.copy()
-        np.fill_diagonal(reference.values, True)
+        reference = outliers.mask(np.eye(*outliers.shape, dtype=bool), True)
         ct_to_reference = {
             ct: reference[ct].loc[reference[ct]].index.tolist() for ct in reference.columns if (reference[ct].sum() > 1)
         }

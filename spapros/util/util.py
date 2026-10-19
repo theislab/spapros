@@ -9,6 +9,7 @@ import scipy.cluster.hierarchy as sch
 import seaborn as sns
 from rich.progress import BarColumn, Progress, TextColumn, TimeElapsedColumn
 from scipy.sparse import issparse
+from scipy.spatial.distance import pdist
 from sklearn.utils import sparsefuncs
 
 ##############
@@ -287,7 +288,7 @@ def cluster_corr(corr_array: Union[pd.DataFrame, np.ndarray]) -> Union[pd.DataFr
         pandas.DataFrame or numpy.ndarray:
             A NxN correlation matrix with the columns and rows rearranged
     """
-    pairwise_distances = sch.distance.pdist(corr_array)
+    pairwise_distances = pdist(corr_array)
     linkage = sch.linkage(pairwise_distances, method="complete")
     cluster_distance_threshold = pairwise_distances.max() / 2
     idx_to_cluster_array = sch.fcluster(linkage, cluster_distance_threshold, criterion="distance")
@@ -719,7 +720,7 @@ def correlation_matrix(
     if absolute:
         cor_mat = np.abs(cor_mat)
     if diag_zero:
-        np.fill_diagonal(cor_mat.values, 0)
+        cor_mat = cor_mat.mask(np.eye(*cor_mat.shape, dtype=bool), 0)
     if unknown_genes_to_zero and unknown:
         for g in unknown:
             cor_mat.loc[g] = 0.0
