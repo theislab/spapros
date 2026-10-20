@@ -13,10 +13,52 @@ import scipy.cluster.hierarchy as sch
 import seaborn as sns
 from matplotlib.gridspec import GridSpec
 from scipy.interpolate import interp1d
+from scipy.spatial.distance import pdist
 from upsetplot import UpSet, from_indicators
 from venndata import venn
 
 from spapros.plotting._masked_dotplot import MaskedDotPlot
+
+
+class _UpSet(UpSet):
+    # ponytail: works around upsetplot<=0.9.0 bugs with numpy>=2.5 and pandas>=3 by patching ax methods.
+    # Drop this subclass once upsetplot ships a fix.
+    def plot_matrix(self, ax):
+        # upsetplot fills missing dot styles via chained inplace fillna, a no-op under pandas>=3 copy-on-write.
+        scatter = ax.scatter
+
+        def _na(v):
+            return isinstance(v, float) and np.isnan(v)
+
+        def _scatter(*args, facecolors, edgecolors, linewidths, linestyles, **kwargs):
+            facecolors = [self._facecolor if _na(c) else c for c in facecolors]
+            edgecolors = [f if _na(e) else e for f, e in zip(facecolors, edgecolors, strict=True)]
+            linewidths = [1 if _na(w) else w for w in linewidths]
+            linestyles = ["solid" if _na(s) else s for s in linestyles]
+            return scatter(
+                *args,
+                facecolors=facecolors,
+                edgecolors=edgecolors,
+                linewidths=linewidths,
+                linestyles=linestyles,
+                **kwargs,
+            )
+
+        ax.scatter = _scatter
+        try:
+            super().plot_matrix(ax)
+        finally:
+            del ax.scatter
+
+    def _label_sizes(self, ax, rects, where):
+        # upsetplot passes shape-(1,) arrays as text positions, which numpy>=2.5 rejects.
+        text = ax.text
+        ax.text = lambda x, y, *args, **kwargs: text(np.squeeze(x).item(), np.squeeze(y).item(), *args, **kwargs)
+        try:
+            super()._label_sizes(ax, rects, where)
+        finally:
+            del ax.text
+
 
 #############################
 ## evaluation related plots ##
@@ -43,7 +85,7 @@ def ordered_confusion_matrices(conf_mats: List[pd.DataFrame]) -> List[pd.DataFra
 
     pooled = pd.concat(conf_mats, axis=1)
 
-    pairwise_distances = sch.distance.pdist(pooled)
+    pairwise_distances = pdist(pooled)
     linkage = sch.linkage(pairwise_distances, method="complete")
     cluster_distance_threshold = pairwise_distances.max() / 2
     idx_to_cluster_array = sch.fcluster(linkage, cluster_distance_threshold, criterion="distance")
@@ -903,7 +945,7 @@ def explore_constraint(
         x_values = np.linspace(0, np.max(a[i].var[x_axis_key]), 240)
         plt.plot(x_values, 1 * penalty_kernels[i](x_values), label="penal.", color="green")
         plt.legend(prop={"size": legend_size}, loc=[0.73, 0.86], frameon=False)
-        plt.ylim([0, 2])
+        plt.ylim(0, 2)
         for label in ax2.get_yticklabels():
             label.set_color("green")
 
@@ -1174,7 +1216,7 @@ def selection_histogram(
                 frameon=False,
             )
 
-            plt.ylim([0, 2])
+            plt.ylim(0, 2)
             for label in ax2.get_yticklabels():
                 label.set_color("green")
 
@@ -1234,7 +1276,7 @@ def gene_overlap(
         upset_data = from_indicators(selection_df)
 
         # set up figure
-        upset_plot = UpSet(
+        upset_plot = _UpSet(
             upset_data, subset_size="count", min_degree=min_degree, show_counts=True, sort_by="cardinality"
         )
 

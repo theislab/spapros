@@ -46,12 +46,12 @@ METRICS_PARAMETERS: Dict[str, Dict] = {
 # utility functions to get general infos about metrics #
 def get_metric_names() -> List[str]:
     """Get a list of all available metric names."""
-    return [metric for metric in METRICS_PARAMETERS]
+    return [*METRICS_PARAMETERS]
 
 
 def get_metric_parameter_names() -> Dict[str, List[str]]:
     """Get all parameter names for each available metric."""
-    names = {metric: [param for param in METRICS_PARAMETERS[metric]] for metric in METRICS_PARAMETERS}
+    names = {metric: [*METRICS_PARAMETERS[metric]] for metric in METRICS_PARAMETERS}
     return names
 
 
@@ -714,16 +714,16 @@ def knns(
         print("There is no overlap of genes between the probeset and the reference dataset.")
 
     # Delete existing PCAs, neighbor graphs, etc. and calculate PCA for n_pcs
-    uns = [key for key in a.uns]
+    uns = [*a.uns]
     for u in uns:
         del a.uns[u]
-    obsm = [key for key in a.obsm]
+    obsm = [*a.obsm]
     for o in obsm:
         del a.obsm[o]
-    varm = [key for key in a.varm]
+    varm = [*a.varm]
     for v in varm:
         del a.varm[v]
-    obsp = [key for key in a.obsp]
+    obsp = [*a.obsp]
     for o in obsp:
         del a.obsp[o]
 
@@ -851,7 +851,7 @@ def summary_knn_AUC(means_df: pd.DataFrame) -> float:
     tmp = pd.Series(index=range(np.min(x), np.max(x)), dtype="float64")
     for i in range(len(y)):
         tmp.loc[x[i]] = y[i]
-    return AUC(tmp.interpolate(), n_min=np.min(x), n_max=np.max(x))
+    return AUC(tmp.interpolate(), n_min=min(x), n_max=max(x))
 
 
 ################################
@@ -1105,7 +1105,7 @@ def xgboost_forest_classification(
 
 
 # SUMMARY metrics
-def summary_metric_diagonal_confusion_mean(conf_mat: pd.DataFrame) -> np.ndarray:
+def summary_metric_diagonal_confusion_mean(conf_mat: pd.DataFrame) -> float:
     """Compute mean of diagonal elements of confusion matrix.
 
     Args:
@@ -1359,7 +1359,7 @@ def summary_marker_corr(cor_df: pd.DataFrame, ct_key: str) -> Dict:
             Column name of cell type annotations in :attr:`cor_df`.
     """
     summaries = cor_df[[col for col in cor_df.columns if (col not in ["mean", ct_key])]].mean(axis=0)
-    return {summary: val for summary, val in summaries.items()}
+    return {**summaries}
 
 
 ##############################
@@ -1476,16 +1476,15 @@ def summary_metric_correlation_mean(cor_matrix: pd.DataFrame) -> float:
         float:
             1 - mean correlation
     """
-    cor_mat = cor_matrix.copy()
-    cor_mat = np.abs(cor_mat)
-    np.fill_diagonal(cor_mat.values, 0)
-    cor_mat.values[~(np.arange(cor_mat.shape[0])[:, None] > np.arange(cor_mat.shape[1]))] = np.nan
+    cor_mat = np.abs(cor_matrix.to_numpy(dtype=float))
+    np.fill_diagonal(cor_mat, 0)
+    cor_mat[~(np.arange(cor_mat.shape[0])[:, None] > np.arange(cor_mat.shape[1]))] = np.nan
     return 1 - np.nanmean(cor_mat)
 
 
 def summary_metric_correlation_percentage(
     cor_matrix: pd.DataFrame, threshold: float = 0.8, tolerance: float = 0.05
-) -> np.ndarray:
+) -> float:
     """Calculate percentage of genes with max(abs(correlations)) < threshold.
 
     To make the metric more stable we smoothen the threshold with a linear transition from
@@ -1503,12 +1502,11 @@ def summary_metric_correlation_percentage(
         float:
             percentage of genes with max(abs(correlations)) < threshold
     """
-    cor_mat = cor_matrix.copy()
-    cor_mat = np.abs(cor_mat)
-    np.fill_diagonal(cor_mat.values, 0)
+    cor_mat = cor_matrix.abs()
+    cor_mat = cor_mat.mask(np.eye(*cor_mat.shape, dtype=np.bool_), 0)
     if tolerance:
         return np.mean(
-            linear_step(np.max(cor_mat, axis=0).values, threshold - tolerance, threshold + tolerance, descending=True)
+            linear_step(cor_mat.max(axis=0).values, threshold - tolerance, threshold + tolerance, descending=True)
         )
     else:
-        return np.mean(np.max(cor_mat, axis=0).values < threshold)
+        return np.mean(cor_mat.max(axis=0).values < threshold)

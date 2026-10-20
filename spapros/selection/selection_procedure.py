@@ -1071,7 +1071,7 @@ class ProbesetSelector:  # (object)
             list_only_cts = [ct for ct in self.marker_list if ct not in self.celltypes]
             shared_cts = [ct for ct in self.celltypes if ct not in adata_only_cts]
         else:
-            adata_only_cts = [ct for ct in self.celltypes]
+            adata_only_cts = [*self.celltypes]
             list_only_cts = []
             shared_cts = []
 
@@ -1160,7 +1160,7 @@ class ProbesetSelector:  # (object)
             ["rank", "marker_rank", "importance_score", "pca_score"], ascending=[True, True, False, False]
         )
         probeset["rank"] = probeset["rank"].rank(method="dense")
-        probeset["gene_nr"] = [i for i in range(1, len(probeset) + 1)]
+        probeset["gene_nr"] = [*range(1, len(probeset) + 1)]
         probeset["selection"] = False
         if not self.n:
             probeset.loc[probeset["rank"] <= max_rank, "selection"] = True
@@ -1406,7 +1406,7 @@ class ProbesetSelector:  # (object)
             self.probeset = pd.read_csv(self.probeset_path, index_col=0)
             for key in self.probeset.columns:
                 if self.probeset.dtypes[key] == "object":
-                    self.probeset[key].fillna("", inplace=True)
+                    self.probeset[key] = self.probeset[key].fillna("")
             if self.verbosity > 1:
                 print(f"\t Found and load {os.path.basename(self.probeset_path)} (probeset).")
             self.loaded_attributes.append("probeset")
@@ -2077,7 +2077,7 @@ def select_reference_probesets(
     # Filter unsupported methods
     for method in methods:
         if method not in selection_fcts:
-            print(f"Method {method} is not available. Supported methods are {[key for key in selection_fcts]}.")
+            print(f"Method {method} is not available. Supported methods are {[*selection_fcts]}.")
     methods = {m: methods[m] for m in methods if m in selection_fcts}
 
     # Create list of planed selections

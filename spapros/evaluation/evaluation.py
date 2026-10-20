@@ -1580,7 +1580,7 @@ def get_reference_masks(cts: list, ct_to_ref: Dict[str, list]) -> Dict[str, np.n
     """
     masks = {}
     for ct, ref in ct_to_ref.items():
-        masks[ct] = np.in1d(cts, ref)
+        masks[ct] = np.isin(cts, ref)
     return masks
 
 
@@ -1938,7 +1938,7 @@ def single_forest_classifications(
     # Evaluate trees (we parallelize over tree indices)
     summary_metric, ct_specific_metric = parallelize(
         callback=eval_ct_tree_helper,
-        collection=[i for i in range(n_trees)],
+        collection=[*range(n_trees)],
         n_jobs=n_jobs,
         backend=backend,
         extractor=pool_eval_ct_tree_helper,
@@ -2000,7 +2000,7 @@ def summarize_specs(specs: Dict[str, pd.DataFrame]) -> pd.DataFrame:
             Each celltype's specificities of reference celltypes.
 
     """
-    cts = [ct for ct in specs]
+    cts = [*specs]
     df = pd.DataFrame(index=cts, columns=specs[cts[0]].columns)
     for ct in specs:
         df.loc[ct] = specs[ct].mean()
@@ -2075,7 +2075,7 @@ def combine_tree_results(
     #    else:
     #        combined[0].append(f1_table)
     # specificities
-    celltypes = [key for key in secondary_res[1]]
+    celltypes = [*secondary_res[1]]
     combined[1] = {ct: df.copy() for ct, df in primary_res[1].items()}
     assert isinstance(combined[1], dict)
     for ct in celltypes:
@@ -2306,8 +2306,8 @@ def forest_rank_table(
     tab = pd.concat([df for _, df in im.items()], axis=1)
     tab["rank"] = tab[[f"{ct}_rank" for ct in im]].min(axis=1)
     tab["importance_score"] = 0.0
-    tab = tab.reindex(columns=tab.columns.tolist() + [ct for ct in im])
-    tab[[ct for ct in im]] = False
+    tab = tab.reindex(columns=tab.columns.tolist() + [*im])
+    tab[[*im]] = False
     for gene in tab.index:
         tmp_cts = [ct for ct in im if (tab.loc[gene, f"{ct}_rank"] == tab.loc[gene, "rank"])]
         tmp_scores = [
@@ -2319,7 +2319,7 @@ def forest_rank_table(
         if tab.loc[gene, "rank"] != worst_rank:
             tab.loc[gene, tmp_cts] = True
 
-    tab = tab[["rank", "importance_score"] + [ct for ct in im]]
+    tab = tab[["rank", "importance_score"] + [*im]]
     tab = tab.sort_values(["rank", "importance_score"], ascending=[True, False])
     tab["rank"] = tab["rank"].rank(axis=0, method="dense", na_option="keep", ascending=True)
 
